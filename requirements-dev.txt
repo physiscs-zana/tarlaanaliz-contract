@@ -1,2 +1,3 @@
-jsonschema
-pytest
+# SEC-FIX: pinned versions to prevent uncontrolled updates
+jsonschema>=4.20.0,<5
+pytest>=7.4.0,<9

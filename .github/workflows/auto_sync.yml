@@ -58,7 +58,13 @@ jobs:
       
       - name: Verify checksums
         run: |
-          python3 tools/pin_version.py --verify || echo "Checksum verification skipped"
+          # SEC-FIX: checksum verification now blocks sync if it fails [KR-041]
+          if [ -f CONTRACTS_VERSION.md ]; then
+            python3 tools/pin_version.py --verify
+          else
+            echo "::error::CONTRACTS_VERSION.md not found — cannot verify contract integrity"
+            exit 1
+          fi
   
   sync-to-platform:
     name: Sync to Platform Repo
