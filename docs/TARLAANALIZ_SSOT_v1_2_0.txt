@@ -1,5 +1,10 @@
 # TarlaAnaliz – Tek Kaynak Gerçek (SSOT) v1.2.0
 
+> **Versiyon:** 1.2.0
+> **Yayın Tarihi:** 2026-02-24
+> **Contract Versiyon Uyum:** 2.0.1 (2026-03-06)
+> **Bu Dosyanın Son Güncelleme:** 2026-03-07
+
 kurallar; daima buradaki kurallara kıdemli SDLC uzmanı, Technical Writer / SSOT Custodian, Domain Expert (AgriTech), Data Engineer / Pipeline Architect , Security Architect, QA Engineer / Test Architect, Kıdemli yazılım mimarı ve yazılım mühendisi olarak sadık kalmalısın;
 
 **KR Şablonu (Kanonik):**
