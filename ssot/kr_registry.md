@@ -320,7 +320,7 @@
 
 **Dinamik Threshold (KARAR-13):**
 - Kaynak: `config/dynamic_thresholds.yaml` (crop × analysis_type bazlı)
-- `global_floor = 0.65` — mutlak alt sınır, threshold_adjuster.py aşağı inemez
+- `global_floor = 0.80` — mutlak alt sınır, threshold_adjuster.py aşağı inemez
 - `initial_threshold = 0.75` — 50 feedback öncesi tüm crop'lar
 - `pamuk.disease = 0.82` — özel: ilk 6 hafta (Türkiye MS verisi sıfır)
 - `max_adjustment_delta = ±0.05` — tek güncellemede maksimum değişim
