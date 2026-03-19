@@ -28,6 +28,11 @@
       "type": "string",
       "description": "Current crop type (reference: enums/crop_type.enum.v1.json)"
     },
+    "field_code": {
+      "type": "string",
+      "pattern": "^[0-9]{8}$",
+      "description": "8-digit human-readable field code for payment identification (KR-013)"
+    },
     "season": {
       "$ref": "#/$defs/SeasonRef",
       "description": "Growing season information"
