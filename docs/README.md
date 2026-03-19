@@ -33,8 +33,10 @@ tarlaanaliz-contracts/
 │   │   ├── field.example.json
 │   │   ├── mission.example.json
 │   │   └── ...
+│   ├── canonical/                    # Kanonik iş dokümanları (v2.4 .docx)
+│   ├── checklists/                   # SDLC gate kontrol listeleri
 │   │
-│   └── migrations/                   # (Future) Version migration guides
+│   └── migration_guides/             # Kırıcı değişiklik geçiş rehberleri
 │
 ├── schemas/                          # JSON Schema definitions
 │   ├── shared/                       # Shared types (GeoJSON, Address, Money)
@@ -390,6 +392,6 @@ Syncs contracts to consumer repositories.
 
 ---
 
-**Last Updated:** 2026-01-26  
-**Current Version:** 1.0.0  
-**Compliance:** KR-002 ✅ | KVKK ✅ | Draft 2020-12 ✅
+**Last Updated:** 2026-03-07
+**Current Version:** 2.0.1
+**Compliance:** KR-002 ✅ | KR-033 ✅ | KR-050 ✅ | KVKK ✅ | Draft 2020-12 ✅

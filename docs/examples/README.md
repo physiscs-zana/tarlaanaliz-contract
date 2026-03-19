@@ -373,6 +373,6 @@ grep -r -i "email\|tckn\|otp" docs/examples/*.json
 
 ---
 
-**Last Updated:** 2026-01-26  
-**Examples Count:** 5  
+**Last Updated:** 2026-03-07
+**Examples Count:** 11
 **Validation Status:** ✅ All passing

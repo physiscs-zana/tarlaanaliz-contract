@@ -167,8 +167,12 @@ jobs:
       
       - name: Verify checksums
         run: |
-          python3 tools/pin_version.py --verify || echo "No version pinned yet"
-        continue-on-error: true
+          # SEC-FIX: continue-on-error removed — checksum mismatch now fails the build [KR-041]
+          if [ -f CONTRACTS_VERSION.md ]; then
+            python3 tools/pin_version.py --verify
+          else
+            echo "::warning::CONTRACTS_VERSION.md not found — skipping checksum verification"
+          fi
   
   lint-openapi:
     name: Lint OpenAPI Specs

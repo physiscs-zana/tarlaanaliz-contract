@@ -55,13 +55,6 @@
       },
       "description": "Specific detections (diseases, pests, weeds)"
     },
-    "recommendations": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/Recommendation"
-      },
-      "description": "Agronomic recommendations"
-    },
     "model_info": {
       "$ref": "#/$defs/ModelInfo",
       "description": "Model fingerprint and metadata"
@@ -167,8 +160,7 @@
             "VECTOR",
             "HEATMAP",
             "CLASSIFICATION",
-            "DETECTION",
-            "PRESCRIPTION"
+            "DETECTION"
           ],
           "description": "Layer type"
         },
@@ -319,54 +311,6 @@
       "required": ["detection_id", "type", "class", "confidence", "severity"],
       "unevaluatedProperties": false
     },
-    "Recommendation": {
-      "type": "object",
-      "title": "Recommendation",
-      "properties": {
-        "recommendation_id": {
-          "type": "string",
-          "description": "Unique recommendation identifier"
-        },
-        "priority": {
-          "type": "string",
-          "enum": ["LOW", "MEDIUM", "HIGH", "URGENT"],
-          "description": "Recommendation priority"
-        },
-        "category": {
-          "type": "string",
-          "enum": [
-            "IRRIGATION",
-            "FERTILIZATION",
-            "PEST_CONTROL",
-            "DISEASE_MANAGEMENT",
-            "HARVEST_TIMING",
-            "GENERAL"
-          ],
-          "description": "Recommendation category"
-        },
-        "title": {
-          "type": "string",
-          "maxLength": 200,
-          "description": "Recommendation title"
-        },
-        "description": {
-          "type": "string",
-          "maxLength": 2000,
-          "description": "Detailed recommendation"
-        },
-        "affected_area_hectares": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Area this recommendation applies to"
-        },
-        "estimated_cost": {
-          "type": "object",
-          "description": "Estimated implementation cost (reference: money.v1.schema.json)"
-        }
-      },
-      "required": ["recommendation_id", "priority", "category", "title", "description"],
-      "unevaluatedProperties": false
-    },
     "ModelInfo": {
       "type": "object",
       "title": "Model Information",
@@ -452,6 +396,7 @@
       "description": "ISO 8601 date (YYYY-MM-DD)"
     }
   },
+  "x-kr-025-note": "KR-025: This schema MUST NOT contain recommendation, prescription, or spraying decision fields. The system provides observational analysis (map layers, detections, metrics) only. Pesticide, fertilization, and irrigation action decisions are explicitly out of scope.",
   "notes": {
     "pii_free": "This schema contains NO PII. All references are to IDs, not user information.",
     "layer_registry": "Layer style_ref references platform/layer_registry.v1.schema.json for consistent styling per KR-064.",
