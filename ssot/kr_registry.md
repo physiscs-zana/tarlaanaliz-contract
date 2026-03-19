@@ -305,11 +305,39 @@
 ---
 ### KR-019
 
-**Başlık:** Expert Portal (Uzman İnceleme)  
-**Applies to:** platform, worker  
+**Başlık:** Expert Portal (Uzman İnceleme)
+**Applies to:** platform, worker
 **Kaynaklar:** SSOT, KANONIK, DEV
 
 **Normatif özet:** Uzman portalı, modelin düşük güven verdiği veya çelişkili durumlarda manuel inceleme için kullanılır (**PII görünmez**)
+
+**5 Eskalasyon Tetikleyicisi (BİRİ yeterli):**
+1. `final_confidence < dynamic_threshold[crop][analysis_type]` — dinamik eşik (KARAR-13)
+2. `agreement_score < 0.6` — DualHead çelişkisi
+3. `cosine_sim < 0.3` — OOD tespiti (FAISS embedding store)
+4. `epistemic_uncertainty > 0.4` — MC-Dropout yüksek model belirsizliği
+5. `expert_verdict == "needs_more_expert"` — döngü re-trigger (aktif öğrenme bütünlüğü)
+
+**Dinamik Threshold (KARAR-13):**
+- Kaynak: `config/dynamic_thresholds.yaml` (crop × analysis_type bazlı)
+- `global_floor = 0.65` — mutlak alt sınır, threshold_adjuster.py aşağı inemez
+- `initial_threshold = 0.75` — 50 feedback öncesi tüm crop'lar
+- `pamuk.disease = 0.82` — özel: ilk 6 hafta (Türkiye MS verisi sıfır)
+- `max_adjustment_delta = ±0.05` — tek güncellemede maksimum değişim
+- `min_feedback_count = 50` — güncelleme için minimum feedback
+
+**Fail-Closed Seviyeler (Worker → Platform hizalı):**
+
+| Confidence Aralığı | Worker ResultMode | Platform EscalationLevel | Eskalasyon |
+|---------------------|-------------------|--------------------------|------------|
+| ≥ dynamic_threshold | FULL_REPORT | NONE | Yok |
+| 0.45 – dynamic_threshold | PARTIAL_REPORT | STANDARD | Evet |
+| 0.25 – 0.45 | INDICES_ONLY | PRIORITY | Evet |
+| < 0.25 | NO_RESULT | CRITICAL | ACİL |
+
+**Sorumluluk ayrımı:**
+- **Worker:** 5 tetikleyiciyi değerlendirir, ResultMode belirler, eskalasyon paketi üretir (field_id YOK — KR-071)
+- **Platform:** Eskalasyon paketini alır, EscalationLevel belirler, expert atar. Worker'ın escalation_reasons'ını severity booster olarak kullanır (OOD/epistemic → seviye yükseltme).
 
 **Component dokümanları:**
 - Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
