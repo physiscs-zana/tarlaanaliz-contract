@@ -19,17 +19,17 @@
   "properties": {
     "dataset_id": {
       "type": "string",
-      "format": "uuid",
-      "description": "Dataset benzersiz kimliği (UUID v4)."
+      "pattern": "^dataset_[a-z0-9]{24}$",
+      "description": "Dataset benzersiz kimliği. Format: dataset_{24-char-hex}."
     },
     "mission_id": {
       "type": "string",
-      "format": "uuid",
+      "pattern": "^mission_[a-z0-9]{24}$",
       "description": "Bu dataset'in ait olduğu Mission ID. mission.v1.schema.json referansı."
     },
     "field_id": {
       "type": "string",
-      "format": "uuid",
+      "pattern": "^field_[a-z0-9]{24}$",
       "description": "Tarla ID. field.v1.schema.json referansı."
     },
     "drone_type": {

@@ -1,76 +1,175 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/schemas/events/dataset_analyzed.v1.schema.json",
-  "title": "DatasetAnalyzed",
-  "description": "Dataset YZ analizi tamamlandı — KR-017 + KR-072.",
+  "title": "DatasetAnalyzedEvent",
+  "description": "Domain event: Dataset YZ analizi tamamlandi — KR-017 + KR-072.",
   "type": "object",
-  "unevaluatedProperties": false,
-  "required": [
-    "event_id",
-    "event_type",
-    "dataset_id",
-    "status_from",
-    "status_to",
-    "occurred_at",
-    "correlation_id"
-  ],
   "properties": {
     "event_id": {
-      "type": "string",
-      "format": "uuid",
-      "description": "Olay benzersiz kimliği."
+      "$ref": "#/$defs/EventId",
+      "description": "Olay benzersiz kimligi."
     },
     "event_type": {
       "type": "string",
-      "const": "DATASET.ANALYZED",
+      "const": "dataset.analyzed",
       "description": "Olay tipi sabiti."
     },
-    "dataset_id": {
+    "event_version": {
       "type": "string",
-      "format": "uuid"
+      "const": "1.0",
+      "description": "Event schema version"
     },
-    "mission_id": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "format": "uuid"
+    "aggregate_type": {
+      "type": "string",
+      "const": "dataset",
+      "description": "Aggregate type"
     },
-    "status_from": {
-      "const": "DISPATCHED_TO_WORKER"
-    },
-    "status_to": {
-      "const": "ANALYZED"
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^dataset_[a-z0-9]{24}$",
+      "description": "Dataset identifier (aggregate root)"
     },
     "occurred_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "correlation_id": {
-      "type": "string",
-      "description": "İzlenebilirlik için korelasyon ID. PII içermez."
+      "$ref": "#/$defs/Timestamp",
+      "description": "When the event occurred (ISO 8601 UTC)"
     },
     "actor": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "description": "Olayı tetikleyen servis veya kullanıcı ID."
+      "$ref": "#/$defs/Actor",
+      "description": "System/service that performed the analysis"
     },
-    "payload": {
+    "data": {
+      "$ref": "#/$defs/DatasetAnalyzedData",
+      "description": "Event-specific data"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EventMetadata",
+      "description": "Event metadata (correlation, causation, etc.)"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "occurred_at",
+    "actor",
+    "data"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "EventId": {
+      "type": "string",
+      "pattern": "^event_[a-z0-9]{24}$",
+      "description": "Event identifier format: event_{24-char-hex}"
+    },
+    "Actor": {
       "type": "object",
+      "title": "Actor",
+      "description": "System/service that triggered the event",
       "properties": {
-        "analysis_job_id": {
+        "actor_type": {
           "type": "string",
-          "format": "uuid"
+          "enum": ["SYSTEM", "SERVICE"],
+          "description": "Actor type"
         },
-        "model_version": {
-          "type": "string"
+        "actor_service": {
+          "type": "string",
+          "description": "Service name (e.g., 'analysis-worker')"
         },
-        "results_summary": {
-          "type": "object"
+        "worker_id": {
+          "type": "string",
+          "description": "Worker instance ID"
         }
-      }
+      },
+      "required": ["actor_type", "actor_service"],
+      "unevaluatedProperties": false
+    },
+    "DatasetAnalyzedData": {
+      "type": "object",
+      "title": "Dataset Analyzed Data",
+      "description": "Data specific to dataset analysis event",
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^dataset_[a-z0-9]{24}$",
+          "description": "Dataset identifier"
+        },
+        "mission_id": {
+          "type": ["string", "null"],
+          "pattern": "^mission_[a-z0-9]{24}$",
+          "description": "Associated mission identifier"
+        },
+        "status_from": {
+          "type": "string",
+          "const": "DISPATCHED_TO_WORKER",
+          "description": "Status before analysis"
+        },
+        "status_to": {
+          "type": "string",
+          "const": "ANALYZED",
+          "description": "Status after analysis"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "analysis_job_id": {
+              "type": "string",
+              "pattern": "^job_[a-z0-9]{24}$",
+              "description": "Analysis job identifier"
+            },
+            "model_version": {
+              "type": "string",
+              "description": "Model version used for analysis"
+            },
+            "results_summary": {
+              "type": "object",
+              "description": "High-level summary of analysis results"
+            }
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "required": ["dataset_id", "status_from", "status_to"],
+      "unevaluatedProperties": false
+    },
+    "EventMetadata": {
+      "type": "object",
+      "title": "Event Metadata",
+      "description": "Event correlation and tracing metadata",
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "description": "Correlation ID for tracing related events"
+        },
+        "causation_id": {
+          "type": "string",
+          "description": "ID of event/command that caused this event"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing ID"
+        },
+        "partition_key": {
+          "type": "string",
+          "description": "Event stream partition key (typically aggregate_id)"
+        },
+        "sequence_number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Sequence number within aggregate"
+        },
+        "source_service": {
+          "type": "string",
+          "description": "Service that emitted the event"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
     }
   },
   "x-kr-ref": [

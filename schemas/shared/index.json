@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/shared/index.json",
+  "title": "Shared Schema Index",
+  "description": "Catalog of reusable shared type schemas available for $ref references across the TarlaAnaliz contract repository.",
+  "type": "object",
+  "properties": {
+    "schemas": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SharedSchemaEntry"
+      }
+    }
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "SharedSchemaEntry": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "file": { "type": "string" },
+        "$id": { "type": "string" },
+        "description": { "type": "string" },
+        "version": { "type": "integer" }
+      },
+      "required": ["name", "file", "$id", "description", "version"],
+      "unevaluatedProperties": false
+    }
+  },
+  "const": {
+    "schemas": [
+      {
+        "name": "Money",
+        "file": "money.v1.schema.json",
+        "$id": "https://api.tarlaanaliz.com/schemas/shared/money.v1.schema.json",
+        "description": "Monetary value with currency and tax information. Use for any field representing a price, payment, or financial amount.",
+        "version": 1
+      },
+      {
+        "name": "Address",
+        "file": "address.v1.schema.json",
+        "$id": "https://api.tarlaanaliz.com/schemas/shared/address.v1.schema.json",
+        "description": "Postal address for billing and operational purposes. Includes optional GeoPoint coordinates. PII-minimized.",
+        "version": 1
+      },
+      {
+        "name": "GeoJSON",
+        "file": "geojson.v1.schema.json",
+        "$id": "https://api.tarlaanaliz.com/schemas/shared/geojson.v1.schema.json",
+        "description": "Full GeoJSON types: Feature, FeatureCollection, and all geometry types (Point, LineString, Polygon, Multi*, GeometryCollection). Use for spatial data representation.",
+        "version": 1
+      }
+    ]
+  }
+}

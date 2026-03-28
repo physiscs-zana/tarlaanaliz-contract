@@ -1,81 +1,181 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/schemas/events/dataset_ingested.v1.schema.json",
-  "title": "DatasetIngested",
-  "description": "Dataset edge kiosk'a alındı — KR-072. Drone'dan ham veri ilk kez sisteme girdi.",
+  "title": "DatasetIngestedEvent",
+  "description": "Domain event: Dataset edge kiosk'a alindi — KR-072. Drone'dan ham veri ilk kez sisteme girdi.",
   "type": "object",
-  "unevaluatedProperties": false,
-  "required": [
-    "event_id",
-    "event_type",
-    "dataset_id",
-    "status_to",
-    "occurred_at",
-    "correlation_id"
-  ],
   "properties": {
     "event_id": {
-      "type": "string",
-      "format": "uuid",
-      "description": "Olay benzersiz kimliği."
+      "$ref": "#/$defs/EventId",
+      "description": "Olay benzersiz kimligi."
     },
     "event_type": {
       "type": "string",
-      "const": "DATASET.INGESTED",
+      "const": "dataset.ingested",
       "description": "Olay tipi sabiti."
     },
-    "dataset_id": {
+    "event_version": {
       "type": "string",
-      "format": "uuid"
+      "const": "1.0",
+      "description": "Event schema version"
     },
-    "mission_id": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "format": "uuid"
+    "aggregate_type": {
+      "type": "string",
+      "const": "dataset",
+      "description": "Aggregate type"
     },
-    "status_from": {
-      "type": "null",
-      "description": "İlk giriş — önceki durum yok."
-    },
-    "status_to": {
-      "const": "RAW_INGESTED"
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^dataset_[a-z0-9]{24}$",
+      "description": "Dataset identifier (aggregate root)"
     },
     "occurred_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "correlation_id": {
-      "type": "string",
-      "description": "İzlenebilirlik için korelasyon ID. PII içermez."
+      "$ref": "#/$defs/Timestamp",
+      "description": "When the event occurred (ISO 8601 UTC)"
     },
     "actor": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "description": "Olayı tetikleyen servis veya kullanıcı ID."
+      "$ref": "#/$defs/Actor",
+      "description": "System/service that triggered the ingestion"
     },
-    "payload": {
+    "data": {
+      "$ref": "#/$defs/DatasetIngestedData",
+      "description": "Event-specific data"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EventMetadata",
+      "description": "Event metadata (correlation, causation, etc.)"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "occurred_at",
+    "actor",
+    "data"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "EventId": {
+      "type": "string",
+      "pattern": "^event_[a-z0-9]{24}$",
+      "description": "Event identifier format: event_{24-char-hex}"
+    },
+    "Actor": {
       "type": "object",
+      "title": "Actor",
+      "description": "System/service that triggered the event",
       "properties": {
-        "kiosk_id": {
-          "type": "string"
+        "actor_type": {
+          "type": "string",
+          "enum": ["SYSTEM", "SERVICE"],
+          "description": "Actor type"
         },
-        "drone_type": {
-          "type": "string"
+        "actor_service": {
+          "type": "string",
+          "description": "Service name (e.g., 'edge-station', 'kiosk-service')"
         },
-        "drone_serial": {
-          "type": "string"
-        },
-        "file_count": {
-          "type": "integer"
-        },
-        "total_size_bytes": {
-          "type": "integer"
+        "worker_id": {
+          "type": "string",
+          "description": "Worker instance ID"
         }
-      }
+      },
+      "required": ["actor_type", "actor_service"],
+      "unevaluatedProperties": false
+    },
+    "DatasetIngestedData": {
+      "type": "object",
+      "title": "Dataset Ingested Data",
+      "description": "Data specific to dataset ingestion event",
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^dataset_[a-z0-9]{24}$",
+          "description": "Dataset identifier"
+        },
+        "mission_id": {
+          "type": ["string", "null"],
+          "pattern": "^mission_[a-z0-9]{24}$",
+          "description": "Associated mission identifier"
+        },
+        "status_from": {
+          "type": "null",
+          "description": "Ilk giris — onceki durum yok."
+        },
+        "status_to": {
+          "type": "string",
+          "const": "RAW_INGESTED",
+          "description": "Target status after ingestion"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "kiosk_id": {
+              "type": "string",
+              "description": "Edge kiosk identifier"
+            },
+            "drone_type": {
+              "type": "string",
+              "description": "Drone type"
+            },
+            "drone_serial": {
+              "type": "string",
+              "description": "Drone serial number"
+            },
+            "file_count": {
+              "type": "integer",
+              "description": "Number of files ingested"
+            },
+            "total_size_bytes": {
+              "type": "integer",
+              "description": "Total size in bytes"
+            }
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "required": ["dataset_id", "status_to"],
+      "unevaluatedProperties": false
+    },
+    "EventMetadata": {
+      "type": "object",
+      "title": "Event Metadata",
+      "description": "Event correlation and tracing metadata",
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "description": "Correlation ID for tracing related events"
+        },
+        "causation_id": {
+          "type": "string",
+          "description": "ID of event/command that caused this event"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing ID"
+        },
+        "partition_key": {
+          "type": "string",
+          "description": "Event stream partition key (typically aggregate_id)"
+        },
+        "sequence_number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Sequence number within aggregate"
+        },
+        "source_service": {
+          "type": "string",
+          "description": "Service that emitted the event"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
     }
   },
   "x-kr-ref": [

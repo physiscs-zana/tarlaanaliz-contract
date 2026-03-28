@@ -20,8 +20,8 @@
   "properties": {
     "intent_id": {
       "type": "string",
-      "format": "uuid",
-      "description": "PaymentIntent benzersiz kimliği (UUID v4). Bir kez oluşturulur, değişmez."
+      "pattern": "^pi_[a-z0-9]{24}$",
+      "description": "PaymentIntent benzersiz kimliği. Format: pi_{24-char-hex}. Bir kez oluşturulur, değişmez."
     },
     "payer_user_id": {
       "type": "string",
@@ -38,6 +38,7 @@
     },
     "field_id": {
       "type": ["string", "null"],
+      "pattern": "^field_[a-z0-9]{24}$",
       "description": "İlgili tarla ID'si. IBAN_TRANSFER eşleştirme için opsiyonel — admin panelinde otomatik listeler. KR-033 §5 Admin Eşleştirme Akışı."
     },
     "amount_kurus": {

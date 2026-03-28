@@ -7,22 +7,22 @@
   "unevaluatedProperties": false,
   "required": ["bundle_id", "dataset_id", "mission_id", "evidence_chain", "chain_complete", "created_at"],
   "properties": {
-    "bundle_id": {"type": "string", "format": "uuid"},
-    "dataset_id": {"type": "string", "format": "uuid"},
-    "mission_id": {"type": "string", "format": "uuid"},
-    "field_id": {"type": ["string", "null"], "format": "uuid"},
+    "bundle_id": {"type": "string", "pattern": "^bundle_[a-z0-9]{24}$", "description": "Kanıt paketi benzersiz kimliği."},
+    "dataset_id": {"type": "string", "pattern": "^dataset_[a-z0-9]{24}$", "description": "İlişkili dataset kimliği."},
+    "mission_id": {"type": "string", "pattern": "^mission_[a-z0-9]{24}$", "description": "İlişkili görev kimliği."},
+    "field_id": {"type": ["string", "null"], "pattern": "^field_[a-z0-9]{24}$", "description": "İlişkili tarla kimliği."},
     "evidence_chain": {
       "type": "object",
       "properties": {
-        "intake_manifest_id": {"type": ["string", "null"], "format": "uuid"},
-        "edge_scan_report_id": {"type": ["string", "null"], "format": "uuid"},
-        "edge_verification_report_id": {"type": ["string", "null"], "format": "uuid"},
-        "calibration_certificate_id": {"type": ["string", "null"], "format": "uuid"},
-        "calibration_result_id": {"type": ["string", "null"], "format": "uuid"},
-        "platform_scan_report_id": {"type": ["string", "null"], "format": "uuid"},
-        "platform_verification_report_id": {"type": ["string", "null"], "format": "uuid"},
-        "qc_report_id": {"type": ["string", "null"], "format": "uuid"},
-        "attestation_ids": {"type": "array", "items": {"type": "string", "format": "uuid"}}
+        "intake_manifest_id": {"type": ["string", "null"]},
+        "edge_scan_report_id": {"type": ["string", "null"]},
+        "edge_verification_report_id": {"type": ["string", "null"]},
+        "calibration_certificate_id": {"type": ["string", "null"]},
+        "calibration_result_id": {"type": ["string", "null"]},
+        "platform_scan_report_id": {"type": ["string", "null"]},
+        "platform_verification_report_id": {"type": ["string", "null"]},
+        "qc_report_id": {"type": ["string", "null"]},
+        "attestation_ids": {"type": "array", "items": {"type": "string"}}
       },
       "description": "Kanıt zincirindeki her aşamaya ait döküman referansları."
     },

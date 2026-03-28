@@ -54,7 +54,7 @@ def validate_json_schema(schema_path: Path) -> List[str]:
     errors = []
 
     try:
-        with open(schema_path) as f:
+        with open(schema_path, encoding='utf-8') as f:
             schema = json.load(f)
 
         # Check $schema
@@ -106,7 +106,7 @@ def validate_enum_file(enum_path: Path) -> List[str]:
     errors = []
 
     try:
-        with open(enum_path) as f:
+        with open(enum_path, encoding='utf-8') as f:
             data = json.load(f)
 
         # Check required fields

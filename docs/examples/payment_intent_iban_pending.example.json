@@ -1,9 +1,9 @@
 {
-  "intent_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "intent_id": "pi_a1b2c3d4e5f67890abcdef12",
   "payer_user_id": "usr_7f3a9b2c1d4e5f6a",
   "target_type": "SUBSCRIPTION",
   "target_id": "sub_2e4d6f8a0b1c3e5f",
-  "field_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+  "field_id": "field_f47ac10b58cc4372a5670e02",
   "amount_kurus": 2000,
   "currency": "TRY",
   "method": "IBAN_TRANSFER",

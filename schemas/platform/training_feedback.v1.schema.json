@@ -17,17 +17,17 @@
   "properties": {
     "feedback_id": {
       "type": "string",
-      "format": "uuid",
-      "description": "Geri bildirim kaydı benzersiz kimliği (UUID v4)."
+      "pattern": "^feedback_[a-z0-9]{24}$",
+      "description": "Geri bildirim kaydı benzersiz kimliği. Format: feedback_{24-char-hex}."
     },
     "review_id": {
       "type": "string",
-      "format": "uuid",
+      "pattern": "^review_[a-z0-9]{24}$",
       "description": "İlişkili uzman inceleme kimliği. expert_reviews.review_id referansı."
     },
     "analysis_result_id": {
       "type": "string",
-      "format": "uuid",
+      "pattern": "^result_[a-z0-9]{24}$",
       "description": "İncelenen analiz sonucu kimliği."
     },
     "expert_user_id": {
@@ -70,12 +70,12 @@
     },
     "field_id": {
       "type": ["string", "null"],
-      "format": "uuid",
+      "pattern": "^field_[a-z0-9]{24}$",
       "description": "İlişkili tarla kimliği."
     },
     "mission_id": {
       "type": ["string", "null"],
-      "format": "uuid",
+      "pattern": "^mission_[a-z0-9]{24}$",
       "description": "İlişkili görev kimliği."
     },
     "analysis_type": {
