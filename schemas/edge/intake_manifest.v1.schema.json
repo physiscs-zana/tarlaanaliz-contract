@@ -20,8 +20,8 @@
   "properties": {
     "batch_id": {
       "type": "string",
-      "pattern": "^BATCH_[0-9]{8}_[0-9]{6}_[A-Z0-9]{4}$",
-      "description": "Batch kimliği. Format: BATCH_YYYYMMDD_HHMMSS_XXXX. Eşleştirme hiyerarşisi: MissionID → BatchID → FieldID."
+      "pattern": "^batch_[a-z0-9]{24}$",
+      "description": "Batch kimliği. Format: batch_{24-char-hex}. Eşleştirme hiyerarşisi: MissionID → BatchID → FieldID."
     },
     "kiosk_id": {
       "type": "string",
@@ -45,12 +45,12 @@
     },
     "mission_id": {
       "type": ["string", "null"],
-      "format": "uuid",
+      "pattern": "^mission_[a-z0-9]{24}$",
       "description": "Eşleştirilen görev kimliği (opsiyonel). EXIF veya dosya adından çıkarılır. Bulunamazsa coğrafi eşleştirme denenir, yoksa manuel inceleme kuyruğu."
     },
     "field_id": {
       "type": ["string", "null"],
-      "format": "uuid",
+      "pattern": "^field_[a-z0-9]{24}$",
       "description": "Eşleştirilen tarla kimliği (opsiyonel). Coğrafi eşleştirme sonucu veya explicit."
     },
     "files": {

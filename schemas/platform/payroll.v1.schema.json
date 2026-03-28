@@ -3,6 +3,10 @@
   "$id": "https://api.tarlaanaliz.com/schemas/platform/payroll.v1.schema.json",
   "title": "PayrollRecord",
   "description": "Pilot and IL operator payroll record. Tracks earnings from approved missions (per KR-031).",
+  "x-shared-types": {
+    "money": "../../schemas/shared/money.v1.schema.json",
+    "note": "PayoutLine and PayrollTotals use domain-specific monetary fields (rate_per_donum, deductions) that differ from the shared Money type. A direct $ref would be a breaking change. Use shared/money.v1 for new schemas that need simple monetary values."
+  },
   "type": "object",
   "properties": {
     "id": {

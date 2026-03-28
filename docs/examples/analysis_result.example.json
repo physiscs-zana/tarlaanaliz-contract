@@ -100,37 +100,6 @@
       "description": "Pamuk kurtçuğu hasarı. Düşük yoğunluk. Birkaç yaprakta besleme izi."
     }
   ],
-  "recommendations": [
-    {
-      "recommendation_id": "rec_001",
-      "priority": "HIGH",
-      "category": "DISEASE_MANAGEMENT",
-      "title": "Bakteriyel Yanıklık İçin Bakırlı İlaç Uygulaması",
-      "description": "Kuzeydoğu bölümde tespit edilen bakteriyel yanıklık odağına karşı bakırlı fungisit uygulaması önerilir. Uygulama sabah erken saatlerde, yapraklar kuru iken yapılmalıdır. 7-10 gün arayla 2 uygulama yapılması önerilir.",
-      "affected_area_hectares": 0.15,
-      "estimated_cost": {
-        "amount": 450,
-        "currency": "TRY",
-        "tax_included": false
-      }
-    },
-    {
-      "recommendation_id": "rec_002",
-      "priority": "MEDIUM",
-      "category": "IRRIGATION",
-      "title": "Güneybatı Bölgede Sulama Artırımı",
-      "description": "Güneybatı köşede hafif su stresi tespit edildi. Bu bölgede sulama miktarı %15-20 artırılmalıdır. Damla sulama sisteminin bu bölgedeki nozulları kontrol edilmelidir.",
-      "affected_area_hectares": 0.85
-    },
-    {
-      "recommendation_id": "rec_003",
-      "priority": "LOW",
-      "category": "PEST_CONTROL",
-      "title": "Pamuk Kurtçuğu İzleme",
-      "description": "Düşük yoğunlukta pamuk kurtçuğu hasarı tespit edildi. Şu an için ilaçlama gerekmemektedir ancak haftalık izleme yapılması önerilir. Ekonomik zarar eşiği (5 larva/100 bitki) aşılırsa müdahale edilmelidir.",
-      "affected_area_hectares": 0.08
-    }
-  ],
   "model_info": {
     "model_name": "cotton-health-v2",
     "model_version": "2.3.1",

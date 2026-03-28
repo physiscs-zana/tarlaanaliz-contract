@@ -18,26 +18,27 @@
   "properties": {
     "thermal_result_id": {
       "type": "string",
-      "format": "uuid",
-      "description": "Termal analiz sonucu benzersiz kimliği (UUID v4)."
+      "pattern": "^thermres_[a-z0-9]{24}$",
+      "description": "Termal analiz sonucu benzersiz kimliği. Format: thermres_{24-char-hex}."
     },
     "analysis_job_id": {
       "type": "string",
-      "format": "uuid",
+      "pattern": "^job_[a-z0-9]{24}$",
       "description": "İlişkili analiz job kimliği."
     },
     "dataset_id": {
       "type": "string",
+      "pattern": "^dataset_[a-z0-9]{24}$",
       "description": "İşlenen dataset kimliği."
     },
     "field_id": {
       "type": "string",
-      "format": "uuid",
+      "pattern": "^field_[a-z0-9]{24}$",
       "description": "İlişkili tarla kimliği."
     },
     "mission_id": {
       "type": ["string", "null"],
-      "format": "uuid",
+      "pattern": "^mission_[a-z0-9]{24}$",
       "description": "İlişkili görev kimliği."
     },
     "sensor_type": {

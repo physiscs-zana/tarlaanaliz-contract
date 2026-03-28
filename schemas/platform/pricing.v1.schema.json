@@ -3,6 +3,10 @@
   "$id": "https://api.tarlaanaliz.com/schemas/platform/pricing.v1.schema.json",
   "title": "PriceBook",
   "description": "Price catalog with immutable snapshots. Single source of truth for all pricing (per KR-022).",
+  "x-shared-types": {
+    "money": "../../schemas/shared/money.v1.schema.json",
+    "note": "PriceItem uses domain-specific monetary fields (price_per_donum, tax_rate, currency) that differ from the shared Money type. A direct $ref would be a breaking change. Use shared/money.v1 for new schemas that need simple monetary values."
+  },
   "type": "object",
   "properties": {
     "id": {
@@ -85,17 +89,16 @@
           "description": "Unique item identifier within price book"
         },
         "crop_type": {
-          "type": "string",
-          "description": "Crop type (reference: enums/crop_type.enum.v1.json - 8 GAP crops)"
+          "$ref": "../../enums/crop_type.enum.v1.json",
+          "description": "Crop type (8 GAP crops)"
         },
         "analysis_types": {
           "type": "array",
           "items": {
-            "type": "string",
-            "description": "Analysis type (reference: enums/analysis_type.enum.v1.json - KR-002: 7 map layers)"
+            "$ref": "../../enums/analysis_type.enum.v1.json"
           },
           "minItems": 1,
-          "description": "Included analysis types"
+          "description": "Included analysis types (KR-002 + KR-084: 8 map layers)"
         },
         "subscription_type": {
           "type": "string",

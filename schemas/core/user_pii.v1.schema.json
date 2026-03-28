@@ -100,8 +100,8 @@
         },
         "algorithm": {
           "type": "string",
-          "const": "SHA256",
-          "description": "Hashing algorithm"
+          "const": "PBKDF2_SHA256",
+          "description": "Hashing algorithm: PBKDF2 with SHA-256 as PRF"
         },
         "salt": {
           "type": "string",
@@ -112,7 +112,7 @@
           "type": "integer",
           "minimum": 10000,
           "default": 100000,
-          "description": "PBKDF2 iterations (if using PBKDF2)"
+          "description": "PBKDF2 iteration count"
         },
         "created_at": {
           "$ref": "#/$defs/Timestamp",
@@ -224,7 +224,7 @@
       },
       "pin": {
         "hash": "b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1a2b3c4d5e6f7a8b9c0d1e2f3a4b5",
-        "algorithm": "SHA256",
+        "algorithm": "PBKDF2_SHA256",
         "salt": "c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
         "iterations": 100000,
         "created_at": "2026-01-10T10:30:00Z",
@@ -247,7 +247,7 @@
   ],
   "notes": {
     "critical_pii_rules": "ABSOLUTE RULES: (1) NO email field, (2) NO TCKN field, (3) NO OTP storage, (4) This schema ONLY in PII vault, (5) NEVER return to clients",
-    "identity_model": "Identity = phone (E.164: +90 + 10 digits, e.g., +905432120210) + 6-digit PIN. PIN is ALWAYS hashed (SHA-256 + salt + PBKDF2).",
+    "identity_model": "Identity = phone (E.164: +90 + 10 digits, e.g., +905432120210) + 6-digit PIN. PIN is ALWAYS hashed (PBKDF2 with SHA-256 PRF + salt + 100k iterations).",
     "verification_flow": "1) User enters phone + creates PIN, 2) System sends SMS with verification code (NOT stored), 3) User enters code, 4) phone.verified = true",
     "authentication_flow": "1) User enters phone + PIN, 2) System hashes PIN, 3) Compare hash, 4) Generate JWT with user_id + roles",
     "pii_vault": "This schema is stored in separate PII vault with: (a) encryption at rest, (b) audit logging, (c) access controls, (d) retention policies",

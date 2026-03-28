@@ -20,7 +20,7 @@
         "$ref": "#/$defs/LayerStyle"
       },
       "minItems": 1,
-      "description": "Layer style definitions (per KR-002: 7 map layers)"
+      "description": "Layer style definitions (per KR-002 + KR-084: 8 map layers)"
     },
     "created_at": {
       "$ref": "#/$defs/Timestamp",
@@ -592,6 +592,118 @@
           "opacity": 0.7,
           "priority": 18,
           "icon": "nitrogen-stress-icon",
+          "accessible": true
+        },
+        {
+          "style_id": "fungus_purple_v1",
+          "analysis_type": "FUNGUS",
+          "display_name": {
+            "tr": "Mantar Hastalığı Haritası",
+            "en": "Fungus Map"
+          },
+          "color": {
+            "hex": "#800080",
+            "rgb": {
+              "r": 128,
+              "g": 0,
+              "b": 128
+            },
+            "name": "Mor (Purple)"
+          },
+          "pattern": {
+            "type": "SOLID",
+            "description": {
+              "tr": "Düz",
+              "en": "Solid"
+            }
+          },
+          "legend": {
+            "type": "CATEGORICAL",
+            "items": [
+              {
+                "label": {
+                  "tr": "Yüksek Enfeksiyon",
+                  "en": "High Infection"
+                },
+                "color": "#4B0082"
+              },
+              {
+                "label": {
+                  "tr": "Orta Enfeksiyon",
+                  "en": "Medium Infection"
+                },
+                "color": "#800080"
+              },
+              {
+                "label": {
+                  "tr": "Düşük Enfeksiyon",
+                  "en": "Low Infection"
+                },
+                "color": "#DA70D6"
+              }
+            ]
+          },
+          "opacity": 0.8,
+          "priority": 22,
+          "icon": "fungus-icon",
+          "accessible": true
+        },
+        {
+          "style_id": "thermal_stress_heatmap_v1",
+          "analysis_type": "THERMAL_STRESS",
+          "display_name": {
+            "tr": "Termal Stres Haritası",
+            "en": "Thermal Stress Map"
+          },
+          "color": {
+            "hex": "#8B0000",
+            "rgb": {
+              "r": 139,
+              "g": 0,
+              "b": 0
+            },
+            "name": "Koyu Kırmızı/Turuncu Gradient (Dark Red/Orange Gradient)"
+          },
+          "pattern": {
+            "type": "CUSTOM",
+            "description": {
+              "tr": "Isı Haritası + Termometre İkon",
+              "en": "Heatmap + Thermometer Icon"
+            },
+            "svg_path": "thermometer-heatmap"
+          },
+          "legend": {
+            "type": "GRADIENT",
+            "items": [
+              {
+                "label": {
+                  "tr": "Termal Stres Yok",
+                  "en": "No Thermal Stress"
+                },
+                "color": "#FFD700",
+                "value": 0
+              },
+              {
+                "label": {
+                  "tr": "Hafif Termal Stres",
+                  "en": "Mild Thermal Stress"
+                },
+                "color": "#FF4500",
+                "value": 50
+              },
+              {
+                "label": {
+                  "tr": "Şiddetli Termal Stres",
+                  "en": "Severe Thermal Stress"
+                },
+                "color": "#8B0000",
+                "value": 100
+              }
+            ]
+          },
+          "opacity": 0.7,
+          "priority": 28,
+          "icon": "thermal-stress-icon",
           "accessible": true
         }
       ],

@@ -18,17 +18,17 @@
   "properties": {
     "mission_id": {
       "type": "string",
-      "format": "uuid",
-      "description": "Sistemin ürettiği benzersiz görev kimliği (UUID v4). Dosya adında: {MissionID}_{ParcelRef}_{YYYYMMDD}.kmz"
+      "pattern": "^mission_[a-z0-9]{24}$",
+      "description": "Sistemin ürettiği benzersiz görev kimliği. Format: mission_{24-char-hex}. Dosya adında: {MissionID}_{ParcelRef}_{YYYYMMDD}.kmz"
     },
     "field_id": {
       "type": "string",
-      "format": "uuid",
+      "pattern": "^field_[a-z0-9]{24}$",
       "description": "Hangi tarla için görev oluşturulduğu. field.v1.schema.json referansı."
     },
     "subscription_id": {
       "type": ["string", "null"],
-      "format": "uuid",
+      "pattern": "^sub_[a-z0-9]{24}$",
       "description": "Sezonluk Paket'ten üretildiyse subscription_id. mission_source=SUBSCRIPTION ise zorunlu."
     },
     "pilot_id": {

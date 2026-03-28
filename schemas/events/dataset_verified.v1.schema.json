@@ -1,76 +1,173 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/schemas/events/dataset_verified.v1.schema.json",
-  "title": "DatasetVerified",
-  "description": "Dataset hash/imza doğrulaması tamamlandı — KR-073.",
+  "title": "DatasetVerifiedEvent",
+  "description": "Domain event: Dataset hash/imza dogrulamasi tamamlandi — KR-073.",
   "type": "object",
-  "unevaluatedProperties": false,
-  "required": [
-    "event_id",
-    "event_type",
-    "dataset_id",
-    "status_from",
-    "status_to",
-    "occurred_at",
-    "correlation_id"
-  ],
   "properties": {
     "event_id": {
-      "type": "string",
-      "format": "uuid",
-      "description": "Olay benzersiz kimliği."
+      "$ref": "#/$defs/EventId",
+      "description": "Olay benzersiz kimligi."
     },
     "event_type": {
       "type": "string",
-      "const": "DATASET.VERIFIED",
+      "const": "dataset.verified",
       "description": "Olay tipi sabiti."
     },
-    "dataset_id": {
+    "event_version": {
       "type": "string",
-      "format": "uuid"
+      "const": "1.0",
+      "description": "Event schema version"
     },
-    "mission_id": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "format": "uuid"
+    "aggregate_type": {
+      "type": "string",
+      "const": "dataset",
+      "description": "Aggregate type"
     },
-    "status_from": {
-      "$ref": "../../enums/dataset_status.enum.v1.json"
-    },
-    "status_to": {
-      "$ref": "../../enums/dataset_status.enum.v1.json"
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^dataset_[a-z0-9]{24}$",
+      "description": "Dataset identifier (aggregate root)"
     },
     "occurred_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "correlation_id": {
-      "type": "string",
-      "description": "İzlenebilirlik için korelasyon ID. PII içermez."
+      "$ref": "#/$defs/Timestamp",
+      "description": "When the event occurred (ISO 8601 UTC)"
     },
     "actor": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "description": "Olayı tetikleyen servis veya kullanıcı ID."
+      "$ref": "#/$defs/Actor",
+      "description": "System/service that performed the verification"
     },
-    "payload": {
+    "data": {
+      "$ref": "#/$defs/DatasetVerifiedData",
+      "description": "Event-specific data"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EventMetadata",
+      "description": "Event metadata (correlation, causation, etc.)"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "occurred_at",
+    "actor",
+    "data"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "EventId": {
+      "type": "string",
+      "pattern": "^event_[a-z0-9]{24}$",
+      "description": "Event identifier format: event_{24-char-hex}"
+    },
+    "Actor": {
       "type": "object",
+      "title": "Actor",
+      "description": "System/service that triggered the event",
       "properties": {
-        "decision": {
-          "$ref": "../../enums/verification_status.enum.v1.json"
-        },
-        "verification_report_id": {
+        "actor_type": {
           "type": "string",
-          "format": "uuid"
+          "enum": ["SYSTEM", "SERVICE"],
+          "description": "Actor type"
         },
-        "mismatches_count": {
-          "type": "integer"
+        "actor_service": {
+          "type": "string",
+          "description": "Service name (e.g., 'verification-service')"
+        },
+        "worker_id": {
+          "type": "string",
+          "description": "Worker instance ID"
         }
-      }
+      },
+      "required": ["actor_type", "actor_service"],
+      "unevaluatedProperties": false
+    },
+    "DatasetVerifiedData": {
+      "type": "object",
+      "title": "Dataset Verified Data",
+      "description": "Data specific to dataset verification event",
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^dataset_[a-z0-9]{24}$",
+          "description": "Dataset identifier"
+        },
+        "mission_id": {
+          "type": ["string", "null"],
+          "pattern": "^mission_[a-z0-9]{24}$",
+          "description": "Associated mission identifier"
+        },
+        "status_from": {
+          "$ref": "../../enums/dataset_status.enum.v1.json",
+          "description": "Status before verification"
+        },
+        "status_to": {
+          "$ref": "../../enums/dataset_status.enum.v1.json",
+          "description": "Status after verification"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "decision": {
+              "$ref": "../../enums/verification_status.enum.v1.json",
+              "description": "Verification decision"
+            },
+            "verification_report_id": {
+              "type": "string",
+              "pattern": "^report_[a-z0-9]{24}$",
+              "description": "Verification report identifier"
+            },
+            "mismatches_count": {
+              "type": "integer",
+              "description": "Number of hash mismatches detected"
+            }
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "required": ["dataset_id", "status_from", "status_to"],
+      "unevaluatedProperties": false
+    },
+    "EventMetadata": {
+      "type": "object",
+      "title": "Event Metadata",
+      "description": "Event correlation and tracing metadata",
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "description": "Correlation ID for tracing related events"
+        },
+        "causation_id": {
+          "type": "string",
+          "description": "ID of event/command that caused this event"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing ID"
+        },
+        "partition_key": {
+          "type": "string",
+          "description": "Event stream partition key (typically aggregate_id)"
+        },
+        "sequence_number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Sequence number within aggregate"
+        },
+        "source_service": {
+          "type": "string",
+          "description": "Service that emitted the event"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
     }
   },
   "x-kr-ref": [

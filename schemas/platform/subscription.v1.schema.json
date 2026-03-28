@@ -18,16 +18,17 @@
   "properties": {
     "subscription_id": {
       "type": "string",
-      "format": "uuid",
-      "description": "Abonelik benzersiz kimliği (UUID v4)."
+      "pattern": "^sub_[a-z0-9]{24}$",
+      "description": "Abonelik benzersiz kimliği. Format: sub_{24-char-hex}."
     },
     "user_id": {
       "type": "string",
+      "pattern": "^user_[a-z0-9]{24}$",
       "description": "Aboneliği oluşturan kullanıcının user_id değeri (pseudonymous — PII değil)."
     },
     "field_id": {
       "type": "string",
-      "format": "uuid",
+      "pattern": "^field_[a-z0-9]{24}$",
       "description": "Aboneliğin bağlı olduğu tarla kimliği."
     },
     "crop_type": {
@@ -51,8 +52,8 @@
     },
     "payment_intent_id": {
       "type": ["string", "null"],
-      "format": "uuid",
-      "description": "İlişkili PaymentIntent kimliği."
+      "pattern": "^pi_[a-z0-9]{24}$",
+      "description": "İlişkili PaymentIntent kimliği. Format: pi_{24-char-hex}."
     },
     "start_date": {
       "type": ["string", "null"],

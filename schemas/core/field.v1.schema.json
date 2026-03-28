@@ -25,8 +25,8 @@
       "description": "Field area in hectares (calculated from boundary)"
     },
     "crop_type": {
-      "type": "string",
-      "description": "Current crop type (reference: enums/crop_type.enum.v1.json)"
+      "$ref": "../../enums/crop_type.enum.v1.json",
+      "description": "Current crop type"
     },
     "field_code": {
       "type": "string",
@@ -287,7 +287,7 @@
     "owner_relationship": "Field ownership is NOT stored in this schema. Owner relationship is managed via RBAC claims and separate user-field associations.",
     "rbac": "Access control: FARMER can view/edit own fields, IL_OPERATOR can view province fields, PLATFORM_ADMIN can view all.",
     "pii_free": "This schema contains NO PII. Field name may contain user-chosen text but should not include personal information.",
-    "boundary_validation": "Boundary must be valid GeoJSON Polygon. Self-intersecting polygons are rejected.",
+    "boundary_validation": "Boundary must be valid GeoJSON Polygon. Self-intersecting polygons are rejected. The inline GeoRef $def is a Polygon-only subset; for full GeoJSON support (Feature, FeatureCollection, all geometry types), see shared/geojson.v1.schema.json.",
     "area_calculation": "area_hectares is calculated from boundary geometry and should match within 1% tolerance.",
     "kr_reference": "Field model defined in KR-013 (Farmer field management).",
     "events": "Field creation triggers events/field_created.v1 event."

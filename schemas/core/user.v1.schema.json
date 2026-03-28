@@ -240,7 +240,7 @@
     {
       "id": "user_507f191e810c19729de860ea",
       "display_name": "Ahmet K.",
-      "roles": ["FARMER"],
+      "roles": ["FARMER_SINGLE"],
       "status": "ACTIVE",
       "rbac_claims": {
         "scopes": [
