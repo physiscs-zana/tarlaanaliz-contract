@@ -1032,3 +1032,166 @@ Hata/şüphe: `REJECTED_QUARANTINE`
 - KR-018/KR-082 (spektral kapasite), KR-017 (şemsiye), KR-072 (dataset lifecycle), KR-064 (layer registry)
 
 ---
+
+## KR-088 — Field Index Timeseries (Tarla Zaman Serisi Vejetasyon İndeksleri)
+
+> **Versiyon notu (2026-03-29):** Yeni KR — veri katmanı genişleme projesi kapsamında.
+
+**1) Amaç**
+Her başarılı analiz sonucunda tarla bazlı vejetasyon indeksleri, sağlık metrikleri ve tespit istatistiklerini zaman serisi olarak saklamak. Çiftçilerin tarla sağlık trendlerini görmesini ve sezonlar arası karşılaştırma yapmasını sağlamak.
+
+**2) Kapsam / Applies-to:** platform
+
+**3) Zorunluluklar (MUST)**
+1) Worker analysis_result payload'undan otomatik olarak timeseries kaydı oluşturulur.
+2) Sadece `result_mode ∈ {FULL_REPORT, PARTIAL_REPORT}` olan sonuçlar dahil edilir (KR-019 fail-closed uyumu).
+3) `status ∉ {COMPLETED, SUCCESS}` olan sonuçlar için timeseries kaydı YAZILMAZ.
+4) Timeseries kaydı, Dataset + Mission güncellemesi ile AYNI transaction'da atomik olarak yazılır.
+5) UNIQUE constraint: (field_id, mission_id) — aynı tarla+görev çifti tekrar yazılamaz.
+6) health_score aralığı: 0-100 (contract ResultSummary.health_score ile uyumlu).
+7) ndvi_mean, ndre_mean, ndwi_mean kolonları NULL kabul eder (worker inference implement olana kadar).
+
+**4) Kanıt / Artefact**
+- `field_index_timeseries` PostgreSQL tablosu
+- Alembic migration: `YYYYMMDD_kr088_field_index_timeseries.py`
+
+**5) Audit / Log**
+- Platform worker_bridge_consumer log: `WORKER_BRIDGE.TIMESERIES_WRITTEN field_id=... mission_id=...`
+
+**6) Hata Modları**
+- UNIQUE constraint violation (duplicate) → log warning, skip (idempotent)
+- Transaction failure → tüm işlem rollback (Dataset, Mission, Timeseries)
+
+**7) Test / Kabul Kriterleri**
+- COMPLETED result → timeseries kaydı oluşturuldu
+- FAILED result → timeseries YAZILMADI
+- NO_RESULT mode → timeseries YAZILMADI
+- Duplicate mission_id → UNIQUE hata, log warning
+- Atomik rollback testi: timeseries hata → Dataset/Mission de rollback
+
+**8) Cross-refs**
+- KR-019 (fail-closed maskeleme), KR-017 (analiz hattı), KR-091 (dashboard), KR-090 (retention)
+
+---
+
+## KR-089 — Field History (Tarla Yaşam Döngüsü Olay Günlüğü)
+
+> **Versiyon notu (2026-03-29):** Yeni KR — veri katmanı genişleme projesi kapsamında.
+
+**1) Amaç**
+Her tarla için kronolojik olay günlüğü tutmak: analiz teslimleri, hastalık/zararlı/ot tespitleri, sağlık değişimleri, bitki değişimleri, abonelik olayları. Çiftçinin "bu tarlada ne oldu?" sorusunu cevaplayabilmek.
+
+**2) Kapsam / Applies-to:** platform
+
+**3) Zorunluluklar (MUST)**
+1) 16 kanonik event tipi: field_history_event_type.enum.v1.json ile tanımlıdır.
+2) mission_id ve analysis_result_id FK olarak DEĞİL, referans UUID olarak saklanır. Gerekçe: retention politikası eski result'ları sildiğinde history kayıtları korunmalıdır.
+3) field_id FK → ON DELETE CASCADE (tarla silinirse geçmişi de silinir).
+4) ANALYSIS_DELIVERED event'i her başarılı sonuçta (status ∈ {COMPLETED, SUCCESS}) otomatik yazılır.
+5) DISEASE_DETECTED, PEST_DETECTED, WEED_DETECTED event'leri sadece HIGH/CRITICAL severity tespitlerde yazılır.
+6) HEALTH_DECLINED/IMPROVED event'leri önceki timeseries kaydıyla delta ≥ ±10 karşılaştırmasıyla yazılır.
+
+**4) Kanıt / Artefact**
+- `field_history` PostgreSQL tablosu
+- Alembic migration: `YYYYMMDD_kr089_field_history.py`
+
+**5) Audit / Log**
+- `WORKER_BRIDGE.FIELD_HISTORY_WRITTEN field_id=... event_type=... count=...`
+
+**6) Hata Modları**
+- İlk ölçüm → trend karşılaştırma yapılamaz → HEALTH_DECLINED/IMPROVED yazılmaz (normal)
+- Transaction failure → rollback (timeseries ile birlikte)
+
+**7) Test / Kabul Kriterleri**
+- Başarılı result → ANALYSIS_DELIVERED event var
+- HIGH severity hastalık → DISEASE_DETECTED event var
+- LOW severity hastalık → event YOK
+- İlk ölçüm → HEALTH_DECLINED/IMPROVED YOK
+- İkinci ölçüm, health 85→60 → HEALTH_DECLINED event var (delta=-25)
+
+**8) Cross-refs**
+- KR-088 (timeseries, trend kaynağı), KR-091 (dashboard uyarıları), KR-090 (retention — history SÜRESİZ)
+
+---
+
+## KR-090 — Retention Policy (Veri Yaşam Döngüsü Yönetimi)
+
+> **Versiyon notu (2026-03-29):** Yeni KR — veri katmanı genişleme projesi kapsamında.
+
+**1) Amaç**
+Verilerin yaşam döngüsünü yöneterek DB boyutu ve S3 depolama maliyetini kontrol altında tutmak. Yasal zorunlulukları (WORM audit, tarla geçmişi) korurken eski analiz sonuçlarını kademeli olarak arşivlemek/silmek.
+
+**2) Kapsam / Applies-to:** platform
+
+**3) Zorunluluklar (MUST)**
+1) analysis_results: 730 gün sonra DB'den silinebilir (timeseries'te özeti zaten var).
+2) S3 GeoTIFF: 365 gün HOT, sonra GLACIER_IR'a geçiş.
+3) S3 tile cache: 180 gün sonra silinir (COG'dan yeniden üretilebilir).
+4) audit_logs: ASLA silinmez (WORM yasal zorunluluk).
+5) field_history: ASLA silinmez.
+6) field_index_timeseries: ASLA silinmez (trend verisi değerli).
+7) analysis_results silmeden ÖNCE timeseries'te karşılığının varlığı doğrulanır.
+8) İlk çalıştırma dry_run() modunda yapılır (silmeden rapor).
+
+**4) Kanıt / Artefact**
+- `config/retention_policy.yaml`
+- `retention_service.py`
+
+**5) Audit / Log**
+- `RETENTION.CYCLE_COMPLETED records_deleted=... bytes_freed=...`
+- `RETENTION.DRY_RUN records_eligible=...`
+
+**6) Hata Modları**
+- Timeseries'te karşılık yok + result silme girişimi → backfill önce, sonra sil
+- S3 lifecycle rule uygulanamadı → log error, bir sonraki döngüde tekrar dene
+
+**7) Test / Kabul Kriterleri**
+- dry_run() doğru kayıtları seçiyor
+- WORM tabloları korunuyor
+- 730 gün öncesi result silinebiliyor, 729 gün öncesi silinmiyor
+
+**8) Cross-refs**
+- KR-088 (timeseries koruma), KR-089 (history koruma), KR-062 (audit WORM)
+
+---
+
+## KR-091 — Aggregation Dashboard (Çiftçi/Bölge/Kooperatif Dashboard)
+
+> **Versiyon notu (2026-03-29):** Yeni KR — veri katmanı genişleme projesi kapsamında.
+
+**1) Amaç**
+Çiftçi, ilçe temsilcisi ve kooperatif yöneticisi için tarla/bölge bazlı sağlık özetleri, trend uyarıları ve istatistik dashboardları sunmak.
+
+**2) Kapsam / Applies-to:** platform
+
+**3) Zorunluluklar (MUST)**
+1) Dashboard verileri field_index_timeseries tablosundan beslenir (KR-088).
+2) Sadece result_mode ∈ {FULL_REPORT, PARTIAL_REPORT} olan kayıtlar dahil edilir (KR-019).
+3) RBAC kontrolleri:
+   - Çiftçi dashboardı: sadece kendi tarlaları (user_id eşleşmesi)
+   - İlçe dashboardı: DISTRICT_REP rolü + ilçe eşleşmesi
+   - Kooperatif dashboardı: COOP_OWNER veya COOP_ADMIN rolü
+4) Uyarılar: health_score delta ≤ -10 → HEALTH_DECLINED uyarısı gösterilir.
+5) Bölge ortalamaları: province + district bazlı AVG(health_score) hesaplanır.
+
+**4) Kanıt / Artefact**
+- `aggregation_service.py`
+- API endpoints: /dashboard/farmer, /dashboard/district, /dashboard/coop/{id}
+
+**5) Audit / Log**
+- Standart API erişim logları (audit_logs tablosunda)
+
+**6) Hata Modları**
+- Hiç timeseries verisi yok → boş dashboard dönülür (500 değil)
+- RBAC ihlali → HTTP 403
+
+**7) Test / Kabul Kriterleri**
+- Farmer başka farmer'ın dashboardını göremez (403)
+- DISTRICT_REP sadece kendi ilçesini görür
+- Boş timeseries → boş response (crash yok)
+- result_mode=NO_RESULT dahil edilmemiş
+
+**8) Cross-refs**
+- KR-088 (veri kaynağı), KR-019 (fail-closed filtre), KR-083 (temsilci rolü), KR-014 (kooperatif)
+
+---

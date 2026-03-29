@@ -1,9 +1,21 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 2.0.1
+## Version: 2.1.0
 
-**Release Date:** 2026-03-06T20:05:25.935613Z  
-**Breaking Change:** NO  
+**Release Date:** 2026-03-29T17:00:00.000000Z
+**Breaking Change:** NO
+**Contracts Checksum (SHA-256):** `pending-recalculation-after-commit`
+
+### Changes in 2.1.0
+- **MINOR**: analysis_result.v1 → `summary.index_averages` OPTIONAL alan eklendi (KR-088)
+- **MINOR**: Yeni enum: `field_history_event_type.enum.v1.json` (KR-089, 16 event tipi)
+- **MINOR**: Yeni event schema: `field_health_changed.v1.schema.json` (KR-088/089)
+- **MINOR**: KR registry → KR-088, KR-089, KR-090, KR-091 eklendi
+
+## Previous Version: 2.0.1
+
+**Release Date:** 2026-03-06T20:05:25.935613Z
+**Breaking Change:** NO
 **Contracts Checksum (SHA-256):** `12b7ebcea698b44bfc4203d79147588f6bce9f102c03c741f5c67c61f727cee2`
 
 ---

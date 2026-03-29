@@ -134,6 +134,19 @@
           "type": "string",
           "maxLength": 1000,
           "description": "Human-readable summary"
+        },
+        "index_averages": {
+          "type": "object",
+          "description": "KR-088: Field-wide vegetation index averages (optional, populated when inference pipeline is active)",
+          "properties": {
+            "ndvi_mean": { "type": "number", "minimum": -1, "maximum": 1, "description": "NDVI field average" },
+            "ndre_mean": { "type": "number", "minimum": -1, "maximum": 1, "description": "NDRE field average" },
+            "ndwi_mean": { "type": "number", "minimum": -1, "maximum": 1, "description": "NDWI field average" },
+            "gndvi_mean": { "type": "number", "minimum": -1, "maximum": 1, "description": "GNDVI field average" },
+            "evi_mean": { "type": "number", "minimum": -1, "maximum": 1, "description": "EVI field average" },
+            "savi_mean": { "type": "number", "minimum": -1, "maximum": 1, "description": "SAVI field average" }
+          },
+          "unevaluatedProperties": false
         }
       },
       "required": ["overall_health", "health_score", "area_analyzed_hectares", "coverage_percent"],
