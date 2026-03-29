@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/enums/field_history_event_type.enum.v1.json",
+  "title": "FieldHistoryEventType",
+  "description": "KR-089: Tarla yaşam döngüsü olay türleri. 16 kanonik event tipi.",
+  "type": "string",
+  "enum": [
+    "FIELD_CREATED",
+    "CROP_CHANGED",
+    "MISSION_PLANNED",
+    "MISSION_COMPLETED",
+    "ANALYSIS_DELIVERED",
+    "DISEASE_DETECTED",
+    "PEST_DETECTED",
+    "WEED_DETECTED",
+    "WATER_STRESS_DETECTED",
+    "HEALTH_IMPROVED",
+    "HEALTH_DECLINED",
+    "EXPERT_REVIEW_COMPLETED",
+    "SUBSCRIPTION_STARTED",
+    "SUBSCRIPTION_ENDED",
+    "WEATHER_BLOCK",
+    "SEASON_SUMMARY"
+  ],
+  "x-enum-descriptions": {
+    "FIELD_CREATED": "Tarla ilk kez sisteme kaydedildi",
+    "CROP_CHANGED": "Tarla bitki türü değiştirildi (yılda 1, Ekim-Aralık)",
+    "MISSION_PLANNED": "Yeni analiz görevi oluşturuldu",
+    "MISSION_COMPLETED": "Analiz görevi tamamlandı (mission.status=DONE)",
+    "ANALYSIS_DELIVERED": "YZ analiz sonuçları teslim edildi",
+    "DISEASE_DETECTED": "Hastalık tespit edildi (severity HIGH/CRITICAL)",
+    "PEST_DETECTED": "Zararlı böcek tespit edildi (severity HIGH/CRITICAL)",
+    "WEED_DETECTED": "Yabancı ot tespit edildi (severity HIGH/CRITICAL)",
+    "WATER_STRESS_DETECTED": "Su stresi tespit edildi",
+    "HEALTH_IMPROVED": "Tarla sağlık skoru önemli ölçüde arttı (delta >= +10)",
+    "HEALTH_DECLINED": "Tarla sağlık skoru önemli ölçüde düştü (delta <= -10)",
+    "EXPERT_REVIEW_COMPLETED": "Uzman incelemesi tamamlandı",
+    "SUBSCRIPTION_STARTED": "Sezonluk abonelik başladı",
+    "SUBSCRIPTION_ENDED": "Sezonluk abonelik sona erdi",
+    "WEATHER_BLOCK": "Hava engeli nedeniyle uçuş ertelendi",
+    "SEASON_SUMMARY": "Sezon sonu otomatik özet raporu"
+  }
+}
