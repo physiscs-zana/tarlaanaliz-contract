@@ -6,11 +6,13 @@
   "type": "string",
   "enum": [
     "CREDIT_CARD",
-    "IBAN_TRANSFER"
+    "IBAN_TRANSFER",
+    "TARIS_DEDUCTION"
   ],
   "x-enum-descriptions": {
     "CREDIT_CARD": "Online ödeme sağlayıcısı üzerinden hosted checkout / payment session. Başarılı işlem provider webhook'u ile otomatik olarak PAID durumuna geçer.",
-    "IBAN_TRANSFER": "Çiftçi belirtilen IBAN'a havale yapar. Transfer açıklamasına Tarla ID'sini yazar. Dekontu POST /payments/intents/{id}/upload-receipt endpoint'i üzerinden UYGULAMA İÇİ yükler (e-posta KANAL DEĞİLDİR). CENTRAL_ADMIN dekontu inceler ve mark-paid veya reject yapar."
+    "IBAN_TRANSFER": "Çiftçi belirtilen IBAN'a havale yapar. Transfer açıklamasına Tarla ID'sini yazar. Dekontu POST /payments/intents/{id}/upload-receipt endpoint'i üzerinden UYGULAMA İÇİ yükler (e-posta KANAL DEĞİLDİR). CENTRAL_ADMIN dekontu inceler ve mark-paid veya reject yapar.",
+    "TARIS_DEDUCTION": "Tariş (kooperatif) üzerinden mahsulden mahsup. Çiftçinin Tariş'e teslim ettiği ürün bedelinden analiz ücreti kesilir; kooperatif toplu mutabakatı ile PAID'e geçer. (Platform/Tariş entegrasyonu, KR-033)."
   },
   "x-iban-transfer-flow": {
     "step1": "Kullanıcı IBAN talimat ekranını görür: IBAN (kopyala), alıcı adı, tutar, Tarla ID (kopyala)",

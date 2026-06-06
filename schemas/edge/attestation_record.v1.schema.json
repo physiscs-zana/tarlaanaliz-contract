@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/edge/attestation_record.v1.schema.json",
+  "title": "AttestationRecord",
+  "description": "Cryptographic attestation record signed by the kiosk for each processing step. Edge interface/contracts/schemas/edge/attestation_record.v1 ile birebir uyumludur.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.2"
+    },
+    "attestation_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique attestation record identifier."
+    },
+    "dataset_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Dataset this attestation applies to."
+    },
+    "station_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Kiosk station identifier."
+    },
+    "attestation_type": {
+      "type": "string",
+      "enum": ["EDGE_SCAN", "HASH_SEAL", "CENTER_VERIFY", "CALIBRATION"],
+      "description": "Type of operation being attested."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of attestation creation."
+    },
+    "signed_by": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identity of the signing key or device."
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^corr_[a-f0-9]{16,32}$",
+      "description": "Request-scoped trace identifier."
+    }
+  },
+  "required": [
+    "schema_version",
+    "attestation_id",
+    "dataset_id",
+    "station_id",
+    "attestation_type",
+    "timestamp",
+    "signed_by",
+    "correlation_id"
+  ],
+  "unevaluatedProperties": false
+}

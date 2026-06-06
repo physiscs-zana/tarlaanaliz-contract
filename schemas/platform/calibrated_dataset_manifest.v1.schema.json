@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/schemas/platform/calibrated_dataset_manifest.v1.schema.json",
   "title": "CalibratedDatasetManifest v1",
-  "description": "Producer sonrası oluşturulan kalibre veri paketinin manifesti: çıktı dosyaları, raporlar ve hash'ler.",
+  "description": "Producer sonrası oluşturulan kalibre veri paketinin manifesti: çıktı dosyaları, raporlar ve hash'ler. (Platform/dataset-katmanı aggregation formu. Edge-emitted per-dataset kalibrasyon manifesti için bkz. schemas/edge/calibrated_dataset_manifest.v1 — calibration_result/qc_report objeleri.)",
   "type": "object",
   "required": [
     "batch_id",

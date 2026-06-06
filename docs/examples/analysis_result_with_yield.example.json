@@ -1,0 +1,63 @@
+{
+  "id": "result_70b8e2c9d0a1b2c3d4e5f6a7",
+  "job_id": "job_70b8e2c9d0a1b2c3d4e5f6a6",
+  "field_id": "field_517e2g88dcg97de8aa549012",
+  "mission_id": "mission_70b8e2c9d0a1b2c3d4e5f6a4",
+  "status": "SUCCESS",
+  "analysis_type": "YIELD_FORECAST",
+  "summary": {
+    "overall_health": "GOOD",
+    "health_score": 74.0,
+    "area_analyzed_hectares": 4.2,
+    "coverage_percent": 98.0,
+    "issues_detected": 1,
+    "critical_issues": 0,
+    "description": "Sezon sonuna yaklaşırken bitki canlılığı stabil. Pre-harvest verim öngörüsü yapıldı.",
+    "index_averages": {
+      "ndvi_mean": 0.72,
+      "ndre_mean": 0.41,
+      "gndvi_mean": 0.58
+    },
+    "yield_estimate": {
+      "expected_yield_kg_per_donum": 1850.0,
+      "confidence_interval_kg_per_donum": [1620.0, 2080.0],
+      "model_id": "grape_yield_v1",
+      "model_version": "1.0.0-pilot",
+      "valid_for_phenology_weeks": [22, 23, 24, 25, 26],
+      "weeks_to_harvest": 4,
+      "method": "SPECTRAL_TIMESERIES"
+    }
+  },
+  "layers": [
+    {
+      "layer_id": "layer_70b8e2c9d0a1b2c3d4e5f6a8",
+      "name": "Health Map (Sağlık Haritası)",
+      "type": "RASTER",
+      "uri": "s3://tarlaanaliz-results/2026/09/field_517e2g88dcg97de8aa549012/health.tif",
+      "format": "GEOTIFF",
+      "sha256": "c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2"
+    }
+  ],
+  "metrics": {
+    "health_distribution": {
+      "excellent_percent": 22.0,
+      "good_percent": 65.0,
+      "fair_percent": 11.0,
+      "poor_percent": 2.0,
+      "critical_percent": 0.0
+    }
+  },
+  "model_info": {
+    "model_name": "grape-yield-pilot",
+    "model_version": "1.0.0-pilot",
+    "model_fingerprint": "d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3",
+    "framework": "PyTorch",
+    "framework_version": "2.1.0",
+    "trained_on": "tarla-grape-yield-2025-v1",
+    "training_date": "2026-02-01"
+  },
+  "created_at": "2026-09-15T10:00:00Z",
+  "metadata": {
+    "notes": "KR-089: yield_estimate populated for crops with production-grade model. Pilot scope: grape (Tarla region)."
+  }
+}

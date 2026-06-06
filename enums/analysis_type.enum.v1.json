@@ -12,11 +12,14 @@
     "WEED",
     "WATER_STRESS",
     "NITROGEN_STRESS",
-    "THERMAL_STRESS"
+    "THERMAL_STRESS",
+    "SALT_STRESS",
+    "GENERAL"
   ],
   "metadata": {
-    "version": "1.0.0",
-    "lastUpdated": "2026-01-26",
+    "version": "1.2.0",
+    "lastUpdated": "2026-05-30",
+    "changeNote": "MINOR: SALT_STRESS eklendi (Platform KR-002 katmanı — toprak tuzluluğu stresi, Kahverengi/Bej + tuz kristali deseni). v1.1.0: GENERAL eklendi (Worker fallback analysis_type).",
     "kr002_reference": "Analysis types defined in KR-002 (Harita katmanı anlamları). These are map layers with specific colors and patterns.",
     "layerMapping": {
       "HEALTH": {
@@ -66,6 +69,12 @@
         "color": "Koyu Kırmızı/Turuncu gradient (Dark Red/Orange gradient)",
         "pattern": "Isı haritası + termometre ikon (Heatmap + thermometer icon)",
         "kr002": "Termal Stres (KR-084): Koyu Kırmızı/Turuncu gradient + ısı haritası"
+      },
+      "SALT_STRESS": {
+        "description": "Tuz stresi katmanı — toprak tuzluluğu kaynaklı bitki stresi",
+        "color": "Kahverengi/Bej (Brown/Beige)",
+        "pattern": "Tuz kristali deseni (Salt crystal pattern)",
+        "kr002": "Tuz Stresi: Kahverengi/Bej + tuz kristali deseni"
       }
     },
     "analysisCategories": {
@@ -79,7 +88,8 @@
           "WEED",
           "WATER_STRESS",
           "NITROGEN_STRESS",
-          "THERMAL_STRESS"
+          "THERMAL_STRESS",
+          "SALT_STRESS"
         ],
         "krReference": "KR-002, KR-064, KR-084"
       }
@@ -148,6 +158,14 @@
         "pattern": "Heatmap + thermometer icon",
         "outputType": "raster_heatmap",
         "krReference": "KR-002, KR-064, KR-084"
+      },
+      "SALT_STRESS": {
+        "fullName": "Tuz Stresi Katmanı (Salt Stress Layer)",
+        "description": "Salt stress detection — soil salinity induced plant stress",
+        "color": "Brown/Beige",
+        "pattern": "Salt crystal",
+        "outputType": "map_layer",
+        "krReference": "KR-002"
       }
     },
     "displayNames": {
@@ -159,7 +177,8 @@
         "WEED": "Yabancı Ot",
         "WATER_STRESS": "Su Stresi",
         "NITROGEN_STRESS": "Azot Stresi",
-        "THERMAL_STRESS": "Termal Stres"
+        "THERMAL_STRESS": "Termal Stres",
+        "SALT_STRESS": "Tuz Stresi"
       },
       "en": {
         "HEALTH": "Health",
@@ -169,7 +188,8 @@
         "WEED": "Weed",
         "WATER_STRESS": "Water Stress",
         "NITROGEN_STRESS": "Nitrogen Stress",
-        "THERMAL_STRESS": "Thermal Stress"
+        "THERMAL_STRESS": "Thermal Stress",
+        "SALT_STRESS": "Salt Stress"
       }
     }
   },

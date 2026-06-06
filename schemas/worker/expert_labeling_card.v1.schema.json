@@ -1,0 +1,599 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/worker/expert_labeling_card.v1.schema.json",
+  "title": "ExpertLabelingCard",
+  "description": "Expert Portal'de uzmana gosterilen tile etiketleme referans karti. Kaynak: config/expert_labeling_cards/<crop>_cards.yaml. Her crop YAML'inin top-level her anahtari bir karttir (class_id ile esitlenmelidir). VERSION 2.0.0 (2026-04-27): additionalProperties=false ve L3 disease/pest icin ground_verification zorunlu hale getirildi (KIRICI DEGISIKLIK). VERSION 2.1.0 (2026-05-15): 3 yeni opsiyonel ML feedback alani eklendi (last_validated_at, validation_evidence_count, expected_loss_weight) — MINOR bump, mevcut kartlar bozulmaz. VERSION 2.1.1 (2026-05-17): expected_loss_weight range 0.1-10.0 → 0.05-50.0 (PATCH, audit B1 — orobanche/clcuv gibi extreme RARE siniflar ~20-50x reweight gerektirebilir). VERSION 2.2.0 (2026-05-17): 3 yeni opsiyonel TR yerellestirme alani eklendi (tr_synonyms, ipm_corpus_ref, tr_resistance_notes) — KR-025+ uyumlu tani baglami, MINOR bump, mevcut kartlar bozulmaz. VERSION 2.3.0 (2026-05-20): reference_images opsiyonel alani eklendi (ADR-003) — sinif icin kuratorlu yakin-cekim referans fotograflari, Expert Portal'da kartla gosterilir. MINOR bump, mevcut kartlar bozulmaz. VERSION 2.4.0 (2026-05-28, T1.4 — Dalga-1): reference_images alani SEMADAN KALDIRILDI (ADR-007). HERMOS misyondan tamamen cikartildi (K4 operator karari); kartlarda yakin-cekim gorsel referans gosterilmez, uzman drone tile + zenginlestirilmis metin alanlari (distinguishing + confused_with + first_appearance_bbch + typical_location) ile karar verir. additionalProperties=false oldugu icin BU KIRICI BIR DEGISIKLIK — mevcut kartlarda reference_images alani varsa validation reddi. MAJOR bump. VERSION 2.5.0 (2026-05-29, T1.4 step F — Dalga-1 tamamlama): 2 yeni opsiyonel alan eklendi (first_appearance_bbch + typical_location) — HERMOS gorsel referans kaybini kompanse eden metin-tabanli zamansal+konumsal ipuclari. MINOR bump, mevcut kartlar bozulmaz.",
+  "type": "object",
+  "required": [
+    "class_id",
+    "display_name_tr",
+    "category",
+    "level",
+    "uav_description",
+    "uav_detectability"
+  ],
+  "properties": {
+    "class_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Stabil sinif tanimlayici (snake_case). YAML key ile esit olmalidir."
+    },
+    "display_name_tr": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Turkce uzun ad (Expert Portal'de gosterilen baslik)."
+    },
+    "latin": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Bilimsel ad (Latin binominal). Yabanci ot/zararli icin tek tur veya pipe-ayrilmis liste; abiyotik kartlarda null."
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "disease",
+        "pest",
+        "weed",
+        "abiotic"
+      ],
+      "description": "Kart kategorisi. Worker confidence/threshold yonlendirmesinde kullanilir."
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "L1",
+        "L2",
+        "L3"
+      ],
+      "description": "L1=QA notu/genel uyari, L2=jenerik abiyotik/yabanci ot grubu, L3=spesifik patojen/zararli tani."
+    },
+    "uav_description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Uzmanin UAV goruntusunden tanima rehberi. 1-5 cumle."
+    },
+    "uav_detectability": {
+      "type": "string",
+      "enum": [
+        "DIRECT",
+        "INDIRECT",
+        "NOT_DETECTABLE"
+      ],
+      "description": "DIRECT: UAV'da spektral/morfolojik dogrudan tespit edilebilir. INDIRECT: stres deseni/dolayli ipucu. NOT_DETECTABLE: UAV'dan tespit edilemez (ornek: yumru kalitesi, viral teyit). PCR/ELISA gerektiren tum viruslerde INDIRECT."
+    },
+    "uav_detection_reliability": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "HIGH",
+        "MEDIUM",
+        "LOW",
+        null
+      ],
+      "description": "Pratik UAV tespit guvenilirligi. HIGH=siklikla net spektral imza, MEDIUM=fenoloji+pattern bagimli, LOW=onemli karistirma riski."
+    },
+    "ndvi_infected": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[min, max] enfekte NDVI araligi. Belirli BBCH evresi belirtilmek istenirse ndvi_infected_by_stage kullan."
+    },
+    "ndvi_infected_by_stage": {
+      "type": "object",
+      "patternProperties": {
+        "^[A-Z_]+$": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "additionalProperties": false,
+      "description": "Fenolojik evre -> [min, max] NDVI. Anahtar phenology_registry'deki evre adlarindan biri olmalidir (LEAF_DEVELOPMENT, TILLERING, vb.)"
+    },
+    "ndvi_healthy": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[min, max] saglikli referans NDVI araligi (opsiyonel)."
+    },
+    "ndre_infected": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[min, max] enfekte NDRE araligi. Hastalik/zararli kartlari icin ONERILEN; uav_detectability=DIRECT durumunda zorunluya yakin."
+    },
+    "calibration_assumed": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "PANEL_ABSOLUTE",
+        "DLS2_RELATIVE",
+        "RELATIVE",
+        "AGNOSTIC",
+        null
+      ],
+      "description": "Spektral esiklerin (ndre_infected, ndvi_infected) hangi kalibrasyon altinda gecerli oldugu. KR-018/082 atif: PANEL/DLS2 mutlak reflektans; RELATIVE field-bazli; AGNOSTIC tum kalibrasyonlardan bagimsiz metrik. Eski cards'da bu alan yoksa varsayilan PANEL_ABSOLUTE kabul edilir."
+    },
+    "min_capability_mode": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "BASIC_4BAND",
+        "EXTENDED_5BAND",
+        "THERMAL_REQUIRED",
+        null
+      ],
+      "description": "Bu sinifin tespiti icin minimum gerekli drone kapasitesi. BASIC_4BAND=G/R/RE/NIR (NDRE/NDVI mevcut); EXTENDED_5BAND=+Blue (EVI gerektiren analizler); THERMAL_REQUIRED=LWIR zorunlu (CWSI). Eski cards'da yoksa BASIC_4BAND varsayilir."
+    },
+    "validated_for_backbones": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "EfficientNet-B2",
+          "ResNet152",
+          "ConvNeXt-Tiny",
+          "DINOv2-ViT-S/14",
+          "DINOv2-ViT-B/14"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Bu sinifin validasyon edildigi backbone listesi. Yalnizca bu liste icindeki backbone'lar icin spektral esikler gecerli kabul edilir. Bos liste = belirsiz, varsayilan EfficientNet-B2 kabul edilir."
+    },
+    "prototype_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^proto_[a-z0-9_]+$",
+      "description": "P1 (Prototypical Networks) referans kimligi. prototype_manager.py'deki centroid kayitlarina baglanir. Format: 'proto_<class_id>' veya 'proto_<class_id>_v<n>'. Null = henuz prototype yok (3+ uzman onayi bekleniyor)."
+    },
+    "expected_epistemic_range": {
+      "type": "array",
+      "items": {
+        "type": "number",
+        "minimum": 0.0,
+        "maximum": 1.0
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "MC-Dropout epistemic uncertainty beklenen [min, max] aralik. KR-019 + K-19: 10 pass zorunlu. Bu aralik disinda epistemic uncertainty -> eskalasyon. Tipik degerler: DIRECT siniflar [0.05, 0.20], INDIRECT siniflar [0.20, 0.45]."
+    },
+    "expected_class_frequency": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "RARE",
+        "UNCOMMON",
+        "COMMON",
+        "UBIQUITOUS",
+        null
+      ],
+      "description": "Sinif imbalance ipucusu. RARE=cok az ornek (orobanche, FD), UNCOMMON=ara siklik, COMMON=tipik, UBIQUITOUS=hemen her ornek icerir (genel abiyotik). Loss reweighting + sampling stratejisi icin."
+    },
+    "expected_loss_weight": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0.05,
+      "maximum": 50.0,
+      "description": "Class imbalance icin sayisal loss reweighting hint. expected_class_frequency'nin sayisal tamamlayicisi: tipik degerler RARE [3.0, 10.0], UNCOMMON [1.5, 3.0], COMMON ~1.0, UBIQUITOUS [0.5, 1.0]. v2.1.1 (audit B1): EXTREME RARE siniflar (orobanche, clcuv, flavescence_doree — ~0.01% frequency) icin 20-50x reweight gerekebilir, bu yuzden tavan 50.0; UBIQUITOUS abiyotik (healthy ~70%) icin taban 0.05'e indirildi. Null = manuel/varsayilan agirlik. Training pipeline'da CrossEntropyLoss weight tensorune cevirilir. KR-019 + 27_04 raporu 5.g + audit-2026-05-16 M1."
+    },
+    "last_validated_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "Kartin uzman feedback'iyle en son teyit edildigi ISO 8601 timestamp (UTC). Distribution shift detection icin: bu tarihten X gun gecmis kartlar revalidation kuyruguna alinabilir. Null = henuz teyit yok veya hic baslangic kartiydi."
+    },
+    "validation_evidence_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "description": "Kartin toplam uzman teyit sayisi (grade A/B feedback). prototype_manager.py 3+ uzman onayi esigini bu sayidan okur — count>=3 + grade dagilim A/B>=%80 -> prototype centroid hesaplama. Null = henuz teyit yok."
+    },
+    "phenology_bbch": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[min, max] BBCH araligi — sinif riskinin gozlendigi fenoloji penceresi."
+    },
+    "peak_bbch": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 99
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "[min, max] zirve risk BBCH araligi (opsiyonel)."
+    },
+    "phenology_stages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z_]+$"
+      },
+      "description": "phenology_registry evre adi listesi (ndvi_infected_by_stage anahtari ile uyumlu)."
+    },
+    "calendar_months": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 12
+      },
+      "uniqueItems": true,
+      "description": "Risk takvimi — 1-12 (Ocak-Aralik). Coklu mevsim icin tum aylari listele."
+    },
+    "calendar_risk_by_crop": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 12
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "description": "Yalnizca general_abiotic kartlari icin: mahsul-bazli risk takvimi. Anahtar = mahsul adi (cereals, fruit_trees, cotton, vb.), deger = risk aylari listesi."
+    },
+    "pattern": {
+      "type": "string",
+      "description": "Mekansal yayilim deseni — ML modelinin pattern_detector ile karsilastirma anahtari."
+    },
+    "severity_threshold": {
+      "type": "string",
+      "description": "Ekonomik zarar esigi (EZE) — uzmanin mudahale karari icin kantitatif esik (TAGEM EMT'den)."
+    },
+    "early_warning_days": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30,
+      "description": "UAV erken uyari penceresi (gun) — gorulebilir belirtiden once spektral imzanin varolma suresi."
+    },
+    "first_appearance_bbch": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 99,
+      "description": "v2.5.0 (T1.4 step F — Dalga-1, ADR-007): Ilk gozlenebilir semptomun beklendigi BBCH evresi (tek deger). phenology_bbch tum risk penceresini, peak_bbch zirve riski verirken first_appearance_bbch ERKEN UYARI esigi — uzmana 'bu evrede ilk belirti aranir' ipucu. HERMOS yakin-cekim gorsel referansi kaldirildiktan sonra (ADR-007) metin-tabanli zamansal rehber. Null = evre-bagimsiz/kronik."
+    },
+    "typical_location": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "leaf_upper",
+        "leaf_lower",
+        "leaf_both",
+        "cluster",
+        "shoot",
+        "trunk_cordon",
+        "root",
+        "canopy_diffuse",
+        "inter_row",
+        "multiple",
+        null
+      ],
+      "description": "v2.5.0 (T1.4 step F — Dalga-1, ADR-007): Belirtinin tipik gozlendigi bitki konumu. HERMOS gorsel referansi yerine metin-tabanli konum ipucu. leaf_upper=yaprak ust yuzeyi, leaf_lower=alt yuzey, leaf_both=her iki yuzey, cluster=salkim, shoot=surgun, trunk_cordon=govde/kordon, root=kok, canopy_diffuse=kanopi geneli, inter_row=sira arasi, multiple=birden fazla konum. Null = belirgin tek konum yok."
+    },
+    "distinguishing": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 5
+      },
+      "minItems": 1,
+      "description": "Kart icin tanimlayici/karakteristik gozlem listesi."
+    },
+    "confused_with": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "class",
+          "difference"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "class": {
+            "type": "string",
+            "description": "Karistirilabilecek sinifin class_id'si veya genel kavram adi."
+          },
+          "difference": {
+            "type": "string",
+            "minLength": 5,
+            "description": "Iki sinif arasindaki ayirici ozellik."
+          }
+        }
+      },
+      "description": "Karistirilabilecek diger siniflar ve farklari."
+    },
+    "co_occurring": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Sik birlikte gorulen diger stresler/patojenler (uzman tani sirasinda dikkate almali)."
+    },
+    "ground_verification": {
+      "type": "string",
+      "minLength": 5,
+      "description": "Saha dogrulamasi — UAV gorulen suphenin yere inerek nasil teyit edilecegi."
+    },
+    "endemic_regions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "MARMARA",
+          "TARLA",
+          "AKDENIZ",
+          "IC_ANADOLU",
+          "KARADENIZ",
+          "DOGU_ANADOLU",
+          "GUNEYDOGU_ANADOLU",
+          "TRAKYA",
+          "GAP",
+          "CUKUROVA"
+        ]
+      },
+      "uniqueItems": true,
+      "description": "Endemik/baskin oldugu Turkiye bolgeleri. Bos liste = ulke geneli."
+    },
+    "quarantine_status": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "EPPO_A1",
+        "EPPO_A2",
+        "EPPO_ALERT",
+        "TR_KARANTINA",
+        "NONE",
+        null
+      ],
+      "description": "Karantina/regulatif durumu. EPPO_A1=AB'de yok, A2=AB'de sinirli, ALERT=gozlem listesi."
+    },
+    "multi_temporal_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "True ise tek ucustan guvenli tani mumkun degil — temporal baseline (>=3 saglikli ucus) zorunludur."
+    },
+    "required_gsd_cm": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0.5,
+      "maximum": 50.0,
+      "description": "Onerilen maksimum GSD (cm/piksel). Daha kaba GSD'lerde tani guvenilirligi duser. capability_detector routing icin."
+    },
+    "time_of_day_constraint": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "EARLY_MORNING_DEW",
+        "MIDDAY_THERMAL",
+        "AFTERNOON",
+        "ANY",
+        null
+      ],
+      "description": "Goz lemde optimum gun saati. EARLY_MORNING_DEW=mildiyö/pas sporulasyonu, MIDDAY_THERMAL=CWSI olcumu icin maks transpirasyon."
+    },
+    "thermal_required": {
+      "type": "boolean",
+      "default": false,
+      "description": "True ise termal (LWIR) verisi olmadan guvenilir tani mumkun degil. KR-084 ile uyumlu."
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 1000,
+      "pattern": "^[^<>{}\\[\\]`\\\\\\u0000-\\u001F]{0,1000}$",
+      "description": "Profesor seviyesinde aciklama notu — irk/biyotip, direnc, populasyon dinamigi gibi yapisal alana sigmayan baglam. KR-071 + worker_ssot.md:184-194 uyumu: HTML/script injection + shell metakarakterleri + control karakterleri yasak. Card notes feedback notes'tan uzun olabilir (1000 char)."
+    },
+    "pdf_reference": {
+      "type": "string",
+      "description": "Kaynak gostergesi (TAGEM EMT, sayfa, peer-reviewed makale, vb.)."
+    },
+    "spectral_signatures_ref": {
+      "type": "string",
+      "pattern": "^spectral_signatures\\.yaml ",
+      "description": "spectral_signatures.yaml icindeki ilgili kayda referans (orn: 'spectral_signatures.yaml -> cotton -> verticillium_wilt')."
+    },
+    "phenology_registry_ref": {
+      "type": "string",
+      "pattern": "^phenology_registry\\.yaml ",
+      "description": "phenology_registry.yaml icindeki ilgili kayda referans."
+    },
+    "tr_synonyms": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string",
+        "minLength": 2,
+        "maxLength": 80,
+        "pattern": "^[^<>{}\\[\\]`\\\\\\u0000-\\u001F]{2,80}$"
+      },
+      "uniqueItems": true,
+      "maxItems": 20,
+      "description": "v2.2.0: Patojen/zararli icin TR yerel yaygin adlar (ciftci sozlugu). Expert Portal'da aliasing + farmer report dil zenginlestirmesi. KR-071 uyumlu: kontrol karakteri/HTML/shell metakarakteri YASAK. KR-025+ uyumlu: yalnizca tani/isimlendirme; ilac/marka/strateji adi YASAK."
+    },
+    "ipm_corpus_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^ipm_corpus/[a-z0-9_]+\\.json$",
+      "description": "v2.2.0: data/ipm_corpus/ altindaki TKB Entegre Mucadele Teknik Talimati ekstrakti pointer'i. Sprint A.4 (ipm_corpus) + Sprint B (IPMRetriever) ile tuketici. Format: 'ipm_corpus/<crop>.json' (crop-level, mevcut Sprint A cikti pattern'i) veya gelecekte 'ipm_corpus/<crop>_<class_id>.json' (class-level granular). ipm_corpus icerigi KR-025+ filtreli — sadece tani baglami (semptom/biyoloji/yasam dongusu/EZE/direnc ekolojisi)."
+    },
+    "tr_resistance_notes": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "required": [
+          "mechanism",
+          "evidence_tr"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "mechanism": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 120,
+            "description": "Direnc mekanizmasi adi (orn: 'QoI direnci', 'organofosfor direnci'). Patojen-direnc ekolojisi GERCEGI; ilac ONERISI veya strateji DEGIL."
+          },
+          "evidence_tr": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 500,
+            "pattern": "^[^<>{}\\[\\]`\\\\\\u0000-\\u001F]{10,500}$",
+            "description": "TR bolgesel direnc kaniti cumlesi. KR-025+: 'X bolgesinde Y direnci raporlanmaktadir' biciminde, strateji onerisi YASAK."
+          },
+          "region": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "MARMARA",
+              "TARLA",
+              "AKDENIZ",
+              "IC_ANADOLU",
+              "KARADENIZ",
+              "DOGU_ANADOLU",
+              "GUNEYDOGU_ANADOLU",
+              "TRAKYA",
+              "GAP",
+              "CUKUROVA",
+              null
+            ]
+          },
+          "source_ref": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^ipm_corpus/[a-z0-9_]+\\.json$"
+          }
+        }
+      },
+      "description": "v2.2.0: Patojen direnc ekolojisi notlari (KR-025+ uyumlu — tani baglami). 'Mucadele stratejisi' degil 'direnc biyolojisi gercegi'. Ornek: QoI G143A mutasyonu, organofosfor direnci. Sprint D loss_weight prior'da indirekt kullanilir."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "category": {
+            "const": "abiotic"
+          }
+        }
+      },
+      "then": {
+        "description": "abiotic kartlarda latin null olabilir, severity_threshold ve pdf_reference opsiyoneldir."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "category": {
+            "enum": [
+              "disease",
+              "pest",
+              "weed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "latin"
+        ],
+        "description": "Hastalik/zararli/ot kartlarinda latin ad ZORUNLU."
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "category": {
+            "enum": [
+              "disease",
+              "pest"
+            ]
+          },
+          "level": {
+            "const": "L3"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "distinguishing",
+          "confused_with",
+          "ground_verification"
+        ],
+        "description": "L3 hastalik/zararli kartlarinda saha dogrulama ve ayirici ozellikler ZORUNLU."
+      }
+    }
+  ],
+  "x-urn": "urn:tarlaanaliz:schemas:expert_labeling_card:v2",
+  "unevaluatedProperties": false
+}

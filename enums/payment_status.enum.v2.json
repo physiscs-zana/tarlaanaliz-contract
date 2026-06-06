@@ -2,10 +2,11 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/enums/payment_status.enum.v2.json",
   "title": "PaymentStatusV2",
-  "description": "Ödeme durumu enum'u v2 — KR-033 kanonik. SSOT Uyum: 1.2.0 (2026-02-24).\nv1'e göre fark: REFUNDED (iade senaryosu) eklendi. APPROVED ve EXPIRED bu versiyonda da yoktur.",
+  "description": "Ödeme durumu enum'u v2 — KR-033 kanonik. SSOT Uyum: 1.2.0 (2026-02-24).\nv1'e göre fark: REFUNDED (iade senaryosu) eklendi. PENDING_ADMIN_REVIEW (dekont→admin incelemesi) eklendi. APPROVED ve EXPIRED bu versiyonda da yoktur.",
   "type": "string",
   "enum": [
     "PAYMENT_PENDING",
+    "PENDING_ADMIN_REVIEW",
     "PAID",
     "REJECTED",
     "CANCELLED",
@@ -13,17 +14,21 @@
   ],
   "x-enum-descriptions": {
     "PAYMENT_PENDING": "Ödeme bekleniyor. Intent açıldı, tahsilat doğrulanmadı.",
-    "PAID": "Ödeme tamamlandı. Provider webhook (CREDIT_CARD) veya CENTRAL_ADMIN manuel onayı (IBAN_TRANSFER) ile geçilir. KANONIK onay durumu.",
+    "PENDING_ADMIN_REVIEW": "Dekont yüklendi, admin incelemesi bekleniyor. Kullanıcı dekont yükledikten sonra otomatik geçiş yapılır. T+1 SLA zorunludur.",
+    "PAID": "Ödeme tamamlandı. Provider webhook (CREDIT_CARD) veya CENTRAL_ADMIN/BILLING_ADMIN manuel onayı (IBAN_TRANSFER) ile geçilir. KANONIK onay durumu.",
     "REJECTED": "Ödeme reddedildi. rejection_reason zorunludur.",
-    "CANCELLED": "Intent iptal edildi. Yalnızca PAYMENT_PENDING iken; otomatik expire yoktur.",
+    "CANCELLED": "Intent iptal edildi. Yalnızca PAYMENT_PENDING veya PENDING_ADMIN_REVIEW iken; otomatik expire yoktur.",
     "REFUNDED": "Ödeme iade edildi. Yalnızca PAID sonrası CENTRAL_ADMIN aksiyonu ile olur."
   },
   "x-state-machine": {
     "transitions": [
-      { "from": "PAYMENT_PENDING", "to": "PAID",      "trigger": "webhook veya admin mark-paid" },
-      { "from": "PAYMENT_PENDING", "to": "REJECTED",  "trigger": "admin reject (rejection_reason zorunlu)" },
-      { "from": "PAYMENT_PENDING", "to": "CANCELLED", "trigger": "kullanıcı veya admin" },
-      { "from": "PAID",            "to": "REFUNDED",  "trigger": "admin refund aksiyonu" }
+      { "from": "PAYMENT_PENDING",      "to": "PENDING_ADMIN_REVIEW", "trigger": "kullanıcı dekont yükledi (upload-receipt)" },
+      { "from": "PENDING_ADMIN_REVIEW", "to": "PAID",                "trigger": "admin mark-paid (admin_note zorunlu)" },
+      { "from": "PENDING_ADMIN_REVIEW", "to": "REJECTED",            "trigger": "admin reject (rejection_reason zorunlu)" },
+      { "from": "PAYMENT_PENDING",      "to": "PAID",                "trigger": "webhook (CREDIT_CARD otomatik)" },
+      { "from": "PAYMENT_PENDING",      "to": "CANCELLED",           "trigger": "kullanıcı veya admin" },
+      { "from": "PENDING_ADMIN_REVIEW", "to": "CANCELLED",           "trigger": "kullanıcı veya admin" },
+      { "from": "PAID",                 "to": "REFUNDED",            "trigger": "admin refund aksiyonu" }
     ],
     "forbidden": [
       "PAID → PAID (tekrar onay yasak)",

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/edge/calibrated_dataset_manifest.v1.schema.json",
+  "title": "EdgeCalibratedDatasetManifest",
+  "description": "Edge tarafı kalibre veri manifesti — Pix4Dfields kalibrasyonunu tamamlamış dataset için (kiosk-emitted). calibration_result + qc_report + tool metadata içerir. Platform/dataset-katmanı paket manifesti için bkz. schemas/platform/calibrated_dataset_manifest.v1 (outputs[]/reports[] aggregation formu). Edge interface/contracts/schemas/edge/calibrated_dataset_manifest.v1 ile birebir uyumludur.",
+  "type": "object",
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.2" },
+    "dataset_id": { "type": "string", "minLength": 1, "description": "Unique dataset identifier." },
+    "raw_manifest_ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reference to the original intake_manifest that produced this calibrated dataset."
+    },
+    "calibration_result": {
+      "type": "object",
+      "properties": {
+        "tool_name": { "type": "string", "minLength": 1, "description": "Calibration tool name, e.g. Pix4Dfields." },
+        "tool_version": { "type": "string", "minLength": 1, "description": "Version of the calibration tool." },
+        "observed_footprint_wkt": {
+          "type": "string",
+          "minLength": 1,
+          "description": "WKT polygon of the observed coverage footprint (KR-065)."
+        },
+        "calibration_type": {
+          "type": "string",
+          "enum": ["ABSOLUTE", "RELATIVE"],
+          "description": "Calibration type. DJI Mavic 3M produces RELATIVE only."
+        }
+      },
+      "required": ["tool_name", "tool_version", "observed_footprint_wkt", "calibration_type"],
+      "additionalProperties": false,
+      "description": "Calibration processing result object."
+    },
+    "qc_report": {
+      "type": "object",
+      "properties": {
+        "pass_warn_fail": {
+          "type": "string",
+          "enum": ["PASS", "WARN", "FAIL"],
+          "description": "Overall QC verdict."
+        },
+        "coverage_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Ratio of observed footprint to expected area (KR-065)."
+        },
+        "flags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of QC flags, e.g. blur_detected, overexposure, crs_mismatch."
+        }
+      },
+      "required": ["pass_warn_fail", "coverage_ratio", "flags"],
+      "additionalProperties": false,
+      "description": "Quality control report for the calibrated dataset."
+    },
+    "calibrated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of calibration completion."
+    },
+    "tool_name": { "type": "string", "minLength": 1, "description": "Top-level calibration tool name." },
+    "tool_version": { "type": "string", "minLength": 1, "description": "Top-level calibration tool version." },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^corr_[a-f0-9]{16,32}$",
+      "description": "Request-scoped trace identifier."
+    }
+  },
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "raw_manifest_ref",
+    "calibration_result",
+    "qc_report",
+    "calibrated_at",
+    "tool_name",
+    "tool_version",
+    "correlation_id"
+  ],
+  "unevaluatedProperties": false
+}

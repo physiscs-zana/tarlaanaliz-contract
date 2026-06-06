@@ -37,9 +37,8 @@
     },
     "interval_days": {
       "type": "integer",
-      "minimum": 1,
-      "maximum": 30,
-      "description": "Tarama periyodu (gün). KR-024'e göre bitki türüne göre önerilir."
+      "enum": [7, 10, 14, 17, 21],
+      "description": "Tarama periyodu (gün). Sabit seçenekler: 7, 10, 14, 17, 21 gün. KR-024'e göre bitki türüne göre önerilir."
     },
     "status": {
       "type": "string",

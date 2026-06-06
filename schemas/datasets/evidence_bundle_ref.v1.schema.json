@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/schemas/datasets/evidence_bundle_ref.v1.schema.json",
   "title": "EvidenceBundleRef",
-  "description": "Kanıt paketi referansı — KR-072 kanonik. Bir dataset'in tüm kanıt zincirini (attestation, scan, verification, QC, calibration) tek bir referansta toplar.",
+  "description": "Kanıt paketi referansı — KR-072 kanonik. Bir dataset'in tüm kanıt zincirini (attestation, scan, verification, QC, calibration) id listeleri olarak tek bir referansta toplar (dataset-katmanı aggregation). Edge-emitted per-type single-ref formu için bkz. schemas/edge/evidence_bundle_ref.v1.",
   "type": "object",
   "unevaluatedProperties": false,
   "required": [

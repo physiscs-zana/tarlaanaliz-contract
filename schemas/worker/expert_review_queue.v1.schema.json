@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/worker/expert_review_queue.v1.schema.json",
+  "title": "ExpertReviewQueuePackage",
+  "description": "Worker → Expert Portal escalation package. Published by Worker on the ``expert_review_queue`` RabbitMQ queue when ANY of the 6 KR-019 escalation triggers fires. KR-071 invariant: this package MUST NOT carry field_id, owner_name, ciftci_adi, GPS coordinates, or any other PII identifier — those are scrubbed at the wire boundary by ``publisher.publish_escalation``. Sprint 3 M (2026-05-17) extends the scrub to all ~25 canonical PII keys at any nesting depth. Worker interface/contracts/expert_review_queue.v1 ile birebir uyumludur.",
+  "type": "object",
+  "required": [
+    "job_id",
+    "mission_id",
+    "escalation_reason",
+    "confidence_score",
+    "crop_type",
+    "analysis_type"
+  ],
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "Job identifier (same UUID as the original AnalysisJob). The Expert Portal correlates the review back to the analysis result via this id."
+    },
+    "mission_id": {
+      "type": "string",
+      "description": "Mission / flight identifier. Multiple jobs can share one mission; Portal uses this for batch surfacing."
+    },
+    "escalation_reason": {
+      "type": "string",
+      "enum": [
+        "LOW_CONFIDENCE",
+        "LOW_AGREEMENT",
+        "OOD_DETECTED",
+        "HIGH_EPISTEMIC",
+        "EXPERT_RE_TRIGGER",
+        "QUARANTINE_CAUTION"
+      ],
+      "description": "Which KR-019 escalation trigger fired. KEY NAME (YÜKSEK-1 / v4.0.0): the wire key is ``escalation_reason``. MUST stay value-for-value in sync with worker src/core/domain/enums.py:EscalationReason (enforced by tests/contract/test_expert_review_queue_schema.py::TestReasonEnumParity)."
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Layer-1 final_confidence at the moment of escalation. Below the dynamic_threshold for this crop x analysis_type combination."
+    },
+    "crop_type": {
+      "type": "string",
+      "enum": [
+        "COTTON", "CORN", "WHEAT", "SUNFLOWER", "PISTACHIO",
+        "GRAPE", "OLIVE", "LENTIL",
+        "APPLE", "PEACH", "HAZELNUT", "CHERRY", "FIG"
+      ],
+      "description": "Same enum as enums/crop_type.enum.v1.json (worker-canonical 13-value set)."
+    },
+    "analysis_type": {
+      "type": "string",
+      "enum": ["DISEASE", "PEST", "WEED", "GENERAL"],
+      "description": "Worker analysis_type subset (the job-request axis): DISEASE/PEST/WEED/GENERAL. Map-layer superset lives in enums/analysis_type.enum.v1.json."
+    },
+    "predicted_class": {
+      "type": ["string", "null"],
+      "description": "Worker's best-guess class label that the expert is asked to confirm/correct. Null when no class made it past the threshold (e.g. NO_RESULT mode)."
+    },
+    "tile_coordinates": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      },
+      "required": ["x", "y", "width", "height"],
+      "description": "Pixel-space tile bbox inside the parent image. NOT geo-referenced — GPS / lat / lon are forbidden under KR-071."
+    },
+    "thumbnail_url": {
+      "type": ["string", "null"],
+      "format": "uri",
+      "description": "S3 / CDN URL of a low-res tile thumbnail for the expert UI. Image content only; no overlay text that could expose PII."
+    },
+    "ndvi_value": {
+      "type": ["number", "null"],
+      "minimum": -1.0,
+      "maximum": 1.0,
+      "description": "Mean NDVI over the escalated tile. Surface stat for the expert; no per-pixel raster on this queue (use index_maps URL for that)."
+    },
+    "ndre_value": {
+      "type": ["number", "null"],
+      "minimum": -1.0,
+      "maximum": 1.0,
+      "description": "Mean NDRE over the escalated tile."
+    },
+    "senior_panel_redirect": {
+      "type": "boolean",
+      "default": false,
+      "description": "KM-01: when an escalation has cycled past MAX_ESCALATION_ROUNDS, the Portal routes to a senior expert panel instead of the regular reviewer queue."
+    },
+    "escalation_round": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Which round of escalation this is. Starts at 0 for the first escalation; incremented when the previous expert verdict was ``needs_more_expert``."
+    },
+    "tile_group_id": {
+      "type": ["string", "null"],
+      "description": "F-10 / KARAR-15: when this tile is the representative of a SimilarTileDeduplicator group, the group id rides on this field so the Portal can show the expert the group context."
+    },
+    "tile_group_size": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Number of tiles in the group (1 = no grouping). The expert's verdict cascades to all members via Worker's bulk-approval pipeline (KARAR-15)."
+    },
+    "tile_group_similarity_min": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Lowest pairwise cosine similarity inside the group — gives the expert a sense of how tight the group is."
+    },
+    "required_reviewers": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "default": 1,
+      "description": "K1 hibrit (KARAR-14 dual-review). Number of independent expert reviewers Platform routing MUST assign to this analysis_result_id. HIGH (>=0.65) → 1 reviewer; MEDIUM (0.50-0.65) and LOW (<0.50) → 2 reviewers. Default 1 preserves the legacy single-review path."
+    },
+    "spot_check": {
+      "type": "boolean",
+      "default": false,
+      "description": "K1 spot-check audit flag (T3.4 — Dalga-3). True iff this package is a QUALITY-AUDIT second review of a HIGH-confidence single-reviewer tile sampled at ~5% (keyed on job_id + UTC date). Default false = ordinary escalation. KR-071: carries no PII."
+    }
+  },
+  "unevaluatedProperties": false
+}

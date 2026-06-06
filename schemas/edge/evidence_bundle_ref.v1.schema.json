@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/edge/evidence_bundle_ref.v1.schema.json",
+  "title": "EdgeEvidenceBundleRef",
+  "description": "Edge tarafı kanıt paketi referansı (kiosk-emitted): bir dataset için tüm kanıt artefactlarını tek tek (per-type single ref) bağlar. Edge-side ref'ler zorunlu; platform-side ref'ler doldurulana kadar nullable. Dataset-katmanı aggregation (id listeleri) için bkz. schemas/datasets/evidence_bundle_ref.v1. Edge interface/contracts/schemas/edge/evidence_bundle_ref.v1 ile birebir uyumludur.",
+  "type": "object",
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.2" },
+    "bundle_id": { "type": "string", "minLength": 1, "description": "Unique evidence bundle identifier." },
+    "dataset_id": { "type": "string", "minLength": 1, "description": "Dataset this bundle belongs to." },
+    "station_id": { "type": "string", "minLength": 1, "description": "Kiosk station identifier." },
+    "manifest_ref": { "type": "string", "minLength": 1, "description": "Reference to the intake manifest artifact." },
+    "scan_report_edge_ref": { "type": "string", "minLength": 1, "description": "Reference to the AV1 edge scan report." },
+    "attestation_edge_ref": { "type": "string", "minLength": 1, "description": "Reference to the edge attestation record." },
+    "scan_report_center_ref": {
+      "type": ["string", "null"],
+      "description": "Reference to the AV2 center scan report. Null until platform scan completes."
+    },
+    "verification_report_ref": {
+      "type": ["string", "null"],
+      "description": "Reference to the hash verification report. Null until platform verification."
+    },
+    "calibration_certificate_ref": {
+      "type": ["string", "null"],
+      "description": "Reference to the calibration certificate. Null until calibration is verified."
+    },
+    "qc_report_ref": {
+      "type": ["string", "null"],
+      "description": "Reference to the QC report artifact. Null until QC is complete."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of bundle creation."
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^corr_[a-f0-9]{16,32}$",
+      "description": "Request-scoped trace identifier."
+    }
+  },
+  "required": [
+    "schema_version",
+    "bundle_id",
+    "dataset_id",
+    "station_id",
+    "manifest_ref",
+    "scan_report_edge_ref",
+    "attestation_edge_ref",
+    "created_at",
+    "correlation_id"
+  ],
+  "unevaluatedProperties": false
+}

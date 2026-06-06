@@ -110,7 +110,41 @@ paths:
       responses:
         '204':
           $ref: './components/responses.yaml#/components/responses/NoContent'
-  
+
+  /auth/change-pin:
+    post:
+      tags: [Auth]
+      summary: Change PIN (KR-050)
+      description: |
+        Authenticated user changes their own 6-digit PIN.
+        Requires current PIN for verification.
+        Per KR-050: PIN must be exactly 6 digits, numeric only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                current_pin:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                  description: Current 6-digit PIN
+                new_pin:
+                  type: string
+                  pattern: '^[0-9]{6}$'
+                  description: New 6-digit PIN (must differ from current)
+              required:
+                - current_pin
+                - new_pin
+      responses:
+        '200':
+          $ref: './components/responses.yaml#/components/responses/Success'
+        '400':
+          $ref: './components/responses.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: './components/responses.yaml#/components/responses/Unauthorized'
+
   # ==================== Fields ====================
   
   /fields:

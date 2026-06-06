@@ -2,83 +2,111 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/enums/crop_type.enum.v1.json",
   "title": "CropType",
-  "description": "Agricultural crop types with GAP (Southeastern Anatolia Project) region priorities",
+  "description": "Agricultural crop types — Worker referanslı kanonik enum. GAP bölgesi öncelikli + ek bitkiler.",
   "type": "string",
   "enum": [
     "COTTON",
-    "PISTACHIO",
-    "MAIZE",
+    "CORN",
     "WHEAT",
     "SUNFLOWER",
+    "PISTACHIO",
     "GRAPE",
-    "HAZELNUT",
+    "BARLEY",
     "OLIVE",
-    "RED_LENTIL"
+    "POTATO",
+    "LENTIL",
+    "APPLE",
+    "PEACH",
+    "HAZELNUT"
   ],
   "metadata": {
-    "version": "1.0.0",
-    "lastUpdated": "2026-01-26",
+    "version": "1.1.0",
+    "lastUpdated": "2026-04-04",
+    "changeNote": "Worker referanslı hizalama: MAIZE→CORN, RED_LENTIL→LENTIL, BARLEY/POTATO/APPLE/PEACH eklendi.",
     "gapPriorities": {
-      "description": "GAP region priority crops (ALL 9 crops are GAP priorities - these are the ONLY supported crops)",
+      "description": "GAP region priority crops — 9 temel GAP bitkisi",
       "crops": [
         "COTTON",
         "PISTACHIO",
         "WHEAT",
-        "MAIZE",
+        "CORN",
         "SUNFLOWER",
         "GRAPE",
         "HAZELNUT",
         "OLIVE",
-        "RED_LENTIL"
+        "LENTIL"
       ]
     },
     "categories": {
       "FIELD_CROPS": [
         "COTTON",
         "WHEAT",
-        "MAIZE",
-        "SUNFLOWER"
+        "CORN",
+        "SUNFLOWER",
+        "BARLEY"
       ],
       "LEGUMES": [
-        "RED_LENTIL"
+        "LENTIL"
       ],
       "ORCHARDS": [
         "PISTACHIO",
         "HAZELNUT",
-        "OLIVE"
+        "OLIVE",
+        "APPLE",
+        "PEACH"
       ],
       "VINEYARDS": [
         "GRAPE"
+      ],
+      "TUBERS": [
+        "POTATO"
       ]
     },
     "displayNames": {
       "tr": {
         "COTTON": "Pamuk",
-        "PISTACHIO": "Antep Fıstığı",
-        "MAIZE": "Mısır",
+        "CORN": "Mısır",
         "WHEAT": "Buğday",
         "SUNFLOWER": "Ayçiçeği",
+        "PISTACHIO": "Antep Fıstığı",
         "GRAPE": "Üzüm",
-        "HAZELNUT": "Fındık",
+        "BARLEY": "Arpa",
         "OLIVE": "Zeytin",
-        "RED_LENTIL": "Kırmızı Mercimek"
+        "POTATO": "Patates",
+        "LENTIL": "Mercimek",
+        "APPLE": "Elma",
+        "PEACH": "Şeftali",
+        "HAZELNUT": "Fındık"
       },
       "en": {
         "COTTON": "Cotton",
-        "PISTACHIO": "Pistachio",
-        "MAIZE": "Maize (Corn)",
+        "CORN": "Corn (Maize)",
         "WHEAT": "Wheat",
         "SUNFLOWER": "Sunflower",
+        "PISTACHIO": "Pistachio",
         "GRAPE": "Grape",
-        "HAZELNUT": "Hazelnut",
+        "BARLEY": "Barley",
         "OLIVE": "Olive",
-        "RED_LENTIL": "Red Lentil"
+        "POTATO": "Potato",
+        "LENTIL": "Lentil",
+        "APPLE": "Apple",
+        "PEACH": "Peach",
+        "HAZELNUT": "Hazelnut"
       }
+    },
+    "aliases": {
+      "description": "Legacy/alternative names for backward compatibility",
+      "MAIZE": "CORN",
+      "RED_LENTIL": "LENTIL"
+    },
+    "archived": {
+      "PEACH": "Prunus cinsi gelecekte ortak pipeline ile geri eklenebilir. Elma ile hastalık örtüşme yüksek."
     }
   },
   "notes": {
     "breaking_change_policy": "Adding new crop types is non-breaking (MINOR). Removing or renaming crop types is breaking (MAJOR) and requires migration guide.",
     "gap_region": "GAP (Güneydoğu Anadolu Projesi) region includes: Adıyaman, Batman, Diyarbakır, Gaziantep, Kilis, Mardin, Siirt, Şanlıurfa, Şırnak",
-    "usage": "This enum is used across schemas (Field, Mission, Pricing) and UI components. Always reference this canonical source."
+    "usage": "This enum is used across schemas (Field, Mission, Pricing) and UI components. Always reference this canonical source.",
+    "worker_alignment": "Worker CropType enum is the reference. Platform and Contract align to Worker values."
   }
 }

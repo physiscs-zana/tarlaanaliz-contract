@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.2",
+  "batch_id": "BATCH_20260612_081500_AB12",
+  "kiosk_id": "STATION-IZM-01",
+  "operator_id": "OP-IZM-07",
+  "card_id": "CARD-2026-0612-014",
+  "drone_serial": "SN-MAVIC3M-90A21",
+  "drone_make": "DJI",
+  "drone_model": "DJI_MAVIC_3M",
+  "files": [
+    {
+      "filename": "DJI_0001.TIF",
+      "sha256": "a3f2b8c9d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1",
+      "size_bytes": 25165824,
+      "mime_type": "image/tiff",
+      "captured_at": "2026-06-12T07:48:12Z"
+    }
+  ],
+  "signature": "-----BEGIN PGP SIGNATURE----- iQEzBAABCAAd ...redacted... -----END PGP SIGNATURE-----",
+  "av_scan_result": {
+    "status": "CLEAN",
+    "scanned_at": "2026-06-12T08:15:00Z",
+    "engine_id": "clamav-1.4.1",
+    "signatures_version": "2026.06.12"
+  },
+  "available_bands": ["GREEN", "RED", "RED_EDGE", "NIR"],
+  "created_at": "2026-06-12T08:15:03Z",
+  "correlation_id": "corr_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+  "mission_id": "0c9e7b1a-1111-4222-8333-444455556666",
+  "field_id": "1d8e6c2b-2222-4333-8444-555566667777"
+}
