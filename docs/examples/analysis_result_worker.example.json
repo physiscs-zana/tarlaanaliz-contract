@@ -1,0 +1,46 @@
+{
+  "job_id": "60a7f1b8-c9d4-4e5f-a7b8-c9d2a1b2c3d4",
+  "status": "COMPLETED",
+  "result_mode": "FULL_REPORT",
+  "confidence_score": 0.91,
+  "low_confidence_flag": false,
+  "crop_type": "GRAPE",
+  "analysis_types": ["DISEASE"],
+  "detections": [
+    {
+      "class_id": "powdery_mildew",
+      "class_name": "Powdery Mildew",
+      "class_name_tr": "Külleme",
+      "confidence": 0.88,
+      "risk_level": "HIGH",
+      "ndvi_value": 0.42,
+      "ndre_value": 0.21,
+      "polygon_geojson": "{\"type\":\"Polygon\",\"coordinates\":[[[28.51,38.35],[28.52,38.35],[28.52,38.36],[28.51,38.36],[28.51,38.35]]]}",
+      "pixel_count": 1840,
+      "confidence_components": {
+        "margin_confidence": 0.82,
+        "epistemic_uncertainty": 0.12,
+        "agreement_score": 0.9
+      }
+    }
+  ],
+  "index_maps": {
+    "ndvi_url": "s3://tarlaanaliz-results/grape/2026-06-12/ndvi.tif",
+    "ndre_url": "s3://tarlaanaliz-results/grape/2026-06-12/ndre.tif",
+    "ndwi_url": null,
+    "gndvi_url": null
+  },
+  "refly_recommended": false,
+  "expert_escalation_required": false,
+  "temporal_baseline_status": "READY",
+  "field_baseline_deviation": -0.06,
+  "training_suggested_priority": "MEDIUM",
+  "model_metadata": {
+    "model_id": "grape_disease_v3",
+    "model_version": "3.1.0",
+    "adapter_version": "lora_2026_05",
+    "capability_mode": "BASIC_4BAND",
+    "inference_stage": "STAGE2"
+  },
+  "processing_time_ms": 48213
+}

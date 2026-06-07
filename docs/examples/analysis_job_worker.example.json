@@ -1,0 +1,63 @@
+{
+  "job_id": "60a7f1b8-c9d4-4e5f-a7b8-c9d2a1b2c3d4",
+  "crop_type": "GRAPE",
+  "analysis_types": ["DISEASE", "GENERAL"],
+  "image_urls": [
+    "s3://tarlaanaliz-missions/2026/06/grape/IMG_0001.tif",
+    "s3://tarlaanaliz-missions/2026/06/grape/IMG_0002.tif"
+  ],
+  "mission_id": "mission-alasehir-2026-0612",
+  "field_id": "field-alasehir-bag-014",
+  "calibration_metadata": {
+    "calibration_type": "PANEL_ABSOLUTE",
+    "calibration_panel_id": "MICASENSE-RP-04915",
+    "irradiance_sensor": "DLS2",
+    "calibration_timestamp": "2026-06-12T07:55:00Z"
+  },
+  "drone_metadata": {
+    "sensor_model": "DJI_MAVIC_3M",
+    "available_bands": ["GREEN", "RED", "RED_EDGE", "NIR"],
+    "red_edge_center_nm": 730,
+    "has_lwir": false
+  },
+  "phenology_week": 14,
+  "previous_expert_verdict": null,
+  "priority_zones": [
+    {
+      "patch_id": "a1b2c3d4e5f60718293a4b5c6d7e8f90",
+      "geom": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [28.5201, 38.3512],
+            [28.5219, 38.3512],
+            [28.5219, 38.3527],
+            [28.5201, 38.3527],
+            [28.5201, 38.3512]
+          ]
+        ]
+      },
+      "priority_level": "EXPRESS",
+      "ndvi_value": 0.31,
+      "sampling_reason": "NDVI_THRESHOLD"
+    },
+    {
+      "patch_id": "f0e1d2c3b4a5968778695a4b3c2d1e0f",
+      "geom": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [28.5240, 38.3540],
+            [28.5258, 38.3540],
+            [28.5258, 38.3555],
+            [28.5240, 38.3555],
+            [28.5240, 38.3540]
+          ]
+        ]
+      },
+      "priority_level": "NORMAL",
+      "ndvi_value": 0.62,
+      "sampling_reason": "RANDOM_SAMPLE"
+    }
+  ]
+}

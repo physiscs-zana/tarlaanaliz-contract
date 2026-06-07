@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/edge/worker_result.v1.schema.json",
+  "title": "WorkerResult",
+  "description": "Analysis result produced by the platform worker and sent back to the edge. Contains analysis layers, coverage, and confidence data. Edge interface/contracts/schemas/edge/worker_result.v1 ile birebir uyumludur. (Bu, edge-tarafı özet kontratıdır; zengin analiz çıktısı worker/analysis_result.v1'dedir.)",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.2"
+    },
+    "job_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique analysis job identifier (UUID)."
+    },
+    "dataset_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Dataset that was analyzed (UUID)."
+    },
+    "field_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Field identifier for the analyzed area."
+    },
+    "crop_type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Crop type of the field, e.g. cotton, wheat."
+    },
+    "analysis_layers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "layer_code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Analysis layer identifier, e.g. NDVI, NDRE, stress_map."
+          },
+          "severity": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Severity classification for this layer."
+          },
+          "affected_area_m2": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Affected area in square meters."
+          }
+        },
+        "required": ["layer_code", "severity", "affected_area_m2"],
+        "additionalProperties": false
+      },
+      "description": "Array of analysis layer results."
+    },
+    "coverage_ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Ratio of observed footprint to expected area (KR-065). Range 0-1."
+    },
+    "observed_footprint_wkt": {
+      "type": "string",
+      "minLength": 1,
+      "description": "WKT polygon of the observed analysis coverage footprint."
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Overall confidence score for the analysis result. Range 0-1."
+    },
+    "model_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identifier of the ML model used for analysis."
+    },
+    "model_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Version of the ML model."
+    },
+    "analyzed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of analysis completion."
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^corr_[a-f0-9]{16,32}$",
+      "description": "Request-scoped trace identifier."
+    }
+  },
+  "required": [
+    "schema_version",
+    "job_id",
+    "dataset_id",
+    "field_id",
+    "crop_type",
+    "analysis_layers",
+    "coverage_ratio",
+    "observed_footprint_wkt",
+    "confidence_score",
+    "model_id",
+    "model_version",
+    "analyzed_at",
+    "correlation_id"
+  ],
+  "unevaluatedProperties": false
+}

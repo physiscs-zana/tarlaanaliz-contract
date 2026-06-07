@@ -503,7 +503,7 @@ python3 scripts/validate_v2_migration.py
 
 **Technical Issues:**
 - Slack: #contracts-dev
-- Create issue: [GitHub Issues](https://github.com/tarlaanaliz/contracts/issues)
+- Create issue: [GitHub Issues](https://github.com/tarlaanaliz/tarlaanaliz-contracts/issues)
 
 **Emergency (Production Down):**
 - Slack: #contracts-emergency

@@ -26,3 +26,9 @@ generated/
 .vscode/
 coverage.xml
 coverage_html/
+
+# Claude Code (per-developer permissions; do not commit)
+.claude/
+
+# local poetry config (virtualenvs.in-project, vs.)
+poetry.toml

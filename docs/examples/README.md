@@ -28,6 +28,12 @@ These examples serve multiple purposes:
 | `payment_intent_iban_paid.example.json` | `platform/payment_intent.v2.schema.json` | IBAN transfer payment (PAID) |
 | `payment_intent_iban_pending.example.json` | `platform/payment_intent.v2.schema.json` | IBAN transfer payment (PENDING) |
 | `thermal_analysis_result.example.json` | `worker/thermal_analysis_result.v1.schema.json` | Thermal analysis result (KR-084) |
+| `analysis_result_with_yield.example.json` | `worker/analysis_result.v1.schema.json` | Analysis result with KR-089 yield estimate |
+| `analysis_result_worker.example.json` | `worker/analysis_result.v1.schema.json` | Worker runtime fail-closed result (v3.0.0 superset) |
+| `analysis_job_worker.example.json` | `worker/analysis_job.v1.schema.json` | Worker runtime job: image_urls + calibration_metadata (v3.0.0 superset) |
+| `expert_feedback.example.json` | `worker/expert_feedback.v1.schema.json` | Expert feedback loop input (KR-029) |
+| `expert_review_queue.example.json` | `worker/expert_review_queue.v1.schema.json` | Expert escalation package (KR-071, PII-free) |
+| `intake_manifest_edge.example.json` | `edge/intake_manifest.v1.schema.json` | Edge operational intake (kiosk-emitted form, v3.0.0 oneOf) |
 
 ---
 
@@ -373,6 +379,6 @@ grep -r -i "email\|tckn\|otp" docs/examples/*.json
 
 ---
 
-**Last Updated:** 2026-03-07
-**Examples Count:** 11
+**Last Updated:** 2026-05-30
+**Examples Count:** 17
 **Validation Status:** ✅ All passing

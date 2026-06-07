@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/worker/expert_feedback.v1.schema.json",
+  "title": "ExpertFeedback",
+  "description": "Expert feedback input from ai.feedback.v1 RabbitMQ queue. KR-071: No PII. Aligned to training_feedback.v1.schema.json contract. Worker interface/contracts/expert_feedback.v1 ile birebir uyumludur.",
+  "type": "object",
+  "required": [
+    "feedback_id",
+    "review_id",
+    "analysis_result_id",
+    "expert_user_id",
+    "verdict",
+    "training_grade",
+    "created_at"
+  ],
+  "properties": {
+    "feedback_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "review_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Associated expert review ID (expert_reviews.review_id reference)"
+    },
+    "analysis_result_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Analyzed result ID. Replaces legacy 'job_id' field."
+    },
+    "expert_user_id": {
+      "type": "string",
+      "description": "Anonymized expert identifier (no PII per KR-071). Replaces legacy 'expert_id' field."
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["confirmed", "corrected", "rejected", "needs_more_expert"]
+    },
+    "corrected_class": {
+      "type": ["string", "null"],
+      "description": "Corrected class if verdict=corrected"
+    },
+    "confidence_in_correction": {
+      "type": ["number", "null"],
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Expert confidence in their correction (0-1). Shown in worker_ssot.md:175."
+    },
+    "training_grade": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D", "REJECT"],
+      "description": "KR-029: Only A and B are exported for training"
+    },
+    "grade_reason": {
+      "type": ["string", "null"],
+      "maxLength": 200,
+      "description": "Grade reason (max 200 chars)"
+    },
+    "notes": {
+      "type": ["string", "null"],
+      "maxLength": 350,
+      "pattern": "^[^<>{}\\[\\]`\\\\;|&$#%\u0000-\u001f\u007f]{0,350}$",
+      "description": "Optional expert notes. Max 350 chars. XSS/shell injection chars blocked (worker_ssot.md:184-194). T2.3: control characters (U+0000 through U+001F including newlines/tabs and U+007F DEL) also rejected to prevent null-byte injection and log-injection (26_04_rapor SEC-02). Single-line UTF-8 only."
+    },
+    "tile_coordinates": {
+      "type": ["object", "null"],
+      "properties": {
+        "x": { "type": "integer" },
+        "y": { "type": "integer" },
+        "width": { "type": "integer" },
+        "height": { "type": "integer" }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Feedback creation timestamp (ISO 8601)"
+    },
+    "bulk_approval_id": {
+      "type": ["string", "null"],
+      "description": "KARAR-15: Expert bulk approval ID (>=5 tiles + same field + same L3 class, grade=B default)"
+    },
+    "mask_correction": {
+      "type": ["object", "null"],
+      "description": "T1.3 Yol C — Expert correction shape for SEGMENTATION outputs (Yol B / Yol C polygon masks). Optional; legacy tile-rectangle producers (Yol A) emit null. Polygon correction granularity is per-Detection: an expert can ADD a missing polygon, REMOVE a wrong one, MODIFY boundary, or fully RE-MASK the tile. KARAR-15 bulk_approval continues to count tiles (not polygons) — this field carries the per-detection diff for grade A/B training export.",
+      "properties": {
+        "correction_type": {
+          "type": "string",
+          "enum": ["polygon_addition", "polygon_removal", "polygon_modification", "full_remask"],
+          "description": "What the expert changed relative to the model's detection."
+        },
+        "corrected_polygon_geojson": {
+          "type": ["string", "null"],
+          "description": "Replacement / addition GeoJSON Geometry (EPSG:4326). Null when correction_type=polygon_removal."
+        },
+        "corrected_class_id": {
+          "type": ["string", "null"],
+          "description": "Class id from config/crops/<crop>.yaml. May differ from the original detection's class_id when the expert reclassified the polygon."
+        },
+        "pixel_bbox": {
+          "type": ["object", "null"],
+          "description": "Tile-local pixel bbox (origin top-left) for the corrected polygon. Mirrors tile_coordinates shape; preserved for UI overlay alignment when CRS metadata is unavailable.",
+          "properties": {
+            "x": { "type": "integer" },
+            "y": { "type": "integer" },
+            "width": { "type": "integer" },
+            "height": { "type": "integer" }
+          }
+        }
+      },
+      "required": ["correction_type"],
+      "additionalProperties": false
+    },
+    "job_id": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "DEPRECATED: Legacy field, use analysis_result_id. Accepted for backward compatibility during migration."
+    },
+    "expert_id": {
+      "type": ["string", "null"],
+      "description": "DEPRECATED: Legacy field, use expert_user_id. Accepted for backward compatibility during migration."
+    }
+  },
+  "unevaluatedProperties": false
+}

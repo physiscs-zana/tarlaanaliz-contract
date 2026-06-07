@@ -1,0 +1,18 @@
+{
+  "job_id": "60a7f1b8-c9d4-4e5f-a7b8-c9d2a1b2c3d4",
+  "mission_id": "mission-alasehir-2026-0612",
+  "escalation_reason": "LOW_CONFIDENCE",
+  "confidence_score": 0.41,
+  "crop_type": "GRAPE",
+  "analysis_type": "DISEASE",
+  "predicted_class": "downy_mildew",
+  "tile_coordinates": { "x": 768, "y": 512, "width": 256, "height": 256 },
+  "thumbnail_url": "https://cdn.tarlaanaliz.com/tiles/2026-06-12/grape/tile_768_512_thumb.jpg",
+  "ndvi_value": 0.38,
+  "ndre_value": 0.19,
+  "senior_panel_redirect": false,
+  "escalation_round": 0,
+  "tile_group_size": 1,
+  "required_reviewers": 2,
+  "spot_check": false
+}

@@ -2,85 +2,119 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/schemas/edge/scan_report.v1.schema.json",
   "title": "EdgeScanReport",
-  "description": "Edge tarafı AV1 tarama raporu — KR-073 kanonik. Kiosk'taki ilk AV taramasının sonucu.",
+  "description": "Edge tarafı AV tarama raporu — KR-073 kanonik. SUPERSET (contracts v3.0.0): oneOf ile iki ayrık formu valide eder — (1) abstract AV1 form (kiosk_id/engine_id/signatures_version, findings[]); (2) edge operasyonel form (AV1+AV2 ortak: scan_type/scan_mode, threats[], correlation_id). Bir payload tam olarak BİR formla eşleşir.",
   "type": "object",
-  "unevaluatedProperties": false,
-  "required": [
-    "report_id",
-    "dataset_id",
-    "kiosk_id",
-    "engine_id",
-    "signatures_version",
-    "started_at",
-    "ended_at",
-    "result"
+  "oneOf": [
+    { "$ref": "#/$defs/AbstractForm" },
+    { "$ref": "#/$defs/OperationalForm" }
   ],
-  "properties": {
-    "report_id": {
-      "type": "string",
-      "format": "uuid"
-    },
-    "dataset_id": {
-      "type": "string",
-      "format": "uuid"
-    },
-    "kiosk_id": {
-      "type": "string"
-    },
-    "engine_id": {
-      "type": "string"
-    },
-    "signatures_version": {
-      "type": "string"
-    },
-    "started_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "ended_at": {
-      "type": "string",
-      "format": "date-time"
-    },
-    "scanned_file_count": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "result": {
-      "type": "string",
-      "enum": [
-        "PASS",
-        "FAIL"
-      ]
-    },
-    "findings": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "file": {
-            "type": "string"
-          },
-          "threat_name": {
-            "type": "string"
-          },
-          "action_taken": {
-            "type": "string",
-            "enum": [
-              "QUARANTINED",
-              "DELETED",
-              "LOGGED"
-            ]
+  "unevaluatedProperties": false,
+  "$defs": {
+    "AbstractForm": {
+      "type": "object",
+      "title": "Abstract AV1 scan report",
+      "description": "Early abstract edge form (KR-073). report_id/dataset_id = UUID.",
+      "required": [
+        "report_id",
+        "dataset_id",
+        "kiosk_id",
+        "engine_id",
+        "signatures_version",
+        "started_at",
+        "ended_at",
+        "result"
+      ],
+      "properties": {
+        "report_id": { "type": "string", "format": "uuid" },
+        "dataset_id": { "type": "string", "format": "uuid" },
+        "kiosk_id": { "type": "string" },
+        "engine_id": { "type": "string" },
+        "signatures_version": { "type": "string" },
+        "started_at": { "type": "string", "format": "date-time" },
+        "ended_at": { "type": "string", "format": "date-time" },
+        "scanned_file_count": { "type": "integer", "minimum": 0 },
+        "result": { "type": "string", "enum": ["PASS", "FAIL"] },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": { "type": "string" },
+              "threat_name": { "type": "string" },
+              "action_taken": {
+                "type": "string",
+                "enum": ["QUARANTINED", "DELETED", "LOGGED"]
+              }
+            }
           }
-        }
-      }
+        },
+        "quarantined": { "type": "boolean" }
+      },
+      "unevaluatedProperties": false
     },
-    "quarantined": {
-      "type": "boolean"
+    "OperationalForm": {
+      "type": "object",
+      "title": "Operational AV1/AV2 scan report",
+      "description": "Edge operational form. scan_type distinguishes AV1 (edge/M1) vs AV2 (platform/center). scan_mode reflects SMART or BYPASS policy.",
+      "required": [
+        "schema_version",
+        "report_id",
+        "dataset_id",
+        "scan_type",
+        "scan_mode",
+        "scanner_version",
+        "signature_db_version",
+        "result",
+        "threats",
+        "scanned_at",
+        "correlation_id"
+      ],
+      "properties": {
+        "schema_version": { "type": "string", "const": "1.2" },
+        "report_id": { "type": "string", "minLength": 1, "description": "Unique identifier for this scan report." },
+        "dataset_id": { "type": "string", "minLength": 1, "description": "Dataset that was scanned." },
+        "scan_type": {
+          "type": "string",
+          "enum": ["AV1", "AV2"],
+          "description": "AV1 = edge scan (M1), AV2 = platform/center scan."
+        },
+        "scan_mode": {
+          "type": "string",
+          "enum": ["SMART", "BYPASS"],
+          "description": "Scanning mode active at time of scan (KR-073)."
+        },
+        "scanner_version": { "type": "string", "minLength": 1, "description": "Version of the AV scanner engine." },
+        "signature_db_version": { "type": "string", "minLength": 1, "description": "Version of the virus signature database." },
+        "result": {
+          "type": "string",
+          "enum": ["PASS", "FAIL", "QUARANTINE"],
+          "description": "Overall scan result. FAIL triggers REJECTED_QUARANTINE (HC-04)."
+        },
+        "threats": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file_path": { "type": "string", "minLength": 1 },
+              "threat_name": { "type": "string", "minLength": 1 },
+              "severity": { "type": "string", "minLength": 1 }
+            },
+            "required": ["file_path", "threat_name", "severity"],
+            "additionalProperties": false
+          },
+          "description": "List of detected threats. Empty array when result is PASS."
+        },
+        "scanned_at": { "type": "string", "format": "date-time", "description": "ISO-8601 timestamp of scan completion." },
+        "correlation_id": {
+          "type": "string",
+          "pattern": "^corr_[a-f0-9]{16,32}$",
+          "description": "Request-scoped trace identifier."
+        }
+      },
+      "unevaluatedProperties": false
     }
   },
-  "x-kr-ref": [
-    "KR-073"
-  ],
+  "x-kr-ref": ["KR-073"],
   "x-ssot-version": "1.2.0",
-  "x-updated": "2026-03-03"
+  "x-updated": "2026-05-30"
 }

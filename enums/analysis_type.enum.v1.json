@@ -13,11 +13,13 @@
     "WATER_STRESS",
     "NITROGEN_STRESS",
     "THERMAL_STRESS",
-    "SALT_STRESS"
+    "SALT_STRESS",
+    "GENERAL"
   ],
   "metadata": {
-    "version": "1.0.0",
-    "lastUpdated": "2026-01-26",
+    "version": "1.2.0",
+    "lastUpdated": "2026-05-30",
+    "changeNote": "MINOR: SALT_STRESS eklendi (Platform KR-002 katmanı — toprak tuzluluğu stresi, Kahverengi/Bej + tuz kristali deseni). v1.1.0: GENERAL eklendi (Worker fallback analysis_type).",
     "kr002_reference": "Analysis types defined in KR-002 (Harita katmanı anlamları). These are map layers with specific colors and patterns.",
     "layerMapping": {
       "HEALTH": {

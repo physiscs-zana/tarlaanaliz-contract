@@ -266,7 +266,7 @@ Add to `.github/workflows/validate.yml`:
 ### Platform Service (platform repo)
 ```bash
 # In platform repo
-git submodule add https://github.com/tarlaanaliz/contracts contracts
+git submodule add https://github.com/tarlaanaliz/tarlaanaliz-contracts contracts
 git submodule update --remote
 python3 contracts/tools/pin_version.py --verify
 ```
@@ -274,7 +274,7 @@ python3 contracts/tools/pin_version.py --verify
 ### Edge Station (edge repo)
 ```bash
 # In edge repo
-git submodule add https://github.com/tarlaanaliz/contracts contracts
+git submodule add https://github.com/tarlaanaliz/tarlaanaliz-contracts contracts
 git submodule update --remote
 ./contracts/tools/sync_to_repos.sh --target edge
 ```
@@ -282,7 +282,7 @@ git submodule update --remote
 ### Worker Service (worker repo)
 ```bash
 # In worker repo
-git submodule add https://github.com/tarlaanaliz/contracts contracts
+git submodule add https://github.com/tarlaanaliz/tarlaanaliz-contracts contracts
 git submodule update --remote
 ./contracts/tools/sync_to_repos.sh --target worker
 ```

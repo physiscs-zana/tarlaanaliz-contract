@@ -194,39 +194,48 @@ class TestSchemaValidation:
                 assert 'value' in value, f"Missing 'value' in {enum_file} metadata"
                 assert 'description' in value, f"Missing 'description' for {value.get('value')} in {enum_file}"
     
-    def test_crop_type_enum_has_9_values(self, base_dir: Path):
-        """Test that crop_type enum has exactly 9 supported crops (KR-002)"""
+    def test_crop_type_enum_matches_worker_canonical(self, base_dir: Path):
+        """Test crop_type enum is the worker-canonical 13-value set (contracts v3.0.0).
+
+        v3.0.0 MAJOR: BARLEY/POTATO removed, CHERRY/FIG added — aligned 1:1 with
+        Worker CropType (src/core/domain/enums.py). See migration_guides/crop_type_v1_to_v2.md.
+        """
         crop_file = base_dir / "enums" / "crop_type.enum.v1.json"
-        
+
         with open(crop_file, 'r', encoding='utf-8') as f:
             schema = json.load(f)
-        
+
         expected_crops = {
-            'COTTON', 'PISTACHIO', 'MAIZE', 'WHEAT',
-            'SUNFLOWER', 'GRAPE', 'HAZELNUT', 'OLIVE', 'RED_LENTIL'
+            'COTTON', 'CORN', 'WHEAT', 'SUNFLOWER', 'PISTACHIO',
+            'GRAPE', 'OLIVE', 'LENTIL', 'APPLE', 'PEACH',
+            'HAZELNUT', 'CHERRY', 'FIG'
         }
-        
+
         actual_crops = set(schema.get('enum', []))
-        
+
         assert actual_crops == expected_crops, \
-            f"Expected 9 supported crops: {expected_crops}, got: {actual_crops}"
-    
-    def test_analysis_type_enum_has_8_values(self, base_dir: Path):
-        """Test that analysis_type enum has exactly 8 KR-002/KR-064/KR-084 map layers"""
+            f"crop_type must match worker-canonical 13 crops: {expected_crops}, got: {actual_crops}"
+
+    def test_analysis_type_enum_canonical(self, base_dir: Path):
+        """Test analysis_type enum is the canonical KR-002/KR-064/KR-084 map-layer set.
+
+        v3.0.0: SALT_STRESS added (platform KR-002 layer); GENERAL is the worker fallback.
+        """
         analysis_file = base_dir / "enums" / "analysis_type.enum.v1.json"
 
         with open(analysis_file, 'r', encoding='utf-8') as f:
             schema = json.load(f)
 
         expected_types = {
-            'HEALTH', 'DISEASE', 'PEST', 'FUNGUS',
-            'WEED', 'WATER_STRESS', 'NITROGEN_STRESS', 'THERMAL_STRESS'
+            'HEALTH', 'DISEASE', 'PEST', 'FUNGUS', 'WEED',
+            'WATER_STRESS', 'NITROGEN_STRESS', 'THERMAL_STRESS',
+            'SALT_STRESS', 'GENERAL'
         }
 
         actual_types = set(schema.get('enum', []))
 
         assert actual_types == expected_types, \
-            f"Expected 8 KR-002/KR-064/KR-084 analysis types: {expected_types}, got: {actual_types}"
+            f"Expected canonical analysis types: {expected_types}, got: {actual_types}"
     
     def test_phone_pattern_is_10_digits(self, schemas_dir: Path):
         """Test that user_pii phone pattern is 10 digits (KR-050)"""

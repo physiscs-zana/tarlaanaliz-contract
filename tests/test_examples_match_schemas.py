@@ -70,6 +70,13 @@ class TestExamplesValidation:
         'intake_manifest.example.json': 'edge/intake_manifest.v1.schema.json',
         'analysis_job.example.json': 'worker/analysis_job.v1.schema.json',
         'analysis_result.example.json': 'worker/analysis_result.v1.schema.json',
+        'analysis_result_with_yield.example.json': 'worker/analysis_result.v1.schema.json',
+        'analysis_result_worker.example.json': 'worker/analysis_result.v1.schema.json',
+        'analysis_job_worker.example.json': 'worker/analysis_job.v1.schema.json',
+        'expert_feedback.example.json': 'worker/expert_feedback.v1.schema.json',
+        'expert_review_queue.example.json': 'worker/expert_review_queue.v1.schema.json',
+        'intake_manifest_edge.example.json': 'edge/intake_manifest.v1.schema.json',
+        'thermal_analysis_result.example.json': 'worker/thermal_analysis_result.v1.schema.json',
         'dataset.example.json': 'datasets/dataset.v1.schema.json',
         'dataset_manifest.example.json': 'datasets/dataset_manifest.v1.schema.json',
         'payment_intent_creditcard_paid.example.json': 'platform/payment_intent.v2.schema.json',
@@ -218,6 +225,10 @@ class TestExamplesValidation:
         entity_id_pattern = re.compile(
             r'^[a-z][a-z0-9]*_[0-9a-f]{24}$'
         )
+        # UUID4 hex without dashes (32 hex chars) — the canonical patch_id
+        # form mandated by edge/intake_manifest.v1 + worker/analysis_job.v1
+        # priority_zones (^[a-f0-9]{32}$). A dashless UUID is still a UUID.
+        uuid_hex32_pattern = re.compile(r'^[0-9a-f]{32}$')
 
         for example_file in examples_dir.glob("*.json"):
             example = self.load_example(example_file)
@@ -230,13 +241,14 @@ class TestExamplesValidation:
                             # well-known non-entity ID formats (e.g. prefixed IDs)
                             is_uuid = bool(uuid_pattern.match(value))
                             is_entity_hex = bool(entity_id_pattern.match(value))
+                            is_uuid_hex32 = bool(uuid_hex32_pattern.match(value))
                             has_underscore = '_' in value
 
                             has_hyphen = '-' in value
 
-                            assert is_uuid or is_entity_hex or has_underscore or has_hyphen, \
+                            assert is_uuid or is_entity_hex or is_uuid_hex32 or has_underscore or has_hyphen, \
                                 (f"ID in {example_file.name} must be UUID, "
-                                 f"entity_24hex, or contain a delimiter: {key}={value}")
+                                 f"entity_24hex, uuid-hex32, or contain a delimiter: {key}={value}")
 
                         check_ids(value, f"{path}.{key}" if path else key)
                 elif isinstance(obj, list):
