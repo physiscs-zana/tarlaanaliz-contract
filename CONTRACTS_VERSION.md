@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 3.0.0
+## Version: 4.0.0
 
-**Release Date:** 2026-06-14T17:32:22.122311Z  
+**Release Date:** 2026-06-14T17:38:24.311513Z  
 **Breaking Change:** YES  
-**Contracts Checksum (SHA-256):** `ad485ac4975c8b5242548755c9ee3410488f72a643779ed4b087388c59ef10c8`
+**Contracts Checksum (SHA-256):** `352b3dfb36ee251e04677b0a972ff2042ab25e92b96e1cdac34e4e7f5bd9e6ac`
 
 ---
 
@@ -41,11 +41,11 @@ Individual file hashes for verification:
 
 ## Changelog
 
-### v3.0.0 (2026-06-14)
+### v4.0.0 (2026-06-14)
 
 **Breaking:** YES
 
-**MAJOR/BREAKING**: field.v1 + expert_labeling_card.v1 region enum'larindan EGE cografi bolgesi kaldirildi. tarlaanaliz yalnizca GAP bolgesi icindir; Ege cografyasi desteklenmez (egeanaliz ayri dagitim).
+**MAJOR/BREAKING**: crop_type worker-canonical 14 degere hizalandi. BARLEY+POTATO kaldirildi (worker portfoy karari 2026-05-18), CHERRY+FIG+RICE eklendi. expert_review_queue.v1 inline enum + enums/crop_type.enum.v1 guncellendi. Bkz migration_guides/crop_type_v1_to_v2.md.
 
 ---
 
@@ -63,7 +63,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("ad485ac4975c8b5242548755c9ee3410488f72a643779ed4b087388c59ef10c8"), "Contracts checksum mismatch!"
+assert verify_contracts("352b3dfb36ee251e04677b0a972ff2042ab25e92b96e1cdac34e4e7f5bd9e6ac"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -76,7 +76,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("ad485ac4975c8b5242548755c9ee3410488f72a643779ed4b087388c59ef10c8"), "Contracts checksum mismatch!");
+assert(verifyContracts("352b3dfb36ee251e04677b0a972ff2042ab25e92b96e1cdac34e4e7f5bd9e6ac"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -127,4 +127,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-06-14T17:32:22.122311Z
+**Last Updated:** 2026-06-14T17:38:24.311513Z

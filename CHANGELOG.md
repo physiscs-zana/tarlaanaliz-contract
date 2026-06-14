@@ -7,6 +7,25 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [4.0.0] - 2026-06-14
+
+**Breaking-change:** EVET — `crop_type` worker-canonical 14 değere hizalandı
+
+### Removed
+
+- **`enums/crop_type.enum.v1.json`:** `BARLEY` ve `POTATO` kaldırıldı (worker portföy kararı 2026-05-18 — yerel pazar/ihracat değeri ve drone WTP düşük, açık kaynak veri yok).
+
+### Added
+
+- **`enums/crop_type.enum.v1.json`:** `CHERRY`, `FIG`, `RICE` eklendi (worker `CropType` ile 1:1, 14 değer).
+- **`schemas/worker/expert_review_queue.v1.schema.json`:** inline `crop_type` enum'una `RICE` eklendi (14 değer); açıklama "13-value" → "14-value".
+
+### Migration
+
+- Bkz. `docs/migration_guides/crop_type_v1_to_v2.md`. Persisted `BARLEY`/`POTATO` değerleri artık geçersiz.
+
+---
+
 ## [3.0.0] - 2026-06-14
 
 **Breaking-change:** EVET — coğrafi `EGE` bölgesi region enum'larından kaldırıldı

@@ -195,9 +195,9 @@ class TestSchemaValidation:
                 assert 'description' in value, f"Missing 'description' for {value.get('value')} in {enum_file}"
     
     def test_crop_type_enum_matches_worker_canonical(self, base_dir: Path):
-        """Test crop_type enum is the worker-canonical 13-value set (contracts v3.0.0).
+        """Test crop_type enum is the worker-canonical 14-value set (contracts v4.0.0).
 
-        v3.0.0 MAJOR: BARLEY/POTATO removed, CHERRY/FIG added — aligned 1:1 with
+        v4.0.0 MAJOR: BARLEY/POTATO removed, CHERRY/FIG/RICE added — aligned 1:1 with
         Worker CropType (src/core/domain/enums.py). See migration_guides/crop_type_v1_to_v2.md.
         """
         crop_file = base_dir / "enums" / "crop_type.enum.v1.json"
@@ -208,13 +208,13 @@ class TestSchemaValidation:
         expected_crops = {
             'COTTON', 'CORN', 'WHEAT', 'SUNFLOWER', 'PISTACHIO',
             'GRAPE', 'OLIVE', 'LENTIL', 'APPLE', 'PEACH',
-            'HAZELNUT', 'CHERRY', 'FIG'
+            'HAZELNUT', 'CHERRY', 'FIG', 'RICE'
         }
 
         actual_crops = set(schema.get('enum', []))
 
         assert actual_crops == expected_crops, \
-            f"crop_type must match worker-canonical 13 crops: {expected_crops}, got: {actual_crops}"
+            f"crop_type must match worker-canonical 14 crops: {expected_crops}, got: {actual_crops}"
 
     def test_analysis_type_enum_canonical(self, base_dir: Path):
         """Test analysis_type enum is the canonical KR-002/KR-064/KR-084 map-layer set.

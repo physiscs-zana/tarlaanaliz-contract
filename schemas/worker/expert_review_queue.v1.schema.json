@@ -44,9 +44,9 @@
       "enum": [
         "COTTON", "CORN", "WHEAT", "SUNFLOWER", "PISTACHIO",
         "GRAPE", "OLIVE", "LENTIL",
-        "APPLE", "PEACH", "HAZELNUT", "CHERRY", "FIG"
+        "APPLE", "PEACH", "HAZELNUT", "CHERRY", "FIG", "RICE"
       ],
-      "description": "Same enum as enums/crop_type.enum.v1.json (worker-canonical 13-value set)."
+      "description": "Same enum as enums/crop_type.enum.v1.json (worker-canonical 14-value set)."
     },
     "analysis_type": {
       "type": "string",

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/enums/crop_type.enum.v1.json",
   "title": "CropType",
-  "description": "Agricultural crop types — Worker referanslı kanonik enum. GAP bölgesi öncelikli + ek bitkiler.",
+  "description": "Agricultural crop types — Worker referanslı kanonik enum (14 değer). GAP bölgesi öncelikli + ek bitkiler.",
   "type": "string",
   "enum": [
     "COTTON",
@@ -11,18 +11,19 @@
     "SUNFLOWER",
     "PISTACHIO",
     "GRAPE",
-    "BARLEY",
     "OLIVE",
-    "POTATO",
     "LENTIL",
     "APPLE",
     "PEACH",
-    "HAZELNUT"
+    "HAZELNUT",
+    "CHERRY",
+    "FIG",
+    "RICE"
   ],
   "metadata": {
-    "version": "1.1.0",
-    "lastUpdated": "2026-04-04",
-    "changeNote": "Worker referanslı hizalama: MAIZE→CORN, RED_LENTIL→LENTIL, BARLEY/POTATO/APPLE/PEACH eklendi.",
+    "version": "2.0.0",
+    "lastUpdated": "2026-06-14",
+    "changeNote": "Worker-canonical hizalama: BARLEY+POTATO portföyden çıkarıldı (worker kararı 2026-05-18 — yerel pazar/ihracat değeri ve drone WTP düşük, açık kaynak veri yok), CHERRY+FIG+RICE eklendi. Toplam 14 değer.",
     "gapPriorities": {
       "description": "GAP region priority crops — 9 temel GAP bitkisi",
       "crops": [
@@ -43,7 +44,7 @@
         "WHEAT",
         "CORN",
         "SUNFLOWER",
-        "BARLEY"
+        "RICE"
       ],
       "LEGUMES": [
         "LENTIL"
@@ -53,13 +54,12 @@
         "HAZELNUT",
         "OLIVE",
         "APPLE",
-        "PEACH"
+        "PEACH",
+        "CHERRY",
+        "FIG"
       ],
       "VINEYARDS": [
         "GRAPE"
-      ],
-      "TUBERS": [
-        "POTATO"
       ]
     },
     "displayNames": {
@@ -70,13 +70,14 @@
         "SUNFLOWER": "Ayçiçeği",
         "PISTACHIO": "Antep Fıstığı",
         "GRAPE": "Üzüm",
-        "BARLEY": "Arpa",
         "OLIVE": "Zeytin",
-        "POTATO": "Patates",
         "LENTIL": "Mercimek",
         "APPLE": "Elma",
         "PEACH": "Şeftali",
-        "HAZELNUT": "Fındık"
+        "HAZELNUT": "Fındık",
+        "CHERRY": "Kiraz",
+        "FIG": "İncir",
+        "RICE": "Çeltik"
       },
       "en": {
         "COTTON": "Cotton",
@@ -85,13 +86,14 @@
         "SUNFLOWER": "Sunflower",
         "PISTACHIO": "Pistachio",
         "GRAPE": "Grape",
-        "BARLEY": "Barley",
         "OLIVE": "Olive",
-        "POTATO": "Potato",
         "LENTIL": "Lentil",
         "APPLE": "Apple",
         "PEACH": "Peach",
-        "HAZELNUT": "Hazelnut"
+        "HAZELNUT": "Hazelnut",
+        "CHERRY": "Cherry",
+        "FIG": "Fig",
+        "RICE": "Rice"
       }
     },
     "aliases": {
@@ -100,7 +102,9 @@
       "RED_LENTIL": "LENTIL"
     },
     "archived": {
-      "PEACH": "Prunus cinsi gelecekte ortak pipeline ile geri eklenebilir. Elma ile hastalık örtüşme yüksek."
+      "description": "Removed crop types — kept for migration reference only.",
+      "BARLEY": "2026-05-18 worker portföy kararı ile çıkarıldı (yerel pazar + ihracat değeri yetersiz, drone WTP düşük).",
+      "POTATO": "2026-05-18 worker portföy kararı ile çıkarıldı (aynı gerekçe)."
     }
   },
   "notes": {
