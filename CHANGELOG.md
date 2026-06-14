@@ -7,6 +7,17 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [3.0.0] - 2026-06-14
+
+**Breaking-change:** EVET — coğrafi `EGE` bölgesi region enum'larından kaldırıldı
+
+### Removed
+
+- **`schemas/core/field.v1.schema.json`:** `region` enum'undan `EGE` değeri kaldırıldı. tarlaanaliz yalnızca GAP (Güneydoğu Anadolu) bölgesi içindir; Ege coğrafyası desteklenmez (egeanaliz ayrı dağıtım).
+- **`schemas/worker/expert_labeling_card.v1.schema.json`:** `endemic_regions` ve `region` enum'larından `EGE` değeri kaldırıldı (aynı gerekçe).
+
+---
+
 ## [2.0.2] - 2026-03-15
 
 **KR-025 Compliance Fix**

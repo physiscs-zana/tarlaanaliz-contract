@@ -375,7 +375,6 @@
         "type": "string",
         "enum": [
           "MARMARA",
-          "TARLA",
           "AKDENIZ",
           "IC_ANADOLU",
           "KARADENIZ",
@@ -514,7 +513,6 @@
             ],
             "enum": [
               "MARMARA",
-              "TARLA",
               "AKDENIZ",
               "IC_ANADOLU",
               "KARADENIZ",
