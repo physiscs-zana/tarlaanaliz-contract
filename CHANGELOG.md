@@ -7,6 +7,61 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [4.1.0] - 2026-06-21
+
+**MINOR (eklemeli) — KR-019 tam uzman kapısı: iki olay şeması + mission_status durumları**
+
+Çiftçinin her analiz sonucunu görmeden önce zorunlu uzman onayından geçmesini
+sağlayan "tam kapı" (full expert gate) iş akışı için sözleşmeye iki yeni domain
+olayı ve `mission_status` enum'una iki yeni durum eklendi. Değişiklik tamamen
+eklemeli; mevcut şemalar/enum değerleri değişmedi (geriye uyumlu).
+
+### Added
+
+- **`schemas/events/analysis_review_requested.v1.schema.json`:** Worker analizi
+  bitince platform her sonuç için bir uzman incelemesi açar; bu olay yayınlanır
+  (artık yalnız düşük-güvenli vakalar değil — KR-019 tam kapı). `review_id`,
+  `analysis_result_id`, `mission_id`, `field_id` (required) + opsiyonel
+  `job_id`/`dataset_id`/`analysis_type`/`crop_type`/`confidence_score`. Kimlikler
+  RFC 4122 UUID (çalışan platform/worker tel-gerçeği).
+- **`schemas/events/expert_review_decided.v1.schema.json`:** Uzman kararı (`verdict`:
+  confirmed/corrected/rejected/needs_more_expert) ve yayın kapısı sonucu
+  (`gate_outcome`: APPROVED_PUBLISHED / REJECTED / ESCALATED). Yalnız
+  APPROVED_PUBLISHED çiftçiye yayını yetkilendirir; `gate_outcome` GERÇEK N-uzman
+  konsensüs kararıdır (naif verdict eşlemesi değil — erken çiftçi yayınını önler).
+- **`enums/mission_status.enum.v1.json`** (metadata 1.0.0 → 1.1.0): `PENDING_REVIEW`
+  (KR-019 yayın kapısı — uzman onayı bekliyor) ve `EXPERT_REJECTED` (uzman reddi →
+  yeniden işleme için `IN_ANALYSIS`'e döner) durumları eklendi. Tam metadata
+  (statusDescriptions, statusFlow.alternativeFlows.expertRejection,
+  statusCategories, displayNames tr/en, uiColors) güncellendi.
+- `docs/examples/analysis_review_requested.example.json`,
+  `docs/examples/expert_review_decided.example.json` + test eşlemesi
+  (`tests/test_examples_match_schemas.py`) ve README girişleri.
+- **`tests/test_lifecycle_chain.py`** + **`tests/fixtures/full_lifecycle_chain.json`:**
+  uçtan uca olay zinciri bütünlük testi — her belge kendi şemasına doğrular,
+  yayın kapısı (onayda derived.published VAR, redde YOK) ve verdict→gate_outcome
+  türetimi assert edilir.
+
+### Notes
+
+- **Lifecycle = DRAFT.** İki olay şeması `notes.lifecycle = DRAFT` ile işaretlidir:
+  tarlaanaliz-platform'da uyumlu üretici (worker→platform bridge / expert-portal)
+  henüz YOK; Faz 2/3'te eklenecek. Üretici hizalanana kadar bu wire olaylarını
+  TÜKETMEYİN. Üretici hazır olunca lifecycle ACTIVE'e çekilecek (planlanan 4.1.1
+  PATCH).
+- **`notes.platform_alignment`** eklendi — platform kısa-form alias eşlemesi
+  belgelendi (kanonik ← platform: `ACCEPTED←ACKED`, `IN_PROGRESS←FLOWN`,
+  `IN_ANALYSIS←ANALYZING`, `DELIVERED←DONE`). Alias'ları kanonik uzun forma yeniden
+  adlandırmak (platform DB enum migration'ı) ayrı bir MAJOR iştir; bu sürümde sapma
+  yalnız belgelendi, birleştirilmedi.
+
+### Migration
+
+- Eklemeli MINOR — consumer'lar mevcut kullanımlarını bozmadan 4.1.0'a pin'leyebilir.
+  Yeni olayları tüketmek isteyen platform/worker, UUID kimlik biçimini varsayar.
+
+---
+
 ## [4.0.0] - 2026-06-14
 
 **Breaking-change:** EVET — `crop_type` worker-canonical 14 değere hizalandı

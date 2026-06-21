@@ -16,6 +16,8 @@
     "RELEASED_FROM_QUARANTINE",
     "IN_ANALYSIS",
     "ANALYSIS_COMPLETED",
+    "PENDING_REVIEW",
+    "EXPERT_REJECTED",
     "VERIFIED",
     "DELIVERED",
     "FAILED",
@@ -24,8 +26,8 @@
     "REJECTED"
   ],
   "metadata": {
-    "version": "1.0.0",
-    "lastUpdated": "2026-01-26",
+    "version": "1.1.0",
+    "lastUpdated": "2026-06-21",
     "statusFlow": {
       "description": "Typical mission status flow",
       "normalFlow": [
@@ -40,6 +42,7 @@
         "RELEASED_FROM_QUARANTINE",
         "IN_ANALYSIS",
         "ANALYSIS_COMPLETED",
+        "PENDING_REVIEW",
         "VERIFIED",
         "DELIVERED"
       ],
@@ -47,7 +50,8 @@
         "failure": ["IN_PROGRESS", "FAILED"],
         "cancellation": ["PLANNED", "CANCELLED"],
         "hold": ["PLANNED", "ON_HOLD", "PLANNED"],
-        "rejection": ["ASSIGNED", "REJECTED", "PLANNED"]
+        "rejection": ["ASSIGNED", "REJECTED", "PLANNED"],
+        "expertRejection": ["PENDING_REVIEW", "EXPERT_REJECTED", "IN_ANALYSIS"]
       }
     },
     "statusDescriptions": {
@@ -118,9 +122,24 @@
       },
       "ANALYSIS_COMPLETED": {
         "description": "Analysis completed, awaiting verification",
-        "allowedTransitions": ["VERIFIED", "FAILED"],
+        "allowedTransitions": ["PENDING_REVIEW", "VERIFIED", "FAILED"],
         "actor": "WORKER_SYSTEM",
         "userFacing": true
+      },
+      "PENDING_REVIEW": {
+        "description": "Analysis result is awaiting mandatory expert approval before farmer-facing publication (KR-019 full expert gate)",
+        "allowedTransitions": ["VERIFIED", "EXPERT_REJECTED", "FAILED", "CANCELLED"],
+        "actor": "EXPERT, ANALYST",
+        "userFacing": true,
+        "krReference": "KR-019"
+      },
+      "EXPERT_REJECTED": {
+        "description": "Expert rejected the analysis result; mission is routed back for reprocessing (KR-019)",
+        "allowedTransitions": ["IN_ANALYSIS", "FAILED", "CANCELLED"],
+        "actor": "EXPERT",
+        "userFacing": true,
+        "krReference": "KR-019",
+        "requiresRejectionReason": true
       },
       "VERIFIED": {
         "description": "Results verified and ready for delivery",
@@ -170,10 +189,10 @@
       "PRE_FLIGHT": ["DRAFT", "PLANNED", "ASSIGNED", "ACCEPTED"],
       "FLIGHT": ["IN_PROGRESS", "COMPLETED"],
       "POST_FLIGHT": ["UPLOADED", "IN_QUARANTINE", "RELEASED_FROM_QUARANTINE"],
-      "PROCESSING": ["IN_ANALYSIS", "ANALYSIS_COMPLETED"],
+      "PROCESSING": ["IN_ANALYSIS", "ANALYSIS_COMPLETED", "PENDING_REVIEW"],
       "FINAL": ["VERIFIED", "DELIVERED"],
       "TERMINAL": ["DELIVERED", "FAILED", "CANCELLED"],
-      "BLOCKED": ["ON_HOLD", "REJECTED", "IN_QUARANTINE"]
+      "BLOCKED": ["ON_HOLD", "REJECTED", "IN_QUARANTINE", "EXPERT_REJECTED"]
     },
     "displayNames": {
       "tr": {
@@ -188,6 +207,8 @@
         "RELEASED_FROM_QUARANTINE": "Karantinadan Çıktı",
         "IN_ANALYSIS": "Analiz Ediliyor",
         "ANALYSIS_COMPLETED": "Analiz Tamamlandı",
+        "PENDING_REVIEW": "Uzman Onayı Bekliyor",
+        "EXPERT_REJECTED": "Uzman Reddetti",
         "VERIFIED": "Doğrulandı",
         "DELIVERED": "Teslim Edildi",
         "FAILED": "Başarısız",
@@ -207,6 +228,8 @@
         "RELEASED_FROM_QUARANTINE": "Released from Quarantine",
         "IN_ANALYSIS": "In Analysis",
         "ANALYSIS_COMPLETED": "Analysis Completed",
+        "PENDING_REVIEW": "Pending Expert Review",
+        "EXPERT_REJECTED": "Expert Rejected",
         "VERIFIED": "Verified",
         "DELIVERED": "Delivered",
         "FAILED": "Failed",
@@ -227,6 +250,8 @@
       "RELEASED_FROM_QUARANTINE": "green",
       "IN_ANALYSIS": "blue",
       "ANALYSIS_COMPLETED": "blue",
+      "PENDING_REVIEW": "orange",
+      "EXPERT_REJECTED": "red",
       "VERIFIED": "green",
       "DELIVERED": "green",
       "FAILED": "red",
@@ -239,6 +264,8 @@
     "breaking_change_policy": "Adding new statuses is non-breaking (MINOR) if inserted appropriately in flow. Removing or renaming statuses is breaking (MAJOR).",
     "state_machine": "Mission status transitions should be validated server-side. Invalid transitions should be rejected with 409 Conflict.",
     "kr_reference": "Mission flow defined in KR-015 (Pilot), KR-016 (Routing), KR-017 (Analysis), and SOP quarantine sections.",
-    "audit_logging": "All status transitions must be logged with timestamp, actor, and reason (if applicable)."
+    "audit_logging": "All status transitions must be logged with timestamp, actor, and reason (if applicable).",
+    "expert_gate": "PENDING_REVIEW and EXPERT_REJECTED added in 1.1.0 to express the KR-019 full expert gate (added alongside the 4.1.0 expert-gate events analysis.review_requested / expert.review_decided, currently DRAFT until the platform producers land in Faz 2/3). PENDING_REVIEW gates farmer-facing publication; only after expert approval does the mission proceed to VERIFIED/DELIVERED. EXPERT_REJECTED routes the result back to IN_ANALYSIS for reprocessing. (SYNC-2 audit 2026-06-21)",
+    "platform_alignment": "The tarlaanaliz-platform runtime persists a condensed alias vocabulary for the canonical states (mission_model.py mission_status ENUM). Canonical (this enum) <- platform alias: ACCEPTED<-ACKED, IN_PROGRESS<-FLOWN, IN_ANALYSIS<-ANALYZING, DELIVERED<-DONE. PENDING_REVIEW, EXPERT_REJECTED, PLANNED, ASSIGNED, UPLOADED, FAILED, CANCELLED, ON_HOLD, REJECTED are identical on both sides. The platform does not use DRAFT, COMPLETED, IN_QUARANTINE, RELEASED_FROM_QUARANTINE, ANALYSIS_COMPLETED, VERIFIED. Renaming the platform aliases to the canonical long forms is a separate MAJOR effort (DB enum migration); the alias divergence is documented here, not yet unified. (SYNC-2 audit 2026-06-21)"
   }
 }
