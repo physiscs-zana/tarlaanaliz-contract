@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 4.1.0
+## Version: 4.1.1
 
-**Release Date:** 2026-06-21T16:40:50.976925Z  
+**Release Date:** 2026-06-23T07:21:49.157237Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `c3b6b9590ea643b910c94c2bcd3938c9e829ac015d32e11022c1d0669cb22523`
+**Contracts Checksum (SHA-256):** `4c4b7fd4830895078627e31af63648114eab2a9d50a32575936611edc49299c9`
 
 ---
 
@@ -41,11 +41,11 @@ Individual file hashes for verification:
 
 ## Changelog
 
-### v4.1.0 (2026-06-21)
+### v4.1.1 (2026-06-23)
 
 **Breaking:** NO
 
-MINOR (eklemeli) — KR-019 tam uzman kapısı: analysis_review_requested.v1 + expert_review_decided.v1 olay şemaları (lifecycle DRAFT, üretici Faz 2/3) ve mission_status enum'a PENDING_REVIEW + EXPERT_REJECTED (metadata 1.1.0). Geriye uyumlu.
+PATCH (yıkıcı değil) — KR-019 tam uzman kapısı olay şemaları DRAFT → ACTIVE. Faz 3'te tarlaanaliz-platform'da uyumlu üreticiler bağlandı; analysis_review_requested.v1 + expert_review_decided.v1 `notes.lifecycle` ACTIVE'e çekildi. Yalnız metadata; şema şekli/required/enum değişmedi. Geriye uyumlu.
 
 ---
 
@@ -63,7 +63,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("c3b6b9590ea643b910c94c2bcd3938c9e829ac015d32e11022c1d0669cb22523"), "Contracts checksum mismatch!"
+assert verify_contracts("4c4b7fd4830895078627e31af63648114eab2a9d50a32575936611edc49299c9"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -76,7 +76,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("c3b6b9590ea643b910c94c2bcd3938c9e829ac015d32e11022c1d0669cb22523"), "Contracts checksum mismatch!");
+assert(verifyContracts("4c4b7fd4830895078627e31af63648114eab2a9d50a32575936611edc49299c9"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -127,4 +127,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-06-21T16:40:50.976925Z
+**Last Updated:** 2026-06-23T07:21:49.157237Z

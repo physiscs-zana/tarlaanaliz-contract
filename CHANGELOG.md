@@ -7,6 +7,35 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [4.1.1] - 2026-06-23
+
+**PATCH (yıkıcı değil) — KR-019 tam uzman kapısı olay şemaları DRAFT → ACTIVE**
+
+Faz 3'te tarlaanaliz-platform'da uyumlu üreticiler eklendi; bu nedenle iki olay
+şemasının `notes.lifecycle` alanı DRAFT'tan ACTIVE'e çekildi. Yalnız metadata/
+açıklama değişikliği — şema şekli, alanlar, required listesi ve enum değerleri
+değişmedi (geriye uyumlu).
+
+### Changed
+
+- **`schemas/events/analysis_review_requested.v1.schema.json`** (`notes.lifecycle`):
+  DRAFT → ACTIVE. Platform worker→platform bridge (`worker_bridge_consumer.py`)
+  HER ExpertReview satırı için bu wire olayını yayınlar (AnalysisReviewRequestedV1,
+  `expert_gate_events.py` → domain.events exchange, routing
+  `event.analysis.review_requested`). In-process ExpertReviewRequested WORM audit
+  için korunur.
+- **`schemas/events/expert_review_decided.v1.schema.json`** (`notes.lifecycle`):
+  DRAFT → ACTIVE. Platform-expert-portal `submit_review` + `bulk_approve`
+  (`expert_portal.py`) GERÇEK N-uzman konsensüs kapı kararıyla bu wire olayını
+  yayınlar (ExpertReviewDecidedV1 → routing `event.expert.review_decided`).
+
+### Notes
+
+- SYNC-1 hizalandı: contract DRAFT lifecycle'ları, üreticiler bağlandıktan sonra
+  ACTIVE'e çekildi (2026-06-23 / Faz 3).
+
+---
+
 ## [4.1.0] - 2026-06-21
 
 **MINOR (eklemeli) — KR-019 tam uzman kapısı: iki olay şeması + mission_status durumları**
