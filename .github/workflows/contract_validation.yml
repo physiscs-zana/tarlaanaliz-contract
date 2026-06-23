@@ -17,7 +17,10 @@ on:
       - 'schemas/**'
       - 'enums/**'
       - 'api/**'
+      - 'tools/**'
+      - 'tests/**'
       - 'CONTRACTS_VERSION.md'
+      - '.github/workflows/contract_validation.yml'
 
 jobs:
   validate-schemas:
