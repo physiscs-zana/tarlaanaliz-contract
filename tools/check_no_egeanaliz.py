@@ -6,8 +6,10 @@ Checks (case-insensitive):
   1. File and directory names containing the contiguous brand "egeanaliz".
   2. File contents containing the contiguous brand "egeanaliz".
 
-Does NOT match the Turkish phrase "tarla analizi" (two whitespace-separated
-words, meaning "field analysis"), which is legitimate domain language.
+The current brand "tarlaanaliz" never produces the "egeanaliz" substring, so
+it is not flagged. Generated coverage reports are skipped, and files in
+ALLOWLIST (which legitimately reference the sibling egeanaliz distribution,
+e.g. CHANGELOG.md) are exempt.
 
 Exits 1 on any hit, 0 if clean.
 """
@@ -19,11 +21,11 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# Contiguous brand form only. The regex is assembled from parts so this
+# Contiguous legacy brand only. The regex is assembled from parts so this
 # guard's own source does not contain the literal brand and self-match.
-# Whitespace-separated "tarla analizi" (legitimate TR phrase) never produces
-# this substring, so it is automatically excluded.
-_LEGACY_BRAND = "tarla" + "analiz"
+# Only the contiguous "egeanaliz" form is matched; the current brand
+# "tarlaanaliz" and unrelated phrases never produce this substring.
+_LEGACY_BRAND = "ege" + "analiz"
 BRAND_RE = re.compile(_LEGACY_BRAND, re.IGNORECASE)
 
 # This guard's own path — must not flag itself.
@@ -43,7 +45,22 @@ SKIP_DIRS = {
     ".pytest_cache",
     ".ruff_cache",
     "coverage",
+    "coverage_html",  # generated HTML coverage report (gitignored)
+    "htmlcov",        # default coverage HTML dir name (gitignored)
     ".next",
+}
+
+# Generated report files (gitignored) that may exist locally after a test run.
+SKIP_FILES = {
+    ".coverage",
+    "coverage.xml",
+}
+
+# Files permitted to mention the legacy brand for legitimate cross-referencing
+# — e.g. documenting that egeanaliz is a SEPARATE sibling distribution. These
+# are intentional historical references, not rebrand leftovers.
+ALLOWLIST = {
+    Path("CHANGELOG.md"),
 }
 
 # Binary / non-text extensions we won't grep into. Filename check still applies.
@@ -72,6 +89,9 @@ def main() -> int:
         if path.resolve() == SELF_PATH:
             continue
         rel = path.relative_to(REPO_ROOT)
+
+        if rel in ALLOWLIST or path.name in SKIP_FILES:
+            continue
 
         if BRAND_RE.search(path.name):
             name_hits.append(rel)

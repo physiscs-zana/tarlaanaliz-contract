@@ -2,9 +2,9 @@
 
 ## Version: 4.1.1
 
-**Release Date:** 2026-06-23T07:21:49.157237Z  
+**Release Date:** 2026-06-23T08:35:48.989618Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `4c4b7fd4830895078627e31af63648114eab2a9d50a32575936611edc49299c9`
+**Contracts Checksum (SHA-256):** `7477abc44f31a6d845aedef98f96820bd9beb9a3e8e4517475cd6dead767188f`
 
 ---
 
@@ -37,6 +37,199 @@ Consumers MUST validate the contracts checksum before use.
 
 Individual file hashes for verification:
 
+### Shared Schemas
+
+- `schemas/shared/address.v1.schema.json`  
+  `9edecd639a7a4440f66c887aedeab9f255208d0f9e50723f08905023cf398665`
+- `schemas/shared/geojson.v1.schema.json`  
+  `2fe6dfa92852ce5cd836448a57d9385ba718bd6821c3e3e27347dc6665e69265`
+- `schemas/shared/index.json`  
+  `5ffad3815db62e1334ebd8beaf9aef140a5432d2baf622ac490bfebb8397c529`
+- `schemas/shared/money.v1.schema.json`  
+  `64fc425b2c734fd51c79bf43fa4a3f85572b4c48fcbead8215e506202250ec2e`
+
+### Enums
+
+- `enums/analysis_type.enum.v1.json`  
+  `030316e8eb64139c019cdcbc2e0def60af85cb5da14b620c2574ab970fad112c`
+- `enums/crop_type.enum.v1.json`  
+  `509ec66a59644eef8d9bc5b308b1fac0ee026d027118b286517eefaf5978d794`
+- `enums/dataset_status.enum.v1.json`  
+  `a1af5173853fd0983339075fa550e66847c0d19a8a2411c72a612d866de54b07`
+- `enums/drone_type.enum.v1.json`  
+  `1aedf3020a675096f1a2188c2c148f5fb028814f41827d22fd0818d956ec4099`
+- `enums/edge_custody_event.enum.v1.json`  
+  `f5578afc7a31de5c3f7afd1974fc90530bf60a307ee5d7134c98707e1139f389`
+- `enums/field_history_event_type.enum.v1.json`  
+  `0a8fe27c92fb127d61ccee7740fd8db5765d49551edb493f650e5e01b8b3618c`
+- `enums/mission_status.enum.v1.json`  
+  `f8623eaef3c959c65c9469cd761430acfd372bd8aba1010855a1e2f0a08b3478`
+- `enums/payment_method.enum.v1.json`  
+  `69acfa5313e2eb7030ea5cabcef7af20a8b6de4a031c8017128368bf64c25072`
+- `enums/payment_status.enum.v1.json`  
+  `08df313506b10f37da55ee2e07e5175c6a3785c8c89e50420f538d945b92f7ae`
+- `enums/payment_status.enum.v2.json`  
+  `03cc82adf59a8f04ed7122b806b8796eb8f6c7fd0aaf98a01ffd5f40ff753029`
+- `enums/payment_target_type.enum.v1.json`  
+  `761b3e420245b1dabce63308572f9aa82da64eaf89381533491f28e1e3258c50`
+- `enums/phenology_stage.enum.v1.json`  
+  `95913c07cdf7e56be415f302c8376a3023f7bffd4ad444fe59ecc311bb07edaa`
+- `enums/qc_status.enum.v1.json`  
+  `889b0f3010678976e7ac351977b5d83391d9d119c91e50e060bc027c32134206`
+- `enums/quarantine_decision.enum.v1.json`  
+  `641b5a9e766f7e91837695954d1d0b45aeca6bfbe67356f12a0a65f762fa91c0`
+- `enums/role.enum.v1.json`  
+  `c978f07a112deabb74c62ba229599d4946a9fa3e2a9bb14162accc802d490c22`
+- `enums/scan_stage.enum.v1.json`  
+  `d7f4fd76caeb6d9bfaeb31d8920143d845386a451f5222bcdcca254394c152ff`
+- `enums/threat_type.enum.v1.json`  
+  `dd210d6016764bcb91c1a69d643ee551f1b3dd37a85e73c6984e922dc6ddf81e`
+- `enums/user_role.enum.v1.json`  
+  `95d76349772e49365cf178c109acdb9e36a445016a3de79211086713f48a718f`
+- `enums/verification_status.enum.v1.json`  
+  `f9857891f92f272fbdf12959224dae22a006fafce0382f9c0745538101219ede`
+
+### Core Schemas
+
+- `schemas/core/field.v1.schema.json`  
+  `e2000a6f8cfac11dfef0e455813fb87339dbcbfafab5a334d983acf3034bf157`
+- `schemas/core/mission.v1.schema.json`  
+  `e0055a61a41be6900c15f7445f7fa979564cc5aa0306a3573e717c3c80db4133`
+- `schemas/core/phenology_flight_profile.v1.schema.json`  
+  `3b2ae85e1ada6bb1d8f09458d0933d3a0df72db1b8b63d9538a91bb088088239`
+- `schemas/core/user.v1.schema.json`  
+  `9c2659f56ddc3a826eac8e7799536ab50f0bd7f212708e568657cc396d43f6e3`
+- `schemas/core/user_pii.v1.schema.json`  
+  `e665ae5ebb0c48f89f23358b2bf88c1766a5ef5a5ecaf74380b631d46457b4f5`
+
+### Edge Schemas
+
+- `schemas/edge/attestation_record.v1.schema.json`  
+  `fab5bddcbcedfdac410f9bc9d9ae9714174630db6e24056c3cc95185f0dbd2e3`
+- `schemas/edge/calibrated_dataset_manifest.v1.schema.json`  
+  `1e2e81fca2c0261e62b3a1b60926e9348fa3eb1f1aa119b5af491ece812d4160`
+- `schemas/edge/calibration_result.v1.schema.json`  
+  `cf67bfa0642dc24e0745ed4fd32cf12c1190206e36684a06c7127d3c816c58be`
+- `schemas/edge/dataset_manifest.v1.schema.json`  
+  `b5a6f03d6aae2dc3e39605e1b2bf80729abcdfe3ebc73c6099747cf44127c5be`
+- `schemas/edge/edge_metadata.v1.schema.json`  
+  `d081229b4092d67d1a38e61b994a8d4a83010d695c6b0769c3e31ac80312f851`
+- `schemas/edge/evidence_bundle_ref.v1.schema.json`  
+  `7c2f17fca155d8c37047c165c021b8daa5f725aa8719663d15a6ede62f20f3fd`
+- `schemas/edge/intake_manifest.v1.schema.json`  
+  `9b52bb7797ff37b2c2b4d1b9e7fc4cbfcf4d488510d8c76f74bf99b88e53dee9`
+- `schemas/edge/qc_report.v1.schema.json`  
+  `4193e9c6d73ddd98bf62ba5b2ea034263cb9a86b69f6c549e7d77ed5bc93d219`
+- `schemas/edge/quarantine_event.v1.schema.json`  
+  `8ea1bf0eea7409b4cbfdc5608cda4689970a24eae7bbbfe251b7d66790e6bc94`
+- `schemas/edge/scan_report.v1.schema.json`  
+  `d07e24a4c295f54bfc50da7f9e3cfb51ae95c0264d6ea3d02a8798e370ca9d28`
+- `schemas/edge/transfer_batch.v1.schema.json`  
+  `3dcc72d3097dad67d3216641b1d2bdecb44e6bfacb763c5fe3893cc21beb8472`
+- `schemas/edge/upload_receipt.v1.schema.json`  
+  `dafd4c505bbc6703b9a400d278635f09f5eb86f2ffacce9606763145108d0eab`
+- `schemas/edge/verification_report.v1.schema.json`  
+  `aa84f86d4ca03b515af8fc551ab66197f46e6dd532f6b48601f591e2be197d42`
+- `schemas/edge/worker_result.v1.schema.json`  
+  `8e0b4a7f3c030e19d53dc5064666e16f5f458b501ebd9611e8912b628b95e5a2`
+
+### Worker Schemas
+
+- `schemas/worker/analysis_job.v1.schema.json`  
+  `68c0e0bd69d7be4418bcb4eea24ad4471a61e30251f9dde9224ccf1e88cd5d2a`
+- `schemas/worker/analysis_result.v1.schema.json`  
+  `dda87ad80db2822c652c6b2803b35ab023ffd72cf4df4ebfc5dedc6d6f88da31`
+- `schemas/worker/calibrated_dataset.v1.schema.json`  
+  `8589a779a26fdebd222188b0c4e755410fdd03bdbc9bd72e3136d466c8855386`
+- `schemas/worker/calibration_metadata.v1.schema.json`  
+  `a0e83a8eb6aafa8329d569a2b0b8423bb6c920eba55c7600255be17ed895ee8c`
+- `schemas/worker/expert_feedback.v1.schema.json`  
+  `c0c2a1103fbec11e10d649d0cc8233f82f32f1caef3fcf51df54d149ba16123f`
+- `schemas/worker/expert_labeling_card.v1.schema.json`  
+  `3b535aceddf629cecf2e3a5a178c9e5acd2f32bdf94f1686c582797a365ffa79`
+- `schemas/worker/expert_review_queue.v1.schema.json`  
+  `80ee1fb72aa71a8edfedc20a86146aa76f9a00f675a4f2635784778df4050d73`
+- `schemas/worker/thermal_analysis_result.v1.schema.json`  
+  `c7b013adce00fa5618214865d869f1f85d68dad83786b21d27f9ea019c8de212`
+
+### Events
+
+- `schemas/events/analysis_completed.v1.schema.json`  
+  `6f093470ce2644ffff3bb1e05c9148a2650723e7f4420dcddd81f228006a4db6`
+- `schemas/events/analysis_review_requested.v1.schema.json`  
+  `c1e4d6f2a7866bed9d2fde61b43108892570c4ecb9b5b74033dae1570e46a35b`
+- `schemas/events/dataset_analyzed.v1.schema.json`  
+  `13be86abb9d3be607d1779a02a42fa34742a37254f23bbf687475560c9410ed2`
+- `schemas/events/dataset_calibrated.v1.schema.json`  
+  `f97fefea1da31e85d239a205b5ed69171f148ef21df5c9d74ad1b76f5f474366`
+- `schemas/events/dataset_dispatched.v1.schema.json`  
+  `4467cbb6467684a7cc4cd9c2099eff13fe56478c64f148ff7c1c5cb7e8423e4d`
+- `schemas/events/dataset_ingested.v1.schema.json`  
+  `3511acf5c393c98ce2e2b67b49dea4e43b8660cbe262dfd96cbc8af76c0e00b1`
+- `schemas/events/dataset_quarantined.v1.schema.json`  
+  `ebd91761c1dcf5f239a4b4888805deee57b2bd4e537c22c42b88126bcc78702f`
+- `schemas/events/dataset_scanned.v1.schema.json`  
+  `62d52566fa778442f92854e0eb63bc1bb5c4d1361bc7e5407bdd4772c5fc89b4`
+- `schemas/events/dataset_unquarantined.v1.schema.json`  
+  `48694bd8b2376b2e1732955748102e9213f0d8f0a505350afe19e3b75422f82b`
+- `schemas/events/dataset_verified.v1.schema.json`  
+  `c5e351dd077e5eeeca6b98d3062d1e22079225b230a0c2d47971da73b1565b24`
+- `schemas/events/derived_published.v1.schema.json`  
+  `9c932b7e7e0ef59f54e434793e556cdc2c18dffd012cd2d23dc7a31fc545bc03`
+- `schemas/events/expert_review_decided.v1.schema.json`  
+  `5496b4abba4d63a9e047551fffba34ff340ec08e07de99668849e2096a39f62b`
+- `schemas/events/field_created.v1.schema.json`  
+  `9fb0649f1d2e214553f4afc4148cf3ebf6358e9f9dcb0effd83188f0370e1035`
+- `schemas/events/field_health_changed.v1.schema.json`  
+  `46e9405d4137f863ce2e1260ccc73a18bf5df77dd29d6222963a7765195ceeaa`
+- `schemas/events/mission_assigned.v1.schema.json`  
+  `6a3d4a6cb0b286cfa4f35fa8cab41a8d5fe04c410c90f8bb83a59cdeee77f2c3`
+
+### Platform
+
+- `schemas/platform/calibrated_dataset_manifest.v1.schema.json`  
+  `40e1656e914b9c420007fd109c128828c0710d3a7a730dfd58f1edec5a77d3fc`
+- `schemas/platform/calibration_result.v1.schema.json`  
+  `c51b377e0aa6922d0b86f4cf9076093d66fc4c13a747f44da3f7059c40a73038`
+- `schemas/platform/evidence_bundle_ref.v1.schema.json`  
+  `879e2c3762d92d257c579112c1a741dae78e33997a7c5ec53506dbc6e73bd109`
+- `schemas/platform/layer_registry.v1.schema.json`  
+  `dcca0ac46ee0105da86a9c6f5dd867874b38bc288418c6807ec270c6e4a8cfeb`
+- `schemas/platform/payment_intent.v1.schema.json`  
+  `ec1223135e451b17a76dd8fedd8f36b9ecda47cdd2f8688afce32f3e6455069d`
+- `schemas/platform/payment_intent.v2.schema.json`  
+  `5e03511707e78c82e123b70232c7fb5040c2c0c8a11ccff4c2a41bd6a86e3628`
+- `schemas/platform/payroll.v1.schema.json`  
+  `f415b8413fa1a6778e41c2e53457c4c310646e09de3fa08bcb37cdc54e2a1a3e`
+- `schemas/platform/pricing.v1.schema.json`  
+  `25e0c9fa7d5a351ab7763facdf3824007fc5e95adf19fde7425a6780e115f580`
+- `schemas/platform/qc_report.v1.schema.json`  
+  `0709dd9c98ebaa11c45924bf571b0cfb6291af16711fbb133e1e2e7b3d97a538`
+- `schemas/platform/subscription.v1.schema.json`  
+  `3467b8c75a94a3558edee94c3c9db7ec7e8db8ea1a59165668073a8a7698adcc`
+- `schemas/platform/training_feedback.v1.schema.json`  
+  `b2f20d016265619a92019ec7585b1d9573ba6c2639f458b8bfc4637c2ed8a438`
+
+### API Components
+
+- `api/components/parameters.yaml`  
+  `19cc0b99a8ec6873037c48b5d80e90b6d1443aca4137e6a474fb3660c5932092`
+- `api/components/responses.yaml`  
+  `c88266b02303eb6b621b7cd6df20385963c2c8ed2864fd84d24e18ae24f93140`
+- `api/components/schemas.yaml`  
+  `543636cb3d3cdc2ef9ed09dd973a3a65113915917d786f98b3ac5af8d7ab8059`
+- `api/components/security_schemes.yaml`  
+  `9d45e3181a4b847b617a0553c72458650aa9c3deacf38cbed67c5c12db3e1c79`
+
+### API Specs
+
+- `api/edge_local.v1.yaml`  
+  `510fac0f988752927353a6ec0fe431fe0098fbec2600074a39ca96103f040ccd`
+- `api/platform_internal.v1.yaml`  
+  `f253f4b68be11f4a1f65416827a6482106017a63c940c39e46eb90e69232cbb7`
+- `api/platform_public.v1.yaml`  
+  `840e42906cdff3f096bc1f03b004ebd35e538b97c93371f7268fe5741980dca1`
+
 ---
 
 ## Changelog
@@ -45,7 +238,7 @@ Individual file hashes for verification:
 
 **Breaking:** NO
 
-PATCH (yıkıcı değil) — KR-019 tam uzman kapısı olay şemaları DRAFT → ACTIVE. Faz 3'te tarlaanaliz-platform'da uyumlu üreticiler bağlandı; analysis_review_requested.v1 + expert_review_decided.v1 `notes.lifecycle` ACTIVE'e çekildi. Yalnız metadata; şema şekli/required/enum değişmedi. Geriye uyumlu.
+PATCH (yıkıcı değil) — KR-019 tam uzman kapısı olay şemaları DRAFT → ACTIVE. Faz 3'te tarlaanaliz-platform'da uyumlu üreticiler bağlandı; analysis_review_requested.v1 + expert_review_decided.v1 `notes.lifecycle` ACTIVE'e çekildi. Yalnız metadata; şema şekli/required/enum değişmedi. Geriye uyumlu. Bu re-pin: pin_version.py enum-aware + CRLF→LF hashing; bütünlük hash'i artık enums/ dizinini de kapsar (içerik değişmedi).
 
 ---
 
@@ -63,7 +256,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("4c4b7fd4830895078627e31af63648114eab2a9d50a32575936611edc49299c9"), "Contracts checksum mismatch!"
+assert verify_contracts("7477abc44f31a6d845aedef98f96820bd9beb9a3e8e4517475cd6dead767188f"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -76,7 +269,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("4c4b7fd4830895078627e31af63648114eab2a9d50a32575936611edc49299c9"), "Contracts checksum mismatch!");
+assert(verifyContracts("7477abc44f31a6d845aedef98f96820bd9beb9a3e8e4517475cd6dead767188f"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -127,4 +320,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-06-23T07:21:49.157237Z
+**Last Updated:** 2026-06-23T08:35:48.989618Z

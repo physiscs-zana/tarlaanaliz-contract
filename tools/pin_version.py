@@ -30,14 +30,17 @@ class VersionPinner:
         self.contracts_file = base_dir / "CONTRACTS_VERSION.md"
         self.schemas_dir = base_dir / "schemas"
         self.api_dir = base_dir / "api"
-        
+        self.enums_dir = base_dir / "enums"
+
     def compute_file_hash(self, file_path: Path) -> str:
-        """Compute SHA-256 hash of file"""
-        sha256_hash = hashlib.sha256()
-        with open(file_path, "rb") as f:
-            for byte_block in iter(lambda: f.read(4096), b""):
-                sha256_hash.update(byte_block)
-        return sha256_hash.hexdigest()
+        """Compute SHA-256 hash of file (CI-style: CRLF→LF normalized).
+
+        Normalizing line endings makes the checksum reproducible across
+        OS/checkout settings (Windows CRLF vs CI LF). Matches the
+        '<sha> <path>' contract used by CONTRACTS_SHA256.txt consumers.
+        """
+        data = file_path.read_bytes().replace(b"\r\n", b"\n")
+        return hashlib.sha256(data).hexdigest()
     
     def compute_directory_hash(self, directory: Path, pattern: str = "*.json") -> str:
         """Compute combined SHA-256 hash of all matching files in directory"""
@@ -78,19 +81,30 @@ class VersionPinner:
             raise ValueError(f"Invalid version type: {version_type}")
     
     def collect_file_hashes(self) -> Dict[str, str]:
-        """Collect SHA-256 hashes of all contract files"""
+        """Collect SHA-256 hashes of all contract files.
+
+        Paths are recorded posix-style (forward-slash) so the aggregate
+        checksum is identical on Windows and CI. Covers schemas/, api/ AND
+        enums/ — the canonical enum definitions (e.g. crop_type) live under
+        the top-level enums/ dir and MUST be part of the integrity hash.
+        """
         hashes = {}
-        
+
         # Schema files
         for schema_file in self.schemas_dir.rglob('*.json'):
-            rel_path = schema_file.relative_to(self.base_dir)
-            hashes[str(rel_path)] = self.compute_file_hash(schema_file)
-        
+            rel_path = schema_file.relative_to(self.base_dir).as_posix()
+            hashes[rel_path] = self.compute_file_hash(schema_file)
+
+        # Enum files (canonical enum SSOT — crop_type, payment_status, ...)
+        for enum_file in self.enums_dir.rglob('*.json'):
+            rel_path = enum_file.relative_to(self.base_dir).as_posix()
+            hashes[rel_path] = self.compute_file_hash(enum_file)
+
         # API files
         for api_file in self.api_dir.rglob('*.yaml'):
-            rel_path = api_file.relative_to(self.base_dir)
-            hashes[str(rel_path)] = self.compute_file_hash(api_file)
-        
+            rel_path = api_file.relative_to(self.base_dir).as_posix()
+            hashes[rel_path] = self.compute_file_hash(api_file)
+
         return hashes
     
     def compute_contracts_checksum(self, file_hashes: Dict[str, str]) -> str:
@@ -103,8 +117,37 @@ class VersionPinner:
         
         return combined_hash.hexdigest()
     
+    def _extract_existing_changelog(self, skip_version: str = None) -> str:
+        """Return prior '### vX.Y.Z' changelog entries from the existing
+        CONTRACTS_VERSION.md so the lock file accumulates history instead of
+        being overwritten on every pin (SDLC-2). Entries matching skip_version
+        are dropped to keep re-pinning the same version idempotent."""
+        if not self.contracts_file.exists():
+            return ""
+        try:
+            existing = self.contracts_file.read_text(encoding="utf-8")
+        except OSError:
+            return ""
+        match = re.search(
+            r"\n## Changelog\n\n(.*?)\n---\n\n## Verification", existing, re.DOTALL
+        )
+        if not match:
+            return ""
+        body = match.group(1)
+        kept = []
+        for part in re.split(r"(?=^### v)", body, flags=re.MULTILINE):
+            part = part.strip()
+            if not part.startswith("### v"):
+                continue
+            if skip_version and part.startswith(f"### v{skip_version} "):
+                continue
+            kept.append(part)
+        if not kept:
+            return ""
+        return "\n\n".join(kept) + "\n\n"
+
     def generate_version_file(
-        self, 
+        self,
         version: Tuple[int, int, int],
         is_breaking: bool,
         changelog_entry: str = None
@@ -175,7 +218,7 @@ Individual file hashes for verification:
         for file_path, file_hash in sorted(file_hashes.items()):
             if 'schemas/shared' in file_path:
                 categories['Shared Schemas'].append((file_path, file_hash))
-            elif 'schemas/enums' in file_path:
+            elif file_path.startswith('enums/') or 'schemas/enums' in file_path:
                 categories['Enums'].append((file_path, file_hash))
             elif 'schemas/core' in file_path:
                 categories['Core Schemas'].append((file_path, file_hash))
@@ -200,21 +243,23 @@ Individual file hashes for verification:
                     content += f"- `{file_path}`  \n  `{file_hash}`\n"
                 content += "\n"
         
-        # Changelog section
+        # Changelog section (newest first; prior entries preserved — SDLC-2)
         content += """---
 
 ## Changelog
 
 """
-        
+
+        content += f"### v{version_str} ({timestamp[:10]})\n\n"
+        content += f"**Breaking:** {'YES' if is_breaking else 'NO'}\n\n"
         if changelog_entry:
-            content += f"### v{version_str} ({timestamp[:10]})\n\n"
-            content += f"**Breaking:** {'YES' if is_breaking else 'NO'}\n\n"
             content += f"{changelog_entry}\n\n"
         else:
-            content += f"### v{version_str} ({timestamp[:10]})\n\n"
-            content += f"**Breaking:** {'YES' if is_breaking else 'NO'}\n\n"
             content += "Version pinned automatically.\n\n"
+
+        prior_entries = self._extract_existing_changelog(skip_version=version_str)
+        if prior_entries:
+            content += prior_entries
         
         # Verification instructions
         content += """---

@@ -2,18 +2,22 @@ name: Contract Validation
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [master]
     paths:
       - 'schemas/**'
+      - 'enums/**'
       - 'api/**'
       - 'tools/**'
       - 'tests/**'
+      - 'CONTRACTS_VERSION.md'
       - '.github/workflows/contract_validation.yml'
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'schemas/**'
+      - 'enums/**'
       - 'api/**'
+      - 'CONTRACTS_VERSION.md'
 
 jobs:
   validate-schemas:

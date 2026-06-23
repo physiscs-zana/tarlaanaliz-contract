@@ -1,13 +1,11 @@
 name: Auto Sync to Consumer Repos
 
+# NOTE: This is an UNCONFIGURED stub — the sync jobs target placeholder repos
+# (`tarlaanaliz/platform` etc. "Replace with actual repo") and need secrets that
+# are NOT set (PLATFORM_REPO_TOKEN / EDGE_REPO_TOKEN / WORKER_REPO_TOKEN). Until
+# those are wired up it MUST NOT auto-run on push (it fails on every master push).
+# Manual-only via workflow_dispatch; re-add the `push:` trigger once configured.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'schemas/**'
-      - 'api/**'
-      - 'CONTRACTS_VERSION.md'
-  
   workflow_dispatch:
     inputs:
       target:
