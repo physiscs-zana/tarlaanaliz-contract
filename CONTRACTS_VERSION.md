@@ -1,8 +1,8 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 4.1.1
+## Version: 4.1.2
 
-**Release Date:** 2026-06-23T08:35:48.989618Z  
+**Release Date:** 2026-06-23T08:55:34.358058Z  
 **Breaking Change:** NO  
 **Contracts Checksum (SHA-256):** `7477abc44f31a6d845aedef98f96820bd9beb9a3e8e4517475cd6dead767188f`
 
@@ -101,6 +101,27 @@ Individual file hashes for verification:
   `9c2659f56ddc3a826eac8e7799536ab50f0bd7f212708e568657cc396d43f6e3`
 - `schemas/core/user_pii.v1.schema.json`  
   `e665ae5ebb0c48f89f23358b2bf88c1766a5ef5a5ecaf74380b631d46457b4f5`
+
+### Datasets
+
+- `schemas/datasets/attestation.v1.schema.json`  
+  `a4d906c1a1dadcb3284775f1fd8a97be9b3ec88142fe33f01d14cd5b2e2e1934`
+- `schemas/datasets/calibration_certificate.v1.schema.json`  
+  `5f3aba49cc653a8679f8d43b09d5788f8378df8f35879755ae36d3f6fe618d94`
+- `schemas/datasets/dataset.v1.schema.json`  
+  `652b794330b3a087152716091402f962722abbe1038a73b26cfb049545c12b89`
+- `schemas/datasets/dataset_manifest.v1.schema.json`  
+  `e2a02116b45ed4275dbf02bbc5e5f49281e6a048b33264d923ca6a7634ff7d78`
+- `schemas/datasets/evidence_bundle_ref.v1.schema.json`  
+  `8897f5873ad9e97083309cb35cf4a8c1ebef213a253c28ac7beb2fe12db51e21`
+- `schemas/datasets/qc_report.v1.schema.json`  
+  `f3de16e8d4c816a06cc2e9a1dbda6797db3a41d28e27b6df70d372ace8d68e70`
+- `schemas/datasets/scan_report.v1.schema.json`  
+  `cf1197c4d4c552ce7c3516317bd5224a3c114d067843260bdc294fd4bf14a430`
+- `schemas/datasets/transfer_batch.v1.schema.json`  
+  `b72a86ecf37ba3768843a105ac6c0c066124e68e74cd4c8c469f73e552ddd2f9`
+- `schemas/datasets/verification_report.v1.schema.json`  
+  `c9bb30e2e9d129ea64a7695fc29e95846147a061aa0ab7e56c6f809bc519dd40`
 
 ### Edge Schemas
 
@@ -234,11 +255,17 @@ Individual file hashes for verification:
 
 ## Changelog
 
+### v4.1.2 (2026-06-23)
+
+**Breaking:** NO
+
+PATCH (yikici degil) — Butunluk checksum algoritmasi guncellendi: pin_version.py artik enums/ dizinini de hash kapsamina alir; CRLF->LF normalizasyonu + posix yol bicimi ile capraz-OS tekrarlanabilir hash uretir. Sema/enum ICERIGI DEGISMEDI; yalniz kanonik enum SSOT (crop_type vb.) artik butunluk korumali. File Checksums tablosuna Datasets ve fallback Other kategorileri eklendi (sessiz dusmeyi onler). NOT: 4.1.1 takimca 4c4b7fd... ile yayinlandi; bu algoritma degisikligi degismezlik politikasi geregi 4.1.2 olarak surulur. Tuketiciler dogrulamayi 'python3 tools/pin_version.py --verify' ile yapmali.
+
 ### v4.1.1 (2026-06-23)
 
 **Breaking:** NO
 
-PATCH (yıkıcı değil) — KR-019 tam uzman kapısı olay şemaları DRAFT → ACTIVE. Faz 3'te tarlaanaliz-platform'da uyumlu üreticiler bağlandı; analysis_review_requested.v1 + expert_review_decided.v1 `notes.lifecycle` ACTIVE'e çekildi. Yalnız metadata; şema şekli/required/enum değişmedi. Geriye uyumlu. Bu re-pin: pin_version.py enum-aware + CRLF→LF hashing; bütünlük hash'i artık enums/ dizinini de kapsar (içerik değişmedi).
+PATCH (yıkıcı değil) — KR-019 tam uzman kapısı olay şemaları DRAFT → ACTIVE. Faz 3'te tarlaanaliz-platform'da uyumlu üreticiler bağlandı; analysis_review_requested.v1 + expert_review_decided.v1 `notes.lifecycle` ACTIVE'e çekildi. Yalnız metadata; şema şekli/required/enum değişmedi. Geriye uyumlu.
 
 ---
 
@@ -320,4 +347,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-06-23T08:35:48.989618Z
+**Last Updated:** 2026-06-23T08:55:34.358058Z

@@ -7,9 +7,11 @@ Checks (case-insensitive):
   2. File contents containing the contiguous brand "egeanaliz".
 
 The current brand "tarlaanaliz" never produces the "egeanaliz" substring, so
-it is not flagged. Generated coverage reports are skipped, and files in
-ALLOWLIST (which legitimately reference the sibling egeanaliz distribution,
-e.g. CHANGELOG.md) are exempt.
+it is not flagged. Generated coverage reports are skipped. A narrow,
+LINE-LEVEL allowlist (ALLOWLIST_LINE_CONTEXT) exempts only specific lines
+that legitimately reference the sibling egeanaliz distribution (e.g. the
+CHANGELOG line documenting it as a separate product); any OTHER legacy-brand
+line in those same files is still flagged, so a real future leak is caught.
 
 Exits 1 on any hit, 0 if clean.
 """
@@ -56,11 +58,14 @@ SKIP_FILES = {
     "coverage.xml",
 }
 
-# Files permitted to mention the legacy brand for legitimate cross-referencing
-# — e.g. documenting that egeanaliz is a SEPARATE sibling distribution. These
-# are intentional historical references, not rebrand leftovers.
-ALLOWLIST = {
-    Path("CHANGELOG.md"),
+# Line-level allowlist: {relative_path: required_substring}. A legacy-brand
+# match is exempted ONLY when it occurs on a line that also contains the
+# required substring. This permits intentional historical cross-references
+# (e.g. documenting that egeanaliz is a SEPARATE sibling distribution) while
+# still flagging any other legacy-brand line in the same file — so a real
+# rebrand leak cannot hide behind a whole-file exemption.
+ALLOWLIST_LINE_CONTEXT = {
+    Path("CHANGELOG.md"): "ayrı dağıtım",
 }
 
 # Binary / non-text extensions we won't grep into. Filename check still applies.
@@ -90,7 +95,7 @@ def main() -> int:
             continue
         rel = path.relative_to(REPO_ROOT)
 
-        if rel in ALLOWLIST or path.name in SKIP_FILES:
+        if path.name in SKIP_FILES:
             continue
 
         if BRAND_RE.search(path.name):
@@ -101,10 +106,13 @@ def main() -> int:
         if path.suffix.lower() in BINARY_EXTS:
             continue
 
+        allowed_context = ALLOWLIST_LINE_CONTEXT.get(rel)
         try:
             with path.open("r", encoding="utf-8", errors="strict") as fh:
                 for lineno, line in enumerate(fh, start=1):
                     if BRAND_RE.search(line):
+                        if allowed_context and allowed_context in line:
+                            continue
                         content_hits.append((rel, lineno, line.rstrip("\n")))
         except (UnicodeDecodeError, OSError):
             # Treat undecodable files as binary; filename check above still ran.
