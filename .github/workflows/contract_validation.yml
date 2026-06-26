@@ -22,6 +22,13 @@ on:
       - 'CONTRACTS_VERSION.md'
       - '.github/workflows/contract_validation.yml'
 
+# Default GITHUB_TOKEN is read-only; the breaking-change job posts a PR comment
+# (issues.createComment) -> needs pull-requests: write. Without it the comment
+# step fails "Resource not accessible by integration" and fails the job.
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   validate-schemas:
     name: Validate JSON Schemas
@@ -139,6 +146,7 @@ jobs:
       - name: Post PR comment
         uses: actions/github-script@v8
         if: always()
+        continue-on-error: true  # informational comment; never fail CI on posting
         with:
           script: |
             const fs = require('fs');
