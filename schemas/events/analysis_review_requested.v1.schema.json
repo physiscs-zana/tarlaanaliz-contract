@@ -153,7 +153,7 @@
     }
   ],
   "notes": {
-    "lifecycle": "ACTIVE — uyumlu platform üreticisi mevcut. Platform worker→platform bridge (worker_bridge_consumer.py) HER ExpertReview satırı için bu wire olayını yayınlar (AnalysisReviewRequestedV1, expert_gate_events.py → domain.events exchange, routing event.analysis.review_requested). In-process ExpertReviewRequested ayrıca WORM audit için korunur. (SYNC-1 hizalandı 2026-06-15)",
+    "lifecycle": "ACTIVE — uyumlu platform üreticisi mevcut. Platform worker→platform bridge (worker_bridge_consumer.py) HER ExpertReview satırı için bu wire olayını yayınlar (AnalysisReviewRequestedV1, expert_gate_events.py → domain.events exchange, routing event.analysis.review_requested); sonuç işleyici + escalation yolu. In-process ExpertReviewRequested ayrıca WORM audit için korunur. (SYNC-1 hizalandı 2026-06-23 / Faz 3)",
     "full_gate": "KR-019 full expert gate: emitted for EVERY analysis result, replacing the prior low-confidence-only escalation. The mission stays in expert-review state and the farmer is NOT notified until expert_review_decided.v1 with an approving outcome.",
     "id_format": "Identifiers are RFC 4122 UUID strings to match the running platform/worker wire format (platform DomainEvent base emits str(uuid4); worker emits raw UUID mission_id). The legacy prefixed-ID event schemas (analysis_completed.v1) describe an aspirational scheme not produced at runtime; reconciling them is a separate MAJOR effort.",
     "pii_free": "No PII. All references are opaque identifiers (KR-050/KR-071)."

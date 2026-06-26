@@ -40,6 +40,120 @@ Bu sürüm, kardeş contracts reposu (TarlaAnaliz'den rebrand edilmiş, daha ile
 
 ---
 
+## [4.1.1] - 2026-06-23
+
+**PATCH (yıkıcı değil) — KR-019 tam uzman kapısı olay şemaları DRAFT → ACTIVE**
+
+Faz 3'te tarlaanaliz-platform'da uyumlu üreticiler eklendi; bu nedenle iki olay
+şemasının `notes.lifecycle` alanı DRAFT'tan ACTIVE'e çekildi. Yalnız metadata/
+açıklama değişikliği — şema şekli, alanlar, required listesi ve enum değerleri
+değişmedi (geriye uyumlu).
+
+### Changed
+
+- **`schemas/events/analysis_review_requested.v1.schema.json`** (`notes.lifecycle`):
+  DRAFT → ACTIVE. Platform worker→platform bridge (`worker_bridge_consumer.py`)
+  HER ExpertReview satırı için bu wire olayını yayınlar (AnalysisReviewRequestedV1,
+  `expert_gate_events.py` → domain.events exchange, routing
+  `event.analysis.review_requested`). In-process ExpertReviewRequested WORM audit
+  için korunur.
+- **`schemas/events/expert_review_decided.v1.schema.json`** (`notes.lifecycle`):
+  DRAFT → ACTIVE. Platform-expert-portal `submit_review` + `bulk_approve`
+  (`expert_portal.py`) GERÇEK N-uzman konsensüs kapı kararıyla bu wire olayını
+  yayınlar (ExpertReviewDecidedV1 → routing `event.expert.review_decided`).
+
+### Notes
+
+- SYNC-1 hizalandı: contract DRAFT lifecycle'ları, üreticiler bağlandıktan sonra
+  ACTIVE'e çekildi (2026-06-23 / Faz 3).
+
+---
+
+## [4.1.0] - 2026-06-21
+
+**MINOR (eklemeli) — KR-019 tam uzman kapısı: iki olay şeması + mission_status durumları**
+
+Çiftçinin her analiz sonucunu görmeden önce zorunlu uzman onayından geçmesini
+sağlayan "tam kapı" (full expert gate) iş akışı için sözleşmeye iki yeni domain
+olayı ve `mission_status` enum'una iki yeni durum eklendi. Değişiklik tamamen
+eklemeli; mevcut şemalar/enum değerleri değişmedi (geriye uyumlu).
+
+### Added
+
+- **`schemas/events/analysis_review_requested.v1.schema.json`:** Worker analizi
+  bitince platform her sonuç için bir uzman incelemesi açar; bu olay yayınlanır
+  (artık yalnız düşük-güvenli vakalar değil — KR-019 tam kapı). `review_id`,
+  `analysis_result_id`, `mission_id`, `field_id` (required) + opsiyonel
+  `job_id`/`dataset_id`/`analysis_type`/`crop_type`/`confidence_score`. Kimlikler
+  RFC 4122 UUID (çalışan platform/worker tel-gerçeği).
+- **`schemas/events/expert_review_decided.v1.schema.json`:** Uzman kararı (`verdict`:
+  confirmed/corrected/rejected/needs_more_expert) ve yayın kapısı sonucu
+  (`gate_outcome`: APPROVED_PUBLISHED / REJECTED / ESCALATED). Yalnız
+  APPROVED_PUBLISHED çiftçiye yayını yetkilendirir; `gate_outcome` GERÇEK N-uzman
+  konsensüs kararıdır (naif verdict eşlemesi değil — erken çiftçi yayınını önler).
+- **`enums/mission_status.enum.v1.json`** (metadata 1.0.0 → 1.1.0): `PENDING_REVIEW`
+  (KR-019 yayın kapısı — uzman onayı bekliyor) ve `EXPERT_REJECTED` (uzman reddi →
+  yeniden işleme için `IN_ANALYSIS`'e döner) durumları eklendi. Tam metadata
+  (statusDescriptions, statusFlow.alternativeFlows.expertRejection,
+  statusCategories, displayNames tr/en, uiColors) güncellendi.
+- `docs/examples/analysis_review_requested.example.json`,
+  `docs/examples/expert_review_decided.example.json` + test eşlemesi
+  (`tests/test_examples_match_schemas.py`) ve README girişleri.
+- **`tests/test_lifecycle_chain.py`** + **`tests/fixtures/full_lifecycle_chain.json`:**
+  uçtan uca olay zinciri bütünlük testi — her belge kendi şemasına doğrular,
+  yayın kapısı (onayda derived.published VAR, redde YOK) ve verdict→gate_outcome
+  türetimi assert edilir.
+
+### Notes
+
+- **Lifecycle = DRAFT.** İki olay şeması `notes.lifecycle = DRAFT` ile işaretlidir:
+  tarlaanaliz-platform'da uyumlu üretici (worker→platform bridge / expert-portal)
+  henüz YOK; Faz 2/3'te eklenecek. Üretici hizalanana kadar bu wire olaylarını
+  TÜKETMEYİN. Üretici hazır olunca lifecycle ACTIVE'e çekilecek (planlanan 4.1.1
+  PATCH).
+- **`notes.platform_alignment`** eklendi — platform kısa-form alias eşlemesi
+  belgelendi (kanonik ← platform: `ACCEPTED←ACKED`, `IN_PROGRESS←FLOWN`,
+  `IN_ANALYSIS←ANALYZING`, `DELIVERED←DONE`). Alias'ları kanonik uzun forma yeniden
+  adlandırmak (platform DB enum migration'ı) ayrı bir MAJOR iştir; bu sürümde sapma
+  yalnız belgelendi, birleştirilmedi.
+
+### Migration
+
+- Eklemeli MINOR — consumer'lar mevcut kullanımlarını bozmadan 4.1.0'a pin'leyebilir.
+  Yeni olayları tüketmek isteyen platform/worker, UUID kimlik biçimini varsayar.
+
+---
+
+## [4.0.0] - 2026-06-14
+
+**Breaking-change:** EVET — `crop_type` worker-canonical 14 değere hizalandı
+
+### Removed
+
+- **`enums/crop_type.enum.v1.json`:** `BARLEY` ve `POTATO` kaldırıldı (worker portföy kararı 2026-05-18 — yerel pazar/ihracat değeri ve drone WTP düşük, açık kaynak veri yok).
+
+### Added
+
+- **`enums/crop_type.enum.v1.json`:** `CHERRY`, `FIG`, `RICE` eklendi (worker `CropType` ile 1:1, 14 değer).
+- **`schemas/worker/expert_review_queue.v1.schema.json`:** inline `crop_type` enum'una `RICE` eklendi (14 değer); açıklama "13-value" → "14-value".
+
+### Migration
+
+- Bkz. `docs/migration_guides/crop_type_v1_to_v2.md`. Persisted `BARLEY`/`POTATO` değerleri artık geçersiz.
+
+---
+
+## [3.0.0] - 2026-06-14
+
+**Breaking-change:** EVET — coğrafi `EGE` bölgesi region enum'larından kaldırıldı
+
+### Removed
+
+- **`schemas/core/field.v1.schema.json`:** `region` enum'undan `EGE` değeri kaldırıldı. tarlaanaliz yalnızca GAP (Güneydoğu Anadolu) bölgesi içindir; Ege coğrafyası desteklenmez (egeanaliz ayrı dağıtım).
+- **`schemas/worker/expert_labeling_card.v1.schema.json`:** `endemic_regions` ve `region` enum'larından `EGE` değeri kaldırıldı (aynı gerekçe).
+
+---
+
 ## [2.0.2] - 2026-03-15
 
 **KR-025 Compliance Fix**

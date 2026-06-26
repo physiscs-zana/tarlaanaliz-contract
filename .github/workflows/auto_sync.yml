@@ -28,7 +28,7 @@ jobs:
     
     steps:
       - name: Checkout contracts
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
       
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -72,12 +72,12 @@ jobs:
     
     steps:
       - name: Checkout contracts
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           path: contracts
       
       - name: Checkout platform repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           repository: tarlaanaliz/platform  # Replace with actual repo
           token: ${{ secrets.PLATFORM_REPO_TOKEN }}
@@ -89,7 +89,7 @@ jobs:
           python-version: '3.11'
       
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
       
@@ -105,7 +105,7 @@ jobs:
           ./tools/sync_to_repos.sh --target platform
       
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           path: platform
           token: ${{ secrets.PLATFORM_REPO_TOKEN }}
@@ -165,12 +165,12 @@ jobs:
     
     steps:
       - name: Checkout contracts
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           path: contracts
       
       - name: Checkout edge repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           repository: tarlaanaliz/edge  # Replace with actual repo
           token: ${{ secrets.EDGE_REPO_TOKEN }}
@@ -192,7 +192,7 @@ jobs:
           ./tools/sync_to_repos.sh --target edge
       
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           path: edge
           token: ${{ secrets.EDGE_REPO_TOKEN }}
@@ -229,12 +229,12 @@ jobs:
     
     steps:
       - name: Checkout contracts
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           path: contracts
       
       - name: Checkout worker repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           repository: tarlaanaliz/worker  # Replace with actual repo
           token: ${{ secrets.WORKER_REPO_TOKEN }}
@@ -256,7 +256,7 @@ jobs:
           ./tools/sync_to_repos.sh --target worker
       
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
           path: worker
           token: ${{ secrets.WORKER_REPO_TOKEN }}

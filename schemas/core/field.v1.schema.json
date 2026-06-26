@@ -227,7 +227,7 @@
         },
         "region": {
           "type": "string",
-          "enum": ["MARMARA", "TARLA", "AKDENIZ", "ICANADOLU", "KARADENIZ", "DOGUANADOLU", "GUNEYDOGUANADOLU"],
+          "enum": ["MARMARA", "AKDENIZ", "ICANADOLU", "KARADENIZ", "DOGUANADOLU", "GUNEYDOGUANADOLU"],
           "description": "Geographic region"
         }
       },

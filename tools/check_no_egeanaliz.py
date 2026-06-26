@@ -11,7 +11,13 @@ Checks (case-insensitive):
   2. File contents containing the contiguous brand "egeanaliz".
 
 Does NOT match the Turkish phrase "ege analizi" (two whitespace-separated words),
-which is legitimate domain language.
+which is legitimate domain language. Also flags Aegean-region leakage (place
+names, ege-/ege_ dataset id prefixes) the bare-brand regex would miss. Generated
+coverage reports are skipped. A narrow, LINE-LEVEL allowlist
+(ALLOWLIST_LINE_CONTEXT) exempts only specific lines that legitimately reference
+the sibling egeanaliz distribution (e.g. the CHANGELOG line documenting it as a
+separate product); any OTHER legacy-brand line in those same files is still
+flagged, so a real future leak is caught.
 
 Exits 1 on any hit, 0 if clean.
 """
@@ -58,11 +64,27 @@ SKIP_DIRS = {
     ".pytest_cache",
     ".ruff_cache",
     "coverage",
-    "coverage_html",
-    "htmlcov",
+    "coverage_html",  # generated HTML coverage report (gitignored)
+    "htmlcov",        # default coverage HTML dir name (gitignored)
     "generated",
     ".generated",
     ".next",
+}
+
+# Generated report files (gitignored) that may exist locally after a test run.
+SKIP_FILES = {
+    ".coverage",
+    "coverage.xml",
+}
+
+# Line-level allowlist: {relative_path: required_substring}. A legacy-brand
+# match is exempted ONLY when it occurs on a line that also contains the
+# required substring. This permits intentional historical cross-references
+# (e.g. documenting that egeanaliz is a SEPARATE sibling distribution) while
+# still flagging any other legacy-brand line in the same file — so a real
+# rebrand leak cannot hide behind a whole-file exemption.
+ALLOWLIST_LINE_CONTEXT = {
+    Path("CHANGELOG.md"): "ayrı dağıtım",
 }
 
 # Binary / non-text extensions we won't grep into. Filename check still applies.
@@ -100,6 +122,9 @@ def main() -> int:
             continue
         rel = path.relative_to(REPO_ROOT)
 
+        if path.name in SKIP_FILES:
+            continue
+
         if BRAND_RE.search(path.name) or REGION_RE.search(path.name):
             name_hits.append(rel)
 
@@ -108,10 +133,13 @@ def main() -> int:
         if path.suffix.lower() in BINARY_EXTS:
             continue
 
+        allowed_context = ALLOWLIST_LINE_CONTEXT.get(rel)
         try:
             with path.open("r", encoding="utf-8", errors="strict") as fh:
                 for lineno, line in enumerate(fh, start=1):
                     if BRAND_RE.search(line):
+                        if allowed_context and allowed_context in line:
+                            continue
                         content_hits.append((rel, lineno, line.rstrip("\n")))
                     if REGION_RE.search(line):
                         region_hits.append((rel, lineno, line.rstrip("\n")))

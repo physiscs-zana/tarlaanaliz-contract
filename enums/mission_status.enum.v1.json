@@ -27,7 +27,7 @@
   ],
   "metadata": {
     "version": "1.1.0",
-    "lastUpdated": "2026-06-15",
+    "lastUpdated": "2026-06-21",
     "statusFlow": {
       "description": "Typical mission status flow",
       "normalFlow": [
@@ -265,7 +265,7 @@
     "state_machine": "Mission status transitions should be validated server-side. Invalid transitions should be rejected with 409 Conflict.",
     "kr_reference": "Mission flow defined in KR-015 (Pilot), KR-016 (Routing), KR-017 (Analysis), and SOP quarantine sections.",
     "audit_logging": "All status transitions must be logged with timestamp, actor, and reason (if applicable).",
-    "expert_gate": "PENDING_REVIEW and EXPERT_REJECTED added in 1.1.0 to express the KR-019 full expert gate (added alongside the 4.1.0 expert-gate events analysis.review_requested / expert.review_decided). PENDING_REVIEW gates farmer-facing publication; only after expert approval does the mission proceed to VERIFIED/DELIVERED. EXPERT_REJECTED routes the result back to IN_ANALYSIS for reprocessing. (SYNC-2 audit 2026-06-15)",
-    "platform_alignment": "The tarlaanaliz-platform runtime persists a condensed alias vocabulary for the canonical states (mission_model.py mission_status ENUM). Canonical (this enum) <- platform alias: ACCEPTED<-ACKED, IN_PROGRESS<-FLOWN, IN_ANALYSIS<-ANALYZING, DELIVERED<-DONE. PENDING_REVIEW, EXPERT_REJECTED, PLANNED, ASSIGNED, UPLOADED, FAILED, CANCELLED, ON_HOLD, REJECTED are identical on both sides. The platform does not use DRAFT, COMPLETED, IN_QUARANTINE, RELEASED_FROM_QUARANTINE, ANALYSIS_COMPLETED, VERIFIED. Renaming the platform aliases to the canonical long forms is a separate MAJOR effort (DB enum migration); the alias divergence is documented here, not yet unified. (SYNC-2 audit 2026-06-15)"
+    "expert_gate": "PENDING_REVIEW and EXPERT_REJECTED added in 1.1.0 to express the KR-019 full expert gate (added alongside the 4.1.0 expert-gate events analysis.review_requested / expert.review_decided, currently DRAFT until the platform producers land in Faz 2/3). PENDING_REVIEW gates farmer-facing publication; only after expert approval does the mission proceed to VERIFIED/DELIVERED. EXPERT_REJECTED routes the result back to IN_ANALYSIS for reprocessing. (SYNC-2 audit 2026-06-21)",
+    "platform_alignment": "The tarlaanaliz-platform runtime persists a condensed alias vocabulary for the canonical states (mission_model.py mission_status ENUM). Canonical (this enum) <- platform alias: ACCEPTED<-ACKED, IN_PROGRESS<-FLOWN, IN_ANALYSIS<-ANALYZING, DELIVERED<-DONE. PENDING_REVIEW, EXPERT_REJECTED, PLANNED, ASSIGNED, UPLOADED, FAILED, CANCELLED, ON_HOLD, REJECTED are identical on both sides. The platform does not use DRAFT, COMPLETED, IN_QUARANTINE, RELEASED_FROM_QUARANTINE, ANALYSIS_COMPLETED, VERIFIED. Renaming the platform aliases to the canonical long forms is a separate MAJOR effort (DB enum migration); the alias divergence is documented here, not yet unified. (SYNC-2 audit 2026-06-21)"
   }
 }

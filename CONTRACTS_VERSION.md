@@ -2,9 +2,9 @@
 
 ## Version: 4.2.1
 
-**Release Date:** 2026-06-26T11:13:46.853701Z  
+**Release Date:** 2026-06-26T11:33:23.535556Z  
 **Breaking Change:** YES  
-**Contracts Checksum (SHA-256):** `7f4aa8d44a8ccc4667e9b38ff1f7a7fdec0c40a9672db015aabe95db1083b6b6`
+**Contracts Checksum (SHA-256):** `614d41d207b89b80148e8781ae5e015d0a486a6d4ce525708a3f8f3fd0487d99`
 
 ---
 
@@ -65,7 +65,7 @@ Individual file hashes for verification:
 - `enums/field_history_event_type.enum.v1.json`  
   `0a8fe27c92fb127d61ccee7740fd8db5765d49551edb493f650e5e01b8b3618c`
 - `enums/mission_status.enum.v1.json`  
-  `13ac6bbd5470199dc3bef4aca1e5e20820c78d330d4ef2f3fb8883dfdf8a171f`
+  `f8623eaef3c959c65c9469cd761430acfd372bd8aba1010855a1e2f0a08b3478`
 - `enums/payment_method.enum.v1.json`  
   `14291b81875704058bf6eed4e701ec7a1325b48d08fccd21f6227e4f6659e12c`
 - `enums/payment_status.enum.v1.json`  
@@ -94,7 +94,7 @@ Individual file hashes for verification:
 ### Core Schemas
 
 - `schemas/core/field.v1.schema.json`  
-  `a720e9074ee715a8a166970575801583b7823a2ec4016c75eec4dc3e62a58192`
+  `e2000a6f8cfac11dfef0e455813fb87339dbcbfafab5a334d983acf3034bf157`
 - `schemas/core/mission.v1.schema.json`  
   `e0055a61a41be6900c15f7445f7fa979564cc5aa0306a3573e717c3c80db4133`
 - `schemas/core/phenology_flight_profile.v1.schema.json`  
@@ -103,6 +103,27 @@ Individual file hashes for verification:
   `9c2659f56ddc3a826eac8e7799536ab50f0bd7f212708e568657cc396d43f6e3`
 - `schemas/core/user_pii.v1.schema.json`  
   `e665ae5ebb0c48f89f23358b2bf88c1766a5ef5a5ecaf74380b631d46457b4f5`
+
+### Datasets
+
+- `schemas/datasets/attestation.v1.schema.json`  
+  `a4d906c1a1dadcb3284775f1fd8a97be9b3ec88142fe33f01d14cd5b2e2e1934`
+- `schemas/datasets/calibration_certificate.v1.schema.json`  
+  `5f3aba49cc653a8679f8d43b09d5788f8378df8f35879755ae36d3f6fe618d94`
+- `schemas/datasets/dataset.v1.schema.json`  
+  `652b794330b3a087152716091402f962722abbe1038a73b26cfb049545c12b89`
+- `schemas/datasets/dataset_manifest.v1.schema.json`  
+  `e2a02116b45ed4275dbf02bbc5e5f49281e6a048b33264d923ca6a7634ff7d78`
+- `schemas/datasets/evidence_bundle_ref.v1.schema.json`  
+  `8897f5873ad9e97083309cb35cf4a8c1ebef213a253c28ac7beb2fe12db51e21`
+- `schemas/datasets/qc_report.v1.schema.json`  
+  `f3de16e8d4c816a06cc2e9a1dbda6797db3a41d28e27b6df70d372ace8d68e70`
+- `schemas/datasets/scan_report.v1.schema.json`  
+  `cf1197c4d4c552ce7c3516317bd5224a3c114d067843260bdc294fd4bf14a430`
+- `schemas/datasets/transfer_batch.v1.schema.json`  
+  `b72a86ecf37ba3768843a105ac6c0c066124e68e74cd4c8c469f73e552ddd2f9`
+- `schemas/datasets/verification_report.v1.schema.json`  
+  `c9bb30e2e9d129ea64a7695fc29e95846147a061aa0ab7e56c6f809bc519dd40`
 
 ### Edge Schemas
 
@@ -148,7 +169,7 @@ Individual file hashes for verification:
 - `schemas/worker/expert_feedback.v1.schema.json`  
   `c0c2a1103fbec11e10d649d0cc8233f82f32f1caef3fcf51df54d149ba16123f`
 - `schemas/worker/expert_labeling_card.v1.schema.json`  
-  `da26cec47d84553f6110c47f671002d156c5b2d0b9fe4a15152119132e6542d5`
+  `a7c28432a38b60cb42599e47f971b3b0a323e5073011d0e3306de077edfb8c32`
 - `schemas/worker/expert_review_queue.v1.schema.json`  
   `873db689f767c0b8d14b8992fb195277fa10d3e5b4e89366c08235bf97ebf81e`
 - `schemas/worker/thermal_analysis_result.v1.schema.json`  
@@ -159,7 +180,7 @@ Individual file hashes for verification:
 - `schemas/events/analysis_completed.v1.schema.json`  
   `6f093470ce2644ffff3bb1e05c9148a2650723e7f4420dcddd81f228006a4db6`
 - `schemas/events/analysis_review_requested.v1.schema.json`  
-  `f3d3793cd48f025d43412089bf95415ab619e84fc66127b34ef4d1c124ce9988`
+  `c1e4d6f2a7866bed9d2fde61b43108892570c4ecb9b5b74033dae1570e46a35b`
 - `schemas/events/dataset_analyzed.v1.schema.json`  
   `13be86abb9d3be607d1779a02a42fa34742a37254f23bbf687475560c9410ed2`
 - `schemas/events/dataset_calibrated.v1.schema.json`  
@@ -179,7 +200,7 @@ Individual file hashes for verification:
 - `schemas/events/derived_published.v1.schema.json`  
   `9c932b7e7e0ef59f54e434793e556cdc2c18dffd012cd2d23dc7a31fc545bc03`
 - `schemas/events/expert_review_decided.v1.schema.json`  
-  `81bb085dc65b3274539a153118bc249f4586da36d41fc1972c2e56542e6cda97`
+  `5496b4abba4d63a9e047551fffba34ff340ec08e07de99668849e2096a39f62b`
 - `schemas/events/field_created.v1.schema.json`  
   `9fb0649f1d2e214553f4afc4148cf3ebf6358e9f9dcb0effd83188f0370e1035`
 - `schemas/events/field_health_changed.v1.schema.json`  
@@ -240,7 +261,7 @@ Individual file hashes for verification:
 
 **Breaking:** YES
 
-SYNC + audit-fixes + GAP scope (rebased onto remote). Ust-akis 4.2.1 parity (MAIZE/RED_LENTIL korundu). HAZELNUT kaldirildi (GAP'ta yetismez, crop_type v2.0.0, 8-crop). TARIS_DEDUCTION ve Ege crop migration rehberi (crop_type_v1_to_v2) cikarildi. Yeni: calibration_type kanonik enum; dataset_unquarantined.status_to kisiti; analysis_result unevaluatedProperties. Migration: crop_type_hazelnut_removal.md + contracts_3_0_0_structural_absorption.md
+Merge master (4.1.2) into GAP-only sync. crop_type GAP 8-set korundu (master 14-canonical override edildi; worker tarafinda ayri degisiklik gerekir). Master KR-019 event semalari + CI + EGE bolge temizligi korundu. TARIS ve Ege crop migration rehberi cikarildi.
 
 ### v2.0.1 (2026-03-06)
 
@@ -264,7 +285,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("7f4aa8d44a8ccc4667e9b38ff1f7a7fdec0c40a9672db015aabe95db1083b6b6"), "Contracts checksum mismatch!"
+assert verify_contracts("614d41d207b89b80148e8781ae5e015d0a486a6d4ce525708a3f8f3fd0487d99"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -277,7 +298,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("7f4aa8d44a8ccc4667e9b38ff1f7a7fdec0c40a9672db015aabe95db1083b6b6"), "Contracts checksum mismatch!");
+assert(verifyContracts("614d41d207b89b80148e8781ae5e015d0a486a6d4ce525708a3f8f3fd0487d99"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -328,4 +349,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-06-26T11:13:46.853701Z
+**Last Updated:** 2026-06-26T11:33:23.535556Z

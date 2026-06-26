@@ -207,14 +207,16 @@ Individual file hashes for verification:
             'Shared Schemas': [],
             'Enums': [],
             'Core Schemas': [],
+            'Datasets': [],
             'Edge Schemas': [],
             'Worker Schemas': [],
             'Events': [],
             'Platform': [],
             'API Components': [],
-            'API Specs': []
+            'API Specs': [],
+            'Other': []
         }
-        
+
         for file_path, file_hash in sorted(file_hashes.items()):
             if 'schemas/shared' in file_path:
                 categories['Shared Schemas'].append((file_path, file_hash))
@@ -222,6 +224,8 @@ Individual file hashes for verification:
                 categories['Enums'].append((file_path, file_hash))
             elif 'schemas/core' in file_path:
                 categories['Core Schemas'].append((file_path, file_hash))
+            elif 'schemas/datasets' in file_path:
+                categories['Datasets'].append((file_path, file_hash))
             elif 'schemas/edge' in file_path:
                 categories['Edge Schemas'].append((file_path, file_hash))
             elif 'schemas/worker' in file_path:
@@ -234,6 +238,10 @@ Individual file hashes for verification:
                 categories['API Components'].append((file_path, file_hash))
             elif 'api/' in file_path:
                 categories['API Specs'].append((file_path, file_hash))
+            else:
+                # Catch-all so no file in the aggregate hash is ever silently
+                # omitted from the human-readable table (new schema dirs, etc.).
+                categories['Other'].append((file_path, file_hash))
         
         # Output by category
         for category, files in categories.items():

@@ -17,14 +17,10 @@ on:
       - 'schemas/**'
       - 'enums/**'
       - 'api/**'
+      - 'tools/**'
+      - 'tests/**'
       - 'CONTRACTS_VERSION.md'
-
-# Default GITHUB_TOKEN is read-only on this repo; the breaking-change job posts a
-# PR comment (issues.createComment) → needs pull-requests: write. Without it the
-# comment step failed "Resource not accessible by integration" and failed CI.
-permissions:
-  contents: read
-  pull-requests: write
+      - '.github/workflows/contract_validation.yml'
 
 jobs:
   validate-schemas:
@@ -33,7 +29,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Full history for breaking change detection
       
@@ -67,7 +63,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
       
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -84,9 +80,9 @@ jobs:
           pytest tests/ -v --cov=schemas --cov-report=term-missing --cov-report=xml
       
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@v5
         with:
-          files: ./coverage.xml
+          file: ./coverage.xml
           flags: schemas
           name: schema-tests
         if: always()
@@ -98,12 +94,12 @@ jobs:
     
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           path: new
       
       - name: Checkout base branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.base_ref }}
           path: old
@@ -141,9 +137,8 @@ jobs:
             --pr-comment > pr_comment.md
       
       - name: Post PR comment
-        uses: actions/github-script@v9
+        uses: actions/github-script@v8
         if: always()
-        continue-on-error: true  # informational comment; never fail CI on posting
         with:
           script: |
             const fs = require('fs');
@@ -170,7 +165,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
       
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -192,10 +187,10 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
       
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: 'npm'
@@ -214,7 +209,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
       
       - name: Check for email/tckn/otp
         run: |
@@ -238,7 +233,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
       
       - name: Check \$schema version
         run: |
@@ -271,7 +266,7 @@ jobs:
       - name: Run brand guard
         run: |
           # tarlaanaliz-contracts is synced from a sibling contracts repo.
-          # This guard fails the build if that sibling brand leaks back in.
+          # This guard fails the build if that sibling brand/region leaks back in.
           python3 tools/check_no_egeanaliz.py
 
   summary:
