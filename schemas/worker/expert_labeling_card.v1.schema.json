@@ -138,7 +138,7 @@
         "AGNOSTIC",
         null
       ],
-      "description": "Spektral esiklerin (ndre_infected, ndvi_infected) hangi kalibrasyon altinda gecerli oldugu. KR-018/082 atif: PANEL/DLS2 mutlak reflektans; RELATIVE field-bazli; AGNOSTIC tum kalibrasyonlardan bagimsiz metrik. Eski cards'da bu alan yoksa varsayilan PANEL_ABSOLUTE kabul edilir."
+      "description": "Spektral esiklerin (ndre_infected, ndvi_infected) hangi kalibrasyon altinda gecerli oldugu. KR-018/082 atif: PANEL/DLS2 mutlak reflektans; RELATIVE field-bazli; AGNOSTIC tum kalibrasyonlardan bagimsiz metrik. Eski cards'da bu alan yoksa varsayilan PANEL_ABSOLUTE kabul edilir. Kanonik vocabulary: enums/calibration_type.enum.v1.json (calibration_assumed alt-kumesi: PANEL_ABSOLUTE/DLS2_RELATIVE/RELATIVE/AGNOSTIC)."
     },
     "min_capability_mode": {
       "type": [
@@ -375,7 +375,7 @@
         "type": "string",
         "enum": [
           "MARMARA",
-          "TARLA",
+          "EGE",
           "AKDENIZ",
           "IC_ANADOLU",
           "KARADENIZ",
@@ -514,7 +514,7 @@
             ],
             "enum": [
               "MARMARA",
-              "TARLA",
+              "EGE",
               "AKDENIZ",
               "IC_ANADOLU",
               "KARADENIZ",

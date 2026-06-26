@@ -2,18 +2,29 @@ name: Contract Validation
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [master]
     paths:
       - 'schemas/**'
+      - 'enums/**'
       - 'api/**'
       - 'tools/**'
       - 'tests/**'
+      - 'CONTRACTS_VERSION.md'
       - '.github/workflows/contract_validation.yml'
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'schemas/**'
+      - 'enums/**'
       - 'api/**'
+      - 'CONTRACTS_VERSION.md'
+
+# Default GITHUB_TOKEN is read-only on this repo; the breaking-change job posts a
+# PR comment (issues.createComment) → needs pull-requests: write. Without it the
+# comment step failed "Resource not accessible by integration" and failed CI.
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   validate-schemas:
@@ -22,12 +33,12 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Full history for breaking change detection
       
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -56,10 +67,10 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -73,9 +84,9 @@ jobs:
           pytest tests/ -v --cov=schemas --cov-report=term-missing --cov-report=xml
       
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
-          file: ./coverage.xml
+          files: ./coverage.xml
           flags: schemas
           name: schema-tests
         if: always()
@@ -87,18 +98,18 @@ jobs:
     
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: new
       
       - name: Checkout base branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.base_ref }}
           path: old
       
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       
@@ -130,8 +141,9 @@ jobs:
             --pr-comment > pr_comment.md
       
       - name: Post PR comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         if: always()
+        continue-on-error: true  # informational comment; never fail CI on posting
         with:
           script: |
             const fs = require('fs');
@@ -158,10 +170,10 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       
@@ -180,10 +192,10 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -202,7 +214,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Check for email/tckn/otp
         run: |
@@ -226,7 +238,7 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Check \$schema version
         run: |
@@ -242,11 +254,30 @@ jobs:
           fi
           
           echo "✅ All schemas use Draft 2020-12"
-  
+
+  check-brand-guard:
+    name: Check Brand Guard (no foreign-brand leakage)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Run brand guard
+        run: |
+          # tarlaanaliz-contracts is synced from a sibling contracts repo.
+          # This guard fails the build if that sibling brand leaks back in.
+          python3 tools/check_no_egeanaliz.py
+
   summary:
     name: Validation Summary
     runs-on: ubuntu-latest
-    needs: [validate-schemas, test-schemas, detect-breaking-changes, check-forbidden-fields, check-draft-2020-12]
+    needs: [validate-schemas, test-schemas, detect-breaking-changes, check-forbidden-fields, check-draft-2020-12, check-brand-guard]
     if: always()
     
     steps:
@@ -259,13 +290,15 @@ jobs:
           echo "- Breaking Changes: ${{ needs.detect-breaking-changes.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Forbidden Fields: ${{ needs.check-forbidden-fields.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Draft 2020-12: ${{ needs.check-draft-2020-12.result }}" >> $GITHUB_STEP_SUMMARY
-      
+          echo "- Brand Guard: ${{ needs.check-brand-guard.result }}" >> $GITHUB_STEP_SUMMARY
+
       - name: Fail if critical checks failed
         if: |
           needs.validate-schemas.result == 'failure' ||
           needs.test-schemas.result == 'failure' ||
           needs.check-forbidden-fields.result == 'failure' ||
-          needs.check-draft-2020-12.result == 'failure'
+          needs.check-draft-2020-12.result == 'failure' ||
+          needs.check-brand-guard.result == 'failure'
         run: |
           echo "::error::Critical validation checks failed!"
           exit 1

@@ -4,7 +4,7 @@
   "field_id": "field_517e2g88dcg97de8aa549012",
   "mission_id": "mission_70b8e2c9d0a1b2c3d4e5f6a4",
   "status": "SUCCESS",
-  "analysis_type": "YIELD_FORECAST",
+  "analysis_type": "GENERAL",
   "summary": {
     "overall_health": "GOOD",
     "health_score": 74.0,
@@ -53,11 +53,11 @@
     "model_fingerprint": "d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3",
     "framework": "PyTorch",
     "framework_version": "2.1.0",
-    "trained_on": "tarla-grape-yield-2025-v1",
+    "trained_on": "gap-grape-yield-2025-v1",
     "training_date": "2026-02-01"
   },
   "created_at": "2026-09-15T10:00:00Z",
   "metadata": {
-    "notes": "KR-089: yield_estimate populated for crops with production-grade model. Pilot scope: grape (Tarla region)."
+    "notes": "KR-089: yield_estimate populated for crops with production-grade model. Pilot scope: grape (GAP region)."
   }
 }

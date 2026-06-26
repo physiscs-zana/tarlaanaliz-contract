@@ -66,7 +66,7 @@
     },
     "crop_type": {
       "$ref": "../../enums/crop_type.enum.v1.json",
-      "description": "Crop type (worker-canonical enum)"
+      "description": "Crop type (GAP crop_type enum, see enums/crop_type.enum.v1.json; worker aliases MAIZE↔CORN, RED_LENTIL↔LENTIL)"
     },
     "summary": {
       "$ref": "#/$defs/ResultSummary",
@@ -95,7 +95,8 @@
         "ndre_url": { "type": ["string", "null"] },
         "ndwi_url": { "type": ["string", "null"] },
         "gndvi_url": { "type": ["string", "null"] }
-      }
+      },
+      "unevaluatedProperties": false
     },
     "artifacts": {
       "type": "array",
@@ -175,7 +176,8 @@
         "cwsi": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
         "delta_from_ambient": { "type": ["number", "null"] },
         "irrigation_efficiency": { "type": ["number", "null"] }
-      }
+      },
+      "unevaluatedProperties": false
     },
     "model_metadata": {
       "type": ["object", "null"],
@@ -186,7 +188,8 @@
         "adapter_version": { "type": ["string", "null"] },
         "capability_mode": { "type": "string" },
         "inference_stage": { "type": "string" }
-      }
+      },
+      "unevaluatedProperties": false
     },
     "model_info": {
       "$ref": "#/$defs/ModelInfo",

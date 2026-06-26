@@ -191,7 +191,7 @@ python3 tools/validate.py
 
 ```bash
 # Add contracts as submodule
-git submodule add https://github.com/tarlaanaliz/contracts contracts
+git submodule add https://github.com/tarlaanaliz/tarlaanaliz-contracts contracts
 git submodule update --remote
 
 # Sync contracts
@@ -207,7 +207,7 @@ import { Field, Mission } from './src/types/contracts';
 
 ```bash
 # Add contracts
-git submodule add https://github.com/tarlaanaliz/contracts contracts
+git submodule add https://github.com/tarlaanaliz/tarlaanaliz-contracts contracts
 git submodule update --remote
 
 # Sync contracts
@@ -224,7 +224,7 @@ from contracts.intake_manifest_v1 import IntakeManifest
 
 ```bash
 # Add contracts
-git submodule add https://github.com/tarlaanaliz/contracts contracts
+git submodule add https://github.com/tarlaanaliz/tarlaanaliz-contracts contracts
 git submodule update --remote
 
 # Sync contracts

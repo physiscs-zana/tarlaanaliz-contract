@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/enums/calibration_type.enum.v1.json",
+  "title": "CalibrationType",
+  "description": "Radyometrik kalibrasyon TİPİ — kanonik vocabulary (SSOT). KR-018/082 kalibrasyon kapısı. Bu, kalibrasyon YÖNTEMİ (calibration_method) ekseninden FARKLIDIR; method ayrı bir eksendir (aşağıya bkz.). Tek doğruluk kaynağıdır: edge/worker/labeling şemaları bu vocabulary'nin bağlam-bazlı alt-kümelerini kullanır.",
+  "type": "string",
+  "enum": [
+    "ABSOLUTE",
+    "PANEL_ABSOLUTE",
+    "DLS2_RELATIVE",
+    "RELATIVE",
+    "NONE",
+    "AGNOSTIC"
+  ],
+  "x-enum-descriptions": {
+    "ABSOLUTE": "Mutlak reflektans (ör. Pix4D panel-tabanlı). Platform sınırında worker PANEL_ABSOLUTE değerine normalize edilir.",
+    "PANEL_ABSOLUTE": "Reflektans paneli ile mutlak kalibrasyon (ör. MicaSense RP). Worker spektral eşiklerinin referans kalibrasyonu.",
+    "DLS2_RELATIVE": "DLS2 ışık/irradyans sensörü ile göreli kalibrasyon.",
+    "RELATIVE": "Saha-bazlı göreli kalibrasyon (ör. DJI Mavic 3M çıktısı).",
+    "NONE": "Kalibrasyon yok → KR-018/082 HARD REJECT (analize alınmaz).",
+    "AGNOSTIC": "Kalibrasyondan bağımsız metrik. YALNIZCA expert_labeling_card.calibration_assumed bağlamında geçerlidir (etiket eşiği tüm kalibrasyonlardan bağımsız demektir)."
+  },
+  "x-normalization": {
+    "description": "Cross-layer normalizasyon sözleşmesi (önceden şemalarda dağınık/örtük idi).",
+    "ABSOLUTE -> PANEL_ABSOLUTE": "Platform, edge/worker ABSOLUTE değerini worker PANEL_ABSOLUTE'una normalize eder (ABSOLUTE ≡ Pix4D panel reflektans).",
+    "missing -> PANEL_ABSOLUTE": "Edge CALIBRATED ama calibration_type yoksa platform PANEL_ABSOLUTE varsayar (güvenlik-ağı).",
+    "hard_reject": ["NONE"]
+  },
+  "x-context-subsets": {
+    "description": "Her şema bağlam-bazlı katı bir alt-küme kullanır (strict validation korunur); bu enum yalnız kanonik vocabulary + eşlemenin SSOT'udur.",
+    "edge/intake_manifest": ["ABSOLUTE", "RELATIVE", "PANEL_ABSOLUTE", "DLS2_RELATIVE"],
+    "edge/calibrated_dataset_manifest": ["ABSOLUTE", "RELATIVE"],
+    "worker/analysis_job,worker/calibration_metadata,worker/calibrated_dataset": ["ABSOLUTE", "PANEL_ABSOLUTE", "DLS2_RELATIVE", "RELATIVE", "NONE"],
+    "worker/expert_labeling_card.calibration_assumed": ["PANEL_ABSOLUTE", "DLS2_RELATIVE", "RELATIVE", "AGNOSTIC"]
+  },
+  "x-separate-axis": {
+    "calibration_method": "AYRI eksen — bu enum DEĞİL. Reflektans yöntemleri: REFLECTANCE_PANEL/DLS_IRRADIANCE/EMPIRICAL_LINE (datasets/calibration_certificate, edge/calibration_result reflektans). Termal fabrika yöntemleri: FACTORY_RADIOMETRIC/FACTORY_RADIOMETRIC_ILS (platform/calibration_result, edge/calibration_result termal). Bunlar sensör-tipine özgüdür ve calibration_type ile birleştirilmez."
+  },
+  "x-kr-ref": ["KR-018", "KR-082"],
+  "notes": {
+    "breaking_change_policy": "Adding a new calibration_type value is non-breaking (MINOR). Removing or renaming is breaking (MAJOR) and requires a migration guide.",
+    "usage": "Kalibrasyon tipi alanları (calibration_type, expert_labeling_card.calibration_assumed) bu kanonik vocabulary'ye atıf yapar. Şemalar bağlam-bazlı alt-kümeyi inline tutar; bu dosya değer anlamları + normalizasyon eşlemesinin SSOT'udur."
+  }
+}

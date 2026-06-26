@@ -20,7 +20,7 @@
     "calibration_type": {
       "type": "string",
       "enum": ["ABSOLUTE", "PANEL_ABSOLUTE", "DLS2_RELATIVE", "RELATIVE", "NONE"],
-      "description": "KR-018: NONE = HARD REJECT. G-3 (2026-06-01): ABSOLUTE eklendi (calibration_metadata + CalibrationLevel ile birleştirildi)."
+      "description": "KR-018: NONE = HARD REJECT. G-3 (2026-06-01): ABSOLUTE eklendi (calibration_metadata + CalibrationLevel ile birleştirildi). Kanonik vocabulary + normalizasyon: enums/calibration_type.enum.v1.json."
     },
     "capability_mode": {
       "type": "string",

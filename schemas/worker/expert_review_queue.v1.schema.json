@@ -42,11 +42,10 @@
     "crop_type": {
       "type": "string",
       "enum": [
-        "COTTON", "CORN", "WHEAT", "SUNFLOWER", "PISTACHIO",
-        "GRAPE", "OLIVE", "LENTIL",
-        "APPLE", "PEACH", "HAZELNUT", "CHERRY", "FIG"
+        "COTTON", "PISTACHIO", "MAIZE", "WHEAT", "SUNFLOWER",
+        "GRAPE", "OLIVE", "RED_LENTIL"
       ],
-      "description": "Same enum as enums/crop_type.enum.v1.json (worker-canonical 13-value set)."
+      "description": "Same enum as enums/crop_type.enum.v1.json (GAP 8-crop set)."
     },
     "analysis_type": {
       "type": "string",

@@ -194,11 +194,12 @@ class TestSchemaValidation:
                 assert 'value' in value, f"Missing 'value' in {enum_file} metadata"
                 assert 'description' in value, f"Missing 'description' for {value.get('value')} in {enum_file}"
     
-    def test_crop_type_enum_matches_worker_canonical(self, base_dir: Path):
-        """Test crop_type enum is the worker-canonical 13-value set (contracts v3.0.0).
+    def test_crop_type_enum_matches_gap_canonical(self, base_dir: Path):
+        """Test crop_type enum is the canonical GAP 8-crop set.
 
-        v3.0.0 MAJOR: BARLEY/POTATO removed, CHERRY/FIG added — aligned 1:1 with
-        Worker CropType (src/core/domain/enums.py). See migration_guides/crop_type_v1_to_v2.md.
+        TarlaAnaliz GAP region scope keeps MAIZE/RED_LENTIL naming and does NOT
+        include the Aegean-only crops (CHERRY/FIG/APPLE/PEACH). HAZELNUT was
+        removed in crop_type v2.0.0 (Black Sea crop, not grown in GAP).
         """
         crop_file = base_dir / "enums" / "crop_type.enum.v1.json"
 
@@ -206,15 +207,14 @@ class TestSchemaValidation:
             schema = json.load(f)
 
         expected_crops = {
-            'COTTON', 'CORN', 'WHEAT', 'SUNFLOWER', 'PISTACHIO',
-            'GRAPE', 'OLIVE', 'LENTIL', 'APPLE', 'PEACH',
-            'HAZELNUT', 'CHERRY', 'FIG'
+            'COTTON', 'PISTACHIO', 'MAIZE', 'WHEAT', 'SUNFLOWER',
+            'GRAPE', 'OLIVE', 'RED_LENTIL'
         }
 
         actual_crops = set(schema.get('enum', []))
 
         assert actual_crops == expected_crops, \
-            f"crop_type must match worker-canonical 13 crops: {expected_crops}, got: {actual_crops}"
+            f"crop_type must match GAP 8 crops: {expected_crops}, got: {actual_crops}"
 
     def test_analysis_type_enum_canonical(self, base_dir: Path):
         """Test analysis_type enum is the canonical KR-002/KR-064/KR-084 map-layer set.

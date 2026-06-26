@@ -1,0 +1,163 @@
+{
+  "description": "Full end-to-end lifecycle of a single analysis result under the FULL EXPERT GATE (KR-019). Documents are ordered as they occur on the wire. Two identifier families coexist by design (see schemas notes.id_format): the worker/dataset events use prefixed IDs (result_/mission_/field_/dataset_/job_), while the platform review events use RFC 4122 UUIDs. The semantic link between families is the mission, carried as prefixed mission_id in analysis_completed/derived_published and as a UUID mission_id in the review events. ID-join integrity is therefore asserted WITHIN each family, not across the string boundary.",
+  "approved_path": {
+    "comment": "Expert APPROVES -> publication authorised -> farmer sees the map.",
+    "analysis_completed": {
+      "schema": "events/analysis_completed.v1.schema.json",
+      "document": {
+        "event_id": "event_60a7f1b8c9d4e5f6a7b8c9e2",
+        "event_type": "analysis.completed",
+        "event_version": "1.0",
+        "aggregate_type": "analysis_job",
+        "aggregate_id": "job_60a7f1b8c9d4e5f6a7b8c9d2",
+        "occurred_at": "2026-06-15T09:45:30Z",
+        "actor": {
+          "actor_type": "SERVICE",
+          "actor_service": "analysis-worker",
+          "worker_id": "worker-gpu-03"
+        },
+        "data": {
+          "job_id": "job_60a7f1b8c9d4e5f6a7b8c9d2",
+          "result_id": "result_60a7f1b8c9d4e5f6a7b8c9d3",
+          "mission_id": "mission_60a7f1b8c9d4e5f6a7b8c9d0",
+          "field_id": "field_507f1f77bcf86cd799439011",
+          "status": "SUCCESS",
+          "analysis_type": "HEALTH",
+          "crop_type": "COTTON",
+          "processing_time": {
+            "started_at": "2026-06-15T08:10:00Z",
+            "completed_at": "2026-06-15T09:45:30Z",
+            "duration_seconds": 5730
+          },
+          "model_info": {
+            "model_name": "cotton-health-v2",
+            "model_version": "2.3.1",
+            "model_fingerprint": "b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0"
+          }
+        },
+        "metadata": {
+          "correlation_id": "corr_mission_abc",
+          "source_service": "analysis-worker"
+        }
+      }
+    },
+    "analysis_review_requested": {
+      "schema": "events/analysis_review_requested.v1.schema.json",
+      "document": {
+        "event_id": "9b2e6f7a-3c41-4d58-8a7b-1f2e3d4c5b6a",
+        "event_type": "analysis.review_requested",
+        "event_version": "1.0",
+        "occurred_at": "2026-06-15T09:46:00Z",
+        "data": {
+          "review_id": "a1b2c3d4-e5f6-4071-8293-a4b5c6d7e8f9",
+          "analysis_result_id": "b2c3d4e5-f6a7-4182-93a4-b5c6d7e8f9a0",
+          "mission_id": "c3d4e5f6-a7b8-4293-a4b5-c6d7e8f9a0b1",
+          "field_id": "d4e5f6a7-b8c9-43a4-b5c6-d7e8f9a0b1c2",
+          "job_id": "e5f6a7b8-c9d0-44b5-c6d7-e8f9a0b1c2d3",
+          "dataset_id": "f6a7b8c9-d0e1-45c6-d7e8-f9a0b1c2d3e4",
+          "analysis_type": "HEALTH",
+          "crop_type": "COTTON",
+          "confidence_score": 0.82
+        },
+        "metadata": {
+          "correlation_id": "corr_mission_abc",
+          "causation_id": "9b2e6f7a-3c41-4d58-8a7b-1f2e3d4c5b6a",
+          "source_service": "platform-worker-bridge"
+        }
+      }
+    },
+    "expert_review_decided": {
+      "schema": "events/expert_review_decided.v1.schema.json",
+      "document": {
+        "event_id": "1a2b3c4d-5e6f-4071-8293-a4b5c6d7e8f9",
+        "event_type": "expert.review_decided",
+        "event_version": "1.0",
+        "occurred_at": "2026-06-15T11:20:00Z",
+        "data": {
+          "review_id": "a1b2c3d4-e5f6-4071-8293-a4b5c6d7e8f9",
+          "analysis_result_id": "b2c3d4e5-f6a7-4182-93a4-b5c6d7e8f9a0",
+          "mission_id": "c3d4e5f6-a7b8-4293-a4b5-c6d7e8f9a0b1",
+          "field_id": "d4e5f6a7-b8c9-43a4-b5c6-d7e8f9a0b1c2",
+          "expert_user_id": "expert-7421",
+          "verdict": "confirmed",
+          "gate_outcome": "APPROVED_PUBLISHED",
+          "training_grade": "A",
+          "decided_at": "2026-06-15T11:20:00Z"
+        },
+        "metadata": {
+          "correlation_id": "corr_mission_abc",
+          "causation_id": "9b2e6f7a-3c41-4d58-8a7b-1f2e3d4c5b6a",
+          "source_service": "platform-expert-portal"
+        }
+      }
+    },
+    "derived_published": {
+      "schema": "events/derived_published.v1.schema.json",
+      "document": {
+        "event_id": "event_71b8c2d4e5f6a7b8c9d0e1f2",
+        "event_type": "derived.published",
+        "event_version": "1.0",
+        "aggregate_type": "dataset",
+        "aggregate_id": "dataset_60a7f1b8c9d4e5f6a7b8c9d1",
+        "occurred_at": "2026-06-15T11:20:05Z",
+        "actor": {
+          "actor_type": "SERVICE",
+          "actor_service": "publishing-service"
+        },
+        "data": {
+          "dataset_id": "dataset_60a7f1b8c9d4e5f6a7b8c9d1",
+          "mission_id": "mission_60a7f1b8c9d4e5f6a7b8c9d0",
+          "status_from": "ANALYZED",
+          "status_to": "DERIVED_PUBLISHED",
+          "payload": {
+            "product_types": ["NDVI_MAP", "DISEASE_REPORT"],
+            "delivery_method": "PLATFORM_UI"
+          }
+        },
+        "metadata": {
+          "correlation_id": "corr_mission_abc",
+          "causation_id": "1a2b3c4d-5e6f-4071-8293-a4b5c6d7e8f9"
+        }
+      }
+    }
+  },
+  "rejected_path": {
+    "comment": "Expert REJECTS -> NO publication. The chain stops at expert_review_decided; there is NO derived_published. The farmer never sees the result.",
+    "analysis_review_requested": {
+      "schema": "events/analysis_review_requested.v1.schema.json",
+      "document": {
+        "event_id": "2c3d4e5f-6a7b-4081-9293-a4b5c6d7e8fa",
+        "event_type": "analysis.review_requested",
+        "event_version": "1.0",
+        "occurred_at": "2026-06-16T09:46:00Z",
+        "data": {
+          "review_id": "33445566-7788-4990-8a1b-2c3d4e5f6a7b",
+          "analysis_result_id": "44556677-8899-4a01-9b2c-3d4e5f6a7b8c",
+          "mission_id": "55667788-99aa-4b12-8c3d-4e5f6a7b8c9d",
+          "field_id": "66778899-aabb-4c23-9d4e-5f6a7b8c9d0e",
+          "confidence_score": 0.41
+        }
+      }
+    },
+    "expert_review_decided": {
+      "schema": "events/expert_review_decided.v1.schema.json",
+      "document": {
+        "event_id": "778899aa-bbcc-4d34-8e5f-6a7b8c9d0e1f",
+        "event_type": "expert.review_decided",
+        "event_version": "1.0",
+        "occurred_at": "2026-06-16T12:00:00Z",
+        "data": {
+          "review_id": "33445566-7788-4990-8a1b-2c3d4e5f6a7b",
+          "analysis_result_id": "44556677-8899-4a01-9b2c-3d4e5f6a7b8c",
+          "mission_id": "55667788-99aa-4b12-8c3d-4e5f6a7b8c9d",
+          "field_id": "66778899-aabb-4c23-9d4e-5f6a7b8c9d0e",
+          "expert_user_id": "expert-3140",
+          "verdict": "rejected",
+          "gate_outcome": "REJECTED",
+          "training_grade": "REJECT",
+          "decided_at": "2026-06-16T12:00:00Z"
+        }
+      }
+    }
+  }
+}

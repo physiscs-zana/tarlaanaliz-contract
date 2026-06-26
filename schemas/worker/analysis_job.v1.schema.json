@@ -48,7 +48,7 @@
     },
     "crop_type": {
       "$ref": "../../enums/crop_type.enum.v1.json",
-      "description": "Crop type — bitki türü (KR-016 routing, worker-canonical enum)"
+      "description": "Crop type — bitki türü (KR-016 routing; GAP crop_type enum, see enums/crop_type.enum.v1.json). Worker eşlemesi için crop_type aliases: MAIZE↔CORN, RED_LENTIL↔LENTIL."
     },
     "image_urls": {
       "type": "array",
@@ -165,12 +165,12 @@
     "CalibrationMetadata": {
       "type": "object",
       "title": "Calibration Metadata",
-      "description": "Worker runtime calibration metadata embedded by Platform. Note: this $def's calibration_type enum includes ABSOLUTE (worker analysis_job form); the standalone worker/calibration_metadata.v1 and worker/calibrated_dataset.v1 omit ABSOLUTE — see docs/sync/worker_required_changes_2026-05-30.md.",
+      "description": "Worker runtime calibration metadata embedded by Platform. calibration_type kanonik vocabulary: enums/calibration_type.enum.v1.json. Worker alt-kümesi (ABSOLUTE/PANEL_ABSOLUTE/DLS2_RELATIVE/RELATIVE/NONE) analysis_job, calibration_metadata ve calibrated_dataset arasında tutarlıdır (G-3, 2026-06-01).",
       "properties": {
         "calibration_type": {
           "type": "string",
           "enum": ["ABSOLUTE", "PANEL_ABSOLUTE", "DLS2_RELATIVE", "RELATIVE", "NONE"],
-          "description": "KR-018: NONE = HARD REJECT"
+          "description": "KR-018: NONE = HARD REJECT. Kanonik vocabulary + normalizasyon: enums/calibration_type.enum.v1.json."
         },
         "calibration_panel_id": { "type": ["string", "null"] },
         "irradiance_sensor": { "type": ["string", "null"] },

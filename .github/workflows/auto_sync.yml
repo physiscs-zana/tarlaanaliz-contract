@@ -1,13 +1,11 @@
 name: Auto Sync to Consumer Repos
 
+# NOTE: This is an UNCONFIGURED stub — the sync jobs target placeholder repos
+# (`tarlaanaliz/platform` etc. "Replace with actual repo") and need secrets that
+# are NOT set (PLATFORM_REPO_TOKEN / EDGE_REPO_TOKEN / WORKER_REPO_TOKEN). Until
+# those are wired up it MUST NOT auto-run on push (it fails on every master push).
+# Manual-only via workflow_dispatch; re-add the `push:` trigger once configured.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'schemas/**'
-      - 'api/**'
-      - 'CONTRACTS_VERSION.md'
-  
   workflow_dispatch:
     inputs:
       target:
@@ -30,10 +28,10 @@ jobs:
     
     steps:
       - name: Checkout contracts
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       
@@ -74,24 +72,24 @@ jobs:
     
     steps:
       - name: Checkout contracts
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: contracts
       
       - name: Checkout platform repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: tarlaanaliz/platform  # Replace with actual repo
           token: ${{ secrets.PLATFORM_REPO_TOKEN }}
           path: platform
       
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
       
@@ -167,19 +165,19 @@ jobs:
     
     steps:
       - name: Checkout contracts
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: contracts
       
       - name: Checkout edge repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: tarlaanaliz/edge  # Replace with actual repo
           token: ${{ secrets.EDGE_REPO_TOKEN }}
           path: edge
       
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       
@@ -231,19 +229,19 @@ jobs:
     
     steps:
       - name: Checkout contracts
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: contracts
       
       - name: Checkout worker repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: tarlaanaliz/worker  # Replace with actual repo
           token: ${{ secrets.WORKER_REPO_TOKEN }}
           path: worker
       
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       

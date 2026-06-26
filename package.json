@@ -24,6 +24,7 @@
     "validate:openapi": "npm run validate -- --openapi-only",
     "validate:forbidden": "npm run validate -- --check-forbidden",
     "validate:unevaluated": "npm run validate -- --check-unevaluated",
+    "validate:brand": "python3 tools/check_no_egeanaliz.py",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "test:ci": "jest --ci --coverage --maxWorkers=2",
@@ -45,7 +46,7 @@
     "clean": "rm -rf dist/ generated/ coverage/ .jest-cache/",
     "prebuild": "npm run clean && npm run validate && npm test",
     "build": "npm run types:gen && npm run openapi:bundle",
-    "ci:gate": "npm run validate && npm run test:ci && npm run breaking-change:detect && npm run openapi:validate",
+    "ci:gate": "npm run validate && npm run validate:brand && npm run test:ci && npm run breaking-change:detect && npm run openapi:validate",
     "prepare": "husky install"
   },
   "dependencies": {

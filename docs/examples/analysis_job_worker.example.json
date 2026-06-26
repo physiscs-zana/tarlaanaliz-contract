@@ -6,8 +6,8 @@
     "s3://tarlaanaliz-missions/2026/06/grape/IMG_0001.tif",
     "s3://tarlaanaliz-missions/2026/06/grape/IMG_0002.tif"
   ],
-  "mission_id": "mission-alasehir-2026-0612",
-  "field_id": "field-alasehir-bag-014",
+  "mission_id": "mission-gap-2026-0612",
+  "field_id": "field-gap-bag-014",
   "calibration_metadata": {
     "calibration_type": "PANEL_ABSOLUTE",
     "calibration_panel_id": "MICASENSE-RP-04915",
@@ -29,11 +29,11 @@
         "type": "Polygon",
         "coordinates": [
           [
-            [28.5201, 38.3512],
-            [28.5219, 38.3512],
-            [28.5219, 38.3527],
-            [28.5201, 38.3527],
-            [28.5201, 38.3512]
+            [38.7901, 37.1612],
+            [38.7919, 37.1612],
+            [38.7919, 37.1627],
+            [38.7901, 37.1627],
+            [38.7901, 37.1612]
           ]
         ]
       },
@@ -47,11 +47,11 @@
         "type": "Polygon",
         "coordinates": [
           [
-            [28.5240, 38.3540],
-            [28.5258, 38.3540],
-            [28.5258, 38.3555],
-            [28.5240, 38.3555],
-            [28.5240, 38.3540]
+            [38.7940, 37.1640],
+            [38.7958, 37.1640],
+            [38.7958, 37.1655],
+            [38.7940, 37.1655],
+            [38.7940, 37.1640]
           ]
         ]
       },

@@ -9,7 +9,7 @@
     "calibration_type": {
       "type": "string",
       "enum": ["ABSOLUTE", "PANEL_ABSOLUTE", "DLS2_RELATIVE", "RELATIVE", "NONE"],
-      "description": "KR-018: NONE = HARD REJECT. G-3 (2026-06-01): ABSOLUTE eklendi — analysis_job.CalibrationMetadata + worker CalibrationLevel kodu ile birleştirildi (4 tanım artık tutarlı). ABSOLUTE ≡ Pix4D panel reflektans; platform sınırında PANEL_ABSOLUTE'a normalize edilebilir."
+      "description": "KR-018: NONE = HARD REJECT. G-3 (2026-06-01): ABSOLUTE eklendi — analysis_job.CalibrationMetadata + worker CalibrationLevel kodu ile birleştirildi (4 tanım artık tutarlı). ABSOLUTE ≡ Pix4D panel reflektans; platform sınırında PANEL_ABSOLUTE'a normalize edilebilir. Kanonik vocabulary: enums/calibration_type.enum.v1.json."
     },
     "calibration_panel_id": {
       "type": ["string", "null"]
