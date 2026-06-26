@@ -433,6 +433,13 @@ git submodule update --remote
 
 def main():
     """Main CLI"""
+    # Status output uses emoji; make stdout robust on legacy Windows code pages
+    # (cp1254) so --verify / pinning never crash with UnicodeEncodeError.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
     parser = argparse.ArgumentParser(
         description='Pin TarlaAnaliz contract version with checksums',
         formatter_class=argparse.RawDescriptionHelpFormatter

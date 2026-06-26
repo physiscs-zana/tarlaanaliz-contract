@@ -15,7 +15,7 @@
       "risk_level": "HIGH",
       "ndvi_value": 0.42,
       "ndre_value": 0.21,
-      "polygon_geojson": "{\"type\":\"Polygon\",\"coordinates\":[[[28.51,38.35],[28.52,38.35],[28.52,38.36],[28.51,38.36],[28.51,38.35]]]}",
+      "polygon_geojson": "{\"type\":\"Polygon\",\"coordinates\":[[[38.79,37.16],[38.80,37.16],[38.80,37.17],[38.79,37.17],[38.79,37.16]]]}",
       "pixel_count": 1840,
       "confidence_components": {
         "margin_confidence": 0.82,

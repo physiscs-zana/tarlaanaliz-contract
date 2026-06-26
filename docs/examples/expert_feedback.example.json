@@ -14,7 +14,7 @@
   "bulk_approval_id": null,
   "mask_correction": {
     "correction_type": "polygon_modification",
-    "corrected_polygon_geojson": "{\"type\":\"Polygon\",\"coordinates\":[[[28.51,38.35],[28.515,38.35],[28.515,38.355],[28.51,38.355],[28.51,38.35]]]}",
+    "corrected_polygon_geojson": "{\"type\":\"Polygon\",\"coordinates\":[[[38.79,37.16],[38.795,37.16],[38.795,37.165],[38.79,37.165],[38.79,37.16]]]}",
     "corrected_class_id": null,
     "pixel_bbox": { "x": 520, "y": 260, "width": 200, "height": 200 }
   }

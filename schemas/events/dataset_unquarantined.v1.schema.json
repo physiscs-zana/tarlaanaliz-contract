@@ -63,7 +63,17 @@
           "const": "REJECTED_QUARANTINE",
           "description": "Status before release"
         },
-        "status_to": { "type": "string", "description": "Status after release (e.g. RAW_SCANNED_EDGE_OK)" },
+        "status_to": {
+          "type": "string",
+          "enum": [
+            "RAW_INGESTED",
+            "RAW_SCANNED_EDGE_OK",
+            "RAW_HASH_SEALED",
+            "CALIBRATED",
+            "CALIBRATED_SCANNED_CENTER_OK"
+          ],
+          "description": "Status after admin release — MUST be one of the pre-quarantine states (same set as dataset_status x-state-machine.rejection.from). REJECTED_QUARANTINE (terminal) and forward/terminal states (ANALYZED/DERIVED_PUBLISHED/ARCHIVED) are NOT allowed. Ref: enums/dataset_status.enum.v1.json. KR-072 chain-of-custody admin-override edge."
+        },
         "release_reason": {
           "type": "string",
           "maxLength": 500,

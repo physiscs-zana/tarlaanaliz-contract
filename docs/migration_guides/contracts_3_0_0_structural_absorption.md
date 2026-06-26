@@ -1,15 +1,17 @@
-# Migration Guide — Contracts 3.0.0 Structural Absorption
+# Migration Guide — Structural Absorption (incorporated into TarlaAnaliz Contracts 4.2.1)
 
 **Breaking:** YES (MAJOR)
-**Date:** 2026-05-30
+**Upstream date:** 2026-05-30 · **Incorporated into TarlaAnaliz 4.2.1:** 2026-06-26
+
+> **TarlaAnaliz uygulanabilirlik notu.** Bu rehber, kardeş (sibling) repoda yapılan "structural absorption" (yapısal birleştirme) mekanizmasını anlatır ve aynı mekanizma TarlaAnaliz **4.2.1** senkronizasyonunda devralınmıştır. **crop_type istisnası:** TarlaAnaliz kendi GAP crop setini ve **MAIZE/RED_LENTIL adlandırmasını** korur (worker CORN/LENTIL yerine; aliaslarla eşlenir) ve Ege bitkilerini (CHERRY/FIG/APPLE/PEACH) **benimsemez**. TarlaAnaliz yalnızca GAP bölgesine hizmet ettiği için **HAZELNUT kaldırılmıştır** (Fındık Karadeniz bitkisidir, GAP'ta yetişmez) → GAP 8-crop seti (COTTON, PISTACHIO, MAIZE, WHEAT, SUNFLOWER, GRAPE, OLIVE, RED_LENTIL). Bkz. `crop_type_hazelnut_removal.md`. Aşağıdaki tüketici (consumer) pin sürümleri üst-akış (upstream) bağlamı içindir.
 
 ## Summary
 
 Contracts 3.0.0 makes the SSOT a **true superset** that validates every consumer's actual on-the-wire payloads. Before 3.0.0 the SSOT had drifted behind the consumers and contradicted them; each consumer pinned a different version line (edge `1.2.0`, platform pin `2.0.1` / vendored `2.2.0`, worker `v4.0.0`).
 
 Canonical direction:
-- **Worker** is the reference for analysis I/O (`analysis_job`, `analysis_result`) and crop/enum vocabulary.
-- **Platform vendored** copy is the source for enum/feature additions (CHERRY, SALT_STRESS, DISTRICT_REP, PENDING_ADMIN_REVIEW, phenology, `/auth/change-pin`).
+- **Worker** is the reference for analysis I/O (`analysis_job`, `analysis_result`) and enum vocabulary — EXCEPT `crop_type`, where TarlaAnaliz keeps its own GAP 8-crop set with MAIZE/RED_LENTIL naming and no HAZELNUT (see `enums/crop_type.enum.v1.json`; cross-repo aliases MAIZE↔CORN, RED_LENTIL↔LENTIL).
+- **Platform vendored** copy is the source for enum/feature additions (SALT_STRESS, DISTRICT_REP, PENDING_ADMIN_REVIEW, phenology, `/auth/change-pin`).
 - **Edge** is the source for station-emitted manifests/reports.
 
 ## Two superset mechanisms
@@ -34,7 +36,7 @@ Used for `edge/intake_manifest.v1`, `edge/scan_report.v1`, `edge/transfer_batch.
 
 | Item | Action |
 |---|---|
-| `crop_type` BARLEY/POTATO removed | See `crop_type_v1_to_v2.md` |
+| `crop_type` HAZELNUT removed (enum v2.0.0) | Drop HAZELNUT from any consumer crop routing/label maps; reject HAZELNUT payloads. See `crop_type_hazelnut_removal.md`. (MAIZE/RED_LENTIL naming kept; sibling's CORN/LENTIL rename + Aegean-crop migration guides intentionally NOT applied.) |
 | `subscription.interval_days` → enum `[7,10,14,17,21]` | Reject/migrate any out-of-set values (e.g. 5, 28) |
 | `analysis_job`/`analysis_result` required reduced + IDs relaxed | None for producers; consumers must not assume previously-required fields are present |
 

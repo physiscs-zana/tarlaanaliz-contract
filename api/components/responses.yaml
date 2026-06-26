@@ -189,7 +189,7 @@ components:
                     message: "Area cannot exceed 1000 hectares"
                     constraint: "max_area"
                   - field: crop_type
-                    message: "TOMATO not supported (supported crops: COTTON, PISTACHIO, MAIZE, WHEAT, SUNFLOWER, GRAPE, HAZELNUT, OLIVE, RED_LENTIL)"
+                    message: "TOMATO not supported (supported crops: COTTON, PISTACHIO, MAIZE, WHEAT, SUNFLOWER, GRAPE, OLIVE, RED_LENTIL)"
                     constraint: "allowed_crop_types"
               request_id: req_abc123
               timestamp: "2026-01-15T10:30:00Z"

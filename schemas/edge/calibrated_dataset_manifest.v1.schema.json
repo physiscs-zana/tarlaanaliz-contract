@@ -25,7 +25,7 @@
         "calibration_type": {
           "type": "string",
           "enum": ["ABSOLUTE", "RELATIVE"],
-          "description": "Calibration type. DJI Mavic 3M produces RELATIVE only."
+          "description": "Calibration type. DJI Mavic 3M produces RELATIVE only. Subset of enums/calibration_type.enum.v1.json (post-calibration manifest: only ABSOLUTE/RELATIVE)."
         }
       },
       "required": ["tool_name", "tool_version", "observed_footprint_wkt", "calibration_type"],

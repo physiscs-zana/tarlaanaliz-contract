@@ -2,61 +2,48 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/enums/crop_type.enum.v1.json",
   "title": "CropType",
-  "description": "Agricultural crop types — Worker referanslı kanonik enum (14 değer). GAP bölgesi öncelikli + ek bitkiler.",
+  "description": "Agricultural crop types for the GAP (Southeastern Anatolia Project) region. 8-crop set; HAZELNUT removed in v2.0.0 (not grown in GAP).",
   "type": "string",
   "enum": [
     "COTTON",
-    "CORN",
+    "PISTACHIO",
+    "MAIZE",
     "WHEAT",
     "SUNFLOWER",
-    "PISTACHIO",
     "GRAPE",
     "OLIVE",
-    "LENTIL",
-    "APPLE",
-    "PEACH",
-    "HAZELNUT",
-    "CHERRY",
-    "FIG",
-    "RICE"
+    "RED_LENTIL"
   ],
   "metadata": {
     "version": "2.0.0",
-    "lastUpdated": "2026-06-14",
-    "changeNote": "Worker-canonical hizalama: BARLEY+POTATO portföyden çıkarıldı (worker kararı 2026-05-18 — yerel pazar/ihracat değeri ve drone WTP düşük, açık kaynak veri yok), CHERRY+FIG+RICE eklendi. Toplam 14 değer.",
+    "lastUpdated": "2026-06-26",
+    "changeNote": "MAJOR (breaking): HAZELNUT (Fındık) removed — hazelnut is a Black Sea crop, not grown in the GAP region; it was erroneously present. Migration: docs/migration_guides/crop_type_hazelnut_removal.md.",
     "gapPriorities": {
-      "description": "GAP region priority crops — 9 temel GAP bitkisi",
+      "description": "GAP region priority crops (ALL 8 crops are GAP priorities - these are the ONLY supported crops)",
       "crops": [
         "COTTON",
         "PISTACHIO",
         "WHEAT",
-        "CORN",
+        "MAIZE",
         "SUNFLOWER",
         "GRAPE",
-        "HAZELNUT",
         "OLIVE",
-        "LENTIL"
+        "RED_LENTIL"
       ]
     },
     "categories": {
       "FIELD_CROPS": [
         "COTTON",
         "WHEAT",
-        "CORN",
-        "SUNFLOWER",
-        "RICE"
+        "MAIZE",
+        "SUNFLOWER"
       ],
       "LEGUMES": [
-        "LENTIL"
+        "RED_LENTIL"
       ],
       "ORCHARDS": [
         "PISTACHIO",
-        "HAZELNUT",
-        "OLIVE",
-        "APPLE",
-        "PEACH",
-        "CHERRY",
-        "FIG"
+        "OLIVE"
       ],
       "VINEYARDS": [
         "GRAPE"
@@ -65,52 +52,38 @@
     "displayNames": {
       "tr": {
         "COTTON": "Pamuk",
-        "CORN": "Mısır",
+        "PISTACHIO": "Antep Fıstığı",
+        "MAIZE": "Mısır",
         "WHEAT": "Buğday",
         "SUNFLOWER": "Ayçiçeği",
-        "PISTACHIO": "Antep Fıstığı",
         "GRAPE": "Üzüm",
         "OLIVE": "Zeytin",
-        "LENTIL": "Mercimek",
-        "APPLE": "Elma",
-        "PEACH": "Şeftali",
-        "HAZELNUT": "Fındık",
-        "CHERRY": "Kiraz",
-        "FIG": "İncir",
-        "RICE": "Çeltik"
+        "RED_LENTIL": "Kırmızı Mercimek"
       },
       "en": {
         "COTTON": "Cotton",
-        "CORN": "Corn (Maize)",
+        "PISTACHIO": "Pistachio",
+        "MAIZE": "Maize (Corn)",
         "WHEAT": "Wheat",
         "SUNFLOWER": "Sunflower",
-        "PISTACHIO": "Pistachio",
         "GRAPE": "Grape",
         "OLIVE": "Olive",
-        "LENTIL": "Lentil",
-        "APPLE": "Apple",
-        "PEACH": "Peach",
-        "HAZELNUT": "Hazelnut",
-        "CHERRY": "Cherry",
-        "FIG": "Fig",
-        "RICE": "Rice"
+        "RED_LENTIL": "Red Lentil"
       }
     },
     "aliases": {
-      "description": "Legacy/alternative names for backward compatibility",
-      "MAIZE": "CORN",
-      "RED_LENTIL": "LENTIL"
+      "description": "Cross-repo / legacy name mapping. TarlaAnaliz (GAP) canonical value -> alternative names used by the sibling/worker vocabulary. Used only for interop translation, NOT as accepted enum values.",
+      "MAIZE": ["CORN"],
+      "RED_LENTIL": ["LENTIL"]
     },
     "archived": {
-      "description": "Removed crop types — kept for migration reference only.",
-      "BARLEY": "2026-05-18 worker portföy kararı ile çıkarıldı (yerel pazar + ihracat değeri yetersiz, drone WTP düşük).",
-      "POTATO": "2026-05-18 worker portföy kararı ile çıkarıldı (aynı gerekçe)."
+      "HAZELNUT": "Removed in v2.0.0. Hazelnut (Fındık) is a Black Sea region crop and is not grown in GAP; its presence was an error. Re-adding would be a MINOR change."
     }
   },
   "notes": {
     "breaking_change_policy": "Adding new crop types is non-breaking (MINOR). Removing or renaming crop types is breaking (MAJOR) and requires migration guide.",
     "gap_region": "GAP (Güneydoğu Anadolu Projesi) region includes: Adıyaman, Batman, Diyarbakır, Gaziantep, Kilis, Mardin, Siirt, Şanlıurfa, Şırnak",
     "usage": "This enum is used across schemas (Field, Mission, Pricing) and UI components. Always reference this canonical source.",
-    "worker_alignment": "Worker CropType enum is the reference. Platform and Contract align to Worker values."
+    "worker_alignment": "TarlaAnaliz uses the GAP 8-crop set and keeps its naming (MAIZE, RED_LENTIL). It is NOT 1:1 with the sibling/worker CropType, which uses CORN/LENTIL and Aegean crops (CHERRY/FIG/APPLE/PEACH). Translate across repos via metadata.aliases (MAIZE<->CORN, RED_LENTIL<->LENTIL)."
   }
 }

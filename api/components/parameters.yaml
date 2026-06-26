@@ -168,7 +168,6 @@ components:
           - WHEAT
           - SUNFLOWER
           - GRAPE
-          - HAZELNUT
           - OLIVE
           - RED_LENTIL
         example: COTTON

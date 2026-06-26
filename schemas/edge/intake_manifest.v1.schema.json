@@ -221,7 +221,7 @@
             "PANEL_ABSOLUTE",
             "DLS2_RELATIVE"
           ],
-          "description": "Radyometrik kalibrasyon tipi (KR-018). DJI Mavic 3M RELATIVE üretir. Opsiyonel, geriye uyumlu; edge→platform→worker calibration_metadata.calibration_type için KAYNAK. Platform ABSOLUTE'u worker PANEL_ABSOLUTE'una normalize eder; yoksa CALIBRATED→PANEL_ABSOLUTE varsayar (güvenlik-ağı)."
+          "description": "Radyometrik kalibrasyon tipi (KR-018). DJI Mavic 3M RELATIVE üretir. Opsiyonel, geriye uyumlu; edge→platform→worker calibration_metadata.calibration_type için KAYNAK. Platform ABSOLUTE'u worker PANEL_ABSOLUTE'una normalize eder; yoksa CALIBRATED→PANEL_ABSOLUTE varsayar (güvenlik-ağı). Kanonik vocabulary: enums/calibration_type.enum.v1.json."
         },
         "created_at": {
           "type": "string",
@@ -392,7 +392,7 @@
             "PANEL_ABSOLUTE",
             "DLS2_RELATIVE"
           ],
-          "description": "Radyometrik kalibrasyon tipi (KR-018). DJI Mavic 3M RELATIVE üretir. Opsiyonel, geriye uyumlu; edge→platform→worker calibration_metadata.calibration_type için KAYNAK. Platform ABSOLUTE'u worker PANEL_ABSOLUTE'una normalize eder; yoksa CALIBRATED→PANEL_ABSOLUTE varsayar (güvenlik-ağı)."
+          "description": "Radyometrik kalibrasyon tipi (KR-018). DJI Mavic 3M RELATIVE üretir. Opsiyonel, geriye uyumlu; edge→platform→worker calibration_metadata.calibration_type için KAYNAK. Platform ABSOLUTE'u worker PANEL_ABSOLUTE'una normalize eder; yoksa CALIBRATED→PANEL_ABSOLUTE varsayar (güvenlik-ağı). Kanonik vocabulary: enums/calibration_type.enum.v1.json."
         },
         "created_at": {
           "type": "string",

@@ -119,7 +119,7 @@
           "type": "object",
           "unevaluatedProperties": false,
           "required": ["start", "end"],
-          "description": "Bölgesel (Tarla) yaklaşık tarih penceresi; yalnız REGIONAL_CALENDAR çapasında kullanılır. Ortalamadır, kesin değildir.",
+          "description": "Bölgesel (GAP) yaklaşık tarih penceresi; yalnız REGIONAL_CALENDAR çapasında kullanılır. Ortalamadır, kesin değildir.",
           "properties": {
             "start": { "$ref": "#/$defs/MonthDay" },
             "end": { "$ref": "#/$defs/MonthDay" }
