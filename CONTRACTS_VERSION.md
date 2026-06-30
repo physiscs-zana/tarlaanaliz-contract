@@ -1,9 +1,9 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 4.1.1
+## Version: 5.0.0
 
-**Release Date:** 2026-06-23T07:21:49.157237Z  
-**Breaking Change:** NO  
+**Release Date:** 2026-06-30T11:40:18.810397Z  
+**Breaking Change:** YES  
 **Contracts Checksum (SHA-256):** `4c4b7fd4830895078627e31af63648114eab2a9d50a32575936611edc49299c9`
 
 ---
@@ -41,11 +41,11 @@ Individual file hashes for verification:
 
 ## Changelog
 
-### v4.1.1 (2026-06-23)
+### v5.0.0 (2026-06-30)
 
-**Breaking:** NO
+**Breaking:** YES
 
-PATCH (yıkıcı değil) — KR-019 tam uzman kapısı olay şemaları DRAFT → ACTIVE. Faz 3'te tarlaanaliz-platform'da uyumlu üreticiler bağlandı; analysis_review_requested.v1 + expert_review_decided.v1 `notes.lifecycle` ACTIVE'e çekildi. Yalnız metadata; şema şekli/required/enum değişmedi. Geriye uyumlu.
+MAJOR (BREAKING): payment_method.enum.v1 TARIS_DEDUCTION kaldirildi. Taris Ege bolgesi kooperatifi; tarlaanaliz yalniz GAP'a hizmet eder. Kalan: CREDIT_CARD, IBAN_TRANSFER. Migration: docs/migration_guides/payment_method_v5_remove_taris.md
 
 ---
 
@@ -127,4 +127,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-06-23T07:21:49.157237Z
+**Last Updated:** 2026-06-30T11:40:18.810397Z

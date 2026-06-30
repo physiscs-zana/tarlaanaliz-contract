@@ -7,6 +7,20 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [5.0.0] - 2026-06-30
+
+**MAJOR (BREAKING) — `payment_method.enum.v1`'den `TARIS_DEDUCTION` kaldırıldı**
+
+Tariş, Ege bölgesi (İzmir/Ege) kooperatifidir; `tarlaanaliz` yalnız **GAP (Güneydoğu Anadolu)**
+bölgesine hizmet eder → Tariş GAP'ta yoktur (egeanaliz→tarlaanaliz port artefaktı). `TARIS_DEDUCTION`
+değeri ödeme yöntemi enum'undan + `x-enum-descriptions`'tan kaldırıldı. Kalan: `CREDIT_CARD`,
+`IBAN_TRANSFER`. PaymentMethod mantıksal sürümü 2.0.0 → 3.0.0.
+
+- **Breaking:** enum value removal (SemVer MAJOR kuralı). Migration: `docs/migration_guides/payment_method_v5_remove_taris.md`.
+- **Tüketici etkisi:** ödeme yöntemi enum'unu yalnız platform + frontend tüketir (ödeme farmer→platform akışı); worker/edge bu enum'u kullanmaz → pratik desync yok.
+
+---
+
 ## [4.1.1] - 2026-06-23
 
 **PATCH (yıkıcı değil) — KR-019 tam uzman kapısı olay şemaları DRAFT → ACTIVE**
