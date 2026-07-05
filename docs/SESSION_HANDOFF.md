@@ -87,10 +87,12 @@ GAP anlık görüntüsünü yeniden-senkronla" bakım işlemi (docstring satır 
 **Düzeltme (hazır, DOĞRULANDI):** RICE'ı `GAP_OUT_WORKER_CROPS` → `GAP_CROPS`'a taşı (RICE artık
 doğrudan GAP eşleşmesi; worker yine `WORKER_CROPS`'ta RICE'ı konuşuyor). 13-vs-14 sayımı / CORN-vs-MAIZE
 ekseni governance kalemine **DOKUNMAZ** — dik (orthogonal).
-- **Worker dalı:** `contract-sync-rice-gap-2026-07-05` (commit `d0a4b2a`) — push edildi;
-  **worker PR #115 AÇIK** (worker master'a DEĞMEDİ, merge edilMEDİ). Bridge süiti 12/12 yeşil;
-  tam contract süiti 238 passed; ruff temiz.
-- **Merge bekliyor:** worker'ın "KULLANICI merge eder" kuralı gereği PR #115 merge'i kullanıcıda.
+- **Worker PR #115 MERGED** (2026-07-05, worker master `3cdedd6`): RICE, `GAP_OUT_WORKER_CROPS`
+  → `GAP_CROPS`'a taşındı. Bridge süiti 12/12 yeşil (master'da doğrulandı); ruff temiz.
+- **Governance not — worker PR #116 AÇIK (merge kullanıcıda):** worker `denetim/kalan_isler.txt`
+  açık-kalem #3 ("contract worker-14/CORN'a uzlaşır") bayat beklentisini günceller. SONUÇ:
+  contract MAIZE-9 kaldı, worker-14 benimsenmedi, kalıcı uzlaşma = AK-4 Yöntem 2 (worker↔GAP
+  köprüsü; iki eksen sınır-çevirisiyle birlikte yaşar). Doküman-only.
 
 **Ek governance notu (kod kırığı DEĞİL):** worker'ın 06-30 AK-4 kaydı, kanonik ekseni **worker-14/CORN**
 bekliyor ve contract'ın CORN'a uzlaşmasını umuyordu (`denetim/kalan_isler.txt` §4.B). Contract/platform
@@ -100,8 +102,8 @@ Bu, worker+contract ORTAK kararı — tek taraflı çözülmedi.
 
 ## 4. Sonraki Oturum İçin — Açık İşler / Öneriler
 
-- [ ] **[YÜKSEK] Worker PR #115'i merge et** (§3.1). Dal hazır ve yeşil, push edildi
-  (`contract-sync-rice-gap-2026-07-05` → worker PR #115); worker "KULLANICI merge eder" kuralı gereği merge kullanıcıda.
+- [x] **Worker PR #115 MERGED** (§3.1) — RICE bridge-snapshot senkronu worker master'a girdi (`3cdedd6`).
+- [ ] **Worker PR #116'yı merge et** (§3.1) — `kalan_isler.txt` CORN/MAIZE eksen-sonucu notu (doküman-only, kullanıcı onayladı; merge kullanıcıda).
 - [ ] **Worker meyve-ağacı bitkileri (APPLE/PEACH/CHERRY/FIG) hizalaması** — Hata 4 kuyruğu.
   Worker/platform crop_type modelinde var, kontrat karşılığı YOK. Ayrı ve bilinçli bir hizalama
   kararı gerektirir (GAP kapsamına dahil mi?). Worker deposunun sahibi/eşzamanlı oturum uyguluyor
