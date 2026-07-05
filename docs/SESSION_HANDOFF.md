@@ -72,8 +72,36 @@ görülüyor → o depoya bu oturumdan **dokunulmadı** (çakışmayı önlemek 
 
 ---
 
+## 3.1. YENİ BULGU (2026-07-05) — Kanıtlanmış çapraz-depo senkron kırığı: worker RICE
+
+**Ne:** Contract 4.3.0'ın (KR-092) `crop_type.enum.v1`'e **RICE** eklemesi, worker'ın
+`tests/contract/test_crop_vocabulary_bridge_lock.py` dosyasındaki **donmuş `GAP_CROPS`
+anlık görüntüsünü (8 bitki, RICE yok)** bayatlattı. Worker RICE'ı hâlâ "GAP-dışı worker-only"
+sayıyordu. Sonuç: kontrat deposu kardeş dizinde erişilebilir olduğunda worker'ın
+`test_gap_set_matches_live_contract_enum` testi **BAŞARISIZ** (kanıt: yerelde çalıştırıldı).
+
+**Neden bir senkron hatası:** Contract tarafı doğru (eklemeli MINOR yayınladı); desync worker'ın
+elle-tutulan donmuş anlık görüntüsünde belirdi. Bu, testin kendi tasarladığı "kontrat değişince
+GAP anlık görüntüsünü yeniden-senkronla" bakım işlemi (docstring satır 25-28, 233-236).
+
+**Düzeltme (hazır, DOĞRULANDI):** RICE'ı `GAP_OUT_WORKER_CROPS` → `GAP_CROPS`'a taşı (RICE artık
+doğrudan GAP eşleşmesi; worker yine `WORKER_CROPS`'ta RICE'ı konuşuyor). 13-vs-14 sayımı / CORN-vs-MAIZE
+ekseni governance kalemine **DOKUNMAZ** — dik (orthogonal).
+- **Worker dalı:** `contract-sync-rice-gap-2026-07-05` (commit `d0a4b2a`) — **yerel, worker master'a
+  DEĞMEDİ, push EDİLMEDİ.** Bridge süiti 12/12 yeşil; tam contract süiti 238 passed; ruff temiz.
+- **Karar bekliyor:** worker'ın "KULLANICI merge eder" + "cross-repo crop = ORTAK karar" kuralı
+  gereği dal push + PR + merge kullanıcı onayına bırakıldı. Eşzamanlı worker oturumu da uyguluyor olabilir.
+
+**Ek governance notu (kod kırığı DEĞİL):** worker'ın 06-30 AK-4 kaydı, kanonik ekseni **worker-14/CORN**
+bekliyor ve contract'ın CORN'a uzlaşmasını umuyordu (`denetim/kalan_isler.txt` §4.B). Contract/platform
+07-05'te **MAIZE-kanonik** kaldı ve worker-14'ü BENİMSEMEDİ. Köprü zaten CORN↔MAIZE çevirdiği için
+**kod kırığı yok**; ama worker'ın açık-kalem prosesi bayat (ters yönde çözülen bir uzlaşmayı bekliyor).
+Bu, worker+contract ORTAK kararı — tek taraflı çözülmedi.
+
 ## 4. Sonraki Oturum İçin — Açık İşler / Öneriler
 
+- [ ] **[YÜKSEK] Worker RICE bridge-sync dalını merge et** (§3.1). Dal hazır ve yeşil
+  (`contract-sync-rice-gap-2026-07-05`); worker "KULLANICI merge eder" kuralı gereği push+PR+merge onayı gerekir.
 - [ ] **Worker meyve-ağacı bitkileri (APPLE/PEACH/CHERRY/FIG) hizalaması** — Hata 4 kuyruğu.
   Worker/platform crop_type modelinde var, kontrat karşılığı YOK. Ayrı ve bilinçli bir hizalama
   kararı gerektirir (GAP kapsamına dahil mi?). Worker deposunun sahibi/eşzamanlı oturum uyguluyor
