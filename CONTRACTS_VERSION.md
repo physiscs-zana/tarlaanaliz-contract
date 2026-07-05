@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 4.2.1
+## Version: 4.3.0
 
-**Release Date:** 2026-06-26T11:33:23.535556Z  
-**Breaking Change:** YES  
-**Contracts Checksum (SHA-256):** `614d41d207b89b80148e8781ae5e015d0a486a6d4ce525708a3f8f3fd0487d99`
+**Release Date:** 2026-07-05T08:53:33.511125Z  
+**Breaking Change:** NO  
+**Contracts Checksum (SHA-256):** `7295e395723746c03d1438885a307b1df6cb75d2f1357db9edffb2c5b3ee801c`
 
 ---
 
@@ -55,7 +55,7 @@ Individual file hashes for verification:
 - `enums/calibration_type.enum.v1.json`  
   `35c85add630b2631ed2f4749a045f258955db11f255ef081822c9654b27c70b8`
 - `enums/crop_type.enum.v1.json`  
-  `f3b39acd55cc8037d6c0880bfa7617833be6f7d62d6b0c58c78d2c5c69b45279`
+  `dc0901b0f682d592ec6e57f559866ac0b5b6668a7504da481091ddaf0f63faff`
 - `enums/dataset_status.enum.v1.json`  
   `a1af5173853fd0983339075fa550e66847c0d19a8a2411c72a612d866de54b07`
 - `enums/drone_type.enum.v1.json`  
@@ -99,6 +99,8 @@ Individual file hashes for verification:
   `e0055a61a41be6900c15f7445f7fa979564cc5aa0306a3573e717c3c80db4133`
 - `schemas/core/phenology_flight_profile.v1.schema.json`  
   `4d1e1f4f7bae6353a646280e4959204c2b4da1a376a96f978435ee64c0121d73`
+- `schemas/core/seasonal_flight_calendar.v1.schema.json`  
+  `e6e201391b2ba0f1b535850b0d53332c83eeae29e011a4df646a7bd66aa2161a`
 - `schemas/core/user.v1.schema.json`  
   `9c2659f56ddc3a826eac8e7799536ab50f0bd7f212708e568657cc396d43f6e3`
 - `schemas/core/user_pii.v1.schema.json`  
@@ -171,7 +173,7 @@ Individual file hashes for verification:
 - `schemas/worker/expert_labeling_card.v1.schema.json`  
   `a7c28432a38b60cb42599e47f971b3b0a323e5073011d0e3306de077edfb8c32`
 - `schemas/worker/expert_review_queue.v1.schema.json`  
-  `873db689f767c0b8d14b8992fb195277fa10d3e5b4e89366c08235bf97ebf81e`
+  `0dcf6bd7bf206ebb637a0ac547f9ca833be2cf737d66c429ab521b9b6bcf72b2`
 - `schemas/worker/thermal_analysis_result.v1.schema.json`  
   `c7b013adce00fa5618214865d869f1f85d68dad83786b21d27f9ea019c8de212`
 
@@ -236,11 +238,11 @@ Individual file hashes for verification:
 ### API Components
 
 - `api/components/parameters.yaml`  
-  `00aa14c9f8e6e81d3b465d14a4ee454f21c7518d40b9a1e96c4b5ab699acacfa`
+  `d956b487a24cb9ef685cbdf789c1f20f3c6de47213c54d2f2ad62d94d4b7c12c`
 - `api/components/responses.yaml`  
-  `59070157640700fdb37bc89dcd65bd10a89de9eaf9eb01500ab2092f2a70e0dc`
+  `0b1bba42a695d77a4fda048889656d6b0236c2a99a1d016dda2374d79e393331`
 - `api/components/schemas.yaml`  
-  `61cfbed71770d910162989e923f150030c10b3d4afa2f17268d6b28936918981`
+  `0e2ba799400fac0cdcf2fcd3035dc9301d9699cd235554f401c0f72dccbd0a48`
 - `api/components/security_schemes.yaml`  
   `9d45e3181a4b847b617a0553c72458650aa9c3deacf38cbed67c5c12db3e1c79`
 
@@ -256,6 +258,12 @@ Individual file hashes for verification:
 ---
 
 ## Changelog
+
+### v4.3.0 (2026-07-05)
+
+**Breaking:** NO
+
+Version pinned automatically.
 
 ### v4.2.1 (2026-06-26)
 
@@ -285,7 +293,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("614d41d207b89b80148e8781ae5e015d0a486a6d4ce525708a3f8f3fd0487d99"), "Contracts checksum mismatch!"
+assert verify_contracts("7295e395723746c03d1438885a307b1df6cb75d2f1357db9edffb2c5b3ee801c"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -298,7 +306,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("614d41d207b89b80148e8781ae5e015d0a486a6d4ce525708a3f8f3fd0487d99"), "Contracts checksum mismatch!");
+assert(verifyContracts("7295e395723746c03d1438885a307b1df6cb75d2f1357db9edffb2c5b3ee801c"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -349,4 +357,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-06-26T11:33:23.535556Z
+**Last Updated:** 2026-07-05T08:53:33.511125Z

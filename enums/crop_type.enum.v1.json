@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/enums/crop_type.enum.v1.json",
   "title": "CropType",
-  "description": "Agricultural crop types for the GAP (Southeastern Anatolia Project) region. 8-crop set; HAZELNUT removed in v2.0.0 (not grown in GAP).",
+  "description": "Agricultural crop types for the GAP (Southeastern Anatolia Project) region. 9-crop set; HAZELNUT removed in v2.0.0 (not grown in GAP); RICE (Çeltik) added in v2.1.0 (active GAP crop, KR-092 seasonal flight calendar scope).",
   "type": "string",
   "enum": [
     "COTTON",
@@ -12,14 +12,15 @@
     "SUNFLOWER",
     "GRAPE",
     "OLIVE",
-    "RED_LENTIL"
+    "RED_LENTIL",
+    "RICE"
   ],
   "metadata": {
-    "version": "2.0.0",
-    "lastUpdated": "2026-06-26",
-    "changeNote": "MAJOR (breaking): HAZELNUT (Fındık) removed — hazelnut is a Black Sea crop, not grown in the GAP region; it was erroneously present. Migration: docs/migration_guides/crop_type_hazelnut_removal.md.",
+    "version": "2.1.0",
+    "lastUpdated": "2026-07-05",
+    "changeNote": "MINOR (non-breaking): RICE (Çeltik) added — active GAP crop within the KR-092 seasonal flight calendar scope (COTTON/MAIZE/RICE/GRAPE/PISTACHIO). Karacadağ/Şanlıurfa paddy rice is grown in GAP. Worker Stage-2 model is blocked_by_data (KR-018 hard-gate) until calibrated open data arrives. Prior v2.0.0 (MAJOR/breaking): HAZELNUT (Fındık) removed — Black Sea crop, not grown in GAP. Migration: docs/migration_guides/crop_type_hazelnut_removal.md.",
     "gapPriorities": {
-      "description": "GAP region priority crops (ALL 8 crops are GAP priorities - these are the ONLY supported crops)",
+      "description": "GAP region priority crops (ALL 9 crops are GAP priorities - these are the ONLY supported crops)",
       "crops": [
         "COTTON",
         "PISTACHIO",
@@ -28,7 +29,8 @@
         "SUNFLOWER",
         "GRAPE",
         "OLIVE",
-        "RED_LENTIL"
+        "RED_LENTIL",
+        "RICE"
       ]
     },
     "categories": {
@@ -36,7 +38,8 @@
         "COTTON",
         "WHEAT",
         "MAIZE",
-        "SUNFLOWER"
+        "SUNFLOWER",
+        "RICE"
       ],
       "LEGUMES": [
         "RED_LENTIL"
@@ -58,7 +61,8 @@
         "SUNFLOWER": "Ayçiçeği",
         "GRAPE": "Üzüm",
         "OLIVE": "Zeytin",
-        "RED_LENTIL": "Kırmızı Mercimek"
+        "RED_LENTIL": "Kırmızı Mercimek",
+        "RICE": "Çeltik"
       },
       "en": {
         "COTTON": "Cotton",
@@ -68,7 +72,8 @@
         "SUNFLOWER": "Sunflower",
         "GRAPE": "Grape",
         "OLIVE": "Olive",
-        "RED_LENTIL": "Red Lentil"
+        "RED_LENTIL": "Red Lentil",
+        "RICE": "Rice (Paddy)"
       }
     },
     "aliases": {
@@ -84,6 +89,6 @@
     "breaking_change_policy": "Adding new crop types is non-breaking (MINOR). Removing or renaming crop types is breaking (MAJOR) and requires migration guide.",
     "gap_region": "GAP (Güneydoğu Anadolu Projesi) region includes: Adıyaman, Batman, Diyarbakır, Gaziantep, Kilis, Mardin, Siirt, Şanlıurfa, Şırnak",
     "usage": "This enum is used across schemas (Field, Mission, Pricing) and UI components. Always reference this canonical source.",
-    "worker_alignment": "TarlaAnaliz uses the GAP 8-crop set and keeps its naming (MAIZE, RED_LENTIL). It is NOT 1:1 with the sibling/worker CropType, which uses CORN/LENTIL and Aegean crops (CHERRY/FIG/APPLE/PEACH). Translate across repos via metadata.aliases (MAIZE<->CORN, RED_LENTIL<->LENTIL)."
+    "worker_alignment": "TarlaAnaliz uses the GAP 9-crop set and keeps its naming (MAIZE, RED_LENTIL). RICE (Çeltik) is an active GAP crop within the KR-092 seasonal flight calendar scope, though the worker Stage-2 model remains blocked_by_data (KR-018 hard-gate). It is NOT 1:1 with the sibling/worker CropType, which uses CORN/LENTIL and Aegean crops (CHERRY/FIG/APPLE/PEACH). Translate across repos via metadata.aliases (MAIZE<->CORN, RED_LENTIL<->LENTIL)."
   }
 }

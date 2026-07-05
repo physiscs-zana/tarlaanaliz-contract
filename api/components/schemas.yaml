@@ -34,6 +34,7 @@ components:
         - GRAPE
         - OLIVE
         - RED_LENTIL
+        - RICE
       description: Crop type (reference enums/crop_type.enum.v1.json - supported crops)
     
     AnalysisType:
@@ -46,7 +47,7 @@ components:
         - WEED
         - WATER_STRESS
         - NITROGEN_STRESS
-      description: Analysis type (reference enums/analysis_type.enum.v1.json - KR-002: 7 map layers)
+      description: "Analysis type (reference enums/analysis_type.enum.v1.json - KR-002: 7 map layers)"
     
     Role:
       type: string

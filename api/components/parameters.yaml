@@ -170,6 +170,7 @@ components:
           - GRAPE
           - OLIVE
           - RED_LENTIL
+          - RICE
         example: COTTON
     
     AnalysisType:
