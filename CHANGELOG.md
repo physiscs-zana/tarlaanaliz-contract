@@ -46,8 +46,8 @@ değişmedi (geriye uyumlu).
 
 **MAJOR (BREAKING) — `payment_method.enum.v1`'den `TARIS_DEDUCTION` kaldırıldı**
 
-Tariş, Ege bölgesi (İzmir/Ege) kooperatifidir; `tarlaanaliz` yalnız **GAP (Güneydoğu Anadolu)**
-bölgesine hizmet eder → Tariş GAP'ta yoktur (egeanaliz→tarlaanaliz port artefaktı). `TARIS_DEDUCTION`
+Tariş, Ege bölgesi kooperatifidir; `tarlaanaliz` yalnız **GAP (Güneydoğu Anadolu)**
+bölgesine hizmet eder → Tariş GAP'ta yoktur (önceki port artefaktı). `TARIS_DEDUCTION`
 değeri ödeme yöntemi enum'undan + `x-enum-descriptions`'tan kaldırıldı. Kalan: `CREDIT_CARD`,
 `IBAN_TRANSFER`. PaymentMethod mantıksal sürümü 2.0.0 → 3.0.0.
 

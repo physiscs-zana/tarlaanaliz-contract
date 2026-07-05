@@ -16,9 +16,9 @@ IBAN_TRANSFER
 
 ## Neden
 
-Tariş, **Ege bölgesi (İzmir/Ege)** tarım satış kooperatifidir. `tarlaanaliz` platformu yalnızca
+Tariş, **Ege bölgesi** tarım satış kooperatifidir. `tarlaanaliz` platformu yalnızca
 **GAP (Güneydoğu Anadolu Projesi)** bölgesine hizmet eder; Tariş GAP'ta faaliyet göstermez.
-`TARIS_DEDUCTION`, `egeanaliz → tarlaanaliz` port'undan kalan bir artefakttı ve hiçbir GAP
+`TARIS_DEDUCTION`, önceki port'tan kalan bir artefakttı ve hiçbir GAP
 senaryosunda geçerli değildi. Platform tarafı (PR #307) ve uygulama kodu zaten temizlendi; bu
 sürüm sözleşmeyi de hizalar.
 

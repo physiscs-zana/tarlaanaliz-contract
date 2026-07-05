@@ -2,18 +2,32 @@ name: Contract Validation
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [master]
     paths:
       - 'schemas/**'
+      - 'enums/**'
       - 'api/**'
       - 'tools/**'
       - 'tests/**'
+      - 'CONTRACTS_VERSION.md'
       - '.github/workflows/contract_validation.yml'
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'schemas/**'
+      - 'enums/**'
       - 'api/**'
+      - 'tools/**'
+      - 'tests/**'
+      - 'CONTRACTS_VERSION.md'
+      - '.github/workflows/contract_validation.yml'
+
+# Default GITHUB_TOKEN is read-only; the breaking-change job posts a PR comment
+# (issues.createComment) -> needs pull-requests: write. Without it the comment
+# step fails "Resource not accessible by integration" and fails the job.
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
   validate-schemas:
@@ -132,6 +146,7 @@ jobs:
       - name: Post PR comment
         uses: actions/github-script@v8
         if: always()
+        continue-on-error: true  # informational comment; never fail CI on posting
         with:
           script: |
             const fs = require('fs');
@@ -242,11 +257,30 @@ jobs:
           fi
           
           echo "✅ All schemas use Draft 2020-12"
-  
+
+  check-brand-guard:
+    name: Check Brand Guard (no foreign-brand leakage)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Run brand guard
+        run: |
+          # tarlaanaliz-contracts is synced from a sibling contracts repo.
+          # This guard fails the build if that sibling brand/region leaks back in.
+          python3 tools/check_no_egeanaliz.py
+
   summary:
     name: Validation Summary
     runs-on: ubuntu-latest
-    needs: [validate-schemas, test-schemas, detect-breaking-changes, check-forbidden-fields, check-draft-2020-12]
+    needs: [validate-schemas, test-schemas, detect-breaking-changes, check-forbidden-fields, check-draft-2020-12, check-brand-guard]
     if: always()
     
     steps:
@@ -259,13 +293,15 @@ jobs:
           echo "- Breaking Changes: ${{ needs.detect-breaking-changes.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Forbidden Fields: ${{ needs.check-forbidden-fields.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Draft 2020-12: ${{ needs.check-draft-2020-12.result }}" >> $GITHUB_STEP_SUMMARY
-      
+          echo "- Brand Guard: ${{ needs.check-brand-guard.result }}" >> $GITHUB_STEP_SUMMARY
+
       - name: Fail if critical checks failed
         if: |
           needs.validate-schemas.result == 'failure' ||
           needs.test-schemas.result == 'failure' ||
           needs.check-forbidden-fields.result == 'failure' ||
-          needs.check-draft-2020-12.result == 'failure'
+          needs.check-draft-2020-12.result == 'failure' ||
+          needs.check-brand-guard.result == 'failure'
         run: |
           echo "::error::Critical validation checks failed!"
           exit 1

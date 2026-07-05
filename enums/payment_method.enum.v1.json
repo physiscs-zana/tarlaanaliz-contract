@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/enums/payment_method.enum.v1.json",
   "title": "PaymentMethod",
-  "description": "Ödeme yöntemi enum'u — KR-033 kanonik. SSOT Uyum: 1.2.0 (2026-02-24).\nDEĞİŞİKLİK NOTU (v5.0.0 BREAKING): TARIS_DEDUCTION kaldırıldı — Tariş Ege bölgesi kooperatifidir; tarlaanaliz yalnız GAP (Güneydoğu Anadolu) bölgesine hizmet eder, Tariş GAP'ta yoktur (egeanaliz→tarlaanaliz port artefaktı). Kalan yöntemler: CREDIT_CARD, IBAN_TRANSFER.",
+  "description": "Ödeme yöntemi enum'u — KR-033 kanonik. SSOT Uyum: 1.2.0 (2026-02-24).\nDEĞİŞİKLİK NOTU (v5.0.0 BREAKING): TARIS_DEDUCTION kaldırıldı — Tariş Ege bölgesi kooperatifidir; tarlaanaliz yalnız GAP (Güneydoğu Anadolu) bölgesine hizmet eder, Tariş GAP'ta yoktur (önceki port artefaktı). Kalan yöntemler: CREDIT_CARD, IBAN_TRANSFER.",
   "type": "string",
   "enum": [
     "CREDIT_CARD",
