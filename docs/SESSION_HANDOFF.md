@@ -87,10 +87,10 @@ GAP anlık görüntüsünü yeniden-senkronla" bakım işlemi (docstring satır 
 **Düzeltme (hazır, DOĞRULANDI):** RICE'ı `GAP_OUT_WORKER_CROPS` → `GAP_CROPS`'a taşı (RICE artık
 doğrudan GAP eşleşmesi; worker yine `WORKER_CROPS`'ta RICE'ı konuşuyor). 13-vs-14 sayımı / CORN-vs-MAIZE
 ekseni governance kalemine **DOKUNMAZ** — dik (orthogonal).
-- **Worker dalı:** `contract-sync-rice-gap-2026-07-05` (commit `d0a4b2a`) — **yerel, worker master'a
-  DEĞMEDİ, push EDİLMEDİ.** Bridge süiti 12/12 yeşil; tam contract süiti 238 passed; ruff temiz.
-- **Karar bekliyor:** worker'ın "KULLANICI merge eder" + "cross-repo crop = ORTAK karar" kuralı
-  gereği dal push + PR + merge kullanıcı onayına bırakıldı. Eşzamanlı worker oturumu da uyguluyor olabilir.
+- **Worker dalı:** `contract-sync-rice-gap-2026-07-05` (commit `d0a4b2a`) — push edildi;
+  **worker PR #115 AÇIK** (worker master'a DEĞMEDİ, merge edilMEDİ). Bridge süiti 12/12 yeşil;
+  tam contract süiti 238 passed; ruff temiz.
+- **Merge bekliyor:** worker'ın "KULLANICI merge eder" kuralı gereği PR #115 merge'i kullanıcıda.
 
 **Ek governance notu (kod kırığı DEĞİL):** worker'ın 06-30 AK-4 kaydı, kanonik ekseni **worker-14/CORN**
 bekliyor ve contract'ın CORN'a uzlaşmasını umuyordu (`denetim/kalan_isler.txt` §4.B). Contract/platform
@@ -100,8 +100,8 @@ Bu, worker+contract ORTAK kararı — tek taraflı çözülmedi.
 
 ## 4. Sonraki Oturum İçin — Açık İşler / Öneriler
 
-- [ ] **[YÜKSEK] Worker RICE bridge-sync dalını merge et** (§3.1). Dal hazır ve yeşil
-  (`contract-sync-rice-gap-2026-07-05`); worker "KULLANICI merge eder" kuralı gereği push+PR+merge onayı gerekir.
+- [ ] **[YÜKSEK] Worker PR #115'i merge et** (§3.1). Dal hazır ve yeşil, push edildi
+  (`contract-sync-rice-gap-2026-07-05` → worker PR #115); worker "KULLANICI merge eder" kuralı gereği merge kullanıcıda.
 - [ ] **Worker meyve-ağacı bitkileri (APPLE/PEACH/CHERRY/FIG) hizalaması** — Hata 4 kuyruğu.
   Worker/platform crop_type modelinde var, kontrat karşılığı YOK. Ayrı ve bilinçli bir hizalama
   kararı gerektirir (GAP kapsamına dahil mi?). Worker deposunun sahibi/eşzamanlı oturum uyguluyor
