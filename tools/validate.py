@@ -132,6 +132,13 @@ def validate_enum_file(enum_path: Path) -> List[str]:
 
 def main():
     """Main validation"""
+    # Windows consoles default to a legacy code page (e.g. cp1254) that cannot
+    # encode the status emoji below and raises UnicodeEncodeError. Force UTF-8.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8")
+
     print("🔍 TarlaAnaliz Contracts Validator\n")
 
     base_dir = Path(__file__).parent.parent

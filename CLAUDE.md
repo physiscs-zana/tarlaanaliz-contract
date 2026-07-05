@@ -14,6 +14,7 @@
 tarlaanaliz-contracts/
 ├── schemas/            # JSON Schema definitions (Draft 2020-12)
 │   ├── core/           # Field, Mission, User, UserPII
+│   ├── datasets/       # Dataset lifecycle + chain of custody (KR-072/073): dataset, dataset_manifest, calibration_certificate, qc_report, scan_report, verification_report, attestation, transfer_batch, evidence_bundle_ref
 │   ├── edge/           # Edge station intake, metadata, quarantine
 │   ├── events/         # Event payloads (field_created, mission_assigned, analysis_completed)
 │   ├── platform/       # Pricing, Payroll, LayerRegistry, PaymentIntent, QC, Calibration

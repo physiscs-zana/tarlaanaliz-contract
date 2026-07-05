@@ -115,20 +115,58 @@ Bu, worker+contract ORTAK kararı — tek taraflı çözülmedi.
 
 ---
 
+## 3.3. Yönetişim Kapanışları (2026-07-05 devam) — meyve-ağacı bitkileri + v5.1.1 netliği
+
+Bu iki kalem §4'te "açık" işaretliydi; ikisi de **kod değişikliği değil, yönetişim (governance)
+kapanışı** olarak çözüldü. Ayrıca iki düşük-öncelik kontrat-içi kalem (validate.py UTF-8 + CLAUDE.md
+datasets) bu oturumda giderildi (§4).
+
+### (A) Worker meyve-ağacı bitkileri (APPLE/PEACH/CHERRY/FIG) — KAPANDI (bilinçli kapsam-dışı)
+
+- **Karar:** Bu 4 bitki GAP kontratına **EKLENMEZ.** Ege (Aegean) bölgesi mirası mahsullerdir;
+  GAP (Güneydoğu Anadolu) kapsamı DIŞINDADIR. Kontrat kanonik seti GAP-9 kalır.
+- **Kilit nerede:** Worker `tests/contract/test_crop_vocabulary_bridge_lock.py` içindeki
+  `GAP_OUT_WORKER_CROPS = {APPLE, PEACH, CHERRY, FIG}` frozenset'i bu 4'ü açıkça "GAP-dışı
+  worker-only" olarak kilitler (sessiz drift imkansız). Worker runtime enum'u worker-13.
+- **Kod kırığı YOK:** Köprü (AK-4 Yöntem 2) yalnız örtüşen mahsulleri çevirir (CORN↔MAIZE,
+  LENTIL↔RED_LENTIL). Meyve-ağacı bitkileri GAP sınırını hiç geçmez → kontratta karşılığı
+  olmaması TASARIM gereğidir, eksiklik değil.
+- **Kontrat zaten belgeliyor:** `enums/crop_type.enum.v1.json` `notes.worker_alignment` (satır 92)
+  bu bitkileri "Aegean crops (CHERRY/FIG/APPLE/PEACH), NOT 1:1 with GAP" olarak anıyor.
+- **Platform:** CHERRY/FIG yalnız platform'un crop_type VO'sunda (value object) var; platform da
+  worker-14'ü BENİMSEMEDİ. Ortak karar (contract+worker+platform), tek taraflı değil.
+- ⇒ "Hata 4"ün meyve-ağacı boyutu KAPANDI. Kontrat enum'una **dokunulmadı** (dokunmak GAP
+  kapsamını ihlal eder + tek taraflı cross-repo değişiklik olurdu).
+
+### (B) Worker `v5.1.1` etiket-mirası — NETLEŞTİRİLDİ (worker PR #117)
+
+- **Durum:** Worker `CONTRACTS_VERSION.md`'i `v5.1.1`'i KENDİ bağımsız KR-041 hash kapısıyla
+  (interface/contracts/*.json 7 dosya, hash `c3cb01bf…`) taşır. Kontrat SSOT SemVer'inden (4.3.0)
+  ve `tools/pin_version.py` checksum'ından **bilinçli olarak ayrıktır.**
+- **Kafa karışıklığı:** "5.x > 4.x → worker kontrattan ileride" YANLIŞ okumasıydı. İki şema
+  bağımsız; sayıların eşleşmesi beklenmez.
+- **Aksiyon:** Worker `CONTRACTS_VERSION.md`'ine eklemeli (additive) "Version scheme note" eklendi
+  → **worker PR #117** (dal `docs-contracts-version-scheme-note-2026-07-05`, doc-only; KR-041 hash
+  değişmedi — `compute_contracts_hash.py --verify` ile doğrulandı). Yeniden-isimlendirme YAPILMADI
+  (sürüm adı worker sahibinin kararı). **KULLANICI merge eder** (§5 worker konvansiyonu).
+
+---
+
 ## 4. Sonraki Oturum İçin — Açık İşler / Öneriler
 
 - [x] **Worker PR #115 MERGED** (§3.1) — RICE bridge-snapshot senkronu worker master'a girdi (`3cdedd6`).
 - [x] **Worker PR #116 MERGED** (§3.1) — `kalan_isler.txt` CORN/MAIZE eksen-sonucu notu worker master'a girdi (`f61e15f`).
 - [x] **docs/ temizliği** (§3.2) — eski-tarihli `SYNC_ANALYSIS_2026-06-30.md` silindi; referanslı `worker_required_changes_2026-05-30.md` korundu.
-- [ ] **Worker meyve-ağacı bitkileri (APPLE/PEACH/CHERRY/FIG) hizalaması** — Hata 4 kuyruğu.
-  Worker/platform crop_type modelinde var, kontrat karşılığı YOK. Ayrı ve bilinçli bir hizalama
-  kararı gerektirir (GAP kapsamına dahil mi?). Worker deposunun sahibi/eşzamanlı oturum uyguluyor
-  olabilir — **dokunmadan önce o oturumun durumunu doğrula.**
-- [ ] **Worker `v5.1.1` etiketi** terk edilen 5.x dalından türedi; worker sahibi kendi şemasında
-  isimlendirmeyi netleştirmeli (etiket contract'la eşleşmek zorunda değil, ama 5.x mirası kafa karıştırıcı).
-- [ ] (Düşük öncelik) `tools/validate.py` Windows UTF-8 (cp1254) çökmesi — yerelde `python -X utf8 tools/validate.py`
-  ile çalıştır; kalıcı düzeltme için aracın başında `sys.stdout.reconfigure(encoding="utf-8")`.
-- [ ] (Düşük öncelik) `CLAUDE.md` şema ağacı `schemas/datasets/` (9 dosya) dizinini belgelemiyor.
+- [x] **Worker meyve-ağacı bitkileri (APPLE/PEACH/CHERRY/FIG) hizalaması** (§3.3-A) — KAPANDI.
+  Bilinçli kapsam-dışı karar: GAP kontratına eklenmez (Ege mirası), köprüyle uyumlu, kod kırığı yok.
+- [x] **Worker `v5.1.1` etiket-mirası netliği** (§3.3-B) — worker PR #117 (eklemeli doc note; bağımsız
+  şema açıklaması). **KULLANICI merge eder** (worker konvansiyonu).
+- [x] **`tools/validate.py` Windows UTF-8 (cp1254) çökmesi** — KALICI DÜZELTİLDİ. `main()` başında
+  `sys.stdout/stderr.reconfigure(encoding="utf-8")`; artık `-X utf8` bayrağı GEREKMİYOR (PowerShell +
+  git-bash'te doğrulandı: 87 dosya, 0 hata).
+- [x] **`CLAUDE.md` şema ağacı `schemas/datasets/` (9 dosya)** — BELGELENDİ (KR-072/073 zincir-koruma
+  şemaları: dataset, dataset_manifest, calibration_certificate, qc_report, scan_report,
+  verification_report, attestation, transfer_batch, evidence_bundle_ref).
 
 ---
 
