@@ -146,9 +146,11 @@ datasets) bu oturumda giderildi (§4).
 - **Kafa karışıklığı:** "5.x > 4.x → worker kontrattan ileride" YANLIŞ okumasıydı. İki şema
   bağımsız; sayıların eşleşmesi beklenmez.
 - **Aksiyon:** Worker `CONTRACTS_VERSION.md`'ine eklemeli (additive) "Version scheme note" eklendi
-  → **worker PR #117** (dal `docs-contracts-version-scheme-note-2026-07-05`, doc-only; KR-041 hash
-  değişmedi — `compute_contracts_hash.py --verify` ile doğrulandı). Yeniden-isimlendirme YAPILMADI
-  (sürüm adı worker sahibinin kararı). **KULLANICI merge eder** (§5 worker konvansiyonu).
+  → **worker PR #117 MERGED** (worker master `416be79`, doc-only; KR-041 hash değişmedi —
+  `compute_contracts_hash.py --verify` ile doğrulandı). CI gerçek yeşil (admin-bypass yok): KR-041
+  hash kapısı + tam test süiti geçti. NOT: `CONTRACTS_VERSION.md` değişikliği worker'ın "CHANGELOG
+  entry for contract/KR changes" CI kapısını tetikledi → kök-neden düzeltildi (`CHANGELOG.md`'e
+  eşleşen giriş eklendi, bypass DEĞİL). Yeniden-isimlendirme YAPILMADI (sürüm adı worker sahibinin kararı).
 
 ---
 
@@ -159,8 +161,8 @@ datasets) bu oturumda giderildi (§4).
 - [x] **docs/ temizliği** (§3.2) — eski-tarihli `SYNC_ANALYSIS_2026-06-30.md` silindi; referanslı `worker_required_changes_2026-05-30.md` korundu.
 - [x] **Worker meyve-ağacı bitkileri (APPLE/PEACH/CHERRY/FIG) hizalaması** (§3.3-A) — KAPANDI.
   Bilinçli kapsam-dışı karar: GAP kontratına eklenmez (Ege mirası), köprüyle uyumlu, kod kırığı yok.
-- [x] **Worker `v5.1.1` etiket-mirası netliği** (§3.3-B) — worker PR #117 (eklemeli doc note; bağımsız
-  şema açıklaması). **KULLANICI merge eder** (worker konvansiyonu).
+- [x] **Worker `v5.1.1` etiket-mirası netliği** (§3.3-B) — worker PR #117 **MERGED** (worker master
+  `416be79`; eklemeli doc note + CHANGELOG girişi; CI gerçek yeşil).
 - [x] **`tools/validate.py` Windows UTF-8 (cp1254) çökmesi** — KALICI DÜZELTİLDİ. `main()` başında
   `sys.stdout/stderr.reconfigure(encoding="utf-8")`; artık `-X utf8` bayrağı GEREKMİYOR (PowerShell +
   git-bash'te doğrulandı: 87 dosya, 0 hata).
