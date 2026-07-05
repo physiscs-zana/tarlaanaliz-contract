@@ -12,7 +12,9 @@
 
 - **Kontrat sürümü (CONTRACTS_VERSION.md):** `4.3.0` — Breaking: **NO** (eklemeli/additive)
   - Checksum (SHA-256): `7295e395723746c03d1438885a307b1df6cb75d2f1357db9edffb2c5b3ee801c`
-  - master head: `82d2fd8` (PR #19 merge)
+  - 4.3.0 içerik-merge commit'i: `82d2fd8` (PR #19). Checksum bu ağaca pinli.
+  - Sonraki commit'ler **yalnız-doküman** (bu handoff izleme + docs/ temizliği); checksum'ı
+    DEĞİŞTİRMEZ. `git log` farklı bir head gösterirse (ör. bu oturum-kapanış commit'i) bu normaldir.
 - **Tek çalışma deposu:** `.../TARLA-ANALİZ/tarlaanaliz-contract` (origin = `github.com/physiscs-zana/tarlaanaliz-contract`)
 
 ### Dallar / PR durumu — 2026-07-05 itibarıyla
@@ -100,10 +102,24 @@ bekliyor ve contract'ın CORN'a uzlaşmasını umuyordu (`denetim/kalan_isler.tx
 **kod kırığı yok**; ama worker'ın açık-kalem prosesi bayat (ters yönde çözülen bir uzlaşmayı bekliyor).
 Bu, worker+contract ORTAK kararı — tek taraflı çözülmedi.
 
+## 3.2. Doküman Bakımı (2026-07-05 oturum-kapanış) — docs/ temizliği
+
+- **SİLİNDİ:** `docs/sync/SYNC_ANALYSIS_2026-06-30.md` (190 satır). Gerekçe: 4.3.0 giderimi +
+  bu SESSION_HANDOFF tarafından geçersiz kılınan eski-tarihli denetim anlık görüntüsü;
+  repo genelinde **hiçbir referansı yok** (grep ile doğrulandı). Bu dosyanın taşıdığı bilgi
+  artık §1–§3.1'de özetli.
+- **KORUNDU:** `docs/sync/worker_required_changes_2026-05-30.md` (57 satır). Gerekçe: kalıcı 3.0.0
+  göç kılavuzu `docs/migration_guides/contracts_3_0_0_structural_absorption.md:47` tarafından
+  **referans veriliyor** (worker-tarafı 3.0.0 hizalama detaylarının eki). Silmek göç kaydında
+  sarkan (dangling) bir bağlantı bırakırdı → bilinçli olarak tutuldu.
+
+---
+
 ## 4. Sonraki Oturum İçin — Açık İşler / Öneriler
 
 - [x] **Worker PR #115 MERGED** (§3.1) — RICE bridge-snapshot senkronu worker master'a girdi (`3cdedd6`).
 - [x] **Worker PR #116 MERGED** (§3.1) — `kalan_isler.txt` CORN/MAIZE eksen-sonucu notu worker master'a girdi (`f61e15f`).
+- [x] **docs/ temizliği** (§3.2) — eski-tarihli `SYNC_ANALYSIS_2026-06-30.md` silindi; referanslı `worker_required_changes_2026-05-30.md` korundu.
 - [ ] **Worker meyve-ağacı bitkileri (APPLE/PEACH/CHERRY/FIG) hizalaması** — Hata 4 kuyruğu.
   Worker/platform crop_type modelinde var, kontrat karşılığı YOK. Ayrı ve bilinçli bir hizalama
   kararı gerektirir (GAP kapsamına dahil mi?). Worker deposunun sahibi/eşzamanlı oturum uyguluyor
