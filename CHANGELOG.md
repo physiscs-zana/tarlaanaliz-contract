@@ -7,6 +7,41 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [5.1.0] - 2026-07-05
+
+**MINOR (eklemeli) — KR-092 sezonluk (haftalık) uçuş takvimi şeması eklendi**
+
+GAP (Güneydoğu Anadolu) bölgesindeki 5 ürün (COTTON/CORN/RICE/GRAPE/PISTACHIO) için
+haftalık sezonluk uçuş parametrelerini (tek skalar İrtifa `Y` / Hız `v`, bölgesel `MM-DD`
+pencereleri, BBCH evresi, kritik hafta işareti) sözleşmeye bağlayan yeni bir çekirdek şema
+eklendi. Değişiklik tamamen eklemeli; mevcut şemalar, enum'lar ve required listeleri
+değişmedi (geriye uyumlu).
+
+### Added
+
+- **`schemas/core/seasonal_flight_calendar.v1.schema.json`:** Bir bitkinin tüm sezon
+  haftalık uçuş takvimi (`crop_type`, `label_tr`, `scientific_name`,
+  `planting_reference_tr`, `season_weeks`, `critical_note_tr`, `weeks[]`). Her hafta:
+  `week`, `date_start`/`date_end` (`MM-DD`), `bbch`, `stage_label_tr`,
+  `priority_target_tr`, `altitude_m`, `speed_ms`, `critical`. Draft 2020-12,
+  `unevaluatedProperties: false`, `$defs` ile yeniden kullanılabilir `SeasonWeek` tipi.
+  Platform pilot görev kartı (KR-092) bu şemadan türetilen DTO'ları tüketir.
+
+### Notes
+
+- **Tek yetkili kaynak:** Bu 5 ürün için haftalık takvim, fenolojiye göre önceliklidir
+  (KR-092). Drone protokolü fail-closed doğrulaması (`0 < altitude_m ≤ 120` SHGM yasal
+  tavanı, `altitude_m / speed_ms ≥ 3.9` DJI Mavic 3M sensör kısıtı) platform tarafında
+  uygulanır; şema yapısal sözleşmeyi tanımlar.
+
+### Migration
+
+- Eklemeli MINOR — consumer'lar mevcut kullanımlarını bozmadan 5.1.0'a pin'leyebilir.
+  Yeni şemayı tüketmek isteyen platform, `WeeklyFlightDTO`/`SeasonFlightScheduleDTO`
+  eşlemesini varsayar.
+
+---
+
 ## [5.0.0] - 2026-06-30
 
 **MAJOR (BREAKING) — `payment_method.enum.v1`'den `TARIS_DEDUCTION` kaldırıldı**

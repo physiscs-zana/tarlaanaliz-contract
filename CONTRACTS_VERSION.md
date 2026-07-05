@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 5.0.0
+## Version: 5.1.0
 
-**Release Date:** 2026-06-30T11:40:18.810397Z  
-**Breaking Change:** YES  
-**Contracts Checksum (SHA-256):** `4c4b7fd4830895078627e31af63648114eab2a9d50a32575936611edc49299c9`
+**Release Date:** 2026-07-05T00:00:00.000000Z  
+**Breaking Change:** NO  
+**Contracts Checksum (SHA-256):** `9fe88842483a20f26dee28a235b9829d75bc702f459d3f802f40049f4a63db5c`
 
 ---
 
@@ -41,6 +41,12 @@ Individual file hashes for verification:
 
 ## Changelog
 
+### v5.1.0 (2026-07-05)
+
+**Breaking:** NO
+
+MINOR (non-breaking): KR-092 yeni sema seasonal_flight_calendar.v1.schema.json eklendi. GAP bolgesi 5 urun (COTTON/CORN/RICE/GRAPE/PISTACHIO) icin haftalik sezonluk ucus takvimi (tek skalar irtifa Y / hiz v, bolgesel MM-DD pencereleri). Yeni sema eklemesi = SemVer MINOR; mevcut semalar/enumlar degismedi.
+
 ### v5.0.0 (2026-06-30)
 
 **Breaking:** YES
@@ -63,7 +69,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("4c4b7fd4830895078627e31af63648114eab2a9d50a32575936611edc49299c9"), "Contracts checksum mismatch!"
+assert verify_contracts("9fe88842483a20f26dee28a235b9829d75bc702f459d3f802f40049f4a63db5c"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -76,7 +82,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("4c4b7fd4830895078627e31af63648114eab2a9d50a32575936611edc49299c9"), "Contracts checksum mismatch!");
+assert(verifyContracts("9fe88842483a20f26dee28a235b9829d75bc702f459d3f802f40049f4a63db5c"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -127,4 +133,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-06-30T11:40:18.810397Z
+**Last Updated:** 2026-07-05T00:00:00.000000Z
