@@ -89,8 +89,8 @@ doğrudan GAP eşleşmesi; worker yine `WORKER_CROPS`'ta RICE'ı konuşuyor). 13
 ekseni governance kalemine **DOKUNMAZ** — dik (orthogonal).
 - **Worker PR #115 MERGED** (2026-07-05, worker master `3cdedd6`): RICE, `GAP_OUT_WORKER_CROPS`
   → `GAP_CROPS`'a taşındı. Bridge süiti 12/12 yeşil (master'da doğrulandı); ruff temiz.
-- **Governance not — worker PR #116 AÇIK (merge kullanıcıda):** worker `denetim/kalan_isler.txt`
-  açık-kalem #3 ("contract worker-14/CORN'a uzlaşır") bayat beklentisini günceller. SONUÇ:
+- **Worker PR #116 MERGED** (2026-07-05, worker master `f61e15f`): worker `denetim/kalan_isler.txt`
+  açık-kalem #3 ("contract worker-14/CORN'a uzlaşır") bayat beklentisi güncellendi. SONUÇ:
   contract MAIZE-9 kaldı, worker-14 benimsenmedi, kalıcı uzlaşma = AK-4 Yöntem 2 (worker↔GAP
   köprüsü; iki eksen sınır-çevirisiyle birlikte yaşar). Doküman-only.
 
@@ -103,7 +103,7 @@ Bu, worker+contract ORTAK kararı — tek taraflı çözülmedi.
 ## 4. Sonraki Oturum İçin — Açık İşler / Öneriler
 
 - [x] **Worker PR #115 MERGED** (§3.1) — RICE bridge-snapshot senkronu worker master'a girdi (`3cdedd6`).
-- [ ] **Worker PR #116'yı merge et** (§3.1) — `kalan_isler.txt` CORN/MAIZE eksen-sonucu notu (doküman-only, kullanıcı onayladı; merge kullanıcıda).
+- [x] **Worker PR #116 MERGED** (§3.1) — `kalan_isler.txt` CORN/MAIZE eksen-sonucu notu worker master'a girdi (`f61e15f`).
 - [ ] **Worker meyve-ağacı bitkileri (APPLE/PEACH/CHERRY/FIG) hizalaması** — Hata 4 kuyruğu.
   Worker/platform crop_type modelinde var, kontrat karşılığı YOK. Ayrı ve bilinçli bir hizalama
   kararı gerektirir (GAP kapsamına dahil mi?). Worker deposunun sahibi/eşzamanlı oturum uyguluyor
