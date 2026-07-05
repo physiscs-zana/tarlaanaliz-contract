@@ -154,6 +154,31 @@ datasets) bu oturumda giderildi (§4).
 
 ---
 
+## 3.4. Şişkinlik-Temizliği (de-bloat) — devir dosyaları sadeleştirildi (2026-07-05 devamı)
+
+**İstek:** Birden fazla "SONRAKİ OTURUM" bölümü olan devir/handoff dosyalarında, **bitmiş-iş
+(tamamlanmış) kayıtlarını son 10 gün hariç sil** — gereksiz şişmişlerdi. Kesim tarihi = **2026-06-25**
+(bugün 07-05, son 10 gün korunur). Kapsam üç repo (contract+worker+platform). Silinen içerik git
+geçmişinde kalıcı olarak erişilebilir (geri-alınabilir).
+
+- **Worker `denetim/kalan_isler.txt`** → **PR #118 MERGED** (worker master `469e7d7`, gerçek yeşil CI —
+  admin-bypass YOK; −48 net satır). §0/§1/§3 (2026-05-31, kesim-öncesi bitmiş-iş) dosyanın kendi
+  "Kademe-1 temizlik" konvansiyonuyla kısa git-SHA işaretçilerine indirildi; **açık kalemler §2/§4/§5/§6
+  (pencere içi) aynen korundu**. Tam anlatı git'te: commit `8987be1..fcae49a` (7 commit) + `a709d5a` (D-3).
+- **Platform `docs/security/open_items_decisions_2026-06.md`** → kompaktlandı (**commit `a58628c`,
+  714→281 satır**; doküman-only, doğrudan `main`). Bitmiş oturum anlatıları tek-satır/oturum **"Yapıldı log"**
+  tablosuna indi; **hiçbir açık kalem silinmedi** (karar tabloları DEFER/COORDINATE/BLOCKED/WON'T-DO +
+  "İzlenen küçük açık kalemler" + H2 HttpOnly fazlı plan + Next 15 spike + EKİM 2026 planı + EN GÜNCEL
+  SONRAKİ OTURUM korundu). İki süperseded "SONRAKİ OTURUM" bölümü, kalemleri güncel tablolara taşınarak
+  Yapıldı log'a absorbe edildi. Tam anlatı git'te (`c0a008d` ve öncesi).
+- **Contract `docs/SESSION_HANDOFF.md`** (bu dosya) → **budama gerekmedi**: tüm içeriği 2026-07-05
+  (10-gün penceresi içinde); kesim-öncesi bitmiş-iş kaydı yok.
+- **Yöntem farkı (kasıtlı):** worker = dal+PR+yeşil-CI'da-merge (kullanıcı onaylı, CHANGELOG kapısı
+  kök-nedenle karşılandı, bypass yok); platform = mevcut doküman konvansiyonu gereği doğrudan `main`
+  (doküman-only kompaktlama).
+
+---
+
 ## 4. Sonraki Oturum İçin — Açık İşler / Öneriler
 
 - [x] **Worker PR #115 MERGED** (§3.1) — RICE bridge-snapshot senkronu worker master'a girdi (`3cdedd6`).
@@ -169,6 +194,9 @@ datasets) bu oturumda giderildi (§4).
 - [x] **`CLAUDE.md` şema ağacı `schemas/datasets/` (9 dosya)** — BELGELENDİ (KR-072/073 zincir-koruma
   şemaları: dataset, dataset_manifest, calibration_certificate, qc_report, scan_report,
   verification_report, attestation, transfer_batch, evidence_bundle_ref).
+- [x] **Devir dosyaları şişkinlik-temizliği (de-bloat)** (§3.4) — worker `kalan_isler.txt` PR #118
+  MERGED (`469e7d7`); platform defteri `a58628c` (714→281); contract handoff budama gerektirmedi.
+  Tüm açık kalemler korundu; silinen bitmiş-iş git geçmişinde.
 
 ---
 
@@ -176,6 +204,7 @@ datasets) bu oturumda giderildi (§4).
 
 - Yeni makinede başlarken: `git fetch origin --prune` → dalların `[ahead/behind]` durumunu kontrol et.
 - Kalıcı bilgi **repoya** yazılmalı (bu dosya gibi); Claude'un yerel hafızası makineye özeldir, taşınmaz.
-- **Eşzamanlı oturum uyarısı:** worker deposunda aktif closeout commit'leri var; o depoya yazmadan
-  önce başka bir makinenin çalışıp çalışmadığını doğrula (çakışma riski).
+- **Eşzamanlı oturum uyarısı:** worker'a bu oturumda dal+PR yöntemiyle yazıldı (PR #118, `469e7d7`;
+  §3.4); artık senkron/temiz. Yine de başka makine yazmadan önce `git fetch --prune` ile `[ahead/behind]`
+  doğrula (çakışma riski).
 - Doğrulama komutu (değişiklik sonrası): `python -X utf8 tools/validate.py && python -X utf8 -m pytest tests/ -v`.
