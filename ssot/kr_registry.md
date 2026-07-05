@@ -1195,3 +1195,48 @@ Verilerin yaşam döngüsünü yöneterek DB boyutu ve S3 depolama maliyetini ko
 - KR-088 (veri kaynağı), KR-019 (fail-closed filtre), KR-083 (temsilci rolü), KR-014 (kooperatif)
 
 ---
+
+## KR-092 — Fenolojik/Sezonluk Uçuş Parametreleri (İrtifa & Hız)
+
+> **Versiyon notu (2026-07-05):** Yeni KR — sezonluk (haftalık) uçuş parametreleri; tarama protokolü v1.6 §10'dan türetilir. Kanonik normatif metin platform SSOT'undadır (`docs/TARLAANALIZ_SSOT_v1_2_0.txt` KR-092); burada contract yüzeyi referanslanır, çoğaltılmaz.
+
+**1) Amaç**
+Bir görevin uçuş yüksekliği (Y) ve hızı (v) değerlerini bitki türü + sezon haftasına (fenolojik evre) göre türetmek; hedef GSD tutturularak analiz kalitesini sabitlemek. Sonuç pilota ekranda o hafta öne çıkarılıp tam sezon tablosuyla ve KMZ uçuş planına gömülü olarak teslim edilir.
+
+**2) Kapsam / Applies-to:** platform, worker, edge-kiosk, contracts
+
+**3) Zorunluluklar (MUST)**
+1) 5 aktif GAP ürünü (COTTON/MAIZE/RICE/GRAPE/PISTACHIO; MAIZE = SSOT/worker sözlüğünde CORN — crop_type aliases MAIZE↔CORN) için **tek yetkili kaynak** haftalık sezon takvimidir (`data/seasonal_flight_calendar.json`); bu ürünlerde haftalık takvim, evre-bazlı fenoloji fallback'inden (`data/phenology_flight_profiles.json`) önceliklidir.
+2) Çözüm anahtarı `crop_type` + `mission_date` → bölgesel haftalık pencere (MM-DD) → (bbch, altitude_m, speed_ms, critical); yeni DB "ekim tarihi" alanı eklenmez.
+3) Fiziksel/mevzuat sınırları fail-closed doğrulanır: RGB GSD=H/37,2 · ÇS GSD=H/21,7, **H/v ≥ 3,9**, **≤ 120 m AGL** (SHGM), güneş açısı > 30°.
+4) Görev tarihi sezona düşmezse en yakın sınır haftasına snap edilir (matched=false); kapsam dışı bitkide haftalık DTO None döner (çağıran fenoloji/varsayılana düşer).
+5) CRP radyometrik kalibrasyonu her uçuş başı+sonu zorunludur (KR-018/082 hard-gate); karar desteğidir, sistem ilaçlama kararı vermez (KR-025).
+
+**4) Kanıt / Artefact**
+- Veri: `data/seasonal_flight_calendar.json` (kanonik haftalık takvim)
+- Contract şeması: `schemas/core/seasonal_flight_calendar.v1.schema.json` (bu repo; SeasonalFlightCalendar)
+- Domain: `seasonal_flight_calendar.py` (VO), `seasonal_flight_planner.py` (servis), `seasonal_flight_calendar_loader.py` (loader)
+- DTO/Contract: `WeeklyFlightDTO`, `SeasonWeekDTO`, `SeasonFlightScheduleDTO`
+- API: `GET /missions/{id}/season-flight-schedule`, `weekly_flight` alanı (mission + pilot mission response), `GET /missions/{id}/flight-route.kmz` (Y/v gömülü)
+
+**5) Audit / Log**
+- Loader olayları: `SEASONAL_CALENDAR_MISSING` / `READ_FAILED` / `PARSE_SKIP` / `LOADED`
+- Snap/fallback notu DTO içinde taşınır (`FLIGHT.PARAMS_FALLBACK`)
+
+**6) Hata Modları**
+- Takvim dosyası yok/bozuk → ilgili ürün atlanır (parse-skip), diğer ürünler yüklenir; negatif cache zehirlenmesi önlenir.
+- Fiziksel sınır ihlali (Y>120 veya H/v<3,9) → VO kurulumunda `SeasonalFlightCalendarError` (fail-closed).
+- Kapsam dışı bitki → 404 (season-flight-schedule) veya `weekly_flight=None` (mission response).
+- IDOR: sezon takvimi erişimi KMZ ile aynı sahiplik/atama kontrolüne tabidir (farmer sahip / atanmış pilot / admin).
+
+**7) Test / Kabul Kriterleri**
+- COTTON Hafta-11 (06-22..06-28) → altitude_m=35, speed_ms=5, critical=true.
+- Sezon dışı tarih → en yakın haftaya snap (matched=false).
+- 5 GAP ürününde KMZ Y/v takvimden gelir (varsayılan 50/5 override edilir); kapsam dışı bitkide fenoloji fallback.
+- Kapsam dışı bitkide `GET /season-flight-schedule` → 404.
+- Yetkisiz kullanıcı (sahip/atanmış pilot/admin değil) → 403.
+
+**8) Cross-refs**
+- KR-024 (fenoloji fallback), KR-016 (uçuş rotası/KMZ), KR-018 (kalibrasyon hard-gate), KR-082 (kalibrasyon sertifikası), KR-025 (karar desteği sınırı), KR-015 (pilot planlama)
+
+---

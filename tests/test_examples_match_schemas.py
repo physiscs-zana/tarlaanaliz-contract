@@ -158,7 +158,7 @@ class TestExamplesValidation:
         
         gap_crops = {
             'COTTON', 'PISTACHIO', 'MAIZE', 'WHEAT',
-            'SUNFLOWER', 'GRAPE', 'OLIVE', 'RED_LENTIL'
+            'SUNFLOWER', 'GRAPE', 'OLIVE', 'RED_LENTIL', 'RICE'
         }
         
         assert example['crop_type'] in gap_crops, \
