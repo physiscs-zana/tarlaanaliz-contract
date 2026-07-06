@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/events/analysis_preliminary_ready.v1.schema.json",
+  "title": "AnalysisPreliminaryReadyEvent",
+  "description": "Domain event: AI analysis produced index layers and a PRELIMINARY (ön rapor) view is now available to the farmer, in PARALLEL with the mandatory expert gate (KR-019) — NOT after it. Under KR-093 (two-phase delivery) the preliminary phase carries ONLY deterministic index layers (HEALTH/NITROGEN_STRESS/WATER_STRESS) + overall_health_index; it carries NO expert-dependent detections, so it does not weaken the KR-019 full-report gate. The platform emits this from the worker→platform bridge after persisting the analysis result and opening the ExpertReview, alongside analysis.review_requested. The full-report 'result ready' notification (after expert approval) is a SEPARATE event and is unchanged. Identifiers are runtime UUIDs (see notes.id_format). PII-free (KR-071): the farmer phone is resolved async by the notifier, never on the wire.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "$ref": "#/$defs/Uuid",
+      "description": "Unique event identifier (platform DomainEvent base — uuid4)"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "analysis.preliminary_ready",
+      "description": "Event type (constant)"
+    },
+    "event_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version"
+    },
+    "occurred_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "When the preliminary view became available (ISO 8601 UTC)"
+    },
+    "data": {
+      "$ref": "#/$defs/AnalysisPreliminaryReadyData",
+      "description": "Event-specific data"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EventMetadata",
+      "description": "Event correlation/tracing metadata"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "occurred_at",
+    "data"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "Uuid": {
+      "type": "string",
+      "format": "uuid",
+      "description": "RFC 4122 UUID (runtime identifier format across platform/worker)"
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
+    },
+    "AnalysisPreliminaryReadyData": {
+      "type": "object",
+      "title": "Analysis Preliminary Ready Data",
+      "description": "Identifiers binding the preliminary view to its mission/field. PII-free: no phone, no name, no address (KR-050/KR-071).",
+      "properties": {
+        "analysis_result_id": {
+          "$ref": "#/$defs/Uuid",
+          "description": "Analysis result whose index layers back the preliminary view"
+        },
+        "mission_id": {
+          "$ref": "#/$defs/Uuid",
+          "description": "Mission that produced the result"
+        },
+        "field_id": {
+          "$ref": "#/$defs/Uuid",
+          "description": "Field the mission belongs to"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/Uuid",
+          "description": "Dataset (chain of custody, KR-072) the result derives from"
+        },
+        "report_phase": {
+          "type": "string",
+          "const": "PRELIMINARY",
+          "description": "Delivery approval phase (reference: enums/report_phase.enum.v1.json). Always PRELIMINARY for this event; FULL is delivered via the separate expert.review_decided approval path."
+        },
+        "report_tier": {
+          "type": "string",
+          "description": "Band quality class of the report (reference: TEMEL/GENISLETILMIS/KAPSAMLI). Independent axis from report_phase and result_mode (KR-093)."
+        }
+      },
+      "required": [
+        "analysis_result_id",
+        "mission_id",
+        "field_id",
+        "report_phase"
+      ],
+      "unevaluatedProperties": false
+    },
+    "EventMetadata": {
+      "type": "object",
+      "title": "Event Metadata",
+      "description": "Event correlation and tracing metadata",
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "description": "Correlation ID for tracing related events"
+        },
+        "causation_id": {
+          "type": "string",
+          "description": "ID of event/command that caused this event"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing ID"
+        },
+        "source_service": {
+          "type": "string",
+          "description": "Service that emitted the event"
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "event_id": "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f",
+      "event_type": "analysis.preliminary_ready",
+      "event_version": "1.0",
+      "occurred_at": "2026-07-06T09:46:00Z",
+      "data": {
+        "analysis_result_id": "b2c3d4e5-f6a7-4182-93a4-b5c6d7e8f9a0",
+        "mission_id": "c3d4e5f6-a7b8-4293-a4b5-c6d7e8f9a0b1",
+        "field_id": "d4e5f6a7-b8c9-43a4-b5c6-d7e8f9a0b1c2",
+        "dataset_id": "f6a7b8c9-d0e1-45c6-d7e8-f9a0b1c2d3e4",
+        "report_phase": "PRELIMINARY",
+        "report_tier": "TEMEL"
+      },
+      "metadata": {
+        "correlation_id": "corr_mission_123",
+        "causation_id": "7a8b9c0d-1e2f-4031-8243-5a6b7c8d9e0f",
+        "source_service": "platform-worker-bridge"
+      }
+    }
+  ],
+  "notes": {
+    "lifecycle": "DRAFT — platform üreticisi Faz 1'de eklenecek (worker_bridge_consumer.py, AnalysisPreliminaryReadyV1 → domain.events exchange, routing event.analysis.preliminary_ready). analysis.review_requested ile PARALEL yayınlanır.",
+    "two_phase": "KR-093 iki-fazlı teslimat: bu olay PRELIMINARY fazın habercisidir (indeks katmanları hazır). FULL faz uzman onayından (expert.review_decided, onaylayan sonuç) SONRA ayrı akışta teslim edilir. KR-019 tam-rapor kapısı DEĞİŞMEZ.",
+    "no_detections": "Ön faz TESPİT sunmaz (hastalık/zararlı/yabancı-ot). Bu olayın data yükü de tespit taşımaz; yalnız kimlikler + faz + tier. Tespitler yalnız uzman onayı sonrası (FULL) açılır (KR-019 korunur).",
+    "id_format": "Identifiers are RFC 4122 UUID strings to match the running platform/worker wire format.",
+    "pii_free": "No PII. Telefon/ad/adres wire'a girmez; bildirim üreticisi (farmer_notifier) telefonu async çözer (KR-050/KR-071)."
+  }
+}

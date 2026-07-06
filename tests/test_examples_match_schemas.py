@@ -76,6 +76,7 @@ class TestExamplesValidation:
         'expert_feedback.example.json': 'worker/expert_feedback.v1.schema.json',
         'expert_review_queue.example.json': 'worker/expert_review_queue.v1.schema.json',
         'analysis_review_requested.example.json': 'events/analysis_review_requested.v1.schema.json',
+        'analysis_preliminary_ready.example.json': 'events/analysis_preliminary_ready.v1.schema.json',
         'expert_review_decided.example.json': 'events/expert_review_decided.v1.schema.json',
         'intake_manifest_edge.example.json': 'edge/intake_manifest.v1.schema.json',
         'thermal_analysis_result.example.json': 'worker/thermal_analysis_result.v1.schema.json',

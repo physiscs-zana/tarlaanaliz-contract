@@ -35,6 +35,7 @@ These examples serve multiple purposes:
 | `expert_review_queue.example.json` | `worker/expert_review_queue.v1.schema.json` | Expert escalation package (KR-071, PII-free) |
 | `intake_manifest_edge.example.json` | `edge/intake_manifest.v1.schema.json` | Edge operational intake (kiosk-emitted form, v3.0.0 oneOf) |
 | `analysis_review_requested.example.json` | `events/analysis_review_requested.v1.schema.json` | Full expert gate: review opened for every analysis result (KR-019) |
+| `analysis_preliminary_ready.example.json` | `events/analysis_preliminary_ready.v1.schema.json` | Two-phase delivery: PRELIMINARY index-only view ready, parallel to the expert gate (KR-093; no detections) |
 | `expert_review_decided.example.json` | `events/expert_review_decided.v1.schema.json` | Expert verdict + publication gate outcome (KR-019/KR-029) |
 
 ---

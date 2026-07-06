@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/enums/report_phase.enum.v1.json",
+  "title": "ReportPhase",
+  "description": "Çiftçiye teslim onay fazı — KR-093 (İki-Fazlı Teslimat) kanonik. mission.status'tan TÜRETİLİR (ayrı state DEĞİL). result_mode (sensör-bandı fail-closed modu) ve report_tier (bant kalite sınıfı) ile KARIŞTIRILMAZ — üç bağımsız eksen. SSOT Uyum: 1.2.0.",
+  "type": "string",
+  "enum": [
+    "PRELIMINARY",
+    "FULL"
+  ],
+  "x-enum-descriptions": {
+    "PRELIMINARY": "Ön rapor — uzman doğrulaması BEKLEMEDE. Yalnız deterministik indeks katmanları (NDVI→HEALTH, NDRE→NITROGEN_STRESS, stress_ratio→WATER_STRESS) + overall_health_index sunulur. Tespitler (hastalık/zararlı/yabancı-ot) İÇERMEZ (fail-closed, KR-019 önü). mission PENDING_REVIEW/ANALYZING durumundan türetilir.",
+    "FULL": "Tam rapor — uzman konsensüs kapısı ONAY (KR-019 yayın). Uzman-doğrulanmış tüm bulgular açılır. mission DONE durumundan türetilir."
+  },
+  "x-derived-from": {
+    "description": "report_phase mission.status'tan türetilir; bağımsız set edilemez (KR-093).",
+    "mapping": {
+      "ANALYZING": "PRELIMINARY",
+      "PENDING_REVIEW": "PRELIMINARY",
+      "DONE": "FULL",
+      "EXPERT_REJECTED": "WITHDRAWN (results özet API 409; katman sunulmaz)"
+    }
+  },
+  "x-kr-ref": ["KR-093", "KR-019", "KR-025", "KR-033"],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-07-06"
+}

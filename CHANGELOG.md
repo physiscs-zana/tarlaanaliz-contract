@@ -7,6 +7,26 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [4.4.0] - 2026-07-06
+
+**Feature:** KR-093 — Çiftçi Ön Raporu (İki-Fazlı Teslimat: PRELIMINARY → FULL)
+**Breaking-change:** HAYIR (MINOR — yeni enum + yeni event şeması, geriye uyumlu)
+
+Çiftçiye uzman onayından ÖNCE (KR-019 kapısıyla PARALEL) yalnız indeks katmanlarını taşıyan bir "ön rapor" fazının sözleşme yüzeyi. Kanonik normatif metin platform SSOT'undadır (`docs/TARLAANALIZ_SSOT_v1_2_0.txt` KR-093 + ADR-007); bu sürüm yalnızca contract yüzeyini ekler. KR-019 tam-rapor konsensüs kapısı DEĞİŞMEZ — ön faz tespit (hastalık/zararlı/ot) taşımaz (fail-closed).
+
+### Added
+
+- **Enums:** `enums/report_phase.enum.v1.json` (ReportPhase) — `["PRELIMINARY","FULL"]`. Teslim onay fazı; `mission.status`'tan TÜRETİLİR (ayrı state değil). `result_mode` (sensör-bandı fail-closed modu) ve `report_tier` (bant kalite sınıfı) ile KARIŞTIRILMAZ — üç bağımsız eksen.
+- **Events:** `schemas/events/analysis_preliminary_ready.v1.schema.json` (AnalysisPreliminaryReadyEvent) — nested-envelope wire olayı (`analysis.preliminary_ready`). PII'siz data: `analysis_result_id`, `mission_id`, `field_id`, `dataset_id?`, `report_phase` (const `PRELIMINARY`), `report_tier?`. Platform worker→platform bridge tarafından `analysis.review_requested` ile PARALEL yayınlanır (üretici Faz 1'de eklenecek; şema lifecycle=DRAFT). Telefon/PII wire'a girmez (KR-050/KR-071).
+- **Examples:** `docs/examples/analysis_preliminary_ready.example.json` (+ örnek→şema haritası + README girdisi).
+
+### Notes
+
+- **Consumer etkisi:** Yeni enum + yeni event şeması → mevcut tüketiciler için kırıcı değildir; min-contract korunur. Platform pin 4.3.0 → 4.4.0'a güncellenmelidir.
+- **Governance:** KR-019 (uzman konsensüs yayın kapısı) mantığı DOKUNULMADI; KR-093 bu kapının ÖNÜNE faz ekler, zayıflatmaz. Bkz. platform `docs/adr/ADR-007-preliminary-farmer-view.md`.
+
+---
+
 ## [4.3.0] - 2026-07-05
 
 **Feature:** KR-092 — Fenolojik/Sezonluk Uçuş Parametreleri (İrtifa & Hız)
