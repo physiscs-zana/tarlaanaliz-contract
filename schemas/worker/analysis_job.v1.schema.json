@@ -48,7 +48,7 @@
     },
     "crop_type": {
       "$ref": "../../enums/crop_type.enum.v1.json",
-      "description": "Crop type — bitki türü (KR-016 routing; GAP crop_type enum, see enums/crop_type.enum.v1.json). Worker eşlemesi için crop_type aliases: MAIZE↔CORN, RED_LENTIL↔LENTIL."
+      "description": "Crop type — bitki türü (KR-016 routing; GAP crop_type enum, see enums/crop_type.enum.v1.json). CORN kanoniktir (MAIZE legacy alias); RED_LENTIL↔LENTIL cross-repo alias'ı korunur."
     },
     "image_urls": {
       "type": "array",

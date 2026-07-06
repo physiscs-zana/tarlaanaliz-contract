@@ -1206,7 +1206,7 @@ Bir görevin uçuş yüksekliği (Y) ve hızı (v) değerlerini bitki türü + s
 **2) Kapsam / Applies-to:** platform, worker, edge-kiosk, contracts
 
 **3) Zorunluluklar (MUST)**
-1) 5 aktif GAP ürünü (COTTON/MAIZE/RICE/GRAPE/PISTACHIO; MAIZE = SSOT/worker sözlüğünde CORN — crop_type aliases MAIZE↔CORN) için **tek yetkili kaynak** haftalık sezon takvimidir (`data/seasonal_flight_calendar.json`); bu ürünlerde haftalık takvim, evre-bazlı fenoloji fallback'inden (`data/phenology_flight_profiles.json`) önceliklidir.
+1) 5 aktif GAP ürünü (COTTON/CORN/RICE/GRAPE/PISTACHIO; CORN kanonik, MAIZE legacy alias — crop_type aliases CORN↔MAIZE) için **tek yetkili kaynak** haftalık sezon takvimidir (`data/seasonal_flight_calendar.json`); bu ürünlerde haftalık takvim, evre-bazlı fenoloji fallback'inden (`data/phenology_flight_profiles.json`) önceliklidir.
 2) Çözüm anahtarı `crop_type` + `mission_date` → bölgesel haftalık pencere (MM-DD) → (bbch, altitude_m, speed_ms, critical); yeni DB "ekim tarihi" alanı eklenmez.
 3) Fiziksel/mevzuat sınırları fail-closed doğrulanır: RGB GSD=H/37,2 · ÇS GSD=H/21,7, **H/v ≥ 3,9**, **≤ 120 m AGL** (SHGM), güneş açısı > 30°.
 4) Görev tarihi sezona düşmezse en yakın sınır haftasına snap edilir (matched=false); kapsam dışı bitkide haftalık DTO None döner (çağıran fenoloji/varsayılana düşer).

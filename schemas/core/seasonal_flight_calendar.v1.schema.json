@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/schemas/core/seasonal_flight_calendar.v1.schema.json",
   "title": "SeasonalFlightCalendar",
-  "description": "Bitki bazında, sezon haftasına göre önerilen drone uçuş yüksekliği (Y) ve hızı (v) tablosu. 5 aktif GAP ürünü (COTTON/MAIZE/RICE/GRAPE/PISTACHIO; MAIZE = SSOT/worker sözlüğünde CORN — crop_type aliases MAIZE↔CORN) için tek yetkili kaynaktır; bu ürünlerde evre-bazlı fenoloji fallback'inden (phenology_flight_profile) önceliklidir (KR-092). Çözüm: crop_type + mission_date → bölgesel haftalık pencere (MM-DD) → (bbch, altitude_m, speed_ms, critical); sezon dışı tarih en yakın sınır haftasına snap edilir. Değerler karar-destektir; sistem ilaçlama kararı vermez (KR-025). Fiziksel/mevzuat sınırları: RGB GSD=H/37,2 · ÇS GSD=H/21,7, H/v≥3,9, ≤120 m AGL (SHGM), güneş açısı>30°. Kaynak: tarama_protokolu_v1.6 §10.",
+  "description": "Bitki bazında, sezon haftasına göre önerilen drone uçuş yüksekliği (Y) ve hızı (v) tablosu. 5 aktif GAP ürünü (COTTON/CORN/RICE/GRAPE/PISTACHIO; CORN kanoniktir, MAIZE legacy alias) için tek yetkili kaynaktır; bu ürünlerde evre-bazlı fenoloji fallback'inden (phenology_flight_profile) önceliklidir (KR-092). Çözüm: crop_type + mission_date → bölgesel haftalık pencere (MM-DD) → (bbch, altitude_m, speed_ms, critical); sezon dışı tarih en yakın sınır haftasına snap edilir. Değerler karar-destektir; sistem ilaçlama kararı vermez (KR-025). Fiziksel/mevzuat sınırları: RGB GSD=H/37,2 · ÇS GSD=H/21,7, H/v≥3,9, ≤120 m AGL (SHGM), güneş açısı>30°. Kaynak: tarama_protokolu_v1.6 §10.",
   "type": "object",
   "unevaluatedProperties": false,
   "required": ["version", "source", "region", "platform", "global_flight", "resolution", "disclaimer", "crops"],
@@ -87,7 +87,7 @@
       "properties": {
         "crop_type": {
           "$ref": "../../enums/crop_type.enum.v1.json",
-          "description": "Kanonik bitki tipi (KR-092 kapsamı: COTTON/MAIZE/RICE/GRAPE/PISTACHIO; MAIZE = SSOT/worker CORN)."
+          "description": "Kanonik bitki tipi (KR-092 kapsamı: COTTON/CORN/RICE/GRAPE/PISTACHIO; CORN kanonik, MAIZE legacy alias)."
         },
         "label_tr": { "type": "string", "description": "Türkçe görünen ad." },
         "scientific_name": { "type": "string", "description": "Bilimsel ad." },

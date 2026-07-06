@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 4.4.0
+## Version: 5.0.0
 
-**Release Date:** 2026-07-05T22:16:11.606833Z  
-**Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `746cf9acf3522c0fa3d8cae46c830b2bb2ca787aead565a3d288492bbe451b5e`
+**Release Date:** 2026-07-06T19:40:32.414407Z  
+**Breaking Change:** YES  
+**Contracts Checksum (SHA-256):** `5705cc5c4a883691ad234fab71d467b5ed421a5eec47c26b647fd2f7137a6ef0`
 
 ---
 
@@ -55,7 +55,7 @@ Individual file hashes for verification:
 - `enums/calibration_type.enum.v1.json`  
   `35c85add630b2631ed2f4749a045f258955db11f255ef081822c9654b27c70b8`
 - `enums/crop_type.enum.v1.json`  
-  `dc0901b0f682d592ec6e57f559866ac0b5b6668a7504da481091ddaf0f63faff`
+  `c1ed00f005286d08e3f98c5f1280fa80c1b6a874515e4cfa1ae292fa3cd9330e`
 - `enums/dataset_status.enum.v1.json`  
   `a1af5173853fd0983339075fa550e66847c0d19a8a2411c72a612d866de54b07`
 - `enums/drone_type.enum.v1.json`  
@@ -102,7 +102,7 @@ Individual file hashes for verification:
 - `schemas/core/phenology_flight_profile.v1.schema.json`  
   `4d1e1f4f7bae6353a646280e4959204c2b4da1a376a96f978435ee64c0121d73`
 - `schemas/core/seasonal_flight_calendar.v1.schema.json`  
-  `e6e201391b2ba0f1b535850b0d53332c83eeae29e011a4df646a7bd66aa2161a`
+  `db77a05e47bded7da0f5e958439fab63bf3dd7d91b24a1311c9ceec369476cfe`
 - `schemas/core/user.v1.schema.json`  
   `9c2659f56ddc3a826eac8e7799536ab50f0bd7f212708e568657cc396d43f6e3`
 - `schemas/core/user_pii.v1.schema.json`  
@@ -163,9 +163,9 @@ Individual file hashes for verification:
 ### Worker Schemas
 
 - `schemas/worker/analysis_job.v1.schema.json`  
-  `b03a4a8191a1ac192446b1420e4fb5cf399926aa7b3d8a5d674e522cb67ce2bb`
+  `64abf2feb6526b7eeea56fb860401cb6cef420a75872bf6c22d861a4e1a14e0d`
 - `schemas/worker/analysis_result.v1.schema.json`  
-  `b6f3c707a492b15220c542c6ba3f5b41e570a7f4776f5590e3a6aa55dd830971`
+  `98039f44b3115d79863ed07f0e47403443d89f3ef0913854c0570e037e49f609`
 - `schemas/worker/calibrated_dataset.v1.schema.json`  
   `31d201316f59f0c438ebd2018dff5a662441beb072ff148f79f8ce45e7d8de88`
 - `schemas/worker/calibration_metadata.v1.schema.json`  
@@ -175,7 +175,7 @@ Individual file hashes for verification:
 - `schemas/worker/expert_labeling_card.v1.schema.json`  
   `a7c28432a38b60cb42599e47f971b3b0a323e5073011d0e3306de077edfb8c32`
 - `schemas/worker/expert_review_queue.v1.schema.json`  
-  `0dcf6bd7bf206ebb637a0ac547f9ca833be2cf737d66c429ab521b9b6bcf72b2`
+  `cb7c63b65950e539ea4afdc30d73341630ebede9da3395cd288ea3a06ed621db`
 - `schemas/worker/thermal_analysis_result.v1.schema.json`  
   `c7b013adce00fa5618214865d869f1f85d68dad83786b21d27f9ea019c8de212`
 
@@ -242,11 +242,11 @@ Individual file hashes for verification:
 ### API Components
 
 - `api/components/parameters.yaml`  
-  `d956b487a24cb9ef685cbdf789c1f20f3c6de47213c54d2f2ad62d94d4b7c12c`
+  `16e2bb025130334cfc8dc0cc6465a9cb0282fad0dce21d82edcd9dc24012a68f`
 - `api/components/responses.yaml`  
-  `0b1bba42a695d77a4fda048889656d6b0236c2a99a1d016dda2374d79e393331`
+  `227d3c8e4312930f52d78321162f66e7f5862e9f956bf43cf9cced59702c497b`
 - `api/components/schemas.yaml`  
-  `0e2ba799400fac0cdcf2fcd3035dc9301d9699cd235554f401c0f72dccbd0a48`
+  `cb71c34230d437a6e38d597c2e215aab7455cdc3ab254670b0f043fa7dbfdc6c`
 - `api/components/security_schemes.yaml`  
   `9d45e3181a4b847b617a0553c72458650aa9c3deacf38cbed67c5c12db3e1c79`
 
@@ -262,6 +262,12 @@ Individual file hashes for verification:
 ---
 
 ## Changelog
+
+### v5.0.0 (2026-07-06)
+
+**Breaking:** YES
+
+crop_type MAIZE->CORN rename (MAJOR/breaking). enum v2.1.0->3.0.0; displayNames re-keyed; aliases flipped to CORN->MAIZE. Deferred (separate breaking tasks): RED_LENTIL canonical + phenology_stage MAIZE_* codes. Migration: docs/migration_guides/crop_type_maize_to_corn.md
 
 ### v4.4.0 (2026-07-05)
 
@@ -303,7 +309,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("746cf9acf3522c0fa3d8cae46c830b2bb2ca787aead565a3d288492bbe451b5e"), "Contracts checksum mismatch!"
+assert verify_contracts("5705cc5c4a883691ad234fab71d467b5ed421a5eec47c26b647fd2f7137a6ef0"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -316,7 +322,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("746cf9acf3522c0fa3d8cae46c830b2bb2ca787aead565a3d288492bbe451b5e"), "Contracts checksum mismatch!");
+assert(verifyContracts("5705cc5c4a883691ad234fab71d467b5ed421a5eec47c26b647fd2f7137a6ef0"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -367,4 +373,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-07-05T22:16:11.606833Z
+**Last Updated:** 2026-07-06T19:40:32.414407Z

@@ -28,7 +28,7 @@ components:
       enum:
         - COTTON
         - PISTACHIO
-        - MAIZE
+        - CORN
         - WHEAT
         - SUNFLOWER
         - GRAPE

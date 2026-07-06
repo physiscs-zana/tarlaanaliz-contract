@@ -158,7 +158,7 @@ class TestExamplesValidation:
         example = self.load_example(examples_dir / "field.example.json")
         
         gap_crops = {
-            'COTTON', 'PISTACHIO', 'MAIZE', 'WHEAT',
+            'COTTON', 'PISTACHIO', 'CORN', 'WHEAT',
             'SUNFLOWER', 'GRAPE', 'OLIVE', 'RED_LENTIL', 'RICE'
         }
         

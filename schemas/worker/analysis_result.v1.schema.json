@@ -66,7 +66,7 @@
     },
     "crop_type": {
       "$ref": "../../enums/crop_type.enum.v1.json",
-      "description": "Crop type (GAP crop_type enum, see enums/crop_type.enum.v1.json; worker aliases MAIZE↔CORN, RED_LENTIL↔LENTIL)"
+      "description": "Crop type (GAP crop_type enum, see enums/crop_type.enum.v1.json; CORN kanonik / MAIZE legacy alias, RED_LENTIL↔LENTIL cross-repo alias)"
     },
     "summary": {
       "$ref": "#/$defs/ResultSummary",

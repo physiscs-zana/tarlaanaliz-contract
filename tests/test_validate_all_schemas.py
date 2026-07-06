@@ -197,11 +197,11 @@ class TestSchemaValidation:
     def test_crop_type_enum_matches_gap_canonical(self, base_dir: Path):
         """Test crop_type enum is the canonical GAP 9-crop set.
 
-        TarlaAnaliz GAP region scope keeps MAIZE/RED_LENTIL naming and does NOT
-        include the Aegean-only crops (CHERRY/FIG/APPLE/PEACH). HAZELNUT was
-        removed in crop_type v2.0.0 (Black Sea crop, not grown in GAP). RICE
-        (Çeltik) was added in v2.1.0 as an active GAP crop within the KR-092
-        seasonal flight calendar scope.
+        TarlaAnaliz GAP region scope uses CORN (renamed from MAIZE in v3.0.0)
+        and keeps RED_LENTIL naming; it does NOT include the Aegean-only crops
+        (CHERRY/FIG/APPLE/PEACH). HAZELNUT was removed in crop_type v2.0.0
+        (Black Sea crop, not grown in GAP). RICE (Çeltik) was added in v2.1.0 as
+        an active GAP crop within the KR-092 seasonal flight calendar scope.
         """
         crop_file = base_dir / "enums" / "crop_type.enum.v1.json"
 
@@ -209,7 +209,7 @@ class TestSchemaValidation:
             schema = json.load(f)
 
         expected_crops = {
-            'COTTON', 'PISTACHIO', 'MAIZE', 'WHEAT', 'SUNFLOWER',
+            'COTTON', 'PISTACHIO', 'CORN', 'WHEAT', 'SUNFLOWER',
             'GRAPE', 'OLIVE', 'RED_LENTIL', 'RICE'
         }
 

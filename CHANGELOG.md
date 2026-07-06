@@ -7,6 +7,28 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [5.0.0] - 2026-07-06
+
+**Breaking-change:** EVET (MAJOR — enum değeri yeniden adlandırma)
+
+crop_type `MAIZE` → `CORN` olarak yeniden adlandırıldı. Gerekçe: kanonik `CORN` değerini platform CropType VO'su (`src/core/domain/value_objects/crop_type.py`) ve worker CropType enum'u (`src/core/domain/enums.py`) zaten kullanıyordu; contract bunu `MAIZE` tutan **tek** repoydu. Bu rename `CORN`'u tüm repolarda tek kanonik değer yapar ve `MAIZE`'i yalnız-okuma legacy interop alias'ına indirir. Migration: `docs/migration_guides/crop_type_maize_to_corn.md`.
+
+### Changed (breaking)
+
+- **`enums/crop_type.enum.v1.json` v2.1.0 → v3.0.0:** enum değeri MAIZE→CORN; displayNames CORN'a yeniden anahtarlandı (tr "Mısır", en "Corn (Maize)"); `metadata.aliases` ters çevrildi (`"CORN": ["MAIZE"]`).
+- crop_type ayna/inline kopyaları CORN'a hizalandı: `schemas/worker/expert_review_queue.v1.schema.json`, `api/components/schemas.yaml`, `api/components/parameters.yaml`, `api/components/responses.yaml` (örnek hata mesajı), `schemas/core/seasonal_flight_calendar.v1.schema.json` (açıklama), `schemas/worker/analysis_job.v1.schema.json` + `analysis_result.v1.schema.json` (açıklama).
+
+### Deferred (bu sürümde YAPILMADI — ayrı breaking görevler)
+
+- `RED_LENTIL` kanonik kaldı (worker/platform sözlüğü LENTIL); `RED_LENTIL↔LENTIL` alias korunur.
+- `phenology_stage.enum.v1.json` `MAIZE_*` evre kodları değişmedi (ayrı enum; tüketiciler fenolojiyi crop_type alias-normalizasyonuyla çözer → kırılmaz).
+
+### Notes
+
+- **Consumer etkisi:** kanonik değer değişti → tüm tüketiciler CORN'a hizalanmalı; inbound `MAIZE` normalize edilerek kabul edilmeli, outbound `MAIZE` yayılmamalı. Platform pin 4.4.0 → 5.0.0'a güncellenmelidir.
+
+---
+
 ## [4.4.0] - 2026-07-06
 
 **Feature:** KR-093 — Çiftçi Ön Raporu (İki-Fazlı Teslimat: PRELIMINARY → FULL)

@@ -164,10 +164,10 @@ print('✅ Valid!')
 
 All examples comply with KR-002 requirements:
 
-### 8 GAP Crops Only
+### 9 GAP Crops Only
 ```json
 {
-  "crop_type": "COTTON"  // or PISTACHIO, MAIZE, WHEAT, SUNFLOWER, GRAPE, OLIVE, RED_LENTIL
+  "crop_type": "COTTON"  // or PISTACHIO, CORN, WHEAT, SUNFLOWER, GRAPE, OLIVE, RED_LENTIL, RICE
 }
 ```
 

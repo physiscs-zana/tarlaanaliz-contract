@@ -84,7 +84,7 @@ TarlaAnaliz follows **contract-first** development:
 - Separate PII vault: `user_pii.v1.schema.json`
 
 #### 2. KR-002 Compliance
-- **8 GAP crops only**: COTTON, PISTACHIO, MAIZE, WHEAT, SUNFLOWER, GRAPE, OLIVE, RED_LENTIL
+- **9 GAP crops only**: COTTON, PISTACHIO, CORN, WHEAT, SUNFLOWER, GRAPE, OLIVE, RED_LENTIL, RICE
 - **7 map layers only**: HEALTH, DISEASE, PEST, FUNGUS, WEED, WATER_STRESS, NITROGEN_STRESS
 - **No prescriptions** - AI provides map layers, NOT action recommendations
 

@@ -42,7 +42,7 @@
     "crop_type": {
       "type": "string",
       "enum": [
-        "COTTON", "PISTACHIO", "MAIZE", "WHEAT", "SUNFLOWER",
+        "COTTON", "PISTACHIO", "CORN", "WHEAT", "SUNFLOWER",
         "GRAPE", "OLIVE", "RED_LENTIL", "RICE"
       ],
       "description": "Same enum as enums/crop_type.enum.v1.json (GAP 9-crop set)."
