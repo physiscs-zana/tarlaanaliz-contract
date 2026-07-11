@@ -223,6 +223,8 @@ class TestSchemaValidation:
         """Test analysis_type enum is the canonical KR-002/KR-064/KR-084 map-layer set.
 
         v3.0.0: SALT_STRESS added (platform KR-002 layer); GENERAL is the worker fallback.
+        v1.3.0 (2026-07-12): BENEFICIAL added (faydalı böcek / natural-enemy rich slot,
+        worker AK-4 mirror); Teal + beneficial-insect icon adopted from worker proposal.
         """
         analysis_file = base_dir / "enums" / "analysis_type.enum.v1.json"
 
@@ -232,7 +234,7 @@ class TestSchemaValidation:
         expected_types = {
             'HEALTH', 'DISEASE', 'PEST', 'FUNGUS', 'WEED',
             'WATER_STRESS', 'NITROGEN_STRESS', 'THERMAL_STRESS',
-            'SALT_STRESS', 'GENERAL'
+            'SALT_STRESS', 'BENEFICIAL', 'GENERAL'
         }
 
         actual_types = set(schema.get('enum', []))

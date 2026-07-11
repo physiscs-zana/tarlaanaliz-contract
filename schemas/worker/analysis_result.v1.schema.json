@@ -403,6 +403,22 @@
         "tile_id": { "type": ["string", "null"] },
         "ndvi_value": { "type": ["number", "null"] },
         "ndre_value": { "type": ["number", "null"] },
+        "sub_specialty": {
+          "type": ["string", "null"],
+          "enum": [
+            "HEALTH", "DISEASE", "PEST", "FUNGUS", "WEED",
+            "WATER_STRESS", "NITROGEN_STRESS", "THERMAL_STRESS", "SALT_STRESS", "BENEFICIAL", "GENERAL",
+            null
+          ],
+          "description": "result-rich-axis (2026-07-12, Gap #2, worker v1.4.0 AK-4 aynası): RICH sub-specialty token for this detection — the expert_labeling_card 'sub_specialty' of class_id. Gives the farmer-facing result the SAME rich axis the expert_review_queue already carries (FUNGUS separable from DISEASE; WATER_/NITROGEN_/SALT_/THERMAL_STRESS separable from GENERAL). Value set VENDORED verbatim (AK-4) from enums/analysis_type.enum.v1.json (platform-authoritative KR-002 taxonomy: 11 codes incl. BENEFICIAL v1.3.0); worker assigns per class_id via src/core/services/feedback/sub_specialty_resolver.py::resolve_rich_sub_specialty, enum parity-locked by worker tests/contract/test_sub_specialty_enum_lock.py. HEALTH/BENEFICIAL enum-valid for parity but never emitted as detections. Optional/backward-compatible: pre-rich producers and non-carded classes omit it (null). KR-071: enum-constrained label, no PII.",
+          "default": null
+        },
+        "detection_type": {
+          "type": ["string", "null"],
+          "enum": ["disease", "pest", "weed", "abiotic", null],
+          "description": "result-rich-axis (2026-07-12, Gap #2): COARSE sub-specialty token — the expert_labeling_card 'category' of class_id (worker resolve_sub_specialty). Same 4-value axis as expert_review_queue.detection_type. Runs ALONGSIDE the rich sub_specialty. Optional/backward-compatible: null for non-carded classes. KR-071: no PII.",
+          "default": null
+        },
         "rgb_uri": {
           "type": ["string", "null"],
           "format": "uri",
