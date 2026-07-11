@@ -7,6 +7,33 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [6.1.0] - 2026-07-12
+
+**Feature:** BENEFICIAL (faydalı böcek / doğal düşman) zengin alt-uzmanlık yuvası + result-rich-axis (analysis_result.Detection) worker → kanonik AYNA
+**Breaking-change:** HAYIR (MINOR — 1 yeni enum değeri + 2 yeni opsiyonel alan, geriye uyumlu)
+
+Worker'ın v6.1.0 (BENEFICIAL + result-rich-axis, PR #147) additive değişikliklerinin kanonik SSOT aynası (AK-4 uzlaşma; devir spec: worker `denetim/beneficial_ve_sonuc_ekseni_devir_spec_2026_07_11.md`). İki parça: (1) `BENEFICIAL` zengin taksonomi değeri (5.1.0'da aynalanan sub_specialty ekseninin 11. kodu), (2) sub_specialty/detection_type zengin ekseninin `analysis_result.Detection`'a landing'i (5.1.0 yalnız escalation/kart hattını — expert_review_queue + expert_labeling_card — aynalamıştı; sonuç/çiftçi hattı bu sürümde tamamlanır).
+
+### Added
+
+- **`enums/analysis_type.enum.v1.json` v1.2.0 → v1.3.0:** `BENEFICIAL` eklendi (enum + `layerMapping` + `analysisCategories.MAP_LAYERS.types` + `analysisDescriptions` + `displayNames.tr`/`en`). KR-002 renk/deseni **Turkuaz (Teal) + doğal düşman ikonu** worker önerisinden benimsendi (kanonik = KR-002 SSOT; worker'ın `[ÖNERİ — pending]` niteleyicisi kanonikte anlamsız olduğu için düşürüldü). Kaba↔zengin ekseni: BENEFICIAL zengin (rich) eksende yaşar; kaba `detection_type` (disease/pest/weed/abiotic) DEĞİŞMEZ.
+- **`schemas/worker/analysis_result.v1.schema.json` `$defs.Detection`:** 2 yeni opsiyonel alan — `sub_specialty` (zengin 11-kod enum, null default) + `detection_type` (kaba 4-kod enum, null default). `unevaluatedProperties:false` korunur; `required` (`confidence`) DEĞİŞMEZ. Farmer-facing sonuç, escalation kuyruğunun taşıdığı aynı zengin ekseni kazanır.
+
+### Changed
+
+- **`schemas/worker/expert_labeling_card.v1.schema.json` v2.6.0 → v2.7.0:** `sub_specialty` enum'una `BENEFICIAL` eklendi (10 → 11 kod). additionalProperties/required/allOf DEĞİŞMEZ.
+- **`schemas/worker/expert_review_queue.v1.schema.json`:** `sub_specialty` enum'una `BENEFICIAL` eklendi (10 → 11 kod); açıklama "11 codes incl. BENEFICIAL" + BENEFICIAL'in parite-için-geçerli-ama-henüz-emit-edilemez notu.
+- **`tests/test_validate_all_schemas.py`:** `test_analysis_type_enum_canonical` beklenen küme 10 → 11 (`BENEFICIAL` eklendi).
+
+### Notes
+
+- **crop_type DOKUNULMADI:** `crop_type` enum'u (8 mahsul, CORN-kanonik) bu bump'ın KAPSAMI DIŞINDA — ayrı/bağımsız bir konudur. Bu sürüm yalnız analysis_type zengin eksenini + result-rich-axis'i taşır.
+- **BENEFICIAL henüz emit edilemez:** Hiçbir model faydalı böcek/doğal düşman tespiti üretmez; BENEFICIAL enum'da parite (worker↔kanonik senkron) için vardır, worker `NaturalEnemyService` çıktısı ayrı ekosistem-durum yüzeyindedir (tespit değil). HEALTH gibi, escalation/detection asla BENEFICIAL emit etmez.
+- **Consumer etkisi:** Platform/Edge/Worker pin 6.0.1 → 6.1.0'a güncellenmelidir; yeni alanlar opsiyonel olduğundan mevcut üreticiler/tüketiciler bozulmaz (pre-rich producer'lar alanı omit eder = null). **Deploy sırası:** platform şema aynası worker rich-alan emit etmeye başlamadan ÖNCE yayılmalıdır (platform `worker_bridge_consumer` enforce=True ise bilinmeyen alanı nack→DLX yapabilir).
+- **Doğrulama:** `python tools/validate.py && pytest tests/ -q` + `python tools/pin_version.py --verify`.
+
+---
+
 ## [6.0.1] - 2026-07-11
 
 **Breaking-change:** HAYIR (PATCH — yalnızca metadata/docs)

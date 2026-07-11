@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 6.0.1
+## Version: 6.1.0
 
-**Release Date:** 2026-07-11T17:17:04.423581Z  
+**Release Date:** 2026-07-11T21:53:36.811103Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `957e99041d0fdb95462c5bbb9db6197a0adb2413817ab06d8f28dc1ed78c301d`
+**Contracts Checksum (SHA-256):** `9ca1387d6e75413b86fa0e9ceef083c252e23a6ee0d02e469d06a33f6fc57de5`
 
 ---
 
@@ -51,7 +51,7 @@ Individual file hashes for verification:
 ### Enums
 
 - `enums/analysis_type.enum.v1.json`  
-  `030316e8eb64139c019cdcbc2e0def60af85cb5da14b620c2574ab970fad112c`
+  `089f968f2ed7f1e1536f5b4b176fa3c66356e4aaa8218218b7a5273c33965f98`
 - `enums/calibration_type.enum.v1.json`  
   `35c85add630b2631ed2f4749a045f258955db11f255ef081822c9654b27c70b8`
 - `enums/crop_type.enum.v1.json`  
@@ -165,7 +165,7 @@ Individual file hashes for verification:
 - `schemas/worker/analysis_job.v1.schema.json`  
   `0d235742987d438a7cdc256b7f75bc13a348a6d67f198aae8c25cab8c6d535f8`
 - `schemas/worker/analysis_result.v1.schema.json`  
-  `3ce26669ee388d46483352b54c416d4351963e52121d8dcc32ef575bb4d3b8c6`
+  `3df526b62a46f942f200e15bdc3dcc932f8d8dd44cf652a53173ae34129d2881`
 - `schemas/worker/calibrated_dataset.v1.schema.json`  
   `31d201316f59f0c438ebd2018dff5a662441beb072ff148f79f8ce45e7d8de88`
 - `schemas/worker/calibration_metadata.v1.schema.json`  
@@ -173,9 +173,9 @@ Individual file hashes for verification:
 - `schemas/worker/expert_feedback.v1.schema.json`  
   `c0c2a1103fbec11e10d649d0cc8233f82f32f1caef3fcf51df54d149ba16123f`
 - `schemas/worker/expert_labeling_card.v1.schema.json`  
-  `a3f9c3b8a37cbc6424fa832a22ceca210910ee08fe3285d7924dd856d9f6f70c`
+  `8c320cb4c34fdfcf14c9c33be39d91445735251e347bc16cf9671ce8dba43c51`
 - `schemas/worker/expert_review_queue.v1.schema.json`  
-  `1d5c926e51749eba46689ddb6b9d3af5d41e56cdfee12548b2fc0e68967400b9`
+  `047d7a6612ad81db82da86b89e9e7fdf703724909803aa88d07eb080ecf2af8c`
 - `schemas/worker/thermal_analysis_result.v1.schema.json`  
   `c7b013adce00fa5618214865d869f1f85d68dad83786b21d27f9ea019c8de212`
 
@@ -263,6 +263,12 @@ Individual file hashes for verification:
 
 ## Changelog
 
+### v6.1.0 (2026-07-11)
+
+**Breaking:** NO
+
+BENEFICIAL rich taxonomy value (analysis_type v1.3.0, Teal adopted from worker proposal) + result-rich-axis on analysis_result.Detection (sub_specialty/detection_type); BENEFICIAL added to card+review_queue sub_specialty enums. Worker v6.1.0 AK-4 canonical mirror. crop_type untouched. MINOR/non-breaking.
+
 ### v6.0.1 (2026-07-11)
 
 **Breaking:** NO
@@ -327,7 +333,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("957e99041d0fdb95462c5bbb9db6197a0adb2413817ab06d8f28dc1ed78c301d"), "Contracts checksum mismatch!"
+assert verify_contracts("9ca1387d6e75413b86fa0e9ceef083c252e23a6ee0d02e469d06a33f6fc57de5"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -340,7 +346,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("957e99041d0fdb95462c5bbb9db6197a0adb2413817ab06d8f28dc1ed78c301d"), "Contracts checksum mismatch!");
+assert(verifyContracts("9ca1387d6e75413b86fa0e9ceef083c252e23a6ee0d02e469d06a33f6fc57de5"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -391,4 +397,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-07-11T17:17:04.423581Z
+**Last Updated:** 2026-07-11T21:53:36.811103Z
