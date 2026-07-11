@@ -7,6 +7,30 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [5.1.0] - 2026-07-11
+
+**Feature:** Alt-uzmanlık (sub_specialty / detection_type) worker → kanonik AYNA
+**Breaking-change:** HAYIR (MINOR — 3 yeni opsiyonel alan, geriye uyumlu)
+
+Worker escalation/kart hattının additive alt-uzmanlık eksenini kanonik şemalara aynalar (AK-4 vendored/override deseninin kanonik-taraf tamamlaması). Worker bu alanları hash-kapılı vendored kopyasına ÖNCEDEN eklemişti (worker kendi bağımsız v5.2.0/v5.3.0 şemasıyla — bkz. worker CONTRACTS_VERSION "version scheme note": worker'ın 5.x'i kanonik SemVer'den bilinçli decoupled, numaralar eşleşmek zorunda DEĞİL, crop-sözlüğü AK-4 köprüsüyle uzlaşılır). Bu sürüm alanları kanonik SSOT'a landler; yeni enum dosyası YAZILMAZ (değer kümesi `enums/analysis_type.enum.v1.json` v1.2.0'da zaten var, 10 kod).
+
+### Added
+
+- **`schemas/worker/expert_review_queue.v1.schema.json`:** iki opsiyonel alan.
+  - `detection_type` (C-1, kaba): `["string","null"]`, enum `disease/pest/weed/abiotic/null`. Worker'ın TAHMİN ettiği ham kart kategorisi (lowercase); platform CONFIRMED kayıtları bununla katmanlar. `analysis_type`'tan (İSTENEN, uppercase) AYRIDIR.
+  - `sub_specialty` (C-1 RICH, additive): `["string","null"]`, enum = `analysis_type.enum.v1.json`'un 10 kodu + null. Worker'ın TAHMİN ettiği zengin alt-uzmanlık; `detection_type`'ın YANINDA çalışır (kaba eksen korunur).
+- **`schemas/worker/expert_labeling_card.v1.schema.json`:** opsiyonel `sub_specialty` (v2.6.0) — kaba `category` ekseninin zengin ADDITIVE tamamlayıcısı. `category`/`required`/`allOf` ve `additionalProperties` mührü DEĞİŞMEZ.
+
+### Notes
+
+- **Non-breaking:** üç alan da opsiyonel, default null; migrasyon-öncesi üreticiler atlar → hiçbir tüketici kırılmaz (`breaking_change_detector`: 0 breaking / 3 optional-field-added).
+- **KR-071:** üç alan da enum-kısıtlı sınıflandırma etiketi; PII taşımaz, `unevaluatedProperties/additionalProperties:false` mührünü genişletmez.
+- **KR-002 / SSOT:** zengin değer kümesi `analysis_type.enum.v1.json` (v1.2.0, KR-002 harita-katmanı taksonomisi) — kanonikte zaten mevcut, byte-parity korunur.
+- **Consumer etkisi:** Platform pin 5.0.0 → 5.1.0'a güncellenmelidir. Worker vendored kopyası kendi bağımsız şemasında kalır (numara-uzlaşımı gerekmez — bilinçli decoupled).
+- **training.feedback (`rich_sub_specialty`):** worker C-3 alanı hash-kapılı DEĞİL, KR-032 additive → kanonik şema-bump YOK; yalnız platform tüketicisi okur.
+
+---
+
 ## [5.0.0] - 2026-07-06
 
 **Breaking-change:** EVET (MAJOR — enum değeri yeniden adlandırma)
