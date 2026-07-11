@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 6.0.0
+## Version: 6.0.1
 
-**Release Date:** 2026-07-11T12:30:17.879399Z  
-**Breaking Change:** YES  
-**Contracts Checksum (SHA-256):** `0dd8351a8d845835a1e560e6748f22e1c68637f74decc34ac29287176d581afc`
+**Release Date:** 2026-07-11T17:17:04.423581Z  
+**Breaking Change:** NO  
+**Contracts Checksum (SHA-256):** `957e99041d0fdb95462c5bbb9db6197a0adb2413817ab06d8f28dc1ed78c301d`
 
 ---
 
@@ -55,7 +55,7 @@ Individual file hashes for verification:
 - `enums/calibration_type.enum.v1.json`  
   `35c85add630b2631ed2f4749a045f258955db11f255ef081822c9654b27c70b8`
 - `enums/crop_type.enum.v1.json`  
-  `f99265993e9d757ba01a520a13ac10bd2808786b3860d2ed4a7d62fad50534d9`
+  `7625b7bd88add5a98bc11e479019896858cc3ed8f3d12908633c9994b91d8ec8`
 - `enums/dataset_status.enum.v1.json`  
   `a1af5173853fd0983339075fa550e66847c0d19a8a2411c72a612d866de54b07`
 - `enums/drone_type.enum.v1.json`  
@@ -263,6 +263,12 @@ Individual file hashes for verification:
 
 ## Changelog
 
+### v6.0.1 (2026-07-11)
+
+**Breaking:** NO
+
+crop_type enum metadata.archived (HAZELNUT+RED_LENTIL) kaldirildi — kullanici direktifi: mercimek/findik icin arsivde dahil hicbir kalinti tutulmaz. Enum array DEGISMEDI (8 mahsul); bu metadata/docs degisikligi = PATCH. Kaldirma-kaydi enum changeNote + migration guide crop_type_red_lentil_removal.md'de KORUNUR. DUZELTME: 6.0.0 notundaki 'Immutable DB residue (COORDINATE, ileriye-donuk worker-koordineli DB migration)' cercevesi YANLISTI — platform 2026_04_04_align_expert_schema_to_worker.py Postgres crop_type ENUM'unu zaten VARCHAR(50)'e cevirdi + DROP TYPE crop_type calisti; canli ENUM yok, forward migration GEREKMIYOR; yalniz uygulanmis/immutable migration'larin tarihsel DDL metni kalir (RESOLVED, COORDINATE degil).
+
 ### v6.0.0 (2026-07-11)
 
 **Breaking:** YES
@@ -321,7 +327,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("0dd8351a8d845835a1e560e6748f22e1c68637f74decc34ac29287176d581afc"), "Contracts checksum mismatch!"
+assert verify_contracts("957e99041d0fdb95462c5bbb9db6197a0adb2413817ab06d8f28dc1ed78c301d"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -334,7 +340,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("0dd8351a8d845835a1e560e6748f22e1c68637f74decc34ac29287176d581afc"), "Contracts checksum mismatch!");
+assert(verifyContracts("957e99041d0fdb95462c5bbb9db6197a0adb2413817ab06d8f28dc1ed78c301d"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -385,4 +391,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-07-11T12:30:17.879399Z
+**Last Updated:** 2026-07-11T17:17:04.423581Z

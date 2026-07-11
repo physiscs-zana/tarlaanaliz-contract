@@ -10,7 +10,8 @@ The worker is **dropping LENTIL (Mercimek)** from its crop vocabulary. The contr
 mirrors that removal to stay 100% synced with the worker (no latent cross-repo
 divergence). `RED_LENTIL` was the GAP-canonical spelling bridged to the worker/platform
 `LENTIL` value via `metadata.aliases` (`RED_LENTIL↔LENTIL`); that cross-repo alias is now
-retired and `RED_LENTIL` moves to `metadata.archived`.
+retired. `RED_LENTIL` is fully removed with no `metadata.archived` entry retained — this
+migration guide (plus the enum `changeNote`) is the removal record of record.
 
 ## Change
 
@@ -31,10 +32,14 @@ alias is removed from `metadata.aliases`.
   with `crop_type = RED_LENTIL` (HTTP 422 `allowed_crop_types`).
 - Re-pin to the new `CONTRACTS_VERSION.md` checksum.
 - No data backfill is expected for GAP fields; audit any legacy rows that carry
-  `RED_LENTIL`/`LENTIL` and reclassify or archive them. Note: an immutable Postgres ENUM
-  (`KIRMIZI_MERCIMEK`, added by an already-applied Alembic migration) still carries the
-  legacy DDL value on the platform side — a forward enum-value drop is a separate,
-  worker-coordinated DB migration (tracked as COORDINATE), not part of this contract bump.
+  `RED_LENTIL`/`LENTIL` and reclassify or archive them. Note: on the platform side the
+  `crop_type` Postgres ENUM was **already dropped** — Alembic migration
+  `2026_04_04_align_expert_schema_to_worker.py` converted the six `crop_type` columns to
+  `VARCHAR(50)`, remapped `KIRMIZI_MERCIMEK`→`LENTIL`, and ran `DROP TYPE IF EXISTS crop_type`.
+  So there is **no live ENUM type and no forward enum-value-drop migration is required**; the ENUM
+  DDL in earlier applied migrations is immutable *historical* text only. Any remaining concern is at
+  the *data* level (a `LENTIL` VARCHAR string), a read-only audit — not a schema change or a
+  cross-repo COORDINATE item.
 
 ## Re-adding
 

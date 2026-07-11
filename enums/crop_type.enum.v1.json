@@ -15,9 +15,9 @@
     "RICE"
   ],
   "metadata": {
-    "version": "4.0.0",
+    "version": "4.0.1",
     "lastUpdated": "2026-07-11",
-    "changeNote": "MAJOR (breaking): crop type RED_LENTIL removed. Rationale: the worker is dropping LENTIL (Mercimek) from its crop vocabulary; the platform mirrors that removal to keep the contract 100% synced with the worker (no latent divergence). RED_LENTIL was the GAP-canonical spelling bridged to the worker/platform LENTIL via metadata.aliases; that RED_LENTIL<->LENTIL cross-repo alias is now retired and RED_LENTIL moves to metadata.archived. Requires migration guide: docs/migration_guides/crop_type_red_lentil_removal.md. After removal the GAP set is 8 crops (COTTON, PISTACHIO, CORN, WHEAT, SUNFLOWER, GRAPE, OLIVE, RICE). Prior v3.0.0 (MAJOR/breaking): MAIZE renamed to CORN (metadata.aliases: CORN->MAIZE; migration: docs/migration_guides/crop_type_maize_to_corn.md). Prior v2.1.0 (MINOR): +RICE. Prior v2.0.0 (MAJOR/breaking): -HAZELNUT (Black Sea crop, not grown in GAP; migration: docs/migration_guides/crop_type_hazelnut_removal.md). Note: phenology_stage.enum.v1.json MAIZE_* stage codes remain unchanged (distinct enum).",
+    "changeNote": "MAJOR (breaking): crop type RED_LENTIL removed. Rationale: the worker is dropping LENTIL (Mercimek) from its crop vocabulary; the platform mirrors that removal to keep the contract 100% synced with the worker (no latent divergence). RED_LENTIL was the GAP-canonical spelling bridged to the worker/platform LENTIL via metadata.aliases; that RED_LENTIL<->LENTIL cross-repo alias is now retired; RED_LENTIL is fully removed with no metadata.archived entry retained (removal provenance kept in this changeNote + migration guide docs/migration_guides/crop_type_red_lentil_removal.md). Requires migration guide: docs/migration_guides/crop_type_red_lentil_removal.md. After removal the GAP set is 8 crops (COTTON, PISTACHIO, CORN, WHEAT, SUNFLOWER, GRAPE, OLIVE, RICE). Prior v3.0.0 (MAJOR/breaking): MAIZE renamed to CORN (metadata.aliases: CORN->MAIZE; migration: docs/migration_guides/crop_type_maize_to_corn.md). Prior v2.1.0 (MINOR): +RICE. Prior v2.0.0 (MAJOR/breaking): -HAZELNUT (Black Sea crop, not grown in GAP; migration: docs/migration_guides/crop_type_hazelnut_removal.md). Note: phenology_stage.enum.v1.json MAIZE_* stage codes remain unchanged (distinct enum).",
     "gapPriorities": {
       "description": "GAP region priority crops (ALL 8 crops are GAP priorities - these are the ONLY supported crops)",
       "crops": [
@@ -72,10 +72,6 @@
     "aliases": {
       "description": "Cross-repo / legacy name mapping. TarlaAnaliz (GAP) canonical value -> alternative/legacy names. Used only for interop translation, NOT as accepted enum values. CORN->MAIZE is a legacy alias (MAIZE was the canonical value before v3.0.0).",
       "CORN": ["MAIZE"]
-    },
-    "archived": {
-      "HAZELNUT": "Removed in v2.0.0. Hazelnut (Fındık) is a Black Sea region crop and is not grown in GAP; its presence was an error. Re-adding would be a MINOR change.",
-      "RED_LENTIL": "Removed in v4.0.0 (MAJOR/breaking). Mirrors the worker dropping LENTIL (Mercimek) from its crop vocabulary; the RED_LENTIL<->LENTIL cross-repo alias is retired. Re-adding would be a MINOR change."
     }
   },
   "notes": {

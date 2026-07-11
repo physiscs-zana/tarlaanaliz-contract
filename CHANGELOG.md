@@ -7,6 +7,25 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [6.0.1] - 2026-07-11
+
+**Breaking-change:** HAYIR (PATCH — yalnızca metadata/docs)
+
+crop_type enum'undan `metadata.archived` bloğu (HAZELNUT + RED_LENTIL) **tamamen kaldırıldı**. Gerekçe: kullanıcı direktifi — mercimek (LENTIL/RED_LENTIL/KIRMIZI_MERCIMEK) ve fındık (HAZELNUT) için **arşiv dâhil hiçbir yerde kalıntı tutulmaz**. Enum `enum` dizisi **DEĞİŞMEDİ** (8 mahsul: COTTON, PISTACHIO, CORN, WHEAT, SUNFLOWER, GRAPE, OLIVE, RICE); değer kümesi değişmediği için bu bir metadata/docs değişikliğidir = **PATCH**. Kaldırma-kaydı (provenans) enum `changeNote` + `docs/migration_guides/crop_type_red_lentil_removal.md` içinde **KORUNUR** (audit trail).
+
+### Changed
+
+- **`enums/crop_type.enum.v1.json` v4.0.0 → v4.0.1:** `metadata.archived` bloğu silindi (HAZELNUT + RED_LENTIL girdileri); `changeNote`'taki "`RED_LENTIL` moves to `metadata.archived`" ibaresi "no `metadata.archived` entry retained" olacak şekilde uzlaştırıldı. `enum` dizisi, `aliases`, `displayNames`, `categories`, `gapPriorities`, `worker_alignment` DEĞİŞMEDİ.
+- **`docs/migration_guides/crop_type_red_lentil_removal.md`:** iki düzeltme — (1) "moves to `metadata.archived`" cümlesi, arşiv tutulmadığını (migration guide + changeNote'un removal-record-of-record olduğunu) yansıtacak şekilde güncellendi; (2) "Required consumer actions" bölümündeki YANLIŞ "immutable Postgres ENUM (`KIRMIZI_MERCIMEK`…) → ileriye dönük enum-değeri düşürme worker-koordineli ayrı DB migration (COORDINATE)" çerçevesi kaldırıldı → gerçek: enum `2026_04_04_align_expert_schema_to_worker.py`'de zaten VARCHAR(50)'e çevrildi + `DROP TYPE crop_type`, canlı ENUM/forward migration YOK, kalan endişe yalnızca veri-seviyesi read-only audit'tir (aşağıdaki Notes ile tutarlı). Bu ikinci düzeltme root docs-inclusive aggregate'i `56bf11f2…`→`005b579e…` değiştirir (submodule aggregate `957e9904…` docs HARİÇ olduğu için etkilenmez).
+
+### Notes
+
+- **6.0.0 notundaki DÜZELTME (KESİN KURAL — latent tutarsızlık bırakılmaz):** 6.0.0 girişinin "Immutable DB residue (COORDINATE) — ileriye dönük enum-değeri düşürme worker ile eşgüdümlü ayrı bir DB migration'ıdır" notu **YANLIŞTI**. Gerçek: platform tarafındaki `alembic/versions/2026_04_04_align_expert_schema_to_worker.py` Postgres `crop_type` ENUM'unu **zaten VARCHAR(50)'e çevirdi** (6 kolon, `_enum_to_varchar`), değerleri remapladı ve `DROP TYPE IF EXISTS crop_type` çalıştırdı → **canlı ENUM yok, ileriye dönük DB migration GEREKMİYOR.** Geriye yalnız uygulanmış/immutable migration'ların tarihsel DDL metni kalır (tarih, canlı kalıntı değil). Durum: **RESOLVED**, COORDINATE değil.
+- **Consumer etkisi:** Platform/Edge/Worker pin 6.0.0 → 6.0.1'e güncellenmelidir; runtime davranışı değişmez (enum değer kümesi aynı) — yalnızca sürüm-string + per-dosya hash + aggregate güncellenir.
+- **Doğrulama:** `python tools/validate.py && pytest tests/ -v` (`test_crop_type_enum_matches_gap_canonical` 8-kümeyi assert eder, arşiv kaldırma kırmaz) + `python tools/pin_version.py --verify`.
+
+---
+
 ## [6.0.0] - 2026-07-11
 
 **Breaking-change:** EVET (MAJOR — enum değeri kaldırma)
