@@ -33,7 +33,6 @@ components:
         - SUNFLOWER
         - GRAPE
         - OLIVE
-        - RED_LENTIL
         - RICE
       description: Crop type (reference enums/crop_type.enum.v1.json - supported crops)
     

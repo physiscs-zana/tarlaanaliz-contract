@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 5.1.0
+## Version: 6.0.0
 
-**Release Date:** 2026-07-11T10:48:50.180209Z  
-**Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `60bfc3f2b2377bed672ee8b81b1ec07ea2809d55f5b69095250902354d5ad4e1`
+**Release Date:** 2026-07-11T12:30:17.879399Z  
+**Breaking Change:** YES  
+**Contracts Checksum (SHA-256):** `0dd8351a8d845835a1e560e6748f22e1c68637f74decc34ac29287176d581afc`
 
 ---
 
@@ -55,7 +55,7 @@ Individual file hashes for verification:
 - `enums/calibration_type.enum.v1.json`  
   `35c85add630b2631ed2f4749a045f258955db11f255ef081822c9654b27c70b8`
 - `enums/crop_type.enum.v1.json`  
-  `c1ed00f005286d08e3f98c5f1280fa80c1b6a874515e4cfa1ae292fa3cd9330e`
+  `f99265993e9d757ba01a520a13ac10bd2808786b3860d2ed4a7d62fad50534d9`
 - `enums/dataset_status.enum.v1.json`  
   `a1af5173853fd0983339075fa550e66847c0d19a8a2411c72a612d866de54b07`
 - `enums/drone_type.enum.v1.json`  
@@ -163,9 +163,9 @@ Individual file hashes for verification:
 ### Worker Schemas
 
 - `schemas/worker/analysis_job.v1.schema.json`  
-  `64abf2feb6526b7eeea56fb860401cb6cef420a75872bf6c22d861a4e1a14e0d`
+  `0d235742987d438a7cdc256b7f75bc13a348a6d67f198aae8c25cab8c6d535f8`
 - `schemas/worker/analysis_result.v1.schema.json`  
-  `98039f44b3115d79863ed07f0e47403443d89f3ef0913854c0570e037e49f609`
+  `3ce26669ee388d46483352b54c416d4351963e52121d8dcc32ef575bb4d3b8c6`
 - `schemas/worker/calibrated_dataset.v1.schema.json`  
   `31d201316f59f0c438ebd2018dff5a662441beb072ff148f79f8ce45e7d8de88`
 - `schemas/worker/calibration_metadata.v1.schema.json`  
@@ -175,7 +175,7 @@ Individual file hashes for verification:
 - `schemas/worker/expert_labeling_card.v1.schema.json`  
   `a3f9c3b8a37cbc6424fa832a22ceca210910ee08fe3285d7924dd856d9f6f70c`
 - `schemas/worker/expert_review_queue.v1.schema.json`  
-  `49cfdb670489e39c9d1cfddd588b31ab5a52bc4359bab2105b055513a1d55546`
+  `1d5c926e51749eba46689ddb6b9d3af5d41e56cdfee12548b2fc0e68967400b9`
 - `schemas/worker/thermal_analysis_result.v1.schema.json`  
   `c7b013adce00fa5618214865d869f1f85d68dad83786b21d27f9ea019c8de212`
 
@@ -242,11 +242,11 @@ Individual file hashes for verification:
 ### API Components
 
 - `api/components/parameters.yaml`  
-  `16e2bb025130334cfc8dc0cc6465a9cb0282fad0dce21d82edcd9dc24012a68f`
+  `ed7e7fd541e74f323606f17329b0bb9cadf993a9be30eb296ecc553cec1ba26f`
 - `api/components/responses.yaml`  
-  `227d3c8e4312930f52d78321162f66e7f5862e9f956bf43cf9cced59702c497b`
+  `d7fcd4ce585d77ef9d260ea53c89b3d513d0f9628980ca356aa24b6cc5796308`
 - `api/components/schemas.yaml`  
-  `cb71c34230d437a6e38d597c2e215aab7455cdc3ab254670b0f043fa7dbfdc6c`
+  `2676ba18722b6410ee5865aef2233831047932a0c0dcfcaa98a233d58a1e8782`
 - `api/components/security_schemes.yaml`  
   `9d45e3181a4b847b617a0553c72458650aa9c3deacf38cbed67c5c12db3e1c79`
 
@@ -262,6 +262,12 @@ Individual file hashes for verification:
 ---
 
 ## Changelog
+
+### v6.0.0 (2026-07-11)
+
+**Breaking:** YES
+
+crop_type RED_LENTIL kaldirildi (MAJOR/breaking); enum v3.0.0->v4.0.0. Worker LENTIL'i crop-sozlugunden dusuruyor; contract aynalar (%100 worker-sync). RED_LENTIL<->LENTIL cross-repo alias emekli. GAP kumesi 8 mahsul (COTTON, PISTACHIO, CORN, WHEAT, SUNFLOWER, GRAPE, OLIVE, RICE). Migration: docs/migration_guides/crop_type_red_lentil_removal.md
 
 ### v5.1.0 (2026-07-11)
 
@@ -315,7 +321,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("60bfc3f2b2377bed672ee8b81b1ec07ea2809d55f5b69095250902354d5ad4e1"), "Contracts checksum mismatch!"
+assert verify_contracts("0dd8351a8d845835a1e560e6748f22e1c68637f74decc34ac29287176d581afc"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -328,7 +334,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("60bfc3f2b2377bed672ee8b81b1ec07ea2809d55f5b69095250902354d5ad4e1"), "Contracts checksum mismatch!");
+assert(verifyContracts("0dd8351a8d845835a1e560e6748f22e1c68637f74decc34ac29287176d581afc"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -379,4 +385,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-07-11T10:48:50.180209Z
+**Last Updated:** 2026-07-11T12:30:17.879399Z

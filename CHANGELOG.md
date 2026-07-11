@@ -7,6 +7,26 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [6.0.0] - 2026-07-11
+
+**Breaking-change:** EVET (MAJOR — enum değeri kaldırma)
+
+crop_type `RED_LENTIL` kaldırıldı. Gerekçe: worker `LENTIL` (Mercimek) değerini kendi crop-sözlüğünden düşürüyor; contract bunu aynalayarak worker'la %100 senkron kalır (latent/uykuda ayrışma bırakılmaz). `RED_LENTIL`, worker/platform `LENTIL` değerine `metadata.aliases` (`RED_LENTIL↔LENTIL`) ile köprülenen GAP-kanonik yazımdı; bu çapraz-repo alias'ı emekli edildi ve `RED_LENTIL` `metadata.archived`'a taşındı. Kaldırma sonrası GAP kümesi **8 mahsul** (COTTON, PISTACHIO, CORN, WHEAT, SUNFLOWER, GRAPE, OLIVE, RICE). Migration: `docs/migration_guides/crop_type_red_lentil_removal.md`.
+
+### Changed (breaking)
+
+- **`enums/crop_type.enum.v1.json` v3.0.0 → v4.0.0:** enum'dan `RED_LENTIL` çıkarıldı; `gapPriorities`, `categories` (LEGUMES bloğu tümüyle kaldırıldı), `displayNames.tr`/`displayNames.en` `RED_LENTIL` girdileri silindi; `metadata.aliases`'ten `"RED_LENTIL": ["LENTIL"]` kaldırıldı; `metadata.archived`'a `RED_LENTIL` girdisi eklendi; `notes.worker_alignment` v4.0.0 kaldırma notuna güncellendi.
+- crop_type ayna/inline kopyaları 8-kümeye hizalandı: `schemas/worker/expert_review_queue.v1.schema.json` (inline enum + "GAP 8-crop set" açıklaması), `api/components/schemas.yaml`, `api/components/parameters.yaml`, `api/components/responses.yaml` (örnek hata mesajı), `schemas/worker/analysis_job.v1.schema.json` + `analysis_result.v1.schema.json` (açıklamadan `RED_LENTIL↔LENTIL` alias ibaresi kaldırıldı).
+- Dokümanlar: `docs/README.md` ("8 GAP crops"), `docs/examples/README.md` ("8 GAP Crops Only"); testler: `tests/test_validate_all_schemas.py` + `tests/test_examples_match_schemas.py` beklenen küme 9→8.
+
+### Notes
+
+- **Consumer etkisi:** Platform/Edge/Worker pin 5.1.0 → 6.0.0'a güncellenmelidir; `RED_LENTIL` crop dropdown/routing/pricing/model-sözlüğünden kaldırılmalı, gelen `crop_type = RED_LENTIL` payload'ları 422 `allowed_crop_types` ile reddedilmelidir.
+- **Immutable DB residue (COORDINATE):** Platform tarafında uygulanmış bir Alembic migration'ının Postgres ENUM DDL'i hâlâ `KIRMIZI_MERCIMEK` değerini taşır; ileriye dönük enum-değeri düşürme worker ile eşgüdümlü ayrı bir DB migration'ıdır (bu contract bump'ının parçası değildir).
+- **Doğrulama:** `python tools/validate.py && pytest tests/ -v` (`test_crop_type_enum_matches_gap_canonical` 8-kümeyi assert eder) + `python tools/pin_version.py --verify`.
+
+---
+
 ## [5.1.0] - 2026-07-11
 
 **Feature:** Alt-uzmanlık (sub_specialty / detection_type) worker → kanonik AYNA

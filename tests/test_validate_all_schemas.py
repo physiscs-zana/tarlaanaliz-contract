@@ -195,13 +195,14 @@ class TestSchemaValidation:
                 assert 'description' in value, f"Missing 'description' for {value.get('value')} in {enum_file}"
     
     def test_crop_type_enum_matches_gap_canonical(self, base_dir: Path):
-        """Test crop_type enum is the canonical GAP 9-crop set.
+        """Test crop_type enum is the canonical GAP 8-crop set.
 
-        TarlaAnaliz GAP region scope uses CORN (renamed from MAIZE in v3.0.0)
-        and keeps RED_LENTIL naming; it does NOT include the Aegean-only crops
-        (CHERRY/FIG/APPLE/PEACH). HAZELNUT was removed in crop_type v2.0.0
-        (Black Sea crop, not grown in GAP). RICE (Çeltik) was added in v2.1.0 as
-        an active GAP crop within the KR-092 seasonal flight calendar scope.
+        TarlaAnaliz GAP region scope uses CORN (renamed from MAIZE in v3.0.0);
+        it does NOT include the Aegean-only crops (CHERRY/FIG/APPLE/PEACH).
+        HAZELNUT was removed in crop_type v2.0.0 (Black Sea crop, not grown in
+        GAP). RED_LENTIL was removed in crop_type v4.0.0 (worker dropped LENTIL
+        from its crop vocabulary). RICE (Çeltik) was added in v2.1.0 as an active
+        GAP crop within the KR-092 seasonal flight calendar scope.
         """
         crop_file = base_dir / "enums" / "crop_type.enum.v1.json"
 
@@ -210,13 +211,13 @@ class TestSchemaValidation:
 
         expected_crops = {
             'COTTON', 'PISTACHIO', 'CORN', 'WHEAT', 'SUNFLOWER',
-            'GRAPE', 'OLIVE', 'RED_LENTIL', 'RICE'
+            'GRAPE', 'OLIVE', 'RICE'
         }
 
         actual_crops = set(schema.get('enum', []))
 
         assert actual_crops == expected_crops, \
-            f"crop_type must match GAP 9 crops: {expected_crops}, got: {actual_crops}"
+            f"crop_type must match GAP 8 crops: {expected_crops}, got: {actual_crops}"
 
     def test_analysis_type_enum_canonical(self, base_dir: Path):
         """Test analysis_type enum is the canonical KR-002/KR-064/KR-084 map-layer set.

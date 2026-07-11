@@ -43,9 +43,9 @@
       "type": "string",
       "enum": [
         "COTTON", "PISTACHIO", "CORN", "WHEAT", "SUNFLOWER",
-        "GRAPE", "OLIVE", "RED_LENTIL", "RICE"
+        "GRAPE", "OLIVE", "RICE"
       ],
-      "description": "Same enum as enums/crop_type.enum.v1.json (GAP 9-crop set)."
+      "description": "Same enum as enums/crop_type.enum.v1.json (GAP 8-crop set)."
     },
     "analysis_type": {
       "type": "string",
