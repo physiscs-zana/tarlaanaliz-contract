@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 6.2.0
+## Version: 7.0.0
 
-**Release Date:** 2026-07-12T17:16:06.788678Z  
-**Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `6ad397cd9ad7a73ee97c5eeb03c1c25dd6dc63cbc34ae9cea490fab37ca3d349`
+**Release Date:** 2026-07-12T17:25:21.832447Z  
+**Breaking Change:** YES  
+**Contracts Checksum (SHA-256):** `efe437efeca2d3ee894f1965353fbed42c8d9fb9ad3374d5061a503c6ef93caa`
 
 ---
 
@@ -55,7 +55,7 @@ Individual file hashes for verification:
 - `enums/calibration_type.enum.v1.json`  
   `35c85add630b2631ed2f4749a045f258955db11f255ef081822c9654b27c70b8`
 - `enums/crop_type.enum.v1.json`  
-  `7625b7bd88add5a98bc11e479019896858cc3ed8f3d12908633c9994b91d8ec8`
+  `34babfb9245ca3999bfef7f06846c8835592acbf0cd2804c6167df8bd9451194`
 - `enums/dataset_status.enum.v1.json`  
   `a1af5173853fd0983339075fa550e66847c0d19a8a2411c72a612d866de54b07`
 - `enums/drone_type.enum.v1.json`  
@@ -75,7 +75,7 @@ Individual file hashes for verification:
 - `enums/payment_target_type.enum.v1.json`  
   `761b3e420245b1dabce63308572f9aa82da64eaf89381533491f28e1e3258c50`
 - `enums/phenology_stage.enum.v1.json`  
-  `da82e4621ec668e8fce146a86e3facd446cf164a5741e0c9a13333d50379d4cb`
+  `86f6f10ec7951fc3001b0f5f2f3f76720ff1234a6ed37272136bc59f378838de`
 - `enums/qc_status.enum.v1.json`  
   `889b0f3010678976e7ac351977b5d83391d9d119c91e50e060bc027c32134206`
 - `enums/quarantine_decision.enum.v1.json`  
@@ -263,6 +263,12 @@ Individual file hashes for verification:
 
 ## Changelog
 
+### v7.0.0 (2026-07-12)
+
+**Breaking:** YES
+
+MAJOR/breaking: phenology_stage.enum MAIZE_* -> CORN_* rename (4 deger: EMERGENCE_V5, V6_PRETASSEL, TASSEL_SILK, GRAINFILL + x-enum-descriptions keys + x-stage-order 'CORN' anahtari + top description namespace). Son kalan MAIZE kalintisi; crop_type v3.0.0 CORN rename'ini tamamlar (evre ad-uzayi oneki artik crop_type kanonik degeriyle birebir). Enum kume boyutu 14 (GRAPE_*/OLIVE_* degismedi). crop_type changeNote'taki 'MAIZE_* remain unchanged' notu 'aligned to CORN_* in v7.0.0' olarak duzeltildi. Migration: docs/migration_guides/phenology_stage_maize_to_corn.md. Worker phenology_stage tuketiyorsa ayni turda hizalanmalidir.
+
 ### v6.2.0 (2026-07-12)
 
 **Breaking:** NO
@@ -339,7 +345,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("6ad397cd9ad7a73ee97c5eeb03c1c25dd6dc63cbc34ae9cea490fab37ca3d349"), "Contracts checksum mismatch!"
+assert verify_contracts("efe437efeca2d3ee894f1965353fbed42c8d9fb9ad3374d5061a503c6ef93caa"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -352,7 +358,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("6ad397cd9ad7a73ee97c5eeb03c1c25dd6dc63cbc34ae9cea490fab37ca3d349"), "Contracts checksum mismatch!");
+assert(verifyContracts("efe437efeca2d3ee894f1965353fbed42c8d9fb9ad3374d5061a503c6ef93caa"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -403,4 +409,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-07-12T17:16:06.788678Z
+**Last Updated:** 2026-07-12T17:25:21.832447Z

@@ -7,6 +7,32 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.0.0] - 2026-07-12
+
+**Feature:** phenology_stage `MAIZE_* → CORN_*` rename — son kalan MAIZE kalıntısının temizliği
+**Breaking-change:** EVET (MAJOR — enum değeri rename)
+
+`crop_type` v3.0.0'da `MAIZE → CORN` yapılmıştı (contract v5.0.0); kanonik mahsul değeri artık tüm repolarda `CORN`. `phenology_stage` **son kalan MAIZE kalıntısıydı** — evre kodları eski mahsul ön ekiyle ad-uzaylıydı (`MAIZE_EMERGENCE_V5`, …). O rename bilinçli ertelenmişti (bkz. `crop_type_maize_to_corn.md`) çünkü `PhenologyStage` ayrı bir enum'dur ve platform fenoloji profillerini **`crop_type` üzerinden alias-normalizasyonuyla** çözer (`_normalize_crop`: `MAIZE → CORN`), yani `CORN` mahsulü hâlâ `MAIZE_*` evrelerini buluyordu — aktif kırık yoktu. Bu sürüm o tutarlılık boşluğunu kapatır: evre-kodu ön eki artık kanonik `crop_type` değeriyle (`CORN_*`) birebir. Saf rename — evre eklenmedi/kaldırılmadı.
+
+### Changed
+
+- **`enums/phenology_stage.enum.v1.json`:** 4 evre kodu yeniden adlandırıldı — `MAIZE_EMERGENCE_V5→CORN_EMERGENCE_V5`, `MAIZE_V6_PRETASSEL→CORN_V6_PRETASSEL`, `MAIZE_TASSEL_SILK→CORN_TASSEL_SILK`, `MAIZE_GRAINFILL→CORN_GRAINFILL`. `x-enum-descriptions` anahtarları + `x-stage-order` `"MAIZE"→"CORN"` anahtarı ve değerleri + top-level `description` ad-uzayı örneği re-key edildi; `x-breaking-change` notu eklendi. Küme boyutu **14** (GRAPE_*/OLIVE_* DEĞİŞMEDİ). Türkçe açıklama metinleri ("Mısır — …") değişmedi.
+- **`enums/crop_type.enum.v1.json`:** `metadata.changeNote` içindeki artık yanlış "`phenology_stage.enum.v1.json MAIZE_* stage codes remain unchanged`" ibaresi "subsequently aligned to `CORN_*` in contract v7.0.0" olarak düzeltildi. `enum` dizisi (8 mahsul) + tüm diğer metadata **DEĞİŞMEDİ** — bu yalnız tarihsel-kayıt düzeltmesidir.
+
+### Added
+
+- **`docs/migration_guides/phenology_stage_maize_to_corn.md`:** yeni göç kılavuzu (gerekçe, before/after tablo, etkilenen tüketiciler, gerekli aksiyonlar, doğrulama).
+
+### Notes
+
+- **`schemas/core/phenology_flight_profile.v1.schema.json` düzenlenmedi:** enum'a `$ref` ile bağlanır, `MAIZE_*` string'i sabit-kodlamaz → renamed kodlara otomatik uyumlu.
+- **Repo içi örnek JSON yok:** hiçbir örnek `MAIZE_*` değeri taşımıyor (grep ile doğrulandı) → güncellenecek örnek yok.
+- **Worker koordinasyonu (KRİTİK):** worker `phenology_stage` tüketiyorsa aynı turda `CORN_*`'a hizalanmalıdır; aksi halde `MAIZE_*` emit/bekleyen worker renamed enum'a karşı validasyonda kırılır. Bu, contract'ın worker'ı etkileyebilecek tek breaking maddesidir.
+- **Consumer etkisi:** Platform/Edge/Worker pin 6.2.0 → 7.0.0'a güncellenmelidir; MAJOR olduğundan tüketici koordinasyonu gerekir. Geçiş penceresi gerekiyorsa inbound `MAIZE_*` `CORN_*`'a normalize edilir, outbound asla `MAIZE_*` emit etmez.
+- **Doğrulama:** `python -X utf8 tools/validate.py && python -X utf8 -m pytest tests/ -q` + `python -X utf8 tools/pin_version.py --verify`.
+
+---
+
 ## [6.2.0] - 2026-07-12
 
 **Feature:** KR-018 bant-gate tek-kaynak (analysis_type ↔ drone bant kesişimi) + payment_status v1 deprecation
