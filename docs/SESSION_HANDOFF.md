@@ -4,24 +4,58 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-07-05
+**Son güncelleme:** 2026-07-12
+
+---
+
+## 0. EN GÜNCEL OTURUM (2026-07-12) — Platform öneri denetimi + 6.2.0 & 7.0.0
+
+**İstek:** Platform tarafındaki oturumun 7 contract önerisini denetle, planla, onayla, uygula (auto mode).
+
+**Sonuç:** 2 yeni sürüm (yerelde commit'lendi + master'a push edildi). Başlangıç: `6.1.0`.
+
+### Denetim düzeltmeleri (öneri yazarının bilmediği noktalar)
+- **Öneri 5 ZATEN MEVCUTTU:** `drone_capability_matrix.yaml` bant/kapasite matrisi (supported_bands, band_classes, available_indices) halihazırda contract-kanonik. Yeni matris oluşturulmadı; yalnız `drone_type.enum` → matrise çapraz-link eklendi.
+- **Öneri 7b ZATEN YAPILMIŞTI:** 6.1.0 pin + `feat/beneficial…` merge (PR #20) tamamdı.
+- **Öneri 3 / 6:** yalnız teyit — contract zaten kanonik (drone tam-anahtar; IL_OPERATOR deprecated→DISTRICT_REP).
+
+### Commit'lenen değişiklikler
+- **`d5f18b9` — v6.2.0 (MINOR, non-breaking):**
+  - `analysis_type.enum` v1.3.0→v1.4.0: `metadata.bandRequirements` (requires_bands + availability; THERMAL_STRESS→`requires_thermal_payload`/LWIR, BENEFICIAL→`enum_valid_not_yet_emittable`). Enum dizisi değişmedi.
+  - `drone_type.enum`: `x-registry-sync` → `drone_capability_matrix.yaml` çapraz-referansı + add_model_flow.
+  - `payment_status.enum.v1`: `x-deprecated` (repo içi `$ref` tüketicisi yok; payment_intent.v1 status'u inline yazar; v2 kanonik).
+- **`c0fa705` — v7.0.0 (MAJOR/breaking):**
+  - `phenology_stage.enum`: 4 evre `MAIZE_*→CORN_*` (son MAIZE kalıntısı; crop_type v3.0.0 CORN rename'ini tamamlar). Küme=14; GRAPE_*/OLIVE_* değişmedi. Türkçe metinler ("Mısır") değişmedi.
+  - `crop_type.enum`: changeNote'taki artık-yanlış "MAIZE_* remain unchanged" → "aligned to CORN_* in v7.0.0" (enum dizisi değişmedi; tarihsel-kayıt).
+  - Yeni: `docs/migration_guides/phenology_stage_maize_to_corn.md`.
+
+### İş kararı
+- **Öneri 2 (payment PENDING_RECEIPT) = (B):** contract DEĞİŞMEZ. Platform `PENDING_RECEIPT` yerine `PAYMENT_PENDING` kullanmalı (off-contract ara durum contract'ta ayrı modellenmez).
+
+### ⚠️ SONRAKİ OTURUM İÇİN AÇIK — KRİTİK
+- [ ] **Worker `phenology_stage` hizalaması (7.0.0 breaking):** Worker bu enum'u tüketiyorsa `MAIZE_*→CORN_*` **aynı turda** hizalanmalı; aksi halde `MAIZE_*` emit/bekleyen worker renamed enum'a karşı validasyonda kırılır. Bu, 7.0.0'ın worker'ı etkileyebilecek TEK breaking maddesidir. Bu oturumda worker deposuna **dokunulmadı**.
+- [ ] **Consumer pin güncellemesi:** Platform/Edge/Worker `CONTRACTS_VERSION.md` pin 6.1.0 → 7.0.0 (checksum `efe437efeca2d3ee894f1965353fbed42c8d9fb9ad3374d5061a503c6ef93caa`). MAJOR → koordinasyon gerekir.
+
+### Doğrulama (bu oturumda geçti)
+- `validate.py`: 89 dosya, 0 hata. `pytest`: 547/547 geçti. `pin_version.py --verify`: ✓.
 
 ---
 
 ## 1. Depo Durumu (Snapshot)
 
-- **Kontrat sürümü (CONTRACTS_VERSION.md):** `4.3.0` — Breaking: **NO** (eklemeli/additive)
-  - Checksum (SHA-256): `7295e395723746c03d1438885a307b1df6cb75d2f1357db9edffb2c5b3ee801c`
-  - 4.3.0 içerik-merge commit'i: `82d2fd8` (PR #19). Checksum bu ağaca pinli.
-  - Sonraki commit'ler **yalnız-doküman** (bu handoff izleme + docs/ temizliği); checksum'ı
-    DEĞİŞTİRMEZ. `git log` farklı bir head gösterirse (ör. bu oturum-kapanış commit'i) bu normaldir.
+- **Kontrat sürümü (CONTRACTS_VERSION.md):** `7.0.0` — Breaking: **YES** (phenology_stage MAIZE_*→CORN_* rename)
+  - Checksum (SHA-256): `efe437efeca2d3ee894f1965353fbed42c8d9fb9ad3374d5061a503c6ef93caa`
+  - 7.0.0 rename commit'i: `c0fa705`. Ondan önce 6.2.0 (bant-gate tek-kaynak + v1 deprecation) commit'i: `d5f18b9`.
+  - Checksum yalnız `schemas/`+`enums/`+`api/` ağacını kapsar; CHANGELOG.md / docs/ değişiklikleri
+    (bu handoff dahil) checksum'ı DEĞİŞTİRMEZ. `git log` daha yeni bir head gösterirse (ör. bu
+    oturum-kapanış handoff commit'i) bu normaldir.
 - **Tek çalışma deposu:** `.../TARLA-ANALİZ/tarlaanaliz-contract` (origin = `github.com/physiscs-zana/tarlaanaliz-contract`)
 
-### Dallar / PR durumu — 2026-07-05 itibarıyla
+### Dallar / PR durumu — 2026-07-12 itibarıyla
 
 | Öğe | Durum | Not |
 |---|---|---|
-| `master` | `82d2fd8` | Güncel referans dal (4.3.0) |
+| `master` | `c0fa705` | Güncel referans dal (7.0.0); 2 commit ileride (d5f18b9=6.2.0, c0fa705=7.0.0) |
 | PR #19 (`feat/kr-092-seasonal-flight-calendar-v2`) | **MERGED** | KR-092 sezonluk uçuş takvimi + RICE; eklemeli 4.3.0; crop_type MAIZE-kanonik |
 | PR #18 (`feat/kr-092-seasonal-flight-calendar`) | **CLOSED** | Terk edildi — 5.1.0 MAJOR gereksizdi (TARIS zaten master'da yok) + CORN (kanonik-dışı) |
 | Açık PR | **yok** | — |
@@ -63,14 +97,14 @@ görülüyor → o depoya bu oturumdan **dokunulmadı** (çakışmayı önlemek 
 
 ---
 
-## 3. Tüketici (consumer) Durumu — 2026-07-05
+## 3. Tüketici (consumer) Durumu — 2026-07-12
 
 | Servis | Sürüm | Senkron | Not |
 |---|---|---|---|
-| **Contract (SSOT)** | `4.3.0` (82d2fd8) | — | master; checksum `7295e395…` |
-| **Platform** | 4.3.0 pin (submodule 82d2fd8) | ✓ Hizalı | vendored `contracts/` ağacı 4.3.0 |
-| **Worker** | `v5.1.1` (bağımsız şema + kendi hash gate) | Temiz, origin=eşit | 13-bitki worker-kanonik (CORN/LENTIL + APPLE/PEACH/CHERRY/FIG); MAIZE↔CORN alias |
-| **Edge** | `1.2.0` (bağımsız pin + kendi hash gate) | Temiz | 8 edge şeması; `$id` host drift ÇÖZÜLDÜ (hepsi `api.tarlaanaliz.com`) |
+| **Contract (SSOT)** | `7.0.0` (c0fa705) | — | master; checksum `efe437ef…` |
+| **Platform** | 4.3.0 pin (submodule 82d2fd8) | ⚠ GERİDE (4.3.0 → 7.0.0) | 6.2.0 + 7.0.0'a re-pin gerekli; checksum `efe437ef…` |
+| **Worker** | `v5.1.1` (bağımsız şema + kendi hash gate) | ⚠ AKSİYON | phenology_stage tüketiyorsa MAIZE_*→CORN_* aynı turda hizalanmalı (7.0.0 breaking) |
+| **Edge** | `1.2.0` (bağımsız pin + kendi hash gate) | Temiz | phenology_stage tüketmez; 7.0.0 rename edge'i etkilemez |
 
 ---
 
