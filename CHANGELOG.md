@@ -7,6 +7,31 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [6.2.0] - 2026-07-12
+
+**Feature:** KR-018 bant-gate tek-kaynak (analysis_type ↔ drone bant kesişimi) + payment_status v1 deprecation
+**Breaking-change:** HAYIR (MINOR — yalnız metadata eklemeleri; hiçbir enum değeri eklenmedi/kaldırılmadı/yeniden adlandırılmadı)
+
+Platform tarafı contract önerilerinin (Öneri 4/5/7a) güvenli/non-breaking grubu. Amaç: KR-018 bant-kapısı (kalibrasyonsuz/eksik bant → katman üretilemez) mantığını contract-kanonik + tekil kaynaktan türetilir kılmak, ve zaten-tüketilmeyen payment_status v1'i açıkça emekliye ayırmak. Öneri 2 (PENDING_RECEIPT) platform-side (B) karar → contract değişmez. Öneri 3 (drone kısa↔tam anahtar) + Öneri 6 (IL_OPERATOR) yalnız teyit; contract zaten kanonik.
+
+### Added
+
+- **`enums/analysis_type.enum.v1.json` v1.3.0 → v1.4.0:** `metadata.bandRequirements` eklendi — her 11 map-layer için `requires_bands` (minimum bantlar) + `availability` durumu. Kesişim kuralı: `analysis_type.requires_bands ⊆ drone_capability_matrix.yaml[drone].supported_bands` ise katman o drone ile üretilebilir. `THERMAL_STRESS` → `requires_thermal_payload` (LWIR; yalnız DJI_M350 termal varyant + AGEAGLE_EBEE_X_ALTUM_PT; Mavic 3M'de üretilemez). `BENEFICIAL` → `enum_valid_not_yet_emittable` (model olgunlaşınca aktifleşir). Enum `enum` dizisi (11 kod) **DEĞİŞMEDİ**.
+- **`enums/drone_type.enum.v1.json` `x-registry-sync`:** `capability_matrix` çapraz-referansı eklendi (`drone_capability_matrix.yaml` → supported_bands/band_class/available_indices/calibration_class). `add_model_flow` capability-matrix adımını içerecek şekilde güncellendi. Not: matris zaten mevcuttu; bu değişiklik yalnız enum'dan matrise keşfedilebilir bağ kurar.
+
+### Changed
+
+- **`enums/payment_status.enum.v1.json`:** `x-deprecated` bloğu eklendi (`since: 6.2.0`, `replaced_by: payment_status.enum.v2.json`). Gerekçe: v2 kanoniktir (REFUNDED + PENDING_ADMIN_REVIEW); v1'in repo içi `$ref` tüketicisi yoktur (payment_intent.v1 — kendisi DEPRECATED — status değerlerini inline yazar). Enum `enum` dizisi **DEĞİŞMEDİ**; kaldırma değil, yalnız deprecation işareti.
+
+### Notes
+
+- **Öneri 5 zaten karşılanmıştı:** `drone_capability_matrix.yaml` bant/kapasite matrisi (supported_bands, band_classes, available_indices) halihazırda contract-kanonik olduğundan yeni matris **oluşturulmadı**; yalnız enum'dan çapraz-link eklendi.
+- **Öneri 2 = (B) platform-side:** "dekont bekleniyor" ara durumu contract'ta ayrı modellenmez; platform `PENDING_RECEIPT` yerine `PAYMENT_PENDING` kullanır. Contract enum'u (v2) kanonik/şişmeden kalır.
+- **Consumer etkisi:** Platform/Edge/Worker pin 6.1.0 → 6.2.0'a güncellenmelidir; tüm değişiklikler metadata olduğundan hiçbir üretici/tüketici bozulmaz (wire davranışı değişmez).
+- **Doğrulama:** `python -X utf8 tools/validate.py && python -X utf8 -m pytest tests/ -q` + `python -X utf8 tools/pin_version.py --verify`.
+
+---
+
 ## [6.1.0] - 2026-07-12
 
 **Feature:** BENEFICIAL (faydalı böcek / doğal düşman) zengin alt-uzmanlık yuvası + result-rich-axis (analysis_result.Detection) worker → kanonik AYNA

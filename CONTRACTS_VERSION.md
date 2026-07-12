@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 6.1.0
+## Version: 6.2.0
 
-**Release Date:** 2026-07-11T21:53:36.811103Z  
+**Release Date:** 2026-07-12T17:16:06.788678Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `9ca1387d6e75413b86fa0e9ceef083c252e23a6ee0d02e469d06a33f6fc57de5`
+**Contracts Checksum (SHA-256):** `6ad397cd9ad7a73ee97c5eeb03c1c25dd6dc63cbc34ae9cea490fab37ca3d349`
 
 ---
 
@@ -51,7 +51,7 @@ Individual file hashes for verification:
 ### Enums
 
 - `enums/analysis_type.enum.v1.json`  
-  `089f968f2ed7f1e1536f5b4b176fa3c66356e4aaa8218218b7a5273c33965f98`
+  `741d03e543fdc882548a3a41121e5df652ce6e12bc6649ecde00214ae40a4391`
 - `enums/calibration_type.enum.v1.json`  
   `35c85add630b2631ed2f4749a045f258955db11f255ef081822c9654b27c70b8`
 - `enums/crop_type.enum.v1.json`  
@@ -59,7 +59,7 @@ Individual file hashes for verification:
 - `enums/dataset_status.enum.v1.json`  
   `a1af5173853fd0983339075fa550e66847c0d19a8a2411c72a612d866de54b07`
 - `enums/drone_type.enum.v1.json`  
-  `1aedf3020a675096f1a2188c2c148f5fb028814f41827d22fd0818d956ec4099`
+  `eb2064732029350f6d8c793fd353b2c7cc5cceb2f9f96785137450ecdb125d5f`
 - `enums/edge_custody_event.enum.v1.json`  
   `f5578afc7a31de5c3f7afd1974fc90530bf60a307ee5d7134c98707e1139f389`
 - `enums/field_history_event_type.enum.v1.json`  
@@ -69,7 +69,7 @@ Individual file hashes for verification:
 - `enums/payment_method.enum.v1.json`  
   `14291b81875704058bf6eed4e701ec7a1325b48d08fccd21f6227e4f6659e12c`
 - `enums/payment_status.enum.v1.json`  
-  `08df313506b10f37da55ee2e07e5175c6a3785c8c89e50420f538d945b92f7ae`
+  `d2eeb8c6f1e4211b6127120018a88bc29cd52aa8bcdf30ce24f5709ec067e6b4`
 - `enums/payment_status.enum.v2.json`  
   `03cc82adf59a8f04ed7122b806b8796eb8f6c7fd0aaf98a01ffd5f40ff753029`
 - `enums/payment_target_type.enum.v1.json`  
@@ -263,6 +263,12 @@ Individual file hashes for verification:
 
 ## Changelog
 
+### v6.2.0 (2026-07-12)
+
+**Breaking:** NO
+
+MINOR (non-breaking): (1) analysis_type.enum v1.3.0->v1.4.0 — bandRequirements eklendi (requires_bands + availability; KR-018 bant-gate tek-kaynak, drone_capability_matrix.yaml ile kesisim = uretilebilir katman). THERMAL_STRESS->requires_thermal_payload (LWIR), BENEFICIAL->enum_valid_not_yet_emittable. (2) drone_type.enum x-registry-sync — drone_capability_matrix.yaml capraz-referansi + add_model_flow guncellendi. (3) payment_status.enum.v1 x-deprecated isaretlendi (v2 kanonik; repo ici $ref tuketicisi yok, payment_intent.v1 status'u inline yazar). Enum dizileri DEGISMEDI; kaldirma/rename yok. Oneri 2 (PENDING_RECEIPT) = platform-side (B), contract degismez; Oneri 3/6 teyit-only.
+
 ### v6.1.0 (2026-07-11)
 
 **Breaking:** NO
@@ -333,7 +339,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("9ca1387d6e75413b86fa0e9ceef083c252e23a6ee0d02e469d06a33f6fc57de5"), "Contracts checksum mismatch!"
+assert verify_contracts("6ad397cd9ad7a73ee97c5eeb03c1c25dd6dc63cbc34ae9cea490fab37ca3d349"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -346,7 +352,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("9ca1387d6e75413b86fa0e9ceef083c252e23a6ee0d02e469d06a33f6fc57de5"), "Contracts checksum mismatch!");
+assert(verifyContracts("6ad397cd9ad7a73ee97c5eeb03c1c25dd6dc63cbc34ae9cea490fab37ca3d349"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -397,4 +403,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-07-11T21:53:36.811103Z
+**Last Updated:** 2026-07-12T17:16:06.788678Z

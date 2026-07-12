@@ -25,6 +25,13 @@
     "notes": "PaymentStateMachine servisi bypass edilemez. Otomatik expire yoktur."
   },
   "x-breaking-change": "v1→: APPROVED ve EXPIRED değerleri kaldırıldı (SSOT 1.2.0 / 2026-02-24). APPROVED kullanan kodlar PAID'e migrasyon gerektirir.",
+  "x-deprecated": {
+    "deprecated": true,
+    "since": "6.2.0",
+    "replaced_by": "payment_status.enum.v2.json",
+    "reason": "v2 kanoniktir (REFUNDED + PENDING_ADMIN_REVIEW içerir). Bu enum'un repo içi $ref tüketicisi yoktur; payment_intent.v1.schema.json (kendisi DEPRECATED) status değerlerini kendi içine yazar, bu dosyaya $ref vermez. Tüm tüketiciler v2'ye pinlidir.",
+    "removal_plan": "Gelecek bir MAJOR sürümde kaldırılabilir (tüm tüketicilerin v2'ye geçişi doğrulandıktan sonra). Şimdilik eski payload okuma/audit için tutulur."
+  },
   "x-kr-ref": "KR-033",
   "x-migration-guide": "docs/migration_guides/payment_intent_v1_to_v2.md"
 }

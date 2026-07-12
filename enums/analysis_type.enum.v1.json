@@ -18,10 +18,32 @@
     "GENERAL"
   ],
   "metadata": {
-    "version": "1.3.0",
+    "version": "1.4.0",
     "lastUpdated": "2026-07-12",
-    "changeNote": "MINOR: BENEFICIAL eklendi (faydalı böcek / doğal düşman zengin alt-uzmanlık yuvası — Gap #1; worker v1.3.0'un AK-4 kanonik aynası, devir spec: worker denetim/beneficial_ve_sonuc_ekseni_devir_spec_2026_07_11.md). KR-002 renk/deseni (Turkuaz/Teal + doğal düşman ikonu) worker önerisinden benimsendi (kanonik = KR-002 SSOT). v1.2.0: SALT_STRESS eklendi (Platform KR-002 katmanı — toprak tuzluluğu stresi, Kahverengi/Bej + tuz kristali deseni). v1.1.0: GENERAL eklendi (Worker fallback analysis_type).",
+    "changeNote": "MINOR (v1.4.0): bandRequirements eklendi — her map-layer için requires_bands + availability (KR-018 bant-gate tek-kaynak). analysis_type.requires_bands ∩ drone_capability_matrix.yaml supported_bands = o drone ile üretilebilir katman. THERMAL_STRESS→availability requires_thermal_payload (LWIR bandı ister; yalnız termal-payload'lı dronelar). BENEFICIAL→enum_valid_not_yet_emittable (model olgunlaşınca aktifleşir). Enum dizisi DEĞİŞMEDİ → non-breaking (MINOR). v1.3.0: BENEFICIAL eklendi (faydalı böcek / doğal düşman zengin alt-uzmanlık yuvası — Gap #1; worker v1.3.0'un AK-4 kanonik aynası, devir spec: worker denetim/beneficial_ve_sonuc_ekseni_devir_spec_2026_07_11.md). KR-002 renk/deseni (Turkuaz/Teal + doğal düşman ikonu) worker önerisinden benimsendi (kanonik = KR-002 SSOT). v1.2.0: SALT_STRESS eklendi (Platform KR-002 katmanı — toprak tuzluluğu stresi, Kahverengi/Bej + tuz kristali deseni). v1.1.0: GENERAL eklendi (Worker fallback analysis_type).",
     "kr002_reference": "Analysis types defined in KR-002 (Harita katmanı anlamları). These are map layers with specific colors and patterns.",
+    "bandRequirements": {
+      "description": "KR-018 bant-gate tek-kaynak: her map-layer'ın üretimi için gereken minimum bantlar (requires_bands) + üretilebilirlik durumu (availability). Kesişim kuralı: analysis_type.requires_bands ⊆ drone_capability_matrix.yaml[drone].supported_bands ise o katman o drone ile üretilebilir. Bant sözlüğü drone_capability_matrix.yaml ile ortaktır (GREEN/RED/RED_EDGE/NIR/BLUE/LWIR).",
+      "cross_reference": "drone_capability_matrix.yaml (supported_bands, band_classes) + drone_registry.yaml (sensor.bands, sensor.thermal)",
+      "availabilityValues": {
+        "available": "Bant gereksinimi birincil BASIC_4BAND platformda (DJI_MAVIC_3M) karşılanır; katman üretilebilir.",
+        "requires_thermal_payload": "LWIR (termal) bandı gerekir; yalnız termal-payload'lı dronelarla üretilebilir (DJI_M350_RTK_SENTERA_6X termal varyant, AGEAGLE_EBEE_X_ALTUM_PT). Mavic 3M'de üretilemez.",
+        "enum_valid_not_yet_emittable": "Enum'da parite için geçerli, ancak mevcut multispektral çözünürlük + model olgunluğuyla henüz emit edilemez; model olgunlaşınca aktifleşir."
+      },
+      "byLayer": {
+        "HEALTH": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
+        "DISEASE": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
+        "PEST": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
+        "FUNGUS": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
+        "WEED": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
+        "WATER_STRESS": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
+        "NITROGEN_STRESS": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
+        "THERMAL_STRESS": { "requires_bands": ["LWIR"], "availability": "requires_thermal_payload" },
+        "SALT_STRESS": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
+        "BENEFICIAL": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "enum_valid_not_yet_emittable" },
+        "GENERAL": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" }
+      }
+    },
     "layerMapping": {
       "HEALTH": {
         "description": "Sağlık katmanı - Bitki sağlık durumu",
