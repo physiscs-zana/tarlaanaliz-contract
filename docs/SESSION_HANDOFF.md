@@ -8,7 +8,46 @@
 
 ---
 
-## 0. EN GÜNCEL OTURUM (2026-07-12) — Platform öneri denetimi + 6.2.0 & 7.0.0
+## 0. EN GÜNCEL OTURUM (2026-07-12) — 18-Ajan Bağımsız Denetim + v7.0.1 PATCH
+
+**İstek:** Bu oturumda yapılan tüm contract değişikliklerini (6.2.0 `bandRequirements`/deprecation +
+7.0.0 `phenology_stage` rename) 6 kıdemli mühendislik perspektifinden (SW/QA/Pentest/SDLC/ML/DL)
+18 bağımsız ajanla satır-satır denetle; bulguları kaynağa karşı doğrula; %100 doğrulananları çöz.
+
+**Sonuç:** **v7.0.1 (PATCH, non-breaking)** — hiçbir enum değeri eklenmedi/kaldırıldı/yeniden adlandırılmadı.
+- Fix commit'i: **`3aa5fa2`** (8 dosya). Başlangıç: `7.0.0` (checksum `efe437ef…`).
+- Yeni checksum (SHA-256): **`32c747a5876dcb612aade23c4a822ac7e8b23ac47d0042c85021b994db16c40c`**.
+- Tam denetim raporu (F1–F10, doğrulama yöntemi, de-escalate edilenler):
+  `denetim/denetim_raporu_2026-07-12_18ajan_v7.0.1.md`.
+
+### Doğrulanan bulgular (özet — detay denetim raporunda)
+- **F1+F2 (DL/ML):** `analysis_type.enum` v1.4.0→**v1.4.1**. THERMAL_STRESS `requires_bands`
+  `["LWIR"]` → tam set `[GREEN,RED,RED_EDGE,NIR,LWIR]` (kullanıcı kararı). Kesişim kuralı
+  netleştirildi: `requires_bands ⊆ effective_bands`, `effective_bands = supported_bands ∪
+  (termal payload takılıysa thermal_variant.thermal_bands)` + M350 örneği. **F7:** `enforcement: advisory`.
+- **F3+F4 (SW/QA/SDLC):** `drone_type.enum` — Parrot açıklamasından yanıltıcı "+termal" kaldırıldı
+  (matris kanonik; Sequoia+ multispektral-only, kullanıcı kararı); `x-updated` 2026-02-24→2026-07-12;
+  `capability_matrix` effective_bands ile hizalandı.
+- **F5 (SDLC):** `phenology_stage_maize_to_corn.md` breaking-guide'a `## Rollback` bölümü eklendi (politika zorunlu).
+- **F8 (QA):** 2 yeni test — `phenology_stage` 14-değer set + `bandRequirements.byLayer` bütünlük.
+- **F9 (SDLC/Pentest):** `breaking_change_detector.py` artık `enums/`'ı da tarıyor (value removal/rename → MAJOR).
+- **F10 (SDLC):** `sync_to_repos.sh` bayat `schemas/enums/` kaynak yolu → `enums/` düzeltildi + `phenology_stage.enum` eklendi.
+- **F6 (bu doküman):** §1 self-referential bayat master-head SHA'sı sürüm/checksum kimliğine dayandırıldı (aşağıda).
+
+### Doğrulama (bu oturumda geçti)
+- `validate.py`: 89 dosya, 0 hata. `pytest`: **549** geçti (+2 yeni). `pin_version.py --verify`: ✓ `32c747a5…`.
+- `breaking_change_detector` (HEAD vs working tree): 0 breaking; enum-diff smoke test: value removal/rename → BREAKING (doğrulandı).
+
+### ⚠️ SONRAKİ OTURUM İÇİN AÇIK
+- [ ] **Worker `phenology_stage` hizalaması (7.0.0 breaking, HÂLÂ AÇIK):** `sync_to_repos.sh` artık
+  enum'u worker'a gönderiyor (F10), ama worker deposuna bu oturumda **dokunulmadı**. Worker bu enum'u
+  tüketiyorsa `MAIZE_*→CORN_*` hizalanmalı.
+- [ ] **Consumer re-pin:** Platform/Edge/Worker `CONTRACTS_VERSION.md` pin → 7.0.1 (checksum `32c747a5…`).
+  7.0.1 breaking DEĞİL; salt doğrulama hash'i güncellenir.
+
+---
+
+## 0.1. Önceki oturum (2026-07-12) — Platform öneri denetimi + 6.2.0 & 7.0.0
 
 **İstek:** Platform tarafındaki oturumun 7 contract önerisini denetle, planla, onayla, uygula (auto mode).
 
@@ -43,19 +82,22 @@
 
 ## 1. Depo Durumu (Snapshot)
 
-- **Kontrat sürümü (CONTRACTS_VERSION.md):** `7.0.0` — Breaking: **YES** (phenology_stage MAIZE_*→CORN_* rename)
-  - Checksum (SHA-256): `efe437efeca2d3ee894f1965353fbed42c8d9fb9ad3374d5061a503c6ef93caa`
-  - 7.0.0 rename commit'i: `c0fa705`. Ondan önce 6.2.0 (bant-gate tek-kaynak + v1 deprecation) commit'i: `d5f18b9`.
+- **Kontrat sürümü (CONTRACTS_VERSION.md):** `7.0.1` — Breaking: **NO** (7.0.0'a göre PATCH:
+  metadata/description iç-tutarlılık; enum dizileri değişmedi). NOT: 7.0.0'ın kendisi breaking'di
+  (phenology_stage MAIZE_*→CORN_* rename).
+  - Checksum (SHA-256): `32c747a5876dcb612aade23c4a822ac7e8b23ac47d0042c85021b994db16c40c`
+  - 7.0.1 fix commit'i: `3aa5fa2` (8 dosya). Öncesi: 7.0.0 rename `c0fa705`, 6.2.0 `d5f18b9`.
   - Checksum yalnız `schemas/`+`enums/`+`api/` ağacını kapsar; CHANGELOG.md / docs/ değişiklikleri
-    (bu handoff dahil) checksum'ı DEĞİŞTİRMEZ. `git log` daha yeni bir head gösterirse (ör. bu
-    oturum-kapanış handoff commit'i) bu normaldir.
+    (bu handoff + denetim/ raporu dahil) checksum'ı DEĞİŞTİRMEZ. `git log` `3aa5fa2`'den daha yeni bir
+    head gösterirse (bu oturum-kapanış handoff/denetim commit'i) bu NORMALDIR — sürüm kimliği SHA'ya
+    değil, yukarıdaki checksum'a dayanır (F6: self-referential SHA'dan kaçınıldı).
 - **Tek çalışma deposu:** `.../TARLA-ANALİZ/tarlaanaliz-contract` (origin = `github.com/physiscs-zana/tarlaanaliz-contract`)
 
 ### Dallar / PR durumu — 2026-07-12 itibarıyla
 
 | Öğe | Durum | Not |
 |---|---|---|
-| `master` | `c0fa705` | Güncel referans dal (7.0.0); 2 commit ileride (d5f18b9=6.2.0, c0fa705=7.0.0) |
+| `master` | `3aa5fa2` (+ doküman commit) | 7.0.1 fix commit `3aa5fa2`; oturum-kapanış handoff/denetim commit'i bir üstte (doküman-only, checksum-nötr) |
 | PR #19 (`feat/kr-092-seasonal-flight-calendar-v2`) | **MERGED** | KR-092 sezonluk uçuş takvimi + RICE; eklemeli 4.3.0; crop_type MAIZE-kanonik |
 | PR #18 (`feat/kr-092-seasonal-flight-calendar`) | **CLOSED** | Terk edildi — 5.1.0 MAJOR gereksizdi (TARIS zaten master'da yok) + CORN (kanonik-dışı) |
 | Açık PR | **yok** | — |
@@ -101,9 +143,9 @@ görülüyor → o depoya bu oturumdan **dokunulmadı** (çakışmayı önlemek 
 
 | Servis | Sürüm | Senkron | Not |
 |---|---|---|---|
-| **Contract (SSOT)** | `7.0.0` (c0fa705) | — | master; checksum `efe437ef…` |
-| **Platform** | 4.3.0 pin (submodule 82d2fd8) | ⚠ GERİDE (4.3.0 → 7.0.0) | 6.2.0 + 7.0.0'a re-pin gerekli; checksum `efe437ef…` |
-| **Worker** | `v5.1.1` (bağımsız şema + kendi hash gate) | ⚠ AKSİYON | phenology_stage tüketiyorsa MAIZE_*→CORN_* aynı turda hizalanmalı (7.0.0 breaking) |
+| **Contract (SSOT)** | `7.0.1` (3aa5fa2) | — | master; checksum `32c747a5…` |
+| **Platform** | 4.3.0 pin (submodule 82d2fd8) | ⚠ GERİDE (4.3.0 → 7.0.1) | 6.2.0 + 7.0.0 + 7.0.1'e re-pin gerekli; checksum `32c747a5…` |
+| **Worker** | `v5.1.1` (bağımsız şema + kendi hash gate) | ⚠ AKSİYON | phenology_stage tüketiyorsa MAIZE_*→CORN_* aynı turda hizalanmalı (7.0.0 breaking; hâlâ açık) |
 | **Edge** | `1.2.0` (bağımsız pin + kendi hash gate) | Temiz | phenology_stage tüketmez; 7.0.0 rename edge'i etkilemez |
 
 ---
@@ -231,6 +273,9 @@ geçmişinde kalıcı olarak erişilebilir (geri-alınabilir).
 - [x] **Devir dosyaları şişkinlik-temizliği (de-bloat)** (§3.4) — worker `kalan_isler.txt` PR #118
   MERGED (`469e7d7`); platform defteri `a58628c` (714→281); contract handoff budama gerektirmedi.
   Tüm açık kalemler korundu; silinen bitmiş-iş git geçmişinde.
+- [x] **18-Ajan bağımsız denetim + v7.0.1 PATCH** (§0) — bu oturumun 6.2.0/7.0.0 değişiklikleri
+  6 perspektiften (SW/QA/Pentest/SDLC/ML/DL) denetlendi; F1–F10 doğrulandı ve giderildi; fix commit
+  `3aa5fa2`, checksum `32c747a5…`. Detay: `denetim/denetim_raporu_2026-07-12_18ajan_v7.0.1.md`.
 
 ---
 
