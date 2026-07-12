@@ -214,9 +214,13 @@ sync_to_worker() {
     # Sync required schemas
     rsync -av "$CONTRACTS_DIR/schemas/worker/" "$contracts_target/schemas/worker/"
     rsync -av "$CONTRACTS_DIR/schemas/shared/geojson.v1.schema.json" "$contracts_target/schemas/shared/"
+    # Canonical enums live at the repo-root enums/ dir (NOT schemas/enums/).
+    # phenology_stage is required: worker must align its MAIZE_*->CORN_* stage
+    # codes with contract v7.0.0 (see migration guide), so it MUST receive the enum.
     rsync -av \
-        "$CONTRACTS_DIR/schemas/enums/crop_type.enum.v1.json" \
-        "$CONTRACTS_DIR/schemas/enums/analysis_type.enum.v1.json" \
+        "$CONTRACTS_DIR/enums/crop_type.enum.v1.json" \
+        "$CONTRACTS_DIR/enums/analysis_type.enum.v1.json" \
+        "$CONTRACTS_DIR/enums/phenology_stage.enum.v1.json" \
         "$contracts_target/schemas/enums/"
     
     # Copy version file

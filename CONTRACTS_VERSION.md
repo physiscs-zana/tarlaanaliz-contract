@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.0.0
+## Version: 7.0.1
 
-**Release Date:** 2026-07-12T17:25:21.832447Z  
-**Breaking Change:** YES  
-**Contracts Checksum (SHA-256):** `efe437efeca2d3ee894f1965353fbed42c8d9fb9ad3374d5061a503c6ef93caa`
+**Release Date:** 2026-07-12T18:17:25.854308Z  
+**Breaking Change:** NO  
+**Contracts Checksum (SHA-256):** `32c747a5876dcb612aade23c4a822ac7e8b23ac47d0042c85021b994db16c40c`
 
 ---
 
@@ -51,7 +51,7 @@ Individual file hashes for verification:
 ### Enums
 
 - `enums/analysis_type.enum.v1.json`  
-  `741d03e543fdc882548a3a41121e5df652ce6e12bc6649ecde00214ae40a4391`
+  `42634dde0ffa878d2e880eca45f2892a37845778196bbcee05d1d684f2ad4b45`
 - `enums/calibration_type.enum.v1.json`  
   `35c85add630b2631ed2f4749a045f258955db11f255ef081822c9654b27c70b8`
 - `enums/crop_type.enum.v1.json`  
@@ -59,7 +59,7 @@ Individual file hashes for verification:
 - `enums/dataset_status.enum.v1.json`  
   `a1af5173853fd0983339075fa550e66847c0d19a8a2411c72a612d866de54b07`
 - `enums/drone_type.enum.v1.json`  
-  `eb2064732029350f6d8c793fd353b2c7cc5cceb2f9f96785137450ecdb125d5f`
+  `baac44459fd505f6a8cea60bc1c71766513333c434c8fbb2aa0363b4884ed5b0`
 - `enums/edge_custody_event.enum.v1.json`  
   `f5578afc7a31de5c3f7afd1974fc90530bf60a307ee5d7134c98707e1139f389`
 - `enums/field_history_event_type.enum.v1.json`  
@@ -263,6 +263,12 @@ Individual file hashes for verification:
 
 ## Changelog
 
+### v7.0.1 (2026-07-12)
+
+**Breaking:** NO
+
+PATCH: KR-018 bant-gate ic-tutarlilik duzeltmeleri (18-ajan denetim bulgulari). analysis_type.enum v1.4.1 — THERMAL_STRESS.requires_bands tam set [GREEN,RED,RED_EDGE,NIR,LWIR]; kesisim kurali effective_bands=supported_bands + thermal_variant.thermal_bands; enforcement:advisory. drone_type.enum — PARROT '+termal' kaldirildi (matris kanonik); x-registry-sync capability_matrix effective_bands ile hizalandi; x-updated 2026-07-12. Enum dizileri DEGISMEDI -> non-breaking.
+
 ### v7.0.0 (2026-07-12)
 
 **Breaking:** YES
@@ -345,7 +351,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("efe437efeca2d3ee894f1965353fbed42c8d9fb9ad3374d5061a503c6ef93caa"), "Contracts checksum mismatch!"
+assert verify_contracts("32c747a5876dcb612aade23c4a822ac7e8b23ac47d0042c85021b994db16c40c"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -358,7 +364,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("efe437efeca2d3ee894f1965353fbed42c8d9fb9ad3374d5061a503c6ef93caa"), "Contracts checksum mismatch!");
+assert(verifyContracts("32c747a5876dcb612aade23c4a822ac7e8b23ac47d0042c85021b994db16c40c"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -409,4 +415,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-07-12T17:25:21.832447Z
+**Last Updated:** 2026-07-12T18:17:25.854308Z

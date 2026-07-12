@@ -241,7 +241,72 @@ class TestSchemaValidation:
 
         assert actual_types == expected_types, \
             f"Expected canonical analysis types: {expected_types}, got: {actual_types}"
-    
+
+    def test_phenology_stage_enum_canonical(self, base_dir: Path):
+        """Test phenology_stage is the canonical 14-value crop-namespaced set.
+
+        Scope is GRAPE + CORN + OLIVE (KR-024 active GAP crops): 4 GRAPE_*,
+        4 CORN_*, 6 OLIVE_*. The CORN_* codes were renamed from MAIZE_* in
+        contract v7.0.0 (MAJOR) to align with crop_type CORN; this test guards
+        against any residual MAIZE_* token re-appearing in the enum.
+        """
+        phenology_file = base_dir / "enums" / "phenology_stage.enum.v1.json"
+
+        with open(phenology_file, 'r', encoding='utf-8') as f:
+            schema = json.load(f)
+
+        expected_stages = {
+            'GRAPE_BUDBREAK_SHOOT', 'GRAPE_PREFLOWER_FLOWER',
+            'GRAPE_FRUITSET_CLOSURE', 'GRAPE_VERAISON_MATURITY',
+            'CORN_EMERGENCE_V5', 'CORN_V6_PRETASSEL',
+            'CORN_TASSEL_SILK', 'CORN_GRAINFILL',
+            'OLIVE_DORMANCY_BUD', 'OLIVE_LEAF_SHOOT', 'OLIVE_INFLOR_FLOWER',
+            'OLIVE_FRUITSET_PIT', 'OLIVE_VERAISON_MATURITY', 'OLIVE_HARVEST'
+        }
+
+        actual_stages = set(schema.get('enum', []))
+
+        assert actual_stages == expected_stages, \
+            f"Expected canonical phenology stages: {expected_stages}, got: {actual_stages}"
+
+        # No residual MAIZE_* stage code may remain in the enum array (v7.0.0 rename).
+        maize_residue = [s for s in schema.get('enum', []) if s.startswith('MAIZE_')]
+        assert not maize_residue, \
+            f"phenology_stage enum still carries MAIZE_* codes (must be CORN_*): {maize_residue}"
+
+    def test_analysis_type_band_requirements_integrity(self, base_dir: Path):
+        """Test analysis_type.metadata.bandRequirements is internally consistent (KR-018).
+
+        - byLayer keys must exactly equal the enum value set (every layer modeled).
+        - Every requires_bands entry must be drawn from the shared band vocabulary
+          (GREEN/RED/RED_EDGE/NIR/BLUE/LWIR), matching drone_capability_matrix.yaml.
+        - Every availability must be a declared availabilityValues key.
+        """
+        analysis_file = base_dir / "enums" / "analysis_type.enum.v1.json"
+
+        with open(analysis_file, 'r', encoding='utf-8') as f:
+            schema = json.load(f)
+
+        enum_values = set(schema.get('enum', []))
+        band_req = schema['metadata']['bandRequirements']
+        by_layer = band_req['byLayer']
+        availability_values = set(band_req['availabilityValues'].keys())
+        band_vocabulary = {'GREEN', 'RED', 'RED_EDGE', 'NIR', 'BLUE', 'LWIR'}
+
+        assert set(by_layer.keys()) == enum_values, \
+            f"bandRequirements.byLayer keys must match enum set; " \
+            f"missing: {enum_values - set(by_layer.keys())}, " \
+            f"extra: {set(by_layer.keys()) - enum_values}"
+
+        for layer, spec in by_layer.items():
+            requires = set(spec.get('requires_bands', []))
+            assert requires, f"{layer}: requires_bands must be non-empty"
+            assert requires <= band_vocabulary, \
+                f"{layer}: unknown band(s) {requires - band_vocabulary}"
+            assert spec.get('availability') in availability_values, \
+                f"{layer}: availability '{spec.get('availability')}' " \
+                f"not in {availability_values}"
+
     def test_phone_pattern_is_10_digits(self, schemas_dir: Path):
         """Test that user_pii phone pattern is 10 digits (KR-050)"""
         pii_file = schemas_dir / "core" / "user_pii.v1.schema.json"

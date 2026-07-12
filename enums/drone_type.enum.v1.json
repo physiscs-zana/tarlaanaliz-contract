@@ -15,7 +15,7 @@
     "DJI_MAVIC_3M": "Birincil/önerilen platform. Entegre multispektral sensör (4 bant + RGB). Kompakt, hızlı deploy. Küçük-orta tarla ölçeğinde en verimli seçenek.",
     "DJI_M350_RTK_SENTERA_6X": "Ağır yük platformu + 6 bantlı multispektral sensör. Büyük tarla, yüksek çözünürlük gerektiren senaryolar. RTK hassas konum.",
     "WINGTRAONE_GEN2_MICASENSE_REDEDGE_P": "VTOL fixed-wing + 5 bantlı multispektral. Geniş alan tarama (500+ ha/uçuş). Sabit kanat verimliliği + dikey iniş-kalkış kolaylığı.",
-    "PARROT_ANAFI_USA_SEQUOIA_PLUS": "Alternatif multirotor + 4 bantlı multispektral + termal. DJI tedarik riski senaryosunda birincil yedek.",
+    "PARROT_ANAFI_USA_SEQUOIA_PLUS": "Alternatif multirotor + 4 bantlı multispektral. DJI tedarik riski senaryosunda birincil yedek. (Sequoia+ multispektral-only — termal taşımaz; bkz. drone_capability_matrix.yaml.)",
     "AGEAGLE_EBEE_X_ALTUM_PT": "Alternatif fixed-wing + 6 bantlı multispektral + termal. Geniş alan tarama alternatifi. Uzun menzil (90+ dk uçuş süresi)."
   },
   "x-platform-categories": {
@@ -25,11 +25,11 @@
   "x-primary-model": "DJI_MAVIC_3M",
   "x-registry-sync": {
     "source": "drone_registry.yaml",
-    "capability_matrix": "drone_capability_matrix.yaml — her drone_type için supported_bands, band_class, available_indices (core/extended/thermal), calibration_class. KR-018/KR-082 bant-gate kanonik kaynağı. analysis_type.enum.v1.json bandRequirements ile kesişerek (requires_bands ⊆ supported_bands) o drone ile üretilebilir katmanları belirler.",
+    "capability_matrix": "drone_capability_matrix.yaml — her drone_type için supported_bands, band_class, available_indices (core/extended/thermal), calibration_class ve (varsa) thermal_variant.thermal_bands. KR-018/KR-082 bant-gate kanonik kaynağı. analysis_type.enum.v1.json bandRequirements ile kesişerek (requires_bands ⊆ effective_bands; effective_bands = supported_bands ∪ termal payload takılıysa thermal_variant.thermal_bands) o drone ile üretilebilir katmanları belirler.",
     "ci_check": "tools/validate.py — drone_type enum değerleri drone_registry.yaml ile eşleşmeli",
     "add_model_flow": "1) drone_registry.yaml'a ekle → 2) drone_capability_matrix.yaml'a bant/kapasite tanımı ekle → 3) bu enum'a ekle → 4) intake_manifest + mission schema test → 5) CI geçmeli"
   },
   "x-kr-ref": ["KR-034", "KR-015", "KR-030"],
   "x-ssot-version": "1.2.0",
-  "x-updated": "2026-02-24"
+  "x-updated": "2026-07-12"
 }

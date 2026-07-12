@@ -7,6 +7,35 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.0.1] - 2026-07-12
+
+**Fix:** KR-018 bant-gate iç-tutarlılık düzeltmeleri + breaking migration guide Rollback bölümü
+**Breaking-change:** HAYIR (PATCH — yalnız metadata/açıklama/doküman/test/tooling; hiçbir enum değeri eklenmedi/kaldırılmadı/yeniden adlandırılmadı)
+
+18-ajan bağımsız denetiminde (SW/QA/Pentest/SDLC/ML/DL perspektifleri) doğrulanan bulguların çözümü. Odak: bant-gate tek-kaynak modelini iç-tutarlı hale getirmek — kesişim kuralı DJI_M350 termal varyantı türetemiyordu (LWIR `supported_bands`'te değil, `thermal_variant.thermal_bands`'te) ve THERMAL_STRESS yalnız `[LWIR]` isteyerek CWSI/canopy-soil delta'nın vejetasyon bağlamını atlıyordu; ayrıca drone_type Parrot açıklaması matrisle çelişiyordu.
+
+### Changed
+
+- **`enums/analysis_type.enum.v1.json` v1.4.0 → v1.4.1:** `byLayer.THERMAL_STRESS.requires_bands` `["LWIR"]` → `["GREEN","RED","RED_EDGE","NIR","LWIR"]` (tam set — CWSI/canopy-soil delta için vejetasyon bağlamı fiziksel olarak gerekli; üretilebilen drone kümesi değişmez — tüm termal droneler 4 multispektral bandı da taşır). `bandRequirements.description` kesişim kuralı netleştirildi: `requires_bands ⊆ effective_bands`, `effective_bands = supported_bands ∪ (termal payload takılıysa thermal_variant.thermal_bands)` — DJI_M350_RTK_SENTERA_6X termal varyant örneğiyle. `enforcement: advisory` notu eklendi (repo içi CI-gate yok; tüketici tarafında uygulanır). `cross_reference` `thermal_variant.thermal_bands` içerecek şekilde güncellendi. Enum `enum` dizisi (11 kod) **DEĞİŞMEDİ**.
+- **`enums/drone_type.enum.v1.json`:** `PARROT_ANAFI_USA_SEQUOIA_PLUS` açıklamasından yanlış "+ termal" ibaresi kaldırıldı — `drone_capability_matrix.yaml` (KR-018 bant-gate SSOT) Parrot'ta LWIR/thermal indeksi tanımlamaz; Sequoia+ multispektral-only. `x-registry-sync.capability_matrix` çapraz-referansı `effective_bands = supported_bands ∪ thermal_variant.thermal_bands` kuralıyla hizalandı (analysis_type ile tutarlı). `x-updated` "2026-02-24" → "2026-07-12" (6.2.0'da içerik değişmişti, tarih güncellenmemişti). Enum `enum` dizisi (5 model) **DEĞİŞMEDİ**.
+
+### Fixed
+
+- **`tools/breaking_change_detector.py`:** dedektör yalnız `schemas/`'ı tarıyordu; `enums/` diff'i eklendi — kaldırılan/yeniden-adlandırılan enum üyeleri artık MAJOR breaking olarak raporlanır (enum breaking değişiklikleri artık görünmez değil).
+- **`tools/sync_to_repos.sh`:** worker senkron listesine `phenology_stage.enum.v1.json` eklendi (7.0.0 MAIZE_*→CORN_* hizalaması worker'a gitmeliydi); bayat `schemas/enums/` yolu repo gerçeği `enums/` ile düzeltildi.
+
+### Added
+
+- **`docs/migration_guides/phenology_stage_maize_to_corn.md`:** `## Rollback` bölümü eklendi — breaking migration guide'lar için politika gereği zorunlu (`docs/versioning_policy.md`, `docs/checklists/SDLC_GATES.md`, `docs/migration_guides/README.md`).
+- **`tests/test_validate_all_schemas.py`:** `phenology_stage` 14-değer set assertion'ı (residüel MAIZE_* token yok doğrulaması dahil); `analysis_type.bandRequirements.byLayer` bütünlük testi (anahtarlar == enum kümesi; requires_bands ⊆ bant sözlüğü; availability ∈ availabilityValues).
+
+### Notes
+
+- **Checksum:** enum metadata değiştiği için re-pin yapıldı → yeni CONTRACTS_VERSION.md checksum. Consumer'lar 7.0.0 → 7.0.1'e re-pin etmeli (breaking değil; salt doğrulama hash'i güncellenir).
+- **Doğrulama:** `python -X utf8 tools/validate.py && python -X utf8 -m pytest tests/ -q` + `python -X utf8 tools/pin_version.py --verify`.
+
+---
+
 ## [7.0.0] - 2026-07-12
 
 **Feature:** phenology_stage `MAIZE_* → CORN_*` rename — son kalan MAIZE kalıntısının temizliği

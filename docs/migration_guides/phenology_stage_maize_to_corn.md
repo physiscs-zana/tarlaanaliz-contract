@@ -64,6 +64,19 @@ Also updated in the same file:
 - Audit any stored phenology-profile rows or external feeds still carrying `MAIZE_*` and
   normalize them.
 
+## Rollback
+
+Bu saf bir rename olduğundan geri alma düşük risklidir; evre ekleme/kaldırma yoktur, yalnız
+kod ad-uzayı `CORN_* ↔ MAIZE_*` değişir. Politika gereği breaking migration guide'lar bir
+rollback planı içermelidir.
+
+1. **Contract seviyesi (bu repo):** 7.0.0/7.0.1 rename commit'ini geri al veya `enums/phenology_stage.enum.v1.json`'ı önceki `MAIZE_*` kod setine döndür; ardından `python -X utf8 tools/pin_version.py` ile checksum'ı yeniden pinle ve `CONTRACTS_VERSION.md`'yi rename-öncesi sürüme (6.2.0) düşür. Tüketicileri o checksum'a re-pin et.
+2. **Geçiş penceresi (önerilen, kesintisiz):** rollback yerine çift-kabul uygula — tüketiciler **inbound** payload'larda hem `MAIZE_*` hem `CORN_*` değerlerini kabul edip `CORN_*`'a normalize etsin (platform zaten `_normalize_crop` ile `MAIZE → CORN` çözer); **outbound** asla `MAIZE_*` emit etmesin. Böylece geri dönüşe gerek kalmadan eski/yeni worker'lar bir arada çalışır.
+3. **Veri:** rollback sırasında `CORN_*`'a re-key edilmiş saklı fenoloji-profili satırları veya harici feed'ler tekrar `MAIZE_*`'a çevrilmeli (yön: `CORN_EMERGENCE_V5→MAIZE_EMERGENCE_V5`, `CORN_V6_PRETASSEL→MAIZE_V6_PRETASSEL`, `CORN_TASSEL_SILK→MAIZE_TASSEL_SILK`, `CORN_GRAINFILL→MAIZE_GRAINFILL`). GRAPE_*/OLIVE_* evreleri etkilenmez.
+4. **Schema:** `schemas/core/phenology_flight_profile.v1.schema.json` enum'a `$ref` ile bağlı olduğundan otomatik uyumludur; rollback'te ayrı düzenleme gerekmez.
+
+---
+
 ## Verification
 
 ```bash

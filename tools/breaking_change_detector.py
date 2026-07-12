@@ -253,33 +253,37 @@ class BreakingChangeDetector:
                 'message': f"Enum value added: {value} in {schema_path}"
             })
     
-    def detect_changes(self) -> Dict[str, List[Dict]]:
-        """Detect all changes between old and new versions"""
-        
-        old_files = self.get_schema_files(self.old_dir)
-        new_files = self.get_schema_files(self.new_dir)
-        
+    def scan_tree(self, old_dir: Path, new_dir: Path) -> None:
+        """Walk a matched old/new directory tree and accumulate detected changes.
+
+        Callable more than once on the same detector to cover several roots
+        (e.g. schemas/ then enums/); results append to self.changes.
+        """
+        old_files = self.get_schema_files(old_dir)
+        new_files = self.get_schema_files(new_dir)
+
         # Get relative paths
-        old_rel_paths = {f.relative_to(self.old_dir) for f in old_files}
-        new_rel_paths = {f.relative_to(self.new_dir) for f in new_files}
-        
+        old_rel_paths = {f.relative_to(old_dir) for f in old_files}
+        new_rel_paths = {f.relative_to(new_dir) for f in new_files}
+
         # Check all files
         all_rel_paths = old_rel_paths | new_rel_paths
-        
+
         for rel_path in sorted(all_rel_paths):
-            old_file = self.old_dir / rel_path
-            new_file = self.new_dir / rel_path
-            
+            old_file = old_dir / rel_path
+            new_file = new_dir / rel_path
+
             old_schema = self.load_schema(old_file) if old_file.exists() else {}
             new_schema = self.load_schema(new_file) if new_file.exists() else {}
-            
+
             self.compare_schemas(old_schema, new_schema, str(rel_path))
-        
-        # Categorize changes by severity
+
+    def categorize(self) -> Dict[str, List[Dict]]:
+        """Categorize accumulated changes by severity"""
         breaking = [c for c in self.changes if c['severity'] == 'BREAKING']
         non_breaking = [c for c in self.changes if c['severity'] == 'NON_BREAKING']
         documentation = [c for c in self.changes if c['severity'] == 'DOCUMENTATION']
-        
+
         return {
             'breaking': breaking,
             'non_breaking': non_breaking,
@@ -287,6 +291,11 @@ class BreakingChangeDetector:
             'total': len(self.changes),
             'has_breaking': len(breaking) > 0
         }
+
+    def detect_changes(self) -> Dict[str, List[Dict]]:
+        """Detect all changes between old and new versions (single root)"""
+        self.scan_tree(self.old_dir, self.new_dir)
+        return self.categorize()
     
     def generate_report(self, categorized_changes: Dict) -> str:
         """Generate human-readable report"""
@@ -390,13 +399,23 @@ def main():
         print(f"❌ New directory not found: {new_dir}")
         sys.exit(1)
     
-    # Detect changes
-    print(f"🔍 Comparing schemas...")
+    # Detect changes across the checksummed contract trees: schemas/ AND enums/.
+    # The canonical enum SSOT (crop_type, phenology_stage, analysis_type, ...)
+    # lives at top-level enums/; enum value removals/renames are MAJOR breaking
+    # and must not be invisible to the detector.
+    print(f"🔍 Comparing contracts (schemas/ + enums/)...")
     print(f"   Old: {old_dir}")
     print(f"   New: {new_dir}\n")
-    
+
     detector = BreakingChangeDetector(old_dir / 'schemas', new_dir / 'schemas')
-    categorized_changes = detector.detect_changes()
+    detector.scan_tree(detector.old_dir, detector.new_dir)  # schemas/
+
+    enums_old = old_dir / 'enums'
+    enums_new = new_dir / 'enums'
+    if enums_old.exists() or enums_new.exists():
+        detector.scan_tree(enums_old, enums_new)  # enums/
+
+    categorized_changes = detector.categorize()
     
     # Output format
     if args.json:
