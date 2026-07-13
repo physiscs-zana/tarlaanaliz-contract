@@ -215,6 +215,16 @@
       "type": "object",
       "additionalProperties": true,
       "description": "Additional metadata"
+    },
+    "tile_counts": {
+      "type": ["object", "null"],
+      "description": "G-10 (2026-07-13, KR-088 preliminary report): aggregate green-vs-problem summary of the worker inference tile scan — how many tiles were scanned, how many are healthy (green/problem-free), how many are anomalous (problematic). The worker_bridge consumer persists this per-mission into field_index_timeseries; it is the farmer preliminary report's 'healthy tiles / problem tiles' signal. Source: worker PipelineResponse.tile_count_total/healthy/anomaly. NOT emitted under NO_RESULT (fail-closed). KR-071: aggregate count, not PII. Kept at top level (NOT under summary) because it does NOT depend on ResultSummary's required overall_health/health_score/area_analyzed_hectares/coverage_percent fields, which the worker runtime form does not compute.",
+      "properties": {
+        "total": { "type": ["integer", "null"], "minimum": 0, "description": "Total number of tiles scanned" },
+        "healthy": { "type": ["integer", "null"], "minimum": 0, "description": "Number of healthy (green/problem-free) tiles" },
+        "anomaly": { "type": ["integer", "null"], "minimum": 0, "description": "Number of anomalous (problematic) tiles" }
+      },
+      "unevaluatedProperties": false
     }
   },
   "required": ["job_id", "status"],

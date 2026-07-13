@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.0.1
+## Version: 7.1.0
 
-**Release Date:** 2026-07-12T18:17:25.854308Z  
+**Release Date:** 2026-07-13T22:41:29.720921Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `32c747a5876dcb612aade23c4a822ac7e8b23ac47d0042c85021b994db16c40c`
+**Contracts Checksum (SHA-256):** `246733806cd057dec528cd4f748f04691c69ecfb574d6126182613bc2b350acc`
 
 ---
 
@@ -165,7 +165,7 @@ Individual file hashes for verification:
 - `schemas/worker/analysis_job.v1.schema.json`  
   `0d235742987d438a7cdc256b7f75bc13a348a6d67f198aae8c25cab8c6d535f8`
 - `schemas/worker/analysis_result.v1.schema.json`  
-  `3df526b62a46f942f200e15bdc3dcc932f8d8dd44cf652a53173ae34129d2881`
+  `93e29920defea258e902b9351a1ccf86c06fda526e196a6654a6e36d9d981bd5`
 - `schemas/worker/calibrated_dataset.v1.schema.json`  
   `31d201316f59f0c438ebd2018dff5a662441beb072ff148f79f8ce45e7d8de88`
 - `schemas/worker/calibration_metadata.v1.schema.json`  
@@ -263,6 +263,12 @@ Individual file hashes for verification:
 
 ## Changelog
 
+### v7.1.0 (2026-07-13)
+
+**Breaking:** NO
+
+MINOR (non-breaking): analysis_result.v1 -- top-level tile_counts {total, healthy, anomaly} objesi eklendi (KR-088 ciftci on-raporu 'kac kare saglikli / kac kare sorunlu' sinyali). Kaynak: worker PipelineResponse.tile_count_total/healthy/anomaly. Opsiyonel/geriye-uyumlu (pre-v7.1.0 ureticiler + NO_RESULT atlar), unevaluatedProperties:false. AK-4 worker->kanonik ayna (worker v7.1.0'da onden landledi). Ayrica tools/sync_to_repos.sh sync_to_worker() salt-okunur drift dedektorune donusturuldu (AK-4: canonical->worker kopya worker ileri formunu ezerdi).
+
 ### v7.0.1 (2026-07-12)
 
 **Breaking:** NO
@@ -351,7 +357,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("32c747a5876dcb612aade23c4a822ac7e8b23ac47d0042c85021b994db16c40c"), "Contracts checksum mismatch!"
+assert verify_contracts("246733806cd057dec528cd4f748f04691c69ecfb574d6126182613bc2b350acc"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -364,7 +370,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("32c747a5876dcb612aade23c4a822ac7e8b23ac47d0042c85021b994db16c40c"), "Contracts checksum mismatch!");
+assert(verifyContracts("246733806cd057dec528cd4f748f04691c69ecfb574d6126182613bc2b350acc"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -415,4 +421,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-07-12T18:17:25.854308Z
+**Last Updated:** 2026-07-13T22:41:29.720921Z

@@ -29,6 +29,18 @@ log_success() { echo -e "${GREEN}✓${NC} $1"; }
 log_error() { echo -e "${RED}✗${NC} $1"; }
 log_warning() { echo -e "${YELLOW}⚠${NC} $1"; }
 
+# LF-normalized SHA-256 (CRLF/CR -> LF), matching the worker's
+# scripts/compute_contracts_hash.py so Windows/Linux checkouts compare equal.
+_lf_sha256() {
+    local py
+    py="$(command -v python3 || command -v python)"
+    "$py" - "$1" <<'PY'
+import sys, hashlib
+b = open(sys.argv[1], "rb").read().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+print(hashlib.sha256(b).hexdigest())
+PY
+}
+
 # Read expected checksum from CONTRACTS_VERSION.md
 get_expected_checksum() {
     local version_file="$CONTRACTS_DIR/CONTRACTS_VERSION.md"
@@ -191,50 +203,83 @@ sync_to_edge() {
     log_success "Synced to edge repository"
 }
 
-# Sync to worker repository
+# Worker's KR-041 hash-tracked contract files (EXACTLY 8), vendored FLAT in the
+# worker's interface/contracts/. Source == worker CONTRACTS_VERSION.md "Tracked files".
+# Deliberately EXCLUDED (worker does not vendor these):
+#   - crop_type.enum          → crop_type is INLINE inside the worker schemas, not a separate file
+#   - phenology_stage.enum     → worker does not consume phenology; the v7.0.0 MAIZE_*->CORN_*
+#                                rename is a NO-OP for the worker (see worker CONTRACTS_VERSION.md v7.0.1)
+#   - thermal_analysis_result  → present in schemas/worker/ but NOT a worker-tracked contract file
+#   - shared/geojson           → not in the worker's tracked set
+#
+# DATA-FLOW DIRECTION (critical): this list is used ONLY for a READ-ONLY drift
+# comparison, NOT a copy. Per worker CLAUDE.md §2.1 + AK-4 ("worker önden gider,
+# kanonik sonra aynalar"), the WORKER LEADS canonical for the 7 schema files —
+# it keeps its own permissive runtime form (additionalProperties) and often lands
+# fields ahead of the canonical repo, which mirrors later. A canonical→worker copy
+# would clobber that ahead-of-canonical work and break the worker's hash gate.
+WORKER_TRACKED_FILES=(
+    "schemas/worker/analysis_job.v1.schema.json"
+    "schemas/worker/analysis_result.v1.schema.json"
+    "schemas/worker/calibrated_dataset.v1.schema.json"
+    "schemas/worker/calibration_metadata.v1.schema.json"
+    "schemas/worker/expert_feedback.v1.schema.json"
+    "schemas/worker/expert_labeling_card.v1.schema.json"
+    "schemas/worker/expert_review_queue.v1.schema.json"
+    "enums/analysis_type.enum.v1.json"
+)
+
+# Check the worker's vendored contracts against canonical — READ-ONLY drift report.
+#
+# This does NOT copy files. The worker vendors its 8 hash-tracked files FLAT in
+# interface/contracts/ (NOT a submodule), but per AK-4 the worker LEADS canonical:
+# a canonical→worker copy would overwrite the worker's ahead-of-canonical runtime
+# form and stale its independent KR-041 hash gate. So we only compare and report;
+# a human reconciles any legitimate divergence via a denetim/*_devir_spec_*.md.
 sync_to_worker() {
     local worker_dir="$1"
-    log_info "Syncing to worker repository: $worker_dir"
-    
+    log_info "Checking worker vendored contracts against canonical: $worker_dir"
+
     if [ ! -d "$worker_dir/.git" ]; then
         log_error "Not a git repository: $worker_dir"
         return 1
     fi
-    
-    local contracts_target="$worker_dir/contracts"
-    mkdir -p "$contracts_target"
-    
-    # Worker needs: worker schemas, analysis job/result, enums
-    log_info "Syncing worker-specific schemas..."
-    
-    mkdir -p "$contracts_target/schemas/worker"
-    mkdir -p "$contracts_target/schemas/shared"
-    mkdir -p "$contracts_target/schemas/enums"
-    
-    # Sync required schemas
-    rsync -av "$CONTRACTS_DIR/schemas/worker/" "$contracts_target/schemas/worker/"
-    rsync -av "$CONTRACTS_DIR/schemas/shared/geojson.v1.schema.json" "$contracts_target/schemas/shared/"
-    # Canonical enums live at the repo-root enums/ dir (NOT schemas/enums/).
-    # phenology_stage is required: worker must align its MAIZE_*->CORN_* stage
-    # codes with contract v7.0.0 (see migration guide), so it MUST receive the enum.
-    rsync -av \
-        "$CONTRACTS_DIR/enums/crop_type.enum.v1.json" \
-        "$CONTRACTS_DIR/enums/analysis_type.enum.v1.json" \
-        "$CONTRACTS_DIR/enums/phenology_stage.enum.v1.json" \
-        "$contracts_target/schemas/enums/"
-    
-    # Copy version file
-    cp "$CONTRACTS_DIR/CONTRACTS_VERSION.md" "$contracts_target/"
-    
-    # Generate Python types for worker
-    log_info "Generating Python types for worker..."
-    (cd "$CONTRACTS_DIR" && ./tools/generate_types.sh --python)
-    
-    if [ -d "$CONTRACTS_DIR/generated/python" ]; then
-        rsync -av "$CONTRACTS_DIR/generated/python/" "$worker_dir/src/contracts/"
+
+    local contracts_target="$worker_dir/interface/contracts"
+    if [ ! -d "$contracts_target" ]; then
+        log_error "Worker vendored dir not found: $contracts_target"
+        return 1
     fi
-    
-    log_success "Synced to worker repository"
+
+    log_warning "READ-ONLY drift check — the worker LEADS canonical (AK-4); no files are copied."
+    local same=0 diff=0 missing=0
+    for rel in "${WORKER_TRACKED_FILES[@]}"; do
+        local src="$CONTRACTS_DIR/$rel"
+        local dst="$contracts_target/$(basename "$rel")"
+        if [ ! -f "$dst" ]; then
+            log_warning "  MISSING (worker): $(basename "$rel")"
+            missing=$((missing + 1))
+            continue
+        fi
+        local hs hd
+        hs="$(_lf_sha256 "$src")"
+        hd="$(_lf_sha256 "$dst")"
+        if [ "$hs" = "$hd" ]; then
+            log_success "  SAME:  $(basename "$rel")"
+            same=$((same + 1))
+        else
+            log_warning "  DIFF:  $(basename "$rel")  (canonical=${hs:0:12} worker=${hd:0:12})"
+            diff=$((diff + 1))
+        fi
+    done
+
+    log_info "Worker drift summary: SAME=$same DIFF=$diff MISSING=$missing (of ${#WORKER_TRACKED_FILES[@]})"
+    if [ "$diff" -gt 0 ] || [ "$missing" -gt 0 ]; then
+        log_warning "Divergence is EXPECTED for worker-led (AK-4) files. Do NOT copy canonical"
+        log_warning "over the worker; reconcile via a denetim/*_devir_spec_*.md. After any"
+        log_warning "legitimate change: cd $worker_dir && python scripts/compute_contracts_hash.py --update"
+    fi
+    log_success "Worker drift check complete (no files modified)"
 }
 
 # Create sync commit
@@ -247,28 +292,40 @@ create_sync_commit() {
     cd "$target_dir"
     
     # Check if there are changes
-    if ! git diff --quiet || ! git diff --cached --quiet; then
-        # Get version from contracts
-        local version=$(grep -oP 'Version: \K[0-9]+\.[0-9]+\.[0-9]+' "$target_dir/contracts/CONTRACTS_VERSION.md" | head -1)
-        
-        # Stage changes
-        git add contracts/
-        git add src/types/contracts/ 2>/dev/null || true
-        git add src/contracts/ 2>/dev/null || true
-        
-        # Create commit
-        git commit -m "chore: sync contracts to v${version}
+    if git diff --quiet && git diff --cached --quiet; then
+        log_info "No changes to commit"
+        return 0
+    fi
+
+    if [ "$target_name" = "worker" ]; then
+        # sync_to_worker() is READ-ONLY (drift check, no copy — the worker LEADS
+        # canonical via AK-4), so this tool never stages or commits worker files.
+        # The worker owns its vendored copies + independent KR-041 hash gate; any
+        # changes shown here belong to the worker's own work and are committed there.
+        log_warning "Worker: this tool made NO changes (read-only drift check)."
+        log_warning "Worker commits its own vendored changes + re-pins its hash gate:"
+        log_warning "  cd $target_dir && python scripts/compute_contracts_hash.py --update && \\"
+        log_warning "    git add interface/contracts/ CONTRACTS_VERSION.md && git commit -m '...'"
+        return 0
+    fi
+
+    # platform / edge: files live under contracts/ (+ generated types); version + checksum
+    # come from the synced contract version file.
+    local version=$(grep -oP 'Version: \K[0-9]+\.[0-9]+\.[0-9]+' "$target_dir/contracts/CONTRACTS_VERSION.md" | head -1)
+
+    git add contracts/
+    git add src/types/contracts/ 2>/dev/null || true
+    git add src/contracts/ 2>/dev/null || true
+
+    git commit -m "chore: sync contracts to v${version}
 
 Synced from tarlaanaliz-contracts@${version}
 Checksum: $(get_expected_checksum)
 
 This is an automated sync of contract schemas and types."
-        
-        log_success "Created sync commit"
-        log_info "To push changes: cd $target_dir && git push"
-    else
-        log_info "No changes to commit"
-    fi
+
+    log_success "Created sync commit"
+    log_info "To push changes: cd $target_dir && git push"
 }
 
 # Main function
