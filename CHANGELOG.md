@@ -7,6 +7,33 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.2.0] - 2026-07-14
+
+**Feature:** intake_manifest.v1 — edge/AV1 karantina görünürlüğü (İş Kolu B2)
+**Breaking-change:** HAYIR (MINOR — iki opsiyonel top-level alan; `required` değişmedi)
+
+Edge/AV1 istasyonu, CLEAN olmayan dosyaları manifest emit edilmeden ÖNCE yerelde düşürür; bu dosyalar `files[]`'a hiç girmediği için platform bugüne kadar edge-karantinasını **göremiyordu**. İki opsiyonel sayaç bu boşluğu kapatır — platform admin panosunda >0 iken DAİMA uyarı olarak yüzeye çıkarılır. Merkez/AV2 `REJECTED_QUARANTINE` (dataset durumu) sinyalinden ayrıdır.
+
+### Added
+
+- **`schemas/edge/intake_manifest.v1.schema.json` (EdgeForm + PlatformForm):** iki opsiyonel top-level alan — `quarantined_file_count` (integer ≥ 0) + `quarantined_bytes` (integer ≥ 0). `required` listeleri **DEĞİŞMEDİ**; `unevaluatedProperties: false` korunur → additive MINOR. Her iki formda simetrik (edge üretir, platform tüketir; worker etkilenmez).
+
+### Notes
+
+- **Checksum:** şema değiştiği için re-pin → yeni CONTRACTS_VERSION.md checksum (7.1.0 → 7.2.0). Consumer'lar (edge, platform) re-pin etmeli; worker pin'i değişmez.
+- **Doğrulama:** `python -X utf8 tools/validate.py && python -X utf8 -m pytest tests/ -q` + `python -X utf8 tools/pin_version.py --verify`.
+
+---
+
+## [7.1.0] - 2026-07-13
+
+**Feature:** analysis_result.v1 — top-level `tile_counts` (KR-088 çiftçi ön-raporu)
+**Breaking-change:** HAYIR (MINOR — opsiyonel obje)
+
+`analysis_result.v1`'e top-level `tile_counts {total, healthy, anomaly}` objesi eklendi (KR-088 çiftçi ön-raporu "kaç kare sağlıklı / kaç kare sorunlu" sinyali). Kaynak: worker `PipelineResponse.tile_count_total/healthy/anomaly`. Opsiyonel/geriye-uyumlu (pre-v7.1.0 üreticiler + `NO_RESULT` atlar), `unevaluatedProperties: false`. AK-4 worker→kanonik ayna (worker v7.1.0'da önden landledi). Ayrıca `tools/sync_to_repos.sh` `sync_to_worker()` salt-okunur drift dedektörüne dönüştürüldü (canonical→worker kopya worker'ın ileri formunu ezerdi).
+
+---
+
 ## [7.0.1] - 2026-07-12
 
 **Fix:** KR-018 bant-gate iç-tutarlılık düzeltmeleri + breaking migration guide Rollback bölümü

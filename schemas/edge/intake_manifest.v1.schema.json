@@ -227,6 +227,16 @@
           "type": "string",
           "format": "date-time",
           "description": "Manifest oluşturulma zamanı (ISO 8601)."
+        },
+        "quarantined_file_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Edge/AV1 tarafında manifest gönderilmeden ÖNCE yerelde karantinaya alınıp düşürülen dosya sayısı (bu dosyalar files[]'a GİRMEZ). Opsiyonel, geriye uyumlu — pre-v7.2.0 üreticiler atlar. Platform admin panosunda >0 iken DAİMA uyarı olarak yüzeye çıkarılır. Operatör görünürlüğü değil; merkez/AV2 REJECTED_QUARANTINE'den ayrı sinyaldir."
+        },
+        "quarantined_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Edge/AV1 tarafında yerelde düşürülen karantina dosyalarının toplam boyutu (bayt). Opsiyonel, geriye uyumlu. quarantined_file_count ile birlikte anlamlıdır."
         }
       },
       "unevaluatedProperties": false
@@ -398,6 +408,16 @@
           "type": "string",
           "format": "date-time",
           "description": "ISO-8601 timestamp of manifest creation."
+        },
+        "quarantined_file_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of files AV1 quarantined/dropped locally BEFORE manifest emission (never enter files[]). Optional, backward compatible. Platform surfaces as an always-on admin warning when >0."
+        },
+        "quarantined_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total size in bytes of the AV1-quarantined files dropped locally. Optional, backward compatible. Meaningful together with quarantined_file_count."
         },
         "correlation_id": {
           "type": "string",

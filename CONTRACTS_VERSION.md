@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.1.0
+## Version: 7.2.0
 
-**Release Date:** 2026-07-13T22:41:29.720921Z  
+**Release Date:** 2026-07-14T09:25:31.730700Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `246733806cd057dec528cd4f748f04691c69ecfb574d6126182613bc2b350acc`
+**Contracts Checksum (SHA-256):** `5d3c204d0cad6946939c90c9778c9d1d9df3e69b78207ee8ce638ac3bd494c02`
 
 ---
 
@@ -144,7 +144,7 @@ Individual file hashes for verification:
 - `schemas/edge/evidence_bundle_ref.v1.schema.json`  
   `7c2f17fca155d8c37047c165c021b8daa5f725aa8719663d15a6ede62f20f3fd`
 - `schemas/edge/intake_manifest.v1.schema.json`  
-  `a39dc944a128cf8e7dc84aa758e833041312355790c83189d0dfd855a97b54ae`
+  `ed700c63fe9f6bdad2196a8d481fb7fb1e83b6fae3130ee9e1b59092eab4b865`
 - `schemas/edge/qc_report.v1.schema.json`  
   `4193e9c6d73ddd98bf62ba5b2ea034263cb9a86b69f6c549e7d77ed5bc93d219`
 - `schemas/edge/quarantine_event.v1.schema.json`  
@@ -263,6 +263,12 @@ Individual file hashes for verification:
 
 ## Changelog
 
+### v7.2.0 (2026-07-14)
+
+**Breaking:** NO
+
+MINOR (non-breaking): intake_manifest.v1 -- EdgeForm + PlatformForm top-level iki opsiyonel alan: quarantined_file_count (integer >=0) + quarantined_bytes (integer >=0). Edge/AV1 manifest emit edilmeden ONCE yerelde karantinaya alip dusurdugu dosya sayisi + toplam boyutu (bu dosyalar files[] icine GIRMEZ -> platform bugune kadar goremiyordu). Platform admin panosunda >0 iken DAIMA uyari. required DEGISMEDI (pre-v7.2.0 ureticiler atlar), unevaluatedProperties:false korunur -> additive MINOR. Is Kolu B2 edge-karantina gorunurlugu. Consumer: edge (uretici) + platform (tuketici); worker etkilenmez.
+
 ### v7.1.0 (2026-07-13)
 
 **Breaking:** NO
@@ -357,7 +363,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("246733806cd057dec528cd4f748f04691c69ecfb574d6126182613bc2b350acc"), "Contracts checksum mismatch!"
+assert verify_contracts("5d3c204d0cad6946939c90c9778c9d1d9df3e69b78207ee8ce638ac3bd494c02"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -370,7 +376,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("246733806cd057dec528cd4f748f04691c69ecfb574d6126182613bc2b350acc"), "Contracts checksum mismatch!");
+assert(verifyContracts("5d3c204d0cad6946939c90c9778c9d1d9df3e69b78207ee8ce638ac3bd494c02"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -421,4 +427,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-07-13T22:41:29.720921Z
+**Last Updated:** 2026-07-14T09:25:31.730700Z
