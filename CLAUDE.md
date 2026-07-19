@@ -285,3 +285,23 @@ This contracts repo is consumed by:
 - **tarlaanaliz-worker** — AI analysis worker
 
 Consumers pin to a specific version via `CONTRACTS_VERSION.md` + SHA-256 hash verification.
+
+## Çapraz-Repo Senkron — Değişmezler ve Doğrulama (DAİMA)
+
+Üçlü senkron (contract = SSOT · platform + worker = consumer) aşağıdaki **5 değişmezle
+(invariant)** güvence altındadır. Kural denetlenebilirdir — her değişmez bir komuta bağlıdır;
+bir kuralı doğrulayacak komut yoksa o kural bir dilek, gate değildir.
+
+**Senkron değişmezleri — her release'de TUTMALI:**
+- **I-1 · Sürüm dizesi hizası:** `CONTRACTS_VERSION.md` sürümü üç repoda birebir aynı (contract `X.Y.Z` = platform `X.Y.Z` = worker `vX.Y.Z`; worker `v` önekli). Uyuşmazlık = senkron kırık.
+- **I-2 · Kanonik release etiketli (annotated tag):** Her contract sürümü, release commit'ine **annotated git tag `vX.Y.Z`** alır (bkz. `docs/versioning_policy.md` §Release). Etiketsiz sürüm **eksik release**'tir — consumer tag ile pinlenemez, `git describe` bulanık kalır (`vA.B.C-N-g…`). Tag adımı release checklist'inin parçasıdır, atlanamaz.
+- **I-3 · Platform ↔ Contract (bayt-özdeş):** Platform `contracts` submodule pini, contract'ın `vX.Y.Z` etiketli commit'ine eşittir; vendored agrega checksum + `CONTRACTS_SHA256.txt` per-dosya hash kanonikle birebir. Platform kanoniği **aynalar**, ikinci bir değer hesaplamaz.
+- **I-4 · Worker ↔ Contract (subset — bayt-özdeş DEĞİL):** Worker `interface/contracts/`'te **8 izli dosyayı** vendor'lar; bunlar kanoniğin **superset** şemasının **dar runtime alt-kümesidir** — bayt-özdeşlik BEKLENMEZ, worker'ın KR-041 öz-hash gate'ini geçmesi beklenir. Kanonik superset worker'ın katı formunu kabul eder.
+- **I-5 · Sapma yalnız GEÇİCİ (AK-4):** Worker bir alanı kanonikten önce re-pinleyebilir ama `denetim/*_devir_spec_*.md` bırakır; kanonik aynalayınca uzlaşılır. **Kalıcı divergence YASAK.**
+
+**Doğrulama (contract — sürüm yükseltme/tag öncesi; hepsi yeşil olmadan release YOK):**
+```bash
+git describe --tags HEAD              # I-2: temiz vX.Y.Z dönmeli (etiketsizse: git tag -a vX.Y.Z <commit> && git push origin vX.Y.Z)
+python tools/pin_version.py --verify  # I-3/I-4 kaynağı: agrega Contracts Checksum tutar
+python tools/validate.py && pytest tests/ -q
+```
