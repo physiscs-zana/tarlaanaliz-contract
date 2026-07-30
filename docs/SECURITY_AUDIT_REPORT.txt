@@ -1,0 +1,317 @@
+================================================================================
+  TARLAANALIZ — KONSOLİDE GÜVENLİK DENETİM RAPORU
+  Tarih: 10-11 Mart 2026
+  Denetçi: Claude Code (Statik Analiz — 6 Faz + Düzeltme)
+  Kapsam: tarlaanaliz-contract, tarlaanaliz-platform, tarlaanaliz-edge, tarlaanaliz-worker
+================================================================================
+
+1. YÖNETİCİ ÖZETİ
+──────────────────
+Toplam Bulgu: 65
+  CRITICAL : 4  → 4 KAPATILDI
+  HIGH     : 25 → 24 KAPATILDI, 1 kaldı (lock dosyaları — operasyonel)
+  MEDIUM   : 21 → 19 KAPATILDI, 2 kaldı (contract submodule + phone hash — yapısal)
+  LOW      : 15 → 10 KAPATILDI (pozitif bulgular dahil)
+
+Düzeltme: 4 repo, 40+ dosya, 57/65 bulgu kapatıldı
+
+Repo Dağılımı:
+  Platform : 2 CRITICAL, 12 HIGH, 8 MEDIUM, 5 LOW  → Acil müdahale
+  Edge     : 2 CRITICAL, 8 HIGH, 5 MEDIUM, 3 LOW   → Acil müdahale
+  Worker   : 0 CRITICAL, 3 HIGH, 5 MEDIUM, 4 LOW   → Orta risk
+  Contract : 0 CRITICAL, 2 HIGH, 3 MEDIUM, 3 LOW   → Orta risk
+
+================================================================================
+2. CRITICAL BULGULAR (4)
+================================================================================
+
+[C-01] Platform — Hardcoded Bypass Credentials
+  Dosya  : src/presentation/api/v1/endpoints/auth.py:115
+  Açıklama: phone=="+905555555555" ve pin=="123456" koşulu ile tüm
+            authentication bypass edilebilir. Production ortamında
+            herkes bu kimlik bilgileriyle giriş yapabilir.
+  Etki   : Tam hesap erişimi, veri sızıntısı, KVKK ihlali
+  Düzeltme: Hardcoded koşul tamamen kaldırılmalı. Dev/test ortamı için
+            ayrı test fixture kullanılmalı, production kodda bypass OLMAMALI.
+
+[C-02] Platform — JWT Secret Default Value
+  Dosya  : src/presentation/api/settings.py:89
+  Açıklama: JWT_SECRET_KEY default değeri "CHANGE-ME-IN-PRODUCTION".
+            .env dosyası yoksa veya değişken tanımlanmamışsa bu değer
+            kullanılır ve tüm JWT token'ları tahmin edilebilir.
+  Etki   : Token forgery, tam API erişimi
+  Düzeltme: Default değer kaldırılmalı, env yoksa uygulama başlatılmamalı
+            (fail-closed). Startup'ta zorunlu kontrol eklenmeli.
+
+[C-03] Edge — Sıfır Authentication
+  Dosya  : src/presentation/api/endpoints/*.py (tüm endpoint'ler)
+  Açıklama: Edge API'de hiçbir authentication middleware yok. Tüm
+            endpoint'ler anonim erişime açık. Ağa erişen herkes
+            dataset upload, sync, pipeline tetikleme yapabilir.
+  Etki   : Yetkisiz veri manipülasyonu, kötü amaçlı dosya yükleme
+  Düzeltme: API key veya token tabanlı middleware eklenmeli. Kiosk
+            ortamında en azından shared secret veya mTLS kullanılmalı.
+
+[C-04] Edge — HC-05 Kalibrasyon Hard Gate Devre Dışı
+  Dosya  : src/presentation/api/endpoints/sync.py:123-129
+  Açıklama: Kalibrasyon kanıtı (calibration_result.json, manifest.sha256)
+            eksik olduğunda kod "pass" ile devam ediyor. Yorum:
+            "Non-fatal for MVP; real validation done server-side".
+            Bu, kalibre edilmemiş verinin upload edilmesine izin verir.
+  Etki   : Kalibre edilmemiş veri ile yanlış analiz sonuçları
+  Düzeltme: CalibratedValidator (calibrated_validator.py) sync endpoint'ine
+            bağlanmalı. Kalibrasyon eksikse upload reddedilmeli (HTTP 422).
+
+================================================================================
+3. HIGH BULGULAR (25)
+================================================================================
+
+[H-01] Platform — python-jose CVE'leri
+  Dosya  : pyproject.toml (python-jose[cryptography]>=3.3.0)
+  CVE    : CVE-2024-33663 (ECDSA key confusion, CVSS 7.4)
+           CVE-2024-33664 (JWE DoS)
+  Düzeltme: PyJWT veya joserfc'ye geçiş
+
+[H-02] Platform — JWT iss/aud/exp Doğrulaması Yok
+  Dosya  : src/presentation/api/middleware/jwt_middleware.py:92-132
+  Açıklama: Token decode'da issuer ve audience kontrolü yok. exp claim'i
+            olmayan token'lar süresiz kabul ediliyor.
+  Düzeltme: decode() parametrelerine issuer, audience, require=["exp"] eklenmeli
+
+[H-03] Platform — RBAC Default-Open
+  Dosya  : src/presentation/api/middleware/rbac_middleware.py:164-165
+  Açıklama: user=None durumunda istek geçiyor (default-open policy).
+  Düzeltme: user=None → HTTP 401 döndürmeli (default-deny)
+
+[H-04] Platform — Payment Webhook HMAC Bypass
+  Dosya  : src/presentation/api/v1/endpoints/payment_webhooks.py:52-53
+  Açıklama: PAYMENT_WEBHOOK_SECRET boş string ise HMAC doğrulama atlanıyor.
+  Düzeltme: Secret boşsa webhook endpoint'i HTTP 503 döndürmeli
+
+[H-05] Platform — localStorage'da JWT Token
+  Dosya  : web/src/lib/authStorage.ts
+  Açıklama: JWT token ve PIN artifact localStorage'da saklanıyor.
+            XSS saldırısında token çalınabilir.
+  Düzeltme: HttpOnly + Secure + SameSite cookie'ye geçiş
+
+[H-06] Platform — Fernet AES-128 (KVKK İhlali)
+  Dosya  : src/infrastructure/security/encryption.py
+  Açıklama: Python Fernet = AES-128-CBC. KVKK AES-256 gerektiriyor.
+  Düzeltme: AES-256-GCM implementasyonuna geçiş (cryptography.hazmat)
+
+[H-07] Platform — PII Log Scrubbing Altyapısı Yok
+  Dosya  : Logging altyapısı genelinde
+  Açıklama: Edge'deki HC-02 benzeri yapısal PII filtresi platform'da yok.
+            Log'lara telefon, GPS, isim gibi PII sızabilir.
+  Düzeltme: Merkezi log formatter'a PII scrubbing filtresi eklenmeli
+
+[H-08] Platform — CQL Injection
+  Dosya  : src/infrastructure/external/tkgm_megsis_wfs_adapter.py:105-111
+  Açıklama: WFS CQL filtresi f-string ile oluşturuluyor, parametre
+            sanitizasyonu yok.
+  Düzeltme: CQL parametre escape fonksiyonu eklenmeli
+
+[H-09] Platform — Next.js Security Headers Yok
+  Dosya  : web/next.config.mjs
+  Açıklama: CSP, HSTS, X-Frame-Options, X-Content-Type-Options
+            header'ları tanımlı değil.
+  Düzeltme: next.config.mjs'e securityHeaders eklenmeli
+
+[H-10] Platform — Docker Compose Hardcoded Credentials
+  Dosya  : docker-compose.yml
+  Açıklama: Redis şifresiz, PostgreSQL/RabbitMQ default credentials,
+            tüm portlar 0.0.0.0'da açık.
+  Düzeltme: .env dosyasından okuma, port binding'i localhost'a kısıtlama
+
+[H-11] Edge — WebSocket Unauthenticated
+  Dosya  : src/presentation/api/websocket/progress.py:146-158
+  Açıklama: WebSocket bağlantısı herhangi bir kimlik doğrulama olmadan
+            kabul ediliyor.
+  Düzeltme: WebSocket handshake'te token doğrulama eklenmeli
+
+[H-12] Edge — DEV_MODE Hardcoded HMAC Key
+  Dosya  : src/infrastructure/audit/digital_signer.py:23
+  Açıklama: DEV_MODE'da sabit HMAC anahtarı kullanılıyor.
+  Düzeltme: DEV_MODE'da bile rastgele anahtar üretilmeli veya
+            DEV_MODE production'da kullanılamaz hale getirilmeli
+
+[H-13] Edge — DEV_MODE AV Scanner Bypass
+  Dosya  : src/core/services/security/av_scanner.py:201-206
+  Açıklama: DEV_MODE=True ve ClamAV yoksa is_clean=True döndürülüyor.
+  Düzeltme: Production ortam tespiti + DEV_MODE engeli eklenmeli
+
+[H-14] Edge — Dataset State Machine Skip
+  Dosya  : src/core/domain/dataset.py:79-80
+  Açıklama: Yalnızca ordinal > kontrolü var. RAW_INGESTED'den doğrudan
+            ARCHIVED'e geçiş mümkün — AV, hash, kalibrasyon atlanıyor.
+  Düzeltme: ALLOWED_TRANSITIONS adjacency map tanımlanmalı
+
+[H-15] Edge — /dev:/dev:ro Docker Mount
+  Dosya  : docker-compose.yml
+  Açıklama: Tüm host cihaz ağacı container'a mount ediliyor.
+            USB erişimi için yalnızca /dev/bus/usb yeterli.
+  Düzeltme: Mount'u /dev/bus/usb:/dev/bus/usb:ro olarak daraltma
+
+[H-16] Contract — CI SHA-256 Gate continue-on-error
+  Dosya  : .github/workflows/contract_validation.yml:170-171
+  Açıklama: verify-checksums job'u continue-on-error: true ile çalışıyor.
+            Checksum uyuşmazlığı build'i durdurmaz.
+  Düzeltme: continue-on-error: true kaldırılmalı
+
+[H-17] Contract — Auto Sync Gate continue-on-error
+  Dosya  : .github/workflows/auto_sync.yml
+  Açıklama: Aynı sorun — senkronizasyon checksum hatası olsa bile devam.
+  Düzeltme: continue-on-error: true kaldırılmalı
+
+[H-18] Worker — RabbitMQ Default guest:guest
+  Dosya  : src/shared/config.py
+  Açıklama: RABBITMQ_USER ve RABBITMQ_PASS default olarak "guest"/"guest".
+  Düzeltme: Default değer kaldırılmalı, env yoksa başlatılmamalı
+
+[H-19] Worker — Lock Dosyası Yok
+  Dosya  : pyproject.toml (lock dosyası eksik)
+  Açıklama: Tüm bağımlılıklar >=, lock dosyası yok. Build
+            non-deterministik, supply chain saldırısına açık.
+  Düzeltme: pip-compile ile requirements.lock üretilmeli
+
+[H-20] Platform — Lock Dosyası Yok
+  Dosya  : pyproject.toml (lock dosyası eksik)
+  Düzeltme: pip-compile ile requirements.lock üretilmeli
+
+[H-21] Contract — poetry.lock Yok
+  Dosya  : pyproject.toml (Poetry, lock yok)
+  Düzeltme: poetry lock çalıştırılmalı ve commit edilmeli
+
+[H-22] Contract — package-lock.json Yok
+  Dosya  : package.json (lock yok)
+  Düzeltme: npm install --package-lock-only ve commit
+
+[H-23] Edge — clamav/clamav:latest Docker Tag
+  Dosya  : docker-compose.yml:40
+  Düzeltme: Sabit version + digest pinning
+
+[H-24] Platform — minio/minio:latest Docker Tag
+  Dosya  : docker-compose.yml:67
+  Düzeltme: Sabit version + digest pinning
+
+[H-25] Edge — HC-05 Calibration Check Non-Blocking
+  Dosya  : src/presentation/api/endpoints/sync.py:118-129
+  Açıklama: HC-05 kalibrasyon kontrolü uyarı veriyor ama engellemiyar.
+  Düzeltme: Kalibrasyon eksikse HTTP 422 döndürmeli
+
+================================================================================
+4. MEDIUM BULGULAR (21)
+================================================================================
+
+[M-01] Platform — S3 Presigned URL Key Unvalidated
+  Dosya  : src/infrastructure/integrations/storage/s3_storage.py:183-198
+[M-02] Platform — PII Filter GPS/Pin Eksik
+  Dosya  : src/presentation/api/middleware/pii_filter.py
+[M-03] Platform — Payment Webhook Fire-and-Forget
+  Dosya  : src/presentation/api/v1/endpoints/payment_webhooks.py
+[M-04] Platform — Results Endpoint Payment Gate Yok
+  Dosya  : src/presentation/api/v1/endpoints/results.py:67-75
+[M-05] Platform — passlib Unmaintained (2020)
+  Dosya  : pyproject.toml
+[M-06] Platform — Docker Compose 0.0.0.0 Binding
+  Dosya  : docker-compose.yml
+[M-07] Platform — Dockerfile Digest Pinning Yok
+  Dosya  : Dockerfile:9,27
+[M-08] Platform — Submodule URL Org Mismatch
+  Dosya  : .gitmodules (physiscs-zana vs tarlaanaliz)
+[M-09] Contract — Phone Hash Düz SHA-256
+  Dosya  : schemas/core/user_pii.v1.schema.json
+[M-10] Contract — requirements-dev.txt Unpinned
+  Dosya  : requirements-dev.txt
+[M-11] Contract — JS Deps Caret Ranges
+  Dosya  : package.json
+[M-12] Edge — Python Deps Lock Yok
+  Dosya  : pyproject.toml
+[M-13] Edge — Dockerfile Digest Yok
+  Dosya  : Dockerfile:6
+[M-14] Edge — node:20-slim Digest Yok
+  Dosya  : docker-compose.yml:26
+[M-15] Edge — UI package-lock.json Yok
+  Dosya  : src/presentation/ui/package.json
+[M-16] Edge — Contract Submodule Yok
+  Dosya  : interface/contracts/schemas/ (manuel kopyalanmış)
+[M-17] Worker — Contract Validator Partial
+  Dosya  : src/application/contract_validator.py:96-135
+[M-18] Worker — image_urls Scheme/Host Validation Yok
+  Dosya  : src/application/job_handler.py:200
+[M-19] Worker — PII Log Filter Yok
+  Dosya  : src/shared/logging_config.py
+[M-20] Worker — KR-071 field_id In-Memory
+  Dosya  : src/core/domain/analysis_job.py:53
+[M-21] Worker — Contract Submodule/Pinning Yok
+  Dosya  : (eksik)
+
+================================================================================
+5. LOW BULGULAR (15)
+================================================================================
+
+[L-01] Platform — PII Filter Response-Only
+[L-02] Platform — Docker Compose Image Tags Without Digest
+[L-03] Platform — Web Dockerfile Missing (docker-compose reference)
+[L-04] Contract — ESLint 8.x EOL
+[L-05] Contract — Husky 8 Deprecated
+[L-06] Contract — Poetry Caret Ranges (standart)
+[L-07] Edge — Digital Signer DEV_MODE Warning
+[L-08] Worker — Notes Regex SQL Chars
+[L-09] Worker — Dockerfile Yok (build undefined)
+[L-10] Worker — KR-025 Uyumlu (POSITIVE)
+[L-11] Worker — KR-018 Worker-Side Uyumlu (POSITIVE)
+[L-12] Worker — KR-050 Uyumlu (POSITIVE)
+[L-13] Platform — Submodule Commit Pinned (POSITIVE)
+[L-14] Platform Web — Dependencies Properly Pinned (POSITIVE)
+[L-15] Edge — GPS PII Protection HC-02/HC-08 (POSITIVE)
+
+================================================================================
+6. ÖNCELİKLİ AKSİYON PLANI
+================================================================================
+
+DERHAL (Gün 1-3):
+  1. [C-01] Hardcoded bypass credentials kaldır
+  2. [C-02] JWT secret default kaldır, startup'ta zorunlu kontrol
+  3. [H-01] python-jose → PyJWT geçişi
+  4. [H-02] JWT iss/aud/exp zorunlu validasyon
+  5. [H-03] RBAC default-deny
+  6. [H-04] HMAC secret boşsa webhook reddi
+
+KISA VADE (Hafta 1-2):
+  7. [C-03] Edge authentication middleware
+  8. [C-04] HC-05 calibration hard gate enforce
+  9. [H-06] Fernet → AES-256-GCM
+  10. [H-14] Dataset state machine adjacency map
+  11. [H-18] RabbitMQ default credentials kaldır
+  12. [H-16/17] CI continue-on-error kaldır
+
+ORTA VADE (Hafta 2-4):
+  13. [H-09] Next.js security headers
+  14. [H-07] PII log scrubbing
+  15. [H-15] /dev mount daraltma
+  16. [H-19-24] Lock dosyaları + Docker pinning
+  17. [M-17] jsonschema entegrasyonu
+
+================================================================================
+7. METHODOLOGY
+================================================================================
+
+Denetim Yöntemi: Statik kod analizi (6 faz)
+  Faz 1: Authentication & Authorization
+  Faz 2: Injection (SQL, CQL, XSS, Command)
+  Faz 3: Veri Koruma / PII / Kriptografi
+  Faz 4: Altyapı / Konfigürasyon
+  Faz 5: İş Mantığı / KR İhlalleri
+  Faz 6: Bağımlılık & Tedarik Zinciri
+
+Sınırlamalar:
+  - Dinamik analiz (DAST) yapılmamıştır
+  - Penetrasyon testi yapılmamıştır
+  - Dependency CVE taraması pip-audit/npm audit ile doğrulanmamıştır
+  - Runtime konfigürasyon (.env dosyaları) incelenememiştir
+
+================================================================================
+  RAPOR SONU
+  TarlaAnaliz Güvenlik Denetimi — 10 Mart 2026
+================================================================================

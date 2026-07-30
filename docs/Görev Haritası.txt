@@ -1,0 +1,145 @@
+TarlaAnaliz Workspace — 5 Klasor, Gorev Haritasi
+=================================================
+
+tarlaanaliz-workspace/
+├── tarlaanaliz-contract/     UPSTREAM — tek dogru kaynak (SSOT)
+├── tarlaanaliz-platform/     Backend API + Frontend PWA
+├── tarlaanaliz-edge/         Saha istasyonu (EdgeKiosk)
+├── tarlaanaliz-worker/       YZ analiz motoru (izole)
+└── genel_dokuman/            Denetim raporlari, mimari dokumanlar
+
+
+1. tarlaanaliz-contract — Sozlesme Kaynagi (Orkestrator)
+=========================================================
+
+Gorevi: Tum sistemin "anayasasi". Diger tum repolar bu repo'daki tanimlara uyar, kopyalamaz.
+
+Icindekiler:
+- schemas/core/       field, mission, user JSON Schema tanimlari
+- schemas/worker/     analysis_job, analysis_result tanimlari (worker bu formatta is alir)
+- schemas/edge/       intake_manifest, dataset_manifest, calibration_result, qc_report (edge bu formatta veri gonderir)
+- schemas/events/     analysis_completed, dataset_ingested, mission_assigned (event bus mesaj formatlari)
+- schemas/platform/   payment_intent, subscription, pricing (platform ic formatlari)
+- schemas/shared/     geojson, money, address (herkes kullanir)
+- enums/              crop_type, mission_status, dataset_status, user_role (kanonik enum tanimlari)
+- api/                OpenAPI 3.1 specleri (platform_public, platform_internal, edge_local)
+- ssot/               KR registry, governance pack
+- drone_registry.yaml desteklenen drone modelleri + kamera specs
+
+Akistaki rolu: Yeni bir alan/event/status eklenecekse ONCE burada tanimlanir → diger repolar submodule olarak ceker.
+
+
+2. tarlaanaliz-platform — Backend API + Frontend
+==================================================
+
+Gorevi: Ciftci, pilot, admin, uzman, kooperatif, temsilci arayuzlerini ve is mantigini calistiran ana sunucu.
+
+Icindekiler:
+- src/core/domain/          entity, value object, event, port (Field, Mission, User, AnalysisJob, CalibrationRecord...)
+- src/application/          service, command (WorkerDispatch, EarningGeneration, Pricing...)
+- src/infrastructure/       DB (SQLAlchemy/PostgreSQL), TKGM adapter, RabbitMQ, storage
+- src/presentation/         FastAPI endpoint'leri, middleware (JWT, RBAC, rate limit, PII filter)
+- web/                      Next.js 14 PWA frontend (tarlalarim, gorevler, pilot panel, kooperatif, odeme...)
+- alembic/                  DB migration'lari
+- contracts/                git submodule → tarlaanaliz-contract (READ-ONLY)
+
+Akistaki rolu:
+1. Ciftci tarla tanimlar → TKGM'den polygon ceker → DB'ye yazar
+2. Mission olusturur → odeme alir → pilota atar
+3. Edge'den gelen veriyi alir (ingest) → kalibrasyon dogrular → worker'a dispatch eder
+4. Worker'dan sonuc alir → ciftciye gosterir (tile, rapor)
+
+
+3. tarlaanaliz-edge — Saha Istasyonu (EdgeKiosk)
+==================================================
+
+Gorevi: Drone'dan gelen ham multispektral goruntuleri sahada on-isleyip guvenli sekilde platform'a gonderen fiziksel istasyon yazilimi.
+
+Icindekiler:
+- src/core/domain/              Dataset, Batch, EvidenceBundle, QuarantineEvent, AttestationRecord
+- src/infrastructure/hardware/  donanim katmani (USB, storage)
+- src/infrastructure/network/   mTLS upload, platform baglantisi
+- src/infrastructure/storage/   yerel depolama
+- src/infrastructure/audit/     kanit zincirleme (evidence bundle)
+- src/infrastructure/persistence/ yerel DB
+- interface/                    contract interface tanimlari
+
+Akistaki rolu:
+1. Pilot drone'u ucurur → SD karti EdgeKiosk'a takar
+2. Edge ham goruntuleri okur → intake_manifest olusturur
+3. Antivirus taramasi (AV1/AV2) → hash zinciri olusturur
+4. Pix4Dfields ile radyometrik kalibrasyon (KR-018 hard gate burada)
+5. Kalibre edilmis veriyi mTLS ile platform'a yukler
+6. Karantina karari (PASS/QUARANTINE) verir
+
+
+4. tarlaanaliz-worker — YZ Analiz Motoru
+==========================================
+
+Gorevi: Kalibre edilmis multispektral goruntulardan tarimsal analiz uretmek (NDVI, su stresi, hastalik tespiti, termal stres). Tamamen izole — dis dunyaya baglantisi yok.
+
+Icindekiler:
+- src/core/domain/       AnalysisJob, AnalysisResult, CalibratedDataset, ChannelSpec, ModelConfig
+- src/agents/            OrchestratorAgent, QATriageAgent, ReportingAgent, ActiveLearningPackager (multi-agent YZ pipeline)
+- src/models/            egitilmis model dosyalari
+- src/preprocessing/     goruntu on isleme
+- src/indices/           vegetasyon indeks hesaplama (NDVI, NDWI, CWSI vb.)
+- interface/             contract interface tanimlari
+
+Akistaki rolu:
+1. RabbitMQ kuyrugunden AnalysisJob ceker (platform push yapmaz, worker ceker)
+2. S3/MinIO'dan kalibre edilmis goruntuleri indirir
+3. Bitki turune gore uygun YZ modelini secer (KR-016 routing)
+4. field_geometry ile polygon mask uygular
+5. NDVI, su stresi, hastalik, termal analiz uretir
+6. Sonuclari COG (Cloud Optimized GeoTIFF) formatinda S3'e yazar
+7. AnalysisCompleted event'i kuyruga koyar → platform alir
+
+
+5. genel_dokuman/ — Denetim ve Mimari Dokumanlar
+==================================================
+
+Gorevi: Repo'lara ait olmayan ust duzey dokumanlar.
+
+Icindekiler:
+- REPO_BOUNDARY_RULES.txt                          hangi kodun hangi repo'da olacaginin kesin kurallari
+- SECURITY_AUDIT_REPORT.txt                         guvenlik denetim raporu
+- TARLAANALIZ — KONSOLIDE DERIN DENETIM RAPORU.txt  konsolide denetim raporu
+- OTURUM DENETIM RAPORU.txt                         oturum raporlari
+- TarlaAnaliz_Etkilesim_Haritasi                    sistem etkilesim diyagrami
+
+
+Uctan Uca Veri Akisi
+=====================
+
+Ciftci (Platform/Web)
+  ├─ Tarla tanimla (TKGM/cizim/dosya import)
+  ├─ Mission olustur + odeme
+  └─ Sonuclari gor (tile harita + rapor)
+         │
+    Platform (API)
+    ├─ Mission → Pilot ata
+    ├─ EdgeKiosk'tan veri al (ingest)
+    ├─ Worker'a dispatch et
+    └─ Worker sonucunu ciftciye sun
+         │
+    Pilot (Sahada)
+    ├─ KMZ ucus rotasi indir
+    ├─ Drone ucur → multispektral cekim
+    └─ SD karti EdgeKiosk'a tak
+         │
+    EdgeKiosk (Saha)
+    ├─ Ham veri oku → AV tarama → hash zinciri
+    ├─ Radyometrik kalibrasyon (Pix4Dfields)
+    └─ mTLS ile Platform'a yukle
+         │
+    Worker (Izole)
+    ├─ Kuyruktan AnalysisJob cek
+    ├─ polygon mask uygula (field_geometry)
+    ├─ YZ analiz: NDVI, su stresi, hastalik...
+    ├─ COG uret → S3'e yaz
+    └─ AnalysisCompleted event → Platform
+         │
+    Contract (Hepsinin ustunde)
+    └─ Tum veri formatlari, enum'lar, event semalari burada tanimli
+       Diger repolar submodule olarak READ-ONLY tuketir
