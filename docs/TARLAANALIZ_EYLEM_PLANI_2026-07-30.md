@@ -99,7 +99,8 @@ tablosunda yok** — iki YAML girdisi (birkaç saat) güçlü verili bir ürün�
 
 ## 2.2 Uçuş çerçevesi — 1 drone, günde 10-12 uçuş × 30 dk
 
-Tamamen `Tarama_Protokolu_v1.6_Birlesik.txt` §10 tablosundan türetildi (MS+RGB modu = tetik başına
+Tamamen `tarlaanaliz-edge/docs/operations/Tarama_Protokolu_v1.6_Birlesik.txt` §10 tablosundan
+türetildi (MS+RGB modu = tetik başına
 5 dosya; tetik sayısı = dosya/5).
 
 | İrtifa | 1 uçuş: tetik / dosya / alan | 10 uçuş/gün: dosya / alan | 12 uçuş/gün: dosya / alan |
@@ -871,7 +872,7 @@ defolyasyon, kanopi renk/stres anomalisi). Nicel eşikler ve yaşam evreleri (ni
 `THERMAL_STRESS` değerleri **korunur ancak "üretilemez" olarak işaretlenir**; hiçbir model bu
 sınıflarda çıktı vermeyecek şekilde eğitilmez.
 
-**Gerekçe.** Optik sınır: `Tarama_Protokolu_v1.6_Birlesik.txt:349-355` — "20 m'de ÇS ~0,92 cm
+**Gerekçe.** Optik sınır: `tarlaanaliz-edge/docs/operations/Tarama_Protokolu_v1.6_Birlesik.txt:349-355` — "20 m'de ÇS ~0,92 cm
 ≈ 9200 µm, tekil böcek tanıma eşiğinin (~80 µm) **~100 katı kaba** … İHA böceği değil bıraktığı
 izi görür. Bu bir uçuş parametresi değil **optik sınırdır**." Bağımsız hesap aynı sonucu veriyor:
 10 mm'lik bir böcekte tür ayrımı için ~0,1-0,2 mm/px, yani `H = GSD × 37,2` ile **37-74 cm
