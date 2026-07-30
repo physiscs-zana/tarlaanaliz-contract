@@ -183,7 +183,7 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 | **E7** | `_discover_output` dosya adları **config'den**. ⚠️ **DJI Terra çıktı adları resmi dokümanda tam yayınlanmamış** — yalnız `dsm.tif` / `gsddsm.tif` teyitli; DOM ve bant/indeks raster adları belirtilmemiş. **Tahminle yazılamaz, ilk koşumda ölçülecek** (ölçüm #2) | aynı dosya | E6, ölçüm #2 |
 | **E8** | `ndvi_thresholds.yaml` + `phenology_calendar.yaml` → ⚠️ **KAPSAM DÜZELTİLDİ (0.d ek bulgusu):** sıra **① KİRAZ kararı** (bugün `bookable:True` ama hem wire-enum'da hem edge tablosunda YOK → sipariş edilebiliyor, iş iki yerden düşüyor; ya `bookable:False` ya enum+tablo) → **② WHEAT** (wire-enum'da var, tek eksik tablo) → **③ SUNFLOWER/OLIVE ertelenebilir** (`bookable:False`, sipariş edilemez → zararsız). Bugün edge'de 5 ürün (COTTON/CORN/PISTACHIO/GRAPE/RICE), contract'ta 8 | `config/processing/` · contract `crop_type.enum.v1` (① için) | ① ürün kararı |
 | **E9** | **Sortie bbox fail-loud doğrulaması** — bbox yoksa `PRIORITIZATION_MIXED_CROP` sessiz çöküşü yerine açık hata | `src/core/services/prioritization/ndvi_prioritizer.py` | C4 |
-| **E10** | Yama görselleri → **nesne anahtarı** (göreli yol yerine), presigned PUT ile yükleme | `src/core/services/pipeline/calibration_pipeline.py:332-336` | C2, E2 |
+| **E10** 🔴🔴 | **DEMO KRİTİK YOLU ②.** Yama görselleri → **nesne anahtarı** (göreli yol yerine) + presigned PUT ile yükleme. ⚠️ **Bugün `ndvi_overlay` yerel diske yazılıp manifeste göreli yol konuyor** → **kırmızı NDVI görseli merkeze hiç ulaşmıyor.** KG-0.b-R'nin göstermek istediği görsel tam olarak bu. Bu madde olmadan ÖN RAPOR'da poligon + NDVI değeri gelir, **görsel gelmez** | `src/core/services/pipeline/calibration_pipeline.py:332-336` | C2, E2 |
 | **E11** | **Kare seçici (frame selector)** — EXIF footprint (GPS+yaw+H+GSD) + ODM `shots.geojson` ile işaretli yamayı gören kareleri bul | yeni: `src/core/services/frames/frame_selector.py` | C3, ölçüm #5 |
 | **E12** 🔴 | `ENABLE_NDVI_PRIORITIZATION` bayrağını **AÇ** — ⚠️ **statü değişti (KG-0.b-R):** artık "ertelenebilir" değil, **ÖN RAPOR'un ön koşulu.** Bayrak kapalıyken `priority_zones` **hiç üretilmez** → `analysis_priority_zones` boş → P6/P12 gösterecek bir şey bulamaz → demo çöker. **P9 uyarısı hâlâ geçerli ama ölçek farklı:** kota sıçraması 28.000 dönüm/gün için hesaplanmıştı; **pilotta günde 3-5 tarla** olduğu için uzman yükü ihmal edilebilir. → **Pilotta AÇ**, üretim ölçeğine geçmeden önce kotayı yeniden ölç | `src/shared/config.py:160`, `.env.example:113` | E4 sonrası · **demo öncesi zorunlu** |
 | **E13** | `calibrated_validator` → manifeste **motor adı** + `calibration_tier` (M3M için `RELATIVE`) yazsın | `src/core/services/calibration_gate/calibrated_validator.py` | C1, C6 |
@@ -274,9 +274,19 @@ ADIM 0  KARAR GÜNÜ (7 karar)                                    1 gün, kod yo
    ├─ DALGA 2 — HAT BAĞLANIR (Dalga 1 bitince)
    │   ├─ E: E3,E4,E5 (C13 kapanır) · E6,E7,E13 runner         6-9 gün
    │   ├─ P: P4 patches · P5 durum bildirimi                   4-6 gün
-   │   ├─ P: 🔴 P6 çiftçi ÖN RAPOR ucu + P12 içerik kaynağı    4-6 gün
-   │   │      + E12 bayrağı AÇ  ⟵ DEMO KRİTİK YOLU (KG-0.b-R)
-   │   │      (E10/C16 ndvi_overlay nesne anahtarı ön koşul)
+   │   │
+   │   ├─ 🔴🔴 DEMO KRİTİK YOLU (KG-0.b-R) — sırayla, hepsi zorunlu:
+   │   │   ① C2  `patches[].object_key` şeması            (C-Tur-1'de)
+   │   │   ② E10 ndvi_overlay → GERÇEK nesne anahtarı      2-3 gün
+   │   │        (bugün yerel göreli yol → görsel merkeze ULAŞMIYOR)
+   │   │   ③ E12 ENABLE_NDVI_PRIORITIZATION = true         0,5 gün
+   │   │        (kapalıyken priority_zones HİÇ üretilmiyor)
+   │   │   ④ P4  patches object_key doğrulama              1 gün
+   │   │   ⑤ P6  çiftçi ÖN RAPOR okuma ucu                 2-3 gün
+   │   │   ⑥ P12 PRELIMINARY ikinci içerik kaynağı         2-3 gün
+   │   │   ───────────────────────────────────────────────────────
+   │   │   ⚠️ Herhangi biri eksikse çiftçi KIRMIZI GÖRSELİ göremez:
+   │   │      ②'siz görsel yok · ③'süz bölge yok · ⑤/⑥'sız ekran yok
    │   ├─ W: W2 reflektans ölçeği                              2-3 gün
    │   └─ E: E10 yama nesne anahtarı (C16 kapanır)             2-3 gün
    │        ⟵ DEMO BU DALGA BİTİNCE MÜMKÜN
@@ -676,7 +686,29 @@ C15 maddesi "KARAR BEKLİYOR" → "Y-C ile kapatıldı" olarak güncellenir.
 > yazılacak yorum notu **Y-D'yi** anlatacak biçimde güncellenir.
 >
 > **Yeni/değişen iş kalemleri:** **P6** (yeniden tanımlandı) · **P12** (yeni) · **E12** (sıra revize)
-> — bkz. §3.4 ve §11.5 altındaki notlar.
+> · **E10/C16** (demo kritik yoluna alındı) — bkz. §3 tabloları ve Dalga 2 şeması.
+>
+> ### ⚠️ ÖNCEKİ ANALİZİMDEKİ HATANIN DÜZELTİLMESİ
+>
+> C15 çözümlemesinde şunu yazmıştım: *"**Pix4D çıktısını platforma taşıyan bir yol yok**
+> (C13 ile aynı kök)"* — bu, `end_to_end_workflow.md`'nin C15 maddesinden alıntıydı ve
+> **ben de doğrulamadan devraldım. İfade yanlıştır.**
+>
+> | | Doğru hâli |
+> |---|---|
+> | **Türetilmiş ürün** (öncelik bölgeleri + 3-katmanlı görseller) | ✅ **Yol TANIMLI** — `ingest.py:71` `PriorityZoneEntry` intake manifestinde taşınıyor, `ingest_service_impl.py:266` `analysis_priority_zones`'a yazıyor. ❌ **Ama BAĞLI DEĞİL** — `submit_manifest` çağrısız (C13). Yani **tesisat eksikliği**, tasarım boşluğu değil |
+> | **Ham rasterlar** (ortho.tif / ndvi.tif tam çözünürlük) | ✅ İfade burada **doğru** — taşıma yolu gerçekten yok → C1 `index_layers[]` bu yüzden var |
+>
+> **Neden önemli:** "yol yok" demek problemi bir **tasarım boşluğu** gibi gösterdi ve beni
+> "yeni faz gerekir, üç ADR açılır, ertele" sonucuna götürdü. Oysa gerçek "**yol var, fişi
+> takılmamış**" — çözüm zaten planlanmış C13 tesisatının içinde. Bu fark, kararı **ertelemekten
+> FAZ 0'da yapmaya** çevirdi.
+>
+> **Çelişmeyen kısım (her iki analizde de doğru):** `worker_bridge_consumer.py:1565`
+> `_emit_preliminary_ready` **bildirimdir** ve worker sonucunda tetiklenir — ADR-007 §5'in birebir
+> uygulaması. Y-D bunu **değiştirmiyor**; yanına kalibrasyon-sonrası bir okuma yolu ekliyor.
+> Yani "ön rapor **bildirimi** YZ'den sonra çıkar" ifadesi doğruydu ve doğru kalıyor;
+> yanlış olan "**içerik** için hiçbir taşıma yolu yok" ifadesiydi.
 
 ---
 
@@ -969,11 +1001,21 @@ satın alma takvimi
 platformda ikili gövde ucu açılmayacak. ⚠️ Önkoşul: kalibrasyon kanıtı üreticisi (E14) —
 `calibration_result`/`observed_footprint_wkt` beş yerde tüketiliyor, sıfır yerde üretiliyor;
 o yazılmadan hat bağlansa bile HC-05 M1 içinde durur. |
-| C15 | ... | **KAPATILDI (2026-07-30, KG-0.b) — Y-C ile.** ADR-007 §2/§5 korunur; kod zaten ADR'ye
-sadıktı. Direktif, kalibrasyon sonrası **durum bildirimi** + `layer_registry`'de ham indeks katmanı
-ile karşılanır. Y-A (yeni faz) FAZ 1'e ertelendi. |
+| C15 | ... | **KAPATILDI (2026-07-30, KG-0.b-R) — Y-D ile.** ADR-007 §2/§5 korunur; kod zaten
+ADR'ye sadıktı (`worker_bridge_consumer.py:1565` = **bildirim**, ADR-007 §5'in birebir uygulaması).
+Direktif, ÖN RAPOR'un **`analysis_priority_zones`'tan** sunulmasıyla karşılanır: çiftçi
+kalibrasyondan sonra sorunlu NDVI bölgelerini (`geom` + `ndvi_value` + `ndvi_overlay`) görür.
+**Yeni faz/mission state eklenmez** — `results_service_impl.py:227` zaten `PRELIMINARY` türetiyor;
+eklenen yalnız **içerik kaynağı** (P12) + **çiftçi okuma ucu** (P6). KR-019/033/025 korunur.
+⚠️ **BU MADDENİN ESKİ METNİ DÜZELTİLMELİ:** *"Pix4D çıktısını platforma taşıyan bir yol yok"*
+ifadesi **yanlıştır.** Doğrusu: **türetilmiş** ürün için yol **TANIMLI ama BAĞLI DEĞİL** —
+`ingest.py:71` `PriorityZoneEntry` (geom + ndvi_value + visualizations) intake manifestinde
+taşınıyor ve `ingest_service_impl.py:266` `analysis_priority_zones`'a yazıyor; eksik olan
+`submit_manifest`'in çağrılması (C13). **Yol yokluğu değil, tesisat eksikliği.**
+Tam çözünürlüklü ham rasterlar (ortho/ndvi .tif) için ise gerçekten yol yok → C1 `index_layers[]`. |
 | C16 | ... | **KARAR VERİLDİ (2026-07-30, KG-0.a):** presigned mekanizmasıyla aynı işte çözülür;
-yama görselleri `object_key` taşıyacak (C2 + E10 + P4). |
+yama görselleri `object_key` taşıyacak (C2 + E10 + P4). ⚠️ **Statü yükseldi:** KG-0.b-R ile
+**demo kritik yoluna** girdi — `ndvi_overlay` bu madde olmadan merkeze ulaşmaz. |
 ```
 
 ### C) ★ ADR işleri
