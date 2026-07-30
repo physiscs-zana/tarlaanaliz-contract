@@ -1,0 +1,232 @@
+# REPO_BOUNDARY_RULES.md — Repository Ayrim Kesin Kurallari
+
+> **Durum:** BAGLAYICI — Tum gelistiriciler ve AI agent'lar bu kurallara uyar.
+> **SSOT Referansi:** TARLAANALIZ_SSOT_v1_2_0.txt
+> **Ilgili KR'ler:** KR-071, KR-081, KR-063, KR-050, KR-072
+
+---
+
+## 1. Repository Haritasi
+
+```
+tarlaanaliz-workspace/
+├── tarlaanaliz-contract/     # [UPSTREAM]  Sozlesme kaynagi (SSOT)
+├── tarlaanaliz-platform/     # [CONSUMER]  Backend API (Python/FastAPI)
+│   └── contracts/            #   → git submodule → tarlaanaliz-contract (READ-ONLY)
+├── tarlaanaliz-web/          # [CONSUMER]  Frontend PWA (Next.js/TypeScript)
+│   └── contracts/            #   → git submodule → tarlaanaliz-contract (READ-ONLY)
+└── (tarlaanaliz-worker/)     # [CONSUMER]  YZ Worker (gelecekte ayri repo)
+```
+
+---
+
+## 2. Neyin Nereye Ait Oldugu
+
+### 2.1 tarlaanaliz-contract (Orkestrasyon Kaynagi)
+
+**SADECE su icerikler bu repoda bulunur:**
+
+| Icerik | Ornek |
+|--------|-------|
+| JSON Schema tanimlari (Draft 2020-12) | `schemas/core/field.v1.schema.json` |
+| Enum tanimlari | `enums/crop_type.enum.v1.json` |
+| OpenAPI 3.1 spec'leri | `api/platform_public.v1.yaml` |
+| KR registry (is kurallari indeksi) | `ssot/kr_registry.md` |
+| Governance pack | `ssot/GOVERNANCE_PACK_v1_0_1.md` |
+| Validation & breaking change araclari | `tools/validate.py` |
+| Contract testleri | `tests/test_validate_all_schemas.py` |
+| Migration guide'lar | `docs/migration_guides/` |
+| Ornek payload'lar | `docs/examples/` |
+| Versiyon kilitleme | `CONTRACTS_VERSION.md` |
+| Drone registry | `drone_registry.yaml`, `drone_capability_matrix.yaml` |
+
+**YASAK — Bu repoda OLMAZ:**
+- Uygulama kodu (Python, TypeScript implementasyon)
+- Veritabani migration'lari
+- Docker/deployment konfigurasyonu
+- Frontend/backend is mantigi
+- Test fixture'lari (ornek payload'lar haric)
+
+### 2.2 tarlaanaliz-platform (Backend API)
+
+**SADECE su icerikler bu repoda bulunur:**
+
+| Icerik | Dizin |
+|--------|-------|
+| Domain katmani (entity, value object, event, port) | `src/core/domain/` |
+| Application katmani (command, query, DTO, service) | `src/application/` |
+| Infrastructure katmani (DB, cache, MQ, entegrasyon) | `src/infrastructure/` |
+| Presentation katmani (FastAPI endpoint, CLI) | `src/presentation/` |
+| DB migration'lari | `alembic/` |
+| Backend testleri | `tests/` |
+| Docker konfigurasyonu (backend container) | `Dockerfile` |
+| Altyapi orkestrasyonu (dev ortami) | `docker-compose.yml` |
+| Contract submodule (READ-ONLY) | `contracts/` |
+| SchemaRegistry + ContractValidatorService | `src/infrastructure/contracts/` |
+
+**YASAK — Bu repoda OLMAZ:**
+- Frontend kodu (Next.js, React, TypeScript UI)
+- Kendi schema/enum tanimlari (contract repodan gelir)
+- OpenAPI spec tanimlari (contract repodan gelir)
+- Ham is kurali metni (KR referansi ile gosterilir, kopyalanmaz)
+- Object storage icindeki dosyalar (S3/MinIO blob'lari)
+
+### 2.3 tarlaanaliz-web (Frontend PWA) — AYRILACAK
+
+**SADECE su icerikler bu repoda bulunur:**
+
+| Icerik | Dizin |
+|--------|-------|
+| Next.js sayfa ve layout'lari | `src/app/` |
+| UI bilesenler (common, feature, layout, ui) | `src/components/` |
+| Feature modulleri (hook, service, type) | `src/features/` |
+| Paylasilan hook'lar | `src/hooks/` |
+| HTTP client, env, routing, correlation | `src/lib/` |
+| i18n (coklu dil) | `src/i18n/` |
+| Stiller (Tailwind) | `src/styles/` |
+| E2E testler | `e2e/` |
+| Storybook konfigurasyonu | `.storybook/` |
+| PWA manifest, ikonlar | `public/` |
+| Contract submodule (READ-ONLY) | `contracts/` |
+
+**YASAK — Bu repoda OLMAZ:**
+- Backend is mantigi veya veritabani erisimi
+- Dogrudan schema/enum tanimlari (contract'tan generate edilir)
+- Guvenlik sirrlari (.env'de backend secret'lari)
+- Ham veri isleme (TIFF, kalibrasyon, multispektral)
+- RBAC uygulama mantigi (backend enforce eder, frontend sadece UI gosterir)
+
+---
+
+## 3. Contract Tuketim Kurallari
+
+### Kural 3.1: Read-Only Submodule
+Consumer repo'lar contract'i **git submodule** olarak ekler.
+Submodule icerigini **asla yerel olarak degistirmez**.
+Degisiklik gerekiyorsa contract reposunda PR acilir.
+
+### Kural 3.2: Versiyon Sabitleme
+Her consumer `CONTRACTS_VERSION.md` ile belirli bir versiyona pin'ler.
+`CONTRACTS_SHA256.txt` ile icerik butunlugu dogrulanir.
+CI pipeline'da `sha256sum -c CONTRACTS_SHA256.txt` calistirilir.
+
+### Kural 3.3: Type Generation
+- **Backend (Python):** Contract schema'larindan Pydantic modeller uretilir veya `SchemaRegistry` ile runtime validasyon yapilir.
+- **Frontend (TypeScript):** Contract schema'larindan `json-schema-to-typescript` ile tip uretilir. Manuel tip tanimlamasi YASAK (KR-081 drift riski).
+
+### Kural 3.4: Bagimsiz Validasyon (Defense in Depth)
+Her katman kendi validasyonunu yapar:
+- Contract repo: Schema validasyon (CI gate)
+- Backend: `ContractValidatorService` ile runtime validasyon
+- Frontend: Form validasyon (UX amacli, guvenlik icin degil)
+Backend validasyonu **normative**'dir; frontend validasyonu **kolaylik** icindir.
+
+---
+
+## 4. Veri Akisi Kurallari (KR-071)
+
+```
+EdgeKiosk ──HTTPS+mTLS──→ Platform/Ingress ──→ Storage/Queue
+                                                     │
+                                              Worker (izole)
+                                                     │
+                                              Platform ──→ Web/PWA
+```
+
+| Kural | Aciklama |
+|-------|----------|
+| **4.1** | Platform, ham veriyi public API uzerinden SUNMAZ |
+| **4.2** | Worker sadece kuyruktan/storage'dan CEKER, Platform push yapmaz |
+| **4.3** | Worker → Platform: SADECE turetilmis sonuclar (AnalysisResult/layer) |
+| **4.4** | Web/PWA: SADECE sonuclari okur, ham veriye ERISEMEZ |
+| **4.5** | Platform → Worker: DENY (network policy) |
+| **4.6** | Worker → Internet: DENY (network policy) |
+
+---
+
+## 5. RBAC Sinirlari (KR-063)
+
+| Katman | Sorumluluk |
+|--------|------------|
+| Contract | Rol tanimlari (`role.enum.v1.json`, `user_role.enum.v1.json`) |
+| Backend | Rol dogrulama, yetki kontrolu, JWT claim kontrolu |
+| Frontend | Rol bazli UI gosterimi (route korumalari, menu filtreleme) |
+
+**Kesin kural:** Frontend RBAC'i **gorsellestirme** icindir. Gercek yetki kontrolu **her zaman** backend'de yapilir. Frontend'te bir butonun gorunmemesi guvenlik DEGIL, UX kararidir.
+
+---
+
+## 6. PII Kurallari (KR-050)
+
+| Kural | Uygulama |
+|-------|----------|
+| Yasak alanlar | `email`, `tckn`, `otp` — hicbir repoda, hicbir schema'da |
+| Kimlik modeli | Telefon + 6 haneli PIN |
+| Log maskeleme | `phone_number → phone_***5678`, `pin → ***`, `name → A***` |
+| PII ayriligi | PII ayri tablo/field'da saklanir (KR-066) |
+| CI kontrolu | `tools/validate.py` her PR'da forbidden field tarar |
+
+---
+
+## 7. Degisiklik Akisi (SDLC)
+
+### Schema/Enum Degisikligi:
+```
+1. Contract reposunda PR ac
+2. CI gate'leri gecir (validation, breaking-change detection, forbidden fields)
+3. Breaking ise: MAJOR bump + migration guide yaz
+4. Merge & release
+5. Consumer repo'larda submodule guncelle
+6. CONTRACTS_VERSION.md + CONTRACTS_SHA256.txt guncelle
+7. Consumer CI'da hash dogrulamasi gecir
+```
+
+### Backend Degisikligi:
+```
+1. Platform reposunda PR ac
+2. Contract uyumlulugu dogrula (schema registry test)
+3. Yeni endpoint → contract reposunda once OpenAPI spec ekle
+4. KR referansi ile is kuralini belirt
+5. Test + CI gate gecir
+```
+
+### Frontend Degisikligi:
+```
+1. Web reposunda PR ac
+2. Type'lar contract'tan generate edilmis olmali
+3. API endpoint'leri OpenAPI spec ile uyumlu olmali
+4. E2E test gecir
+5. RBAC: sadece UI katmani, backend enforce
+```
+
+---
+
+## 8. Ayrim Kontrol Listesi (CI Enforcement)
+
+| # | Kontrol | Repo | Otomatik |
+|---|---------|------|----------|
+| 1 | Schema Draft 2020-12 uyumlulugu | contract | Evet |
+| 2 | Forbidden PII field taramasi | contract | Evet |
+| 3 | Breaking change detection | contract | Evet |
+| 4 | SHA-256 hash dogrulamasi | platform, web | Evet |
+| 5 | Submodule versiyon kontrolu | platform, web | Evet |
+| 6 | Frontend'te backend import yok | web | Evet (lint rule) |
+| 7 | Backend'te frontend import yok | platform | Evet (lint rule) |
+| 8 | Contract'ta uygulama kodu yok | contract | Evet (file pattern check) |
+| 9 | Type generation guncel | web | Evet (CI step) |
+| 10 | OpenAPI spec uyumlulugu | platform | Evet |
+
+---
+
+## 9. Workspace Kullanim Kurali
+
+Ayni workspace'te calismak **gelistirme kolayligi** icindir.
+Her repo **bagimsiz** git gecmisine, CI/CD pipeline'ina ve deploy surecine sahiptir.
+
+**Izin verilen:** Ayni IDE'de her uc repoyu acmak, cross-reference okumak
+**YASAK:** Bir reponun dosyasini baska repoya kopyalamak, repo sinirlarini asmak
+
+---
+
+_Son Guncelleme: 2026-03-07_
+_Versiyon: 1.0.0_
