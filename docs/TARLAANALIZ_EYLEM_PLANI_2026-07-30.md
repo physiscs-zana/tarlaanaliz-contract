@@ -19,7 +19,7 @@ Proje ticari değil, protokollerle **kamunun araştırma projesi**. Bu, önceki 
 | **Ticari pilot eğitimi (12 sa teori)** | ZORUNLU | Ticari tetikleyici düşer; kurum içi yetkinlik politikası geçerli. **SHGM'ye yazılı teyit** |
 | **SHGM Kayıt Sistemi kaydı** | ZORUNLU | **YİNE ZORUNLU** — ağırlık bazlı (M3M ~951 g → İHA-0, 7 gün içinde kayıt). Statü bunu değiştirmez |
 | **120 m AGL · VLOS 500 m · yasak bölge izinleri** | geçerli | **AYNEN GEÇERLİ** (5 iş günü meskûn mahal / 10 iş günü yasak bölge yakını) |
-| **TKGM MEGSİS parsel verisi** | ❌ Kapalı ("ticari amaçla kullanılamaz") | ✅ **AÇILIYOR.** MEGSİS zaten "çeşitli kurum ve kuruluşlar ile internet servisleri aracılığıyla" paylaşılıyor. **Kamu-kamu kurumsal protokol tam bu kanal.** Kod hazır (bkz. §3-P6) |
+| **TKGM MEGSİS parsel verisi** | ❌ Kapalı ("ticari amaçla kullanılamaz") | ✅ **AÇILIYOR.** MEGSİS zaten "çeşitli kurum ve kuruluşlar ile internet servisleri aracılığıyla" paylaşılıyor. **Kamu-kamu kurumsal protokol tam bu kanal.** Kod hazır (bkz. §3-**P7**) |
 | **Agisoft Service Provider ($6.736/yıl)** | Gerekebilirdi | **Muhtemelen gereksiz** — servis satmıyorsunuz. Node-locked $3.499 yeterli; kurum akredite araştırma/eğitim kuruluşuysa **eğitim lisansı** çok daha ucuz |
 | **Pix4D EULA servis-bürosu sorusu** | Belirsiz risk | Gevşer; PIX4Dfields'in de **eğitim lisansı** var |
 | **Yazılım satın alma** | serbest | ⚠️ **YENİ ENGEL: kamu satın alma prosedürü** (doğrudan temin / ihale) → takvim uzar. Lisans ihtiyacını **en az 2 ay önceden** başlatın |
@@ -210,7 +210,7 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 | **P3** | Presigned üretimini **ingest anahtarlarına genişlet** + anahtar şeması `{tenant}/{dataset_id}/{raw\|layers\|patches}/{ad}`. ✅ `generate_presigned_url` **zaten var** (`patches.py:165`) → PUT yönü + kapsam kısıtı eklenecek. 🔴 **ANAHTARI PLATFORM ÜRETİR — edge'in verdiği yol ASLA imzalanmaz** (0.a ek şartı). "Edge'in anahtarını doğrula" biçiminde uygulamak YETERSİZDİR | `src/infrastructure/external/storage_adapter.py` | P1 |
 | **P4** | `patches.py` → **object_key zorunlu**; yoksa **açık hata** (bugünkü sessiz 404 yerine). 🔴 **Güvenlik yarısı:** GET presign'da anahtar **DB'den** okunur, istekten/manifestten gelen yol imzalanmaz; kapsam dışı talep `SECURITY.DENY`. **Kabul testi:** sahte manifestle başka kiracının yolu istendiğinde uç 403/deny dönmeli (bugün geçerli URL üretiyor — çapraz-kiracı sızıntı riski) | `src/presentation/api/v1/endpoints/patches.py:151-156,165-175` | C2, E10 |
 | **P5** | **C15 (Y-C):** `DATASET.STATE_TRANSITION → CALIBRATED` üzerinden çiftçiye **durum bildirimi** ("uçuşunuz işlendi, analiz sürüyor"). ⚠️ `results_service_impl` ve `report_phase` **DEĞİŞMEZ** — ADR-007 korunur | `src/infrastructure/messaging/`, `farmer_notifier` | 0.b |
-| **P6** | ⚠️ **BLOKE — önce tanım kararı (0.b açık noktası).** `layer_registry.py:109-113` yalnız katman **TANIMLARINI** döndürüyor (renk/desen/bant), göreve ait veri YOK → bu dosyaya yazmak çiftçiye **hiçbir şey göstermez**. Gösterim bir servis yolu ister ve üç seçenek var: (a) kapılı sonuç/tile yolu → "rapor fazı dışında" iddiası düşer · (b) kapısız yeni yol → KR-033 yeniden açılır · **(c) önerilen: katman gösterimini FAZ 1'e ertele, Y-C yalnız P5 durum bildirimi olarak kalsın.** Karar verilmeden **uygulanmaz** | `layer_registry.py` (karar (a)/(b) ise başka dosya) | 0.b açık noktası |
+| ~~**P6**~~ | 🔵 **FAZ 1'E ERTELENDİ — 2026-07-30 kararı (seçenek c).** FAZ 0/Dalga 2 kapsamından **çıkarıldı.** Gerekçe: `layer_registry.py:109-113` yalnız katman **TANIMLARINI** döndürüyor (renk/desen/öncelik/bant) — göreve veya tarlaya ait veri **yok**; bu dosyaya yazmak çiftçiye **hiçbir şey göstermez**. Gerçek gösterim bir **servis yolu** ister ve iki yol da bedelli: (a) kapılı sonuç/tile yolu → *"rapor fazı dışında"* iddiası düşer · (b) kapısız yeni yol → **KR-033 ödeme kapısı yeniden açılır** (Y-C'nin tam kaçındığı şey). KG-0.b'nin amacı (*"çiftçi uçuştan hemen sonra bir şey görsün"*) **P5 tek başına** karşılıyor. → **Katman gösterimi, Y-A ile birlikte FAZ 1'de tasarlanacaktır.** | — (FAZ 1) | — |
 | **P7** | **TKGM feature flag'ini AÇ** — kod hazır (`tkgm_rest_adapter.py`, `tkgm_megsis_wfs_adapter.py`, idari cache, `GET /parcels/lookup|reverse-lookup|validate`, `settings.py:212`). **Yalnız kurumsal protokol geldikten sonra** | `src/infrastructure/config/settings.py:212` | TKGM protokolü |
 | **P8** | `contracts` submodule pin + `CONTRACTS_SHA256.txt` güncelle (her contract turundan sonra) | repo kökü | C8 |
 | **P9** | Uzman kotası uyarısı: E12 ile aynı sürümde açılmasın — `analysis_priority_zones` dolmaya başlayınca kota 1→N sıçrar | `worker_bridge_consumer.py:1085-1112` | E12 |
@@ -272,7 +272,8 @@ ADIM 0  KARAR GÜNÜ (7 karar)                                    1 gün, kod yo
    │
    ├─ DALGA 2 — HAT BAĞLANIR (Dalga 1 bitince)
    │   ├─ E: E3,E4,E5 (C13 kapanır) · E6,E7,E13 runner         6-9 gün
-   │   ├─ P: P4 patches · P5 C15(Y-C) · P6 layer registry      5-7 gün
+   │   ├─ P: P4 patches · P5 C15(Y-C durum bildirimi)          4-6 gün
+   │   │      (P6 layer registry → FAZ 1'e ERTELENDİ)
    │   ├─ W: W2 reflektans ölçeği                              2-3 gün
    │   └─ E: E10 yama nesne anahtarı (C16 kapanır)             2-3 gün
    │        ⟵ DEMO BU DALGA BİTİNCE MÜMKÜN
@@ -631,7 +632,13 @@ kısmen karşılanır. (−) C15 "çözüldü" değil "kapsamı daraltılarak ka
 **Not.** ADR-007'ye bu kararı işaret eden bir **yorum notu** eklenir; `end_to_end_workflow.md`
 C15 maddesi "KARAR BEKLİYOR" → "Y-C ile kapatıldı" olarak güncellenir.
 
-**AÇIK NOKTA — Y-C'nin İKİNCİ YARISI TANIMLI DEĞİL (2026-07-30 doğrulama turu).**
+**✅ KAPANDI — Y-C'nin ikinci yarısı FAZ 1'e ertelendi (2026-07-30, seçenek (c) onaylandı).**
+Karar: **katman gösterimi FAZ 0 kapsamından çıkarılmıştır.** Y-C, FAZ 0'da **yalnız P5 durum
+bildirimi** olarak uygulanır; `layer_registry` yazımı (P6) ve gösterim yolu, Y-A ile birlikte
+**FAZ 1'de** tasarlanacaktır. Böylece KR-033 ödeme kapısı ekseni FAZ 0'da hiç açılmaz.
+Aşağıdaki analiz, kararın gerekçesi olarak korunur.
+
+**Gerekçe kaydı — Y-C'nin ikinci yarısı neden tanımlı değildi (2026-07-30 doğrulama turu).**
 Kararın *"kalibrasyon indeks katmanı `layer_registry`'ye ham katman olarak kaydedilir"* yarısı,
 işaret ettiği dosyayla **hiçbir şey teslim etmiyor.** Ölçüldü: `layer_registry.py:109-113`
 `GET /layers` yalnız **katman TANIMLARINI** döndürüyor (`color`, `pattern`, `priority`,
@@ -646,14 +653,14 @@ Katmanın gerçekten gösterilmesi bir **servis yolu** gerektirir ve bu bir ikil
 | **(b)** Kapısız yeni bir yol aç | KR-033 ödeme kapısı yeniden açılır — Y-C'nin tam kaçınmak istediği şey |
 | **(c)** Yalnız durum bildirimi (P5), katman gösterimi FAZ 1'e ertelensin | Sıfır risk; Y-C "durum bildirimi" olarak dar ve dürüst kalır |
 
-**Önerilen: (c).** Gerekçe: kararın kabul edilmiş amacı *"çiftçi uçuştan hemen sonra bir şey
-görsün"*; bunu P5 tek başına karşılıyor. Katman gösterimi, ödeme kapısı ekseni açılmadan
-tasarlanamıyorsa Y-A ile birlikte FAZ 1'e ait bir iştir.
+**SEÇİLEN: (c) — onaylandı 2026-07-30.** Gerekçe: kararın kabul edilmiş amacı *"çiftçi uçuştan
+hemen sonra bir şey görsün"*; bunu **P5 tek başına** karşılıyor. Katman gösterimi ödeme kapısı
+ekseni açılmadan tasarlanamadığı için Y-A ile birlikte **FAZ 1'e** ait bir iştir.
 
-**Bu netleşmeden P6 uygulanmamalıdır** — aksi hâlde "yapıldı" görünen ama çiftçiye hiçbir şey
-göstermeyen bir kayıt kalır (kapanmamış riski kapanmış gösterme sınıfı; bkz. denetim SWE-3).
+**Sonuç:** P6 FAZ 0/Dalga 2'den **çıkarıldı**; "yapıldı görünen ama çiftçiye hiçbir şey
+göstermeyen kayıt" riski (kapanmamış riski kapanmış gösterme sınıfı) bertaraf edildi.
 
-**Etkilenen:** P5, P6 · ADR-007 (yorum notu) · `end_to_end_workflow.md` C15
+**Etkilenen:** P5 (uygulanır) · ~~P6~~ (FAZ 1) · ADR-007 (yorum notu) · `end_to_end_workflow.md` C15
 
 ---
 
@@ -872,7 +879,7 @@ satın alma takvimi
 | Kod | Ne | Statü | Neden önemli |
 |---|---|---|---|
 | **0.a-EK** | Anahtar sahipliği: **platform üretir**, edge'in yolu asla imzalanmaz | ☑ uygulamayı bağlar | `patches.py:165` bugün edge'in yolunu imzalıyor → çapraz-kiracı sızıntı riski |
-| **0.b-AÇIK** | Y-C'nin katman yarısı **tanımsız** — `layer_registry` yalnız tanım döndürüyor | ⏳ **karar bekliyor** | P6 bu hâliyle çiftçiye hiçbir şey göstermez; (c) ertele önerilir |
+| **0.b-EK** | Y-C'nin katman yarısı → **FAZ 1'e ertelendi** (seçenek c) | ☑ **Onaylı 2026-07-30** | FAZ 0'da Y-C = **yalnız P5 durum bildirimi**; P6 kapsam dışı → KR-033 ekseni FAZ 0'da açılmaz |
 | **0.d-EK** | **KİRAZ** sipariş edilebilir ama wire-enum + edge tablosunda yok | ⏳ **karar bekliyor** (ürün) | Sipariş açıkken risk canlı; E8 sırası düzeltildi |
 | **0.g-EK** | "Terra'nın CLI'si yok" **teyitli değil** — E6'nın tasarımı buna dayanıyor | ⏳ açık kalem | DJI'dan yazılı cevap; satın alma yazısına eklenir (ek maliyet yok) |
 | **0.f-düzeltme** | Optik sınır irtifası **37-74 cm** (önce "74 cm-1,5 m" yazıyordu, 2× yüksek) | ☑ düzeltildi | Kararı **güçlendirir**; GSD formülleri bağımsız doğrulandı |
@@ -898,7 +905,7 @@ satın alma takvimi
 
 <!-- 2026-07-30 doğrulama turu — kararları DEĞİŞTİRMEZ, uygulamayı bağlar -->
 | KG-0.a-EK | **Anahtar sahipliği:** nesne anahtarını **platform üretir**; edge'in verdiği yol ASLA imzalanmaz. GET presign'da anahtar DB'den okunur. Gerekçe: `patches.py:165` bugün edge'in göreli yolunu imzalıyor → **çapraz-kiracı sızıntı riski**. Kabul testi: sahte manifestle başka kiracı yolu → 403/deny. | DECIDED | P3, P4, E10 | Uygulama Dalga 1-2 |
-| KG-0.b-AÇIK | **Y-C'nin katman yarısı tanımsız:** `layer_registry.py` yalnız katman TANIMI döndürüyor, çiftçi verisi yok → P6 tek başına hiçbir şey göstermez. Seçenek (a) kapılı yol / (b) kapısız yeni yol (KR-033 açılır) / **(c) önerilen: FAZ 1'e ertele, Y-C yalnız durum bildirimi kalsın.** | **KARAR BEKLİYOR** | P6 | P6 karar öncesi uygulanmaz |
+| KG-0.b-EK | **Y-C'nin katman yarısı FAZ 1'e ertelendi (seçenek c).** `layer_registry.py:109-113` yalnız katman TANIMI döndürüyor (renk/desen/öncelik/bant), göreve ait veri yok → P6 tek başına çiftçiye hiçbir şey göstermez. Gösterim yolu (a) kapılı → "faz dışı" iddiası düşer, (b) kapısız → KR-033 yeniden açılır. FAZ 0'da Y-C = **yalnız P5 durum bildirimi**. | **DECIDED** | P6 (kapsam dışı) | Katman gösterimi Y-A ile FAZ 1'de |
 | KG-0.d-EK | **KİRAZ:** `bookable:True` ama contract wire-enum'da ve edge tablosunda YOK → sipariş edilebiliyor, iş iki yerden düşüyor. E8 sırası: ① KİRAZ kararı (bookable:False **veya** enum+tablo) ② WHEAT ③ SUNFLOWER/OLIVE ertelenebilir (`bookable:False` → zararsız). | **KARAR BEKLİYOR** (ürün) | E8, `crop_type.enum.v1` | Sipariş açıkken risk canlı |
 | KG-0.g-EK | **"Terra'nın CLI'si yok" teyitli değil** — E6'nın tasarımı buna dayanıyor. DJI'dan yazılı cevap (CLI var mı · hangi lisansta · çıktı adları dokümante mi) satın alma sorgusuyla aynı yazıda istenir. Cevaba kadar E6 "klasör izleyici" varsayımıyla tasarlanır (güvenli taraf). | AÇIK KALEM | E6, §7 bulgu 1-3 | Cevap gelmeden E6 kodlanmaz |
 ```
