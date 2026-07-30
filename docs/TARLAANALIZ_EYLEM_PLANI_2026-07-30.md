@@ -185,7 +185,7 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 | **E9** | **Sortie bbox fail-loud doğrulaması** — bbox yoksa `PRIORITIZATION_MIXED_CROP` sessiz çöküşü yerine açık hata | `src/core/services/prioritization/ndvi_prioritizer.py` | C4 |
 | **E10** | Yama görselleri → **nesne anahtarı** (göreli yol yerine), presigned PUT ile yükleme | `src/core/services/pipeline/calibration_pipeline.py:332-336` | C2, E2 |
 | **E11** | **Kare seçici (frame selector)** — EXIF footprint (GPS+yaw+H+GSD) + ODM `shots.geojson` ile işaretli yamayı gören kareleri bul | yeni: `src/core/services/frames/frame_selector.py` | C3, ölçüm #5 |
-| **E12** | `ENABLE_NDVI_PRIORITIZATION` bayrağını aç — **AYRI sürümde**, uzman kapasitesi ölçüldükten sonra | `src/shared/config.py:160`, `.env.example:113` | E4 sonrası |
+| **E12** 🔴 | `ENABLE_NDVI_PRIORITIZATION` bayrağını **AÇ** — ⚠️ **statü değişti (KG-0.b-R):** artık "ertelenebilir" değil, **ÖN RAPOR'un ön koşulu.** Bayrak kapalıyken `priority_zones` **hiç üretilmez** → `analysis_priority_zones` boş → P6/P12 gösterecek bir şey bulamaz → demo çöker. **P9 uyarısı hâlâ geçerli ama ölçek farklı:** kota sıçraması 28.000 dönüm/gün için hesaplanmıştı; **pilotta günde 3-5 tarla** olduğu için uzman yükü ihmal edilebilir. → **Pilotta AÇ**, üretim ölçeğine geçmeden önce kotayı yeniden ölç | `src/shared/config.py:160`, `.env.example:113` | E4 sonrası · **demo öncesi zorunlu** |
 | **E13** | `calibrated_validator` → manifeste **motor adı** + `calibration_tier` (M3M için `RELATIVE`) yazsın | `src/core/services/calibration_gate/calibrated_validator.py` | C1, C6 |
 | **E14** 🔴 | **KALİBRASYON KANITI ÜRETİCİSİ — EN ÖNCELİKLİ İŞ.** `calibration_result` ve `observed_footprint_wkt` **beş yerde tüketiliyor, sıfır yerde üretiliyor**: ① `sync.py:207-255` → `calibration_result.json` **dosyasını** ve **üst düzey** `observed_footprint_wkt`'i şart koşuyor, yoksa HC-05 upload kapısı `FAILED` ② `calibrated_validator.py:114-122` → **manifest alanı** `calibration_result`'ın 4 alt alanını şart koşuyor (`tool_name`, `tool_version`, `observed_footprint_wkt`, `calibration_type` — contract'ta hepsi **required**) ③ `qc_report_writer.py:245-256,341` → coverage'ı bundan hesaplıyor ④ `package_assembler.py:52` → dosyayı paketliyor ⑤ `dataset.py:123-125` → `calibration_result_ref` yoksa CALIBRATED geçişi `ValueError`. **`calibration_pipeline.run()` bunu `calibrated_manifest_path` olarak GİRDİ alıyor** ve docstring'i "upstream'de Pix4Dfields + `calibration_proof_checker` üretir" diyor — ama proof_checker yalnız **karşılaştırıyor**, üretmiyor. → **İki artefakt üretilmeli:** standalone `calibration_result.json` + manifest içi nested alan. `observed_footprint_wkt` ortho GeoTIFF extent'inden hesaplanır (KR-065 **ödeme** girdisi). ⚠️ **Bu iş C13'ten ÖNCE gelir:** boru bağlansa bile HC-05 **M1'in kendi içinde** takılır | yeni `src/core/services/calibration_gate/calibration_result_writer.py` | E6, E13 |
 
@@ -210,10 +210,11 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 | **P3** | Presigned üretimini **ingest anahtarlarına genişlet** + anahtar şeması `{tenant}/{dataset_id}/{raw\|layers\|patches}/{ad}`. ✅ `generate_presigned_url` **zaten var** (`patches.py:165`) → PUT yönü + kapsam kısıtı eklenecek. 🔴 **ANAHTARI PLATFORM ÜRETİR — edge'in verdiği yol ASLA imzalanmaz** (0.a ek şartı). "Edge'in anahtarını doğrula" biçiminde uygulamak YETERSİZDİR | `src/infrastructure/external/storage_adapter.py` | P1 |
 | **P4** | `patches.py` → **object_key zorunlu**; yoksa **açık hata** (bugünkü sessiz 404 yerine). 🔴 **Güvenlik yarısı:** GET presign'da anahtar **DB'den** okunur, istekten/manifestten gelen yol imzalanmaz; kapsam dışı talep `SECURITY.DENY`. **Kabul testi:** sahte manifestle başka kiracının yolu istendiğinde uç 403/deny dönmeli (bugün geçerli URL üretiyor — çapraz-kiracı sızıntı riski) | `src/presentation/api/v1/endpoints/patches.py:151-156,165-175` | C2, E10 |
 | **P5** | **C15 (Y-C):** `DATASET.STATE_TRANSITION → CALIBRATED` üzerinden çiftçiye **durum bildirimi** ("uçuşunuz işlendi, analiz sürüyor"). ⚠️ `results_service_impl` ve `report_phase` **DEĞİŞMEZ** — ADR-007 korunur | `src/infrastructure/messaging/`, `farmer_notifier` | 0.b |
-| ~~**P6**~~ | 🔵 **FAZ 1'E ERTELENDİ — 2026-07-30 kararı (seçenek c).** FAZ 0/Dalga 2 kapsamından **çıkarıldı.** Gerekçe: `layer_registry.py:109-113` yalnız katman **TANIMLARINI** döndürüyor (renk/desen/öncelik/bant) — göreve veya tarlaya ait veri **yok**; bu dosyaya yazmak çiftçiye **hiçbir şey göstermez**. Gerçek gösterim bir **servis yolu** ister ve iki yol da bedelli: (a) kapılı sonuç/tile yolu → *"rapor fazı dışında"* iddiası düşer · (b) kapısız yeni yol → **KR-033 ödeme kapısı yeniden açılır** (Y-C'nin tam kaçındığı şey). KG-0.b'nin amacı (*"çiftçi uçuştan hemen sonra bir şey görsün"*) **P5 tek başına** karşılıyor. → **Katman gösterimi, Y-A ile birlikte FAZ 1'de tasarlanacaktır.** | — (FAZ 1) | — |
+| **P6** 🔴 | **ÇİFTÇİ ÖN RAPOR UCU — yeniden tanımlandı (KG-0.b-R).** ~~layer_registry'ye yazmak~~ **değil**: `analysis_priority_zones`'u çiftçiye açan **okuma ucu**. Döndürür: `geom` (GeoJSON Polygon) + `ndvi_value` + `priority_level` + **presigned `ndvi_overlay` URL'i**. **Kapılar:** ① sahiplik (çiftçi yalnız kendi tarlası) ② **KR-033 ödeme** ③ `report_phase == PRELIMINARY` ④ **tespit/`findings` ASLA** ⑤ KR-071 PII yok. Bugün bu tabloyu yalnız `worker_dispatch_handler` ve `expert_review_prioritization_service` okuyor — çiftçi ucu **yok** | yeni uç (öneri `GET /missions/{id}/preliminary`) + `analysis_priority_zone_repository_impl` | 0.b-R · C13 · E12 |
+| **P12** 🔴 | **PRELIMINARY için ikinci içerik kaynağı.** `results_service_impl.py:227` fazı zaten `PRELIMINARY` veriyor ama içerik **worker sonucundan** geliyor; worker sonucu yokken ÖN RAPOR boş kalır. → Worker sonucu **YOKKEN** öncelik bölgelerinden sun; **geldiğinde** mevcut davranış aynen sürsün. `raw_findings` kırpması (`:247`) **değişmez** | `src/application/services/results_service_impl.py` | 0.b-R · P6 |
 | **P7** | **TKGM feature flag'ini AÇ** — kod hazır (`tkgm_rest_adapter.py`, `tkgm_megsis_wfs_adapter.py`, idari cache, `GET /parcels/lookup|reverse-lookup|validate`, `settings.py:212`). **Yalnız kurumsal protokol geldikten sonra** | `src/infrastructure/config/settings.py:212` | TKGM protokolü |
 | **P8** | `contracts` submodule pin + `CONTRACTS_SHA256.txt` güncelle (her contract turundan sonra) | repo kökü | C8 |
-| **P9** | Uzman kotası uyarısı: E12 ile aynı sürümde açılmasın — `analysis_priority_zones` dolmaya başlayınca kota 1→N sıçrar | `worker_bridge_consumer.py:1085-1112` | E12 |
+| **P9** | **Uzman kotası — ölçek-koşullu uyarı (KG-0.b-R ile revize).** `analysis_priority_zones` dolunca kota 1→N sıçrar. ⚠️ Eski hâli "E12 ile aynı sürümde açılmasın" idi; **E12 artık ÖN RAPOR için zorunlu.** Uzlaşma: **pilotta aç** (günde 3-5 tarla → yük ihmal edilebilir), **üretim ölçeğine geçmeden ÖNCE** gerçek uzman kapasitesini ölç ve kotayı sınırla. Ölçüm sonucu §11'deki S2 bütçesine (B) de girdi olur | `worker_bridge_consumer.py:1085-1112` | E12 · **üretim öncesi kapı** |
 | **P10** | **POLİGON-KMZ çıktısı ekle.** Mevcut generator **waypoint** rotası üretiyor (docstring: "DJI Ground Station veya Litchi"). Haritalama görevinde Pilot 2'ye **waypoint değil poligon** verilmeli — Pilot 2 o zaman bindirme / gimbal −90° / shutter tetiklemesini **kendisi** kurar. Waypoint KMZ'de fotogrametri parametreleri kaybolur | `src/core/domain/services/flight_route_generator.py:331` (`flight_route_to_kmz`) | 0.d |
 | **P11** | *(uzun vade)* **WPML üretimi** — `.kmz` içinde `template.kml` + `waylines.wpml` (DJI Cloud API açık spesifikasyonu). Pilot cihaza dokunmadan görev gönderimi | aynı dosya | P10 |
 
@@ -272,8 +273,10 @@ ADIM 0  KARAR GÜNÜ (7 karar)                                    1 gün, kod yo
    │
    ├─ DALGA 2 — HAT BAĞLANIR (Dalga 1 bitince)
    │   ├─ E: E3,E4,E5 (C13 kapanır) · E6,E7,E13 runner         6-9 gün
-   │   ├─ P: P4 patches · P5 C15(Y-C durum bildirimi)          4-6 gün
-   │   │      (P6 layer registry → FAZ 1'e ERTELENDİ)
+   │   ├─ P: P4 patches · P5 durum bildirimi                   4-6 gün
+   │   ├─ P: 🔴 P6 çiftçi ÖN RAPOR ucu + P12 içerik kaynağı    4-6 gün
+   │   │      + E12 bayrağı AÇ  ⟵ DEMO KRİTİK YOLU (KG-0.b-R)
+   │   │      (E10/C16 ndvi_overlay nesne anahtarı ön koşul)
    │   ├─ W: W2 reflektans ölçeği                              2-3 gün
    │   └─ E: E10 yama nesne anahtarı (C16 kapanır)             2-3 gün
    │        ⟵ DEMO BU DALGA BİTİNCE MÜMKÜN
@@ -286,7 +289,8 @@ ADIM 0  KARAR GÜNÜ (7 karar)                                    1 gün, kod yo
    │   └─ W: W7 veri seti kararı                               karar
    │
    └─ DALGA 4 — AYRI SÜRÜM
-       ├─ E12 NDVI önceliklendirme bayrağı + P9 kota kontrolü  1 gün
+       ├─ P9 kota ölçümü + sınırlama (E12 Dalga 2'de açıldı)   1 gün
+       │     ⟵ ÜRETİM ölçeğine geçiş kapısı, pilot için değil
        └─ P7 TKGM flag (protokol gelince)                      1 gün
 ```
 
@@ -632,11 +636,54 @@ kısmen karşılanır. (−) C15 "çözüldü" değil "kapsamı daraltılarak ka
 **Not.** ADR-007'ye bu kararı işaret eden bir **yorum notu** eklenir; `end_to_end_workflow.md`
 C15 maddesi "KARAR BEKLİYOR" → "Y-C ile kapatıldı" olarak güncellenir.
 
-**✅ KAPANDI — Y-C'nin ikinci yarısı FAZ 1'e ertelendi (2026-07-30, seçenek (c) onaylandı).**
-Karar: **katman gösterimi FAZ 0 kapsamından çıkarılmıştır.** Y-C, FAZ 0'da **yalnız P5 durum
-bildirimi** olarak uygulanır; `layer_registry` yazımı (P6) ve gösterim yolu, Y-A ile birlikte
-**FAZ 1'de** tasarlanacaktır. Böylece KR-033 ödeme kapısı ekseni FAZ 0'da hiç açılmaz.
-Aşağıdaki analiz, kararın gerekçesi olarak korunur.
+> ## 🔄 REVİZE — KG-0.b-R (2026-07-30, Proje Koordinatörü direktifi)
+>
+> **Direktif:** *"Uçuştan sonra hafıza kartı işlenip **ilk bulgular** çiftçiye gösterilsin —
+> özellikle tarlasındaki **sorunlu, kırmızı NDVI bölgeleri**. Sonrasında bunlar **'ÖN RAPOR'**
+> başlığı altında görünsün. Demoda bu kullanılacak."*
+>
+> **Karar: Y-C yerine → Y-D (öncelik-bölgesi kaynaklı ÖN RAPOR).** P6'nın FAZ 1'e ertelenmesi
+> **GERİ ALINDI**; yeniden tanımlanarak FAZ 0 kapsamına alındı. Aşağıdaki (c) kararı yürürlükten
+> kalktı, gerekçe kaydı olarak korunur.
+>
+> ### Neden önceki önerim (Y-C / ertele) fazla temkinliydi — düzeltme
+> O öneriyi verirken tek gösterim yolu olarak `layer_registry`'yi görmüştüm ve haklı olarak
+> "hiçbir şey teslim etmiyor" dedim. **Ama aradığım veri başka bir yerde ve hazır:**
+>
+> | Bulgu | Kanıt |
+> |---|---|
+> | **Sorunlu bölgeler zaten hesaplanıyor** (edge, YZ'den ÖNCE) | `ndvi_prioritizer.py` → `PRIORITIZATION.NDVI_PROCESSED`; `expert_image_renderer.py` → `ndvi_overlay.png` |
+> | **Sözleşmesi var** | `ingest.py:71` `PriorityZoneEntry`: `patch_id` · **`geom` (GeoJSON Polygon, WGS84)** · `priority_level` (EXPRESS/NORMAL) · **`ndvi_value` (-1..1)** · `sampling_reason` · `visualizations{true_color, false_color, **ndvi_overlay**}` |
+> | **Platform tablosu var** | `analysis_priority_zones` (`patch_id`, `dataset_id`, `geom` PostGIS, `priority_level`, `ndvi_value`, `visualization_paths` JSONB) |
+> | **Yazan kod var** | `ingest_service_impl.py:266` |
+> | **`report_phase` zaten PRELIMINARY veriyor** | `results_service_impl.py:227` → `"FULL" if mission_status == "DONE" else "PRELIMINARY"` — **yeni faz GEREKMİYOR** |
+> | **Tespitler zaten kırpılıyor** | `results_service_impl.py:247` → `raw_findings = ... if report_phase == "FULL" else None` |
+>
+> **Yani istediğiniz ÖN RAPOR = `analysis_priority_zones`'un çiftçiye sunulması.**
+> Eksik olan tek şey **okuma yolu** — bugün bu tabloyu yalnız `worker_dispatch_handler`
+> (işlem sırası ipucu) ve `expert_review_prioritization_service` (uzman kuyruğu) okuyor;
+> **çiftçiye açan bir uç yok.**
+>
+> ### Üç eksen neden yeniden açılmıyor
+> | Eksen | Durum |
+> |---|---|
+> | **KR-019** (uzman konsensüs kapısı) | ✅ Korunur — öncelik bölgeleri **tespit içermez**; yalnız NDVI değeri + poligon. ADR-007 §1'in "ön rapor tespit taşımaz" şartı sağlanıyor |
+> | **KR-033** (ödeme kapısı) | ✅ Korunur — ÖN RAPOR **ödeme-kapılı kalır.** ADR-007 §4 zaten *"ön rapor ücretsiz teaser değildir; indeks katmanı gerçek üründür"* diyor |
+> | **KR-025** (reçete yok) | ✅ Korunur — NDVI bölgesi bir **gözlem**, ilaçlama/tedavi kararı değil |
+> | **ADR-007 §2** ("yeni mission state EKLENMEZ") | ✅ Korunur — **yeni state de yeni faz da eklenmiyor**; mevcut PRELIMINARY fazına **yeni bir içerik kaynağı** bağlanıyor |
+>
+> **Sonuç:** Bu, Y-A değil. ADR-007'yi değiştirmiyor, üç ADR'yi açmıyor. Bu yüzden ADR-007'ye
+> yazılacak yorum notu **Y-D'yi** anlatacak biçimde güncellenir.
+>
+> **Yeni/değişen iş kalemleri:** **P6** (yeniden tanımlandı) · **P12** (yeni) · **E12** (sıra revize)
+> — bkz. §3.4 ve §11.5 altındaki notlar.
+
+---
+
+**Aşağıdaki (c) kararı 2026-07-30'da KG-0.b-R ile YÜRÜRLÜKTEN KALDIRILDI — gerekçe kaydı olarak korunur.**
+
+~~**✅ KAPANDI — Y-C'nin ikinci yarısı FAZ 1'e ertelendi (seçenek (c) onaylandı).**~~
+~~Katman gösterimi FAZ 0 kapsamından çıkarılmıştır; Y-C yalnız P5 durum bildirimi olarak uygulanır.~~
 
 **Gerekçe kaydı — Y-C'nin ikinci yarısı neden tanımlı değildi (2026-07-30 doğrulama turu).**
 Kararın *"kalibrasyon indeks katmanı `layer_registry`'ye ham katman olarak kaydedilir"* yarısı,
@@ -653,14 +700,19 @@ Katmanın gerçekten gösterilmesi bir **servis yolu** gerektirir ve bu bir ikil
 | **(b)** Kapısız yeni bir yol aç | KR-033 ödeme kapısı yeniden açılır — Y-C'nin tam kaçınmak istediği şey |
 | **(c)** Yalnız durum bildirimi (P5), katman gösterimi FAZ 1'e ertelensin | Sıfır risk; Y-C "durum bildirimi" olarak dar ve dürüst kalır |
 
-**SEÇİLEN: (c) — onaylandı 2026-07-30.** Gerekçe: kararın kabul edilmiş amacı *"çiftçi uçuştan
-hemen sonra bir şey görsün"*; bunu **P5 tek başına** karşılıyor. Katman gösterimi ödeme kapısı
-ekseni açılmadan tasarlanamadığı için Y-A ile birlikte **FAZ 1'e** ait bir iştir.
+~~**SEÇİLEN: (c).**~~ ⟵ **YÜRÜRLÜKTEN KALKTI (KG-0.b-R).** O turda üç seçeneğin hepsi
+`layer_registry` üzerinden düşünülmüştü; **dördüncü ve doğru yol (`analysis_priority_zones`)
+o turda bulunamamıştı.** Tablo, teşhisin nasıl daraldığının kaydı olarak korunur.
 
-**Sonuç:** P6 FAZ 0/Dalga 2'den **çıkarıldı**; "yapıldı görünen ama çiftçiye hiçbir şey
-göstermeyen kayıt" riski (kapanmamış riski kapanmış gösterme sınıfı) bertaraf edildi.
+--- *(yürürlükteki karar kaydının devamı)* ---
 
-**Etkilenen:** P5 (uygulanır) · ~~P6~~ (FAZ 1) · ADR-007 (yorum notu) · `end_to_end_workflow.md` C15
+**YÜRÜRLÜKTEKİ SEÇİM: (d) — `analysis_priority_zones` kaynaklı ÖN RAPOR (Y-D).**
+Çiftçi, kalibrasyondan sonra tarlasındaki **sorunlu kırmızı NDVI bölgelerini** "ÖN RAPOR"
+başlığı altında görür. Yeni faz/mission state eklenmez; mevcut PRELIMINARY fazına ikinci bir
+içerik kaynağı bağlanır. Ayrıntı ve kanıt: yukarıdaki **KG-0.b-R** bloğu.
+
+**Etkilenen:** P5 · **P6 (yeniden tanım)** · **P12 (yeni)** · **E12 (aç)** ·
+ADR-007 (yorum notu — Y-D'yi anlatır) · `end_to_end_workflow.md` C15
 
 ---
 
@@ -879,7 +931,7 @@ satın alma takvimi
 | Kod | Ne | Statü | Neden önemli |
 |---|---|---|---|
 | **0.a-EK** | Anahtar sahipliği: **platform üretir**, edge'in yolu asla imzalanmaz | ☑ uygulamayı bağlar | `patches.py:165` bugün edge'in yolunu imzalıyor → çapraz-kiracı sızıntı riski |
-| **0.b-EK** | Y-C'nin katman yarısı → **FAZ 1'e ertelendi** (seçenek c) | ☑ **Onaylı 2026-07-30** | FAZ 0'da Y-C = **yalnız P5 durum bildirimi**; P6 kapsam dışı → KR-033 ekseni FAZ 0'da açılmaz |
+| **0.b-R** 🔄 | **REVİZE:** ÖN RAPOR = `analysis_priority_zones`'un çiftçiye sunulması (**Y-D**). ~~Y-C/ertele~~ yürürlükten kalktı | ☑ **Onaylı 2026-07-30** (koordinatör direktifi) | Çiftçi kalibrasyondan sonra **sorunlu kırmızı NDVI bölgelerini** görür. Yeni faz/state **yok**; PRELIMINARY'ye yeni içerik kaynağı. KR-019/033/025 ve ADR-007 §2 **korunur**. Yeni: **P6** (yeniden tanım) + **P12** + **E12 açılır** |
 | **0.d-EK** | **KİRAZ** sipariş edilebilir ama wire-enum + edge tablosunda yok | ⏳ **karar bekliyor** (ürün) | Sipariş açıkken risk canlı; E8 sırası düzeltildi |
 | **0.g-EK** | "Terra'nın CLI'si yok" **teyitli değil** — E6'nın tasarımı buna dayanıyor | ⏳ açık kalem | DJI'dan yazılı cevap; satın alma yazısına eklenir (ek maliyet yok) |
 | **0.f-düzeltme** | Optik sınır irtifası **37-74 cm** (önce "74 cm-1,5 m" yazıyordu, 2× yüksek) | ☑ düzeltildi | Kararı **güçlendirir**; GSD formülleri bağımsız doğrulandı |
@@ -905,7 +957,7 @@ satın alma takvimi
 
 <!-- 2026-07-30 doğrulama turu — kararları DEĞİŞTİRMEZ, uygulamayı bağlar -->
 | KG-0.a-EK | **Anahtar sahipliği:** nesne anahtarını **platform üretir**; edge'in verdiği yol ASLA imzalanmaz. GET presign'da anahtar DB'den okunur. Gerekçe: `patches.py:165` bugün edge'in göreli yolunu imzalıyor → **çapraz-kiracı sızıntı riski**. Kabul testi: sahte manifestle başka kiracı yolu → 403/deny. | DECIDED | P3, P4, E10 | Uygulama Dalga 1-2 |
-| KG-0.b-EK | **Y-C'nin katman yarısı FAZ 1'e ertelendi (seçenek c).** `layer_registry.py:109-113` yalnız katman TANIMI döndürüyor (renk/desen/öncelik/bant), göreve ait veri yok → P6 tek başına çiftçiye hiçbir şey göstermez. Gösterim yolu (a) kapılı → "faz dışı" iddiası düşer, (b) kapısız → KR-033 yeniden açılır. FAZ 0'da Y-C = **yalnız P5 durum bildirimi**. | **DECIDED** | P6 (kapsam dışı) | Katman gösterimi Y-A ile FAZ 1'de |
+| KG-0.b-R | **REVİZE (koordinatör direktifi):** ÖN RAPOR = **`analysis_priority_zones`'un çiftçiye sunulması** (Y-D). Çiftçi, kalibrasyondan sonra tarlasındaki **sorunlu kırmızı NDVI bölgelerini** (`geom` + `ndvi_value` + `ndvi_overlay`) "ÖN RAPOR" başlığı altında görür. **Yeni faz/mission state EKLENMEZ** — `results_service_impl.py:227` zaten `PRELIMINARY` türetiyor; eklenen yalnız **içerik kaynağı**. KR-019 (tespit yok), KR-033 (ödeme kapılı), KR-025 (reçete yok), ADR-007 §2 **korunur**. Önceki "FAZ 1'e ertele" kararı yürürlükten kalktı. | **DECIDED** | P6 (yeniden tanım), P12 (yeni), E12 (aç) | ADR-007 yorum notu Y-D'yi anlatacak; demo kritik yolu |
 | KG-0.d-EK | **KİRAZ:** `bookable:True` ama contract wire-enum'da ve edge tablosunda YOK → sipariş edilebiliyor, iş iki yerden düşüyor. E8 sırası: ① KİRAZ kararı (bookable:False **veya** enum+tablo) ② WHEAT ③ SUNFLOWER/OLIVE ertelenebilir (`bookable:False` → zararsız). | **KARAR BEKLİYOR** (ürün) | E8, `crop_type.enum.v1` | Sipariş açıkken risk canlı |
 | KG-0.g-EK | **"Terra'nın CLI'si yok" teyitli değil** — E6'nın tasarımı buna dayanıyor. DJI'dan yazılı cevap (CLI var mı · hangi lisansta · çıktı adları dokümante mi) satın alma sorgusuyla aynı yazıda istenir. Cevaba kadar E6 "klasör izleyici" varsayımıyla tasarlanır (güvenli taraf). | AÇIK KALEM | E6, §7 bulgu 1-3 | Cevap gelmeden E6 kodlanmaz |
 ```
