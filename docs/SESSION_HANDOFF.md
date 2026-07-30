@@ -21,12 +21,39 @@ işleri, çapraz analiz ve teknik referans orada. **Sonraki oturum önce onu oku
 | Kod | Karar | Contract etkisi |
 |---|---|---|
 | KG-0.a | Edge→Platform taşıma: **manifest + presigned PUT** (platform ikili gövde ucu açmaz). **Önkoşul: E14** | C1/C2/C3 |
-| KG-0.b | ÖN RAPOR: **ADR-007 değişmez**, direktif **Y-C** (rapor değil durum bildirimi) ile karşılanır | — |
+| KG-0.b**-R** 🔄 | ÖN RAPOR: **ADR-007 değişmez**, direktif **Y-D** ile karşılanır — çiftçi kalibrasyondan sonra **`analysis_priority_zones`**'tan tarlasındaki **sorunlu kırmızı NDVI bölgelerini** görür (`geom` + `ndvi_value` + `ndvi_overlay`). *(Oturum içinde revize: önceki Y-C/"durum bildirimi + ertele" yürürlükten kalktı)* | — (şema değişmez) |
 | KG-0.c | Ham kareler **bütün gitmez** — yalnız işaretli yamaları gören kareler | C3 |
 | KG-0.d | Pilot **ÜZÜM**, demo hikâyesi **ANTEP FISTIĞI** (kaynak: `crop_readiness.json`) | — |
 | KG-0.e | **dev-station** profili (M1+M2 tek makinede; M1/M2 alınmadı) | — |
 | KG-0.f | YZ hedefi "böcek türü/sayısı" **DEĞİL** → "**hasar izi sınıfı + şiddeti**" (optik sınır) | `analysis_type.enum` metadata notu |
 | KG-0.g | FAZ 0 **sıfır yazılım maliyeti**; eğitim/araştırma lisansı sorgusu + kamu satın alma | — |
+
+### 🔴 DEMO KRİTİK YOLU (KG-0.b-R) — ürün açısından en acil zincir
+
+Çiftçinin **kırmızı NDVI bölgelerini** görmesi için 6 adımın **hepsi** gerekli; biri eksikse ekran boş kalır:
+
+`① C2 patches[].object_key şeması → ② E10 ndvi_overlay gerçek nesne anahtarı → ③ E12 bayrağı AÇ → ④ P4 doğrulama → ⑤ P6 çiftçi okuma ucu → ⑥ P12 PRELIMINARY içerik kaynağı`
+
+**②'siz görsel yok · ③'süz bölge yok · ⑤/⑥'sız ekran yok.** Ön koşul: C13 tesisatı + E14.
+
+**Neden yeni faz gerekmiyor (koddan doğrulandı):** `results_service_impl.py:227` zaten
+`"FULL" if mission_status == "DONE" else "PRELIMINARY"` türetiyor; `:247` findings'i PRELIMINARY'de
+zaten kırpıyor. Eklenen yalnız **içerik kaynağı** (P12) + **çiftçi okuma ucu** (P6).
+KR-019 (tespit yok) · KR-033 (ödeme kapılı kalır) · KR-025 (reçete yok) · ADR-007 §2 (yeni state yok) **korunur**.
+
+### ⚠️ ÖNCEKİ ANALİZDE DÜZELTİLEN HATA — sonraki oturum bunu bilmeli
+
+`end_to_end_workflow.md` C15 maddesindeki *"Pix4D çıktısını platforma taşıyan bir yol yok"*
+ifadesi **YANLIŞTIR** (bu oturumda doğrulanmadan devralınmış, sonra düzeltilmiştir):
+
+| | Gerçek |
+|---|---|
+| **Türetilmiş ürün** (öncelik bölgeleri + görseller) | Yol **TANIMLI ama BAĞLI DEĞİL** — `ingest.py:71` `PriorityZoneEntry` intake manifestinde taşınıyor, `ingest_service_impl.py:266` `analysis_priority_zones`'a yazıyor; eksik olan `submit_manifest` çağrısı (C13). **Tesisat eksikliği, tasarım boşluğu değil** |
+| **Ham rasterlar** (ortho/ndvi .tif) | İfade burada **doğru** — yol yok → C1 `index_layers[]` |
+
+**Çelişmeyen kısım:** `worker_bridge_consumer.py:1565` `_emit_preliminary_ready` bir **bildirimdir**,
+worker sonucunda tetiklenir (ADR-007 §5). Y-D bunu değiştirmez; yanına kalibrasyon-sonrası
+**okuma yolu** ekler. → `end_to_end_workflow.md` C15/C16 güncelleme metinleri eylem planı §9.1-B'de hazır.
 
 ### ⚠️ CONTRACT TARAFINDA BEKLEYEN — sonraki oturumun ilk işi
 | # | İş | Neden kritik |
@@ -49,6 +76,20 @@ işleri, çapraz analiz ve teknik referans orada. **Sonraki oturum önce onu oku
 - `aktif_ogrenme_*.md` (2 dosya) proje kökünden → **`tarlaanaliz-worker/denetim/`** taşındı
   (sürüm kontrolüne alındı; onlara atıf yapan `audit_escalation_reason_devir_spec` ile aynı dizin).
 - Eylem planı proje kökünden → **`tarlaanaliz-contract/docs/`** taşındı (kök artık temiz).
+
+### 📌 Sonraki oturum — önerilen sıra
+1. **`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md`'yi oku** (tek eylem kaynağı).
+2. **Contract turu:** AL-C1 + AL-C2 + C1/C2/C3 + KG-0.f metadata notu → **tek sürümde**, sonra C8 töreni
+   (annotated tag + `pin_version.py` + 3 repo pin).
+3. **Demo kritik yolunu** paralel başlat (yukarıdaki 6 adım) — ürün açısından en acil zincir.
+4. **E14 (kalibrasyon kanıtı üreticisi) C13'ten ÖNCE** — yoksa hat bağlansa bile HC-05 M1 içinde durur.
+5. `end_to_end_workflow.md` C13/C15/C16 + `open_items_decisions_2026-06.md` kayıtlarını işle
+   (metinler eylem planı §9.1'de kopyala-yapıştır hazır).
+
+### 🟡 Açık kalan tek ürün kararı
+**KİRAZ:** `crop_readiness.json` → `bookable: True`, ama `crop_type.enum.v1` (8 ürün) **ve** edge
+eşik/fenoloji tablosunda (5 ürün) **YOK** → sipariş edilebiliyor, iş iki yerden düşüyor.
+Ya `bookable: False` ya enum + tablo eklenmeli. Detay: eylem planı KG-0.d-EK.
 
 ---
 
