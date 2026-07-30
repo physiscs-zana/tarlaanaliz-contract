@@ -4,11 +4,55 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-07-12
+**Son güncelleme:** 2026-07-30
 
 ---
 
-## 0. EN GÜNCEL OTURUM (2026-07-12) — 18-Ajan Bağımsız Denetim + v7.0.1 PATCH
+## 0. EN GÜNCEL OTURUM (2026-07-30) — Fotogrametri motor kararı + Karar Günü (7 karar) + tek eylem planı
+
+**İstek:** DJI Terra / PIX4Dfields / Agisoft Metashape karşılaştırması → demo+pilot planı →
+tüm işlerin **tek dosyada** toplanması → Karar Günü kararlarının onaylanması.
+
+**Ana çıktı:** `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` — **bundan sonraki tek eylem
+kaynağı.** Contract/edge/worker/platform iş listeleri, 7 onaylı karar, aktif öğrenme açık
+işleri, çapraz analiz ve teknik referans orada. **Sonraki oturum önce onu okur.**
+
+### Bu oturumda ALINAN 7 KARAR (KG-0.a … KG-0.g · onaylı 2026-07-30)
+| Kod | Karar | Contract etkisi |
+|---|---|---|
+| KG-0.a | Edge→Platform taşıma: **manifest + presigned PUT** (platform ikili gövde ucu açmaz). **Önkoşul: E14** | C1/C2/C3 |
+| KG-0.b | ÖN RAPOR: **ADR-007 değişmez**, direktif **Y-C** (rapor değil durum bildirimi) ile karşılanır | — |
+| KG-0.c | Ham kareler **bütün gitmez** — yalnız işaretli yamaları gören kareler | C3 |
+| KG-0.d | Pilot **ÜZÜM**, demo hikâyesi **ANTEP FISTIĞI** (kaynak: `crop_readiness.json`) | — |
+| KG-0.e | **dev-station** profili (M1+M2 tek makinede; M1/M2 alınmadı) | — |
+| KG-0.f | YZ hedefi "böcek türü/sayısı" **DEĞİL** → "**hasar izi sınıfı + şiddeti**" (optik sınır) | `analysis_type.enum` metadata notu |
+| KG-0.g | FAZ 0 **sıfır yazılım maliyeti**; eğitim/araştırma lisansı sorgusu + kamu satın alma | — |
+
+### ⚠️ CONTRACT TARAFINDA BEKLEYEN — sonraki oturumun ilk işi
+| # | İş | Neden kritik |
+|---|---|---|
+| **AL-C1** | `expert_review_queue.v1` → `escalation_reason`'a **additive `AUDIT_SAMPLE`** | Doğrulandı: kanonik + worker vendored kopyada **tam 6 değer**. i.i.d. denetim tile'ını taşıyacak neden **yok**; güven-temelli neden altında yollamak **yansızlığı bozar**. Worker tek taraflı ekleyemez (§2.1) |
+| **AL-C2** | `expert_review_queue.v1` → `audit_sample: bool` + `audit_stratum: string` | `audit_stratum` **platform-otoriter eksende** (crop×layer×fenoloji) olmalı |
+| **AL-P1** | *(platform)* Portal **anti-anchoring**: denetim tile'ında uzmana tahmin/güven **gösterilmez** | Görürse etiket modele demirlenir → **tüm ölçüm temeli geçersiz** |
+| **C1/C2/C3** | `calibrated_dataset_manifest.v1` → `index_layers[]`, `patches[].object_key`, `raw_frames[]` | KG-0.a/0.c uygulaması |
+| **KG-0.f** | `analysis_type.enum.v1.json` metadata: `BENEFICIAL` + `THERMAL_STRESS` "üretilemez" notu | M3M'de termal bant yok; BENEFICIAL için model yok |
+
+**Kaynak devir spesi:** `tarlaanaliz-worker/denetim/audit_escalation_reason_devir_spec_2026_07_19.md`
+(worker'ın karar-hazır devri — **platform seçer, worker uydurmaz**).
+⚠️ AL-C1/C2 + C1/C2/C3 **aynı sürüm turunda** birleştirilmeli (tek C8 tören maliyeti).
+
+### Doğrulama (bu oturumda geçti)
+`python tools/check_no_egeanaliz.py` → OK · `python tools/validate.py` → **0 hata, ALL VALIDATIONS PASSED**
+*(Not: bu oturumda şema/enum **değiştirilmedi** — yalnız `docs/` altına iki doküman eklendi.)*
+
+### Depo hijyeni
+- `aktif_ogrenme_*.md` (2 dosya) proje kökünden → **`tarlaanaliz-worker/denetim/`** taşındı
+  (sürüm kontrolüne alındı; onlara atıf yapan `audit_escalation_reason_devir_spec` ile aynı dizin).
+- Eylem planı proje kökünden → **`tarlaanaliz-contract/docs/`** taşındı (kök artık temiz).
+
+---
+
+## 0.0. Önceki oturum (2026-07-12) — 18-Ajan Bağımsız Denetim + v7.0.1 PATCH
 
 **İstek:** Bu oturumda yapılan tüm contract değişikliklerini (6.2.0 `bandRequirements`/deprecation +
 7.0.0 `phenology_stage` rename) 6 kıdemli mühendislik perspektifinden (SW/QA/Pentest/SDLC/ML/DL)
