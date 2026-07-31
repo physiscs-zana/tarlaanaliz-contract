@@ -55,6 +55,26 @@ ifadesi **YANLIŞTIR** (bu oturumda doğrulanmadan devralınmış, sonra düzelt
 worker sonucunda tetiklenir (ADR-007 §5). Y-D bunu değiştirmez; yanına kalibrasyon-sonrası
 **okuma yolu** ekler. → `end_to_end_workflow.md` C15/C16 güncelleme metinleri eylem planı §9.1-B'de hazır.
 
+### 💰 MOTOR KARARI — demo ve 1 aylık pilot için: **hiçbir şey satın alınmayacak** (§12)
+
+**Demo + 1 aylık pilot = 0 TL.** Elinizdeki **DJI Terra hediyesi** (M3M kutusundan, 3 ay,
+**fotoğraf sınırı YOK**) + **ODM** (ücretsiz, CLI'li, otomasyon kanıtı) ikisini de karşılıyor.
+Üretim motoru kararı **pilotun ölçümüne** bırakıldı — tahmine değil.
+
+| Bulgu | Sonuç |
+|---|---|
+| 🔴 **Terra EDUCATION 500 fotoğrafla sınırlı** (DJI resmi: *"reconstruction of 500+ photos is not supported"*) | ~€2.976'lık Terra EDU **ALINMAYACAK** — 50 ha tek tarla 3.635 dosya üretiyor |
+| ✅ Terra **Agriculture**: foto sınırı yok, 2D Multispectral dahil, 3 cihaz, **$300/yıl** | Hediye bitince tek makul satın alma |
+| 🟢 Eğitim lisansları ucuz: **Metashape Pro $549 kalıcı** · **PIX4Dfields $650/yıl** | ⚠️ Uygunluk farklı: Pix4D *"research institutes"* **açıkça sayıyor**; Agisoft yalnız *"accredited educational institutions"* — araştırma enstitüsü girmeyebilir |
+| 🔴 **Eğitim lisansı = ticari kullanım YASAK** (her iki EULA; "materials created with it" dahil) | Faz planında **gelir kapısı** var → EDU ile kurulan hat paraya dönerse **ihlal**. ODM'de (AGPL) bu kısıt yok |
+| 📏 Ölçülmüş referans (Pix4D resmi vaka): M3M + 50 ha, 90 m → 727 RGB + 2.908 ÇS = **34,1 GB**; RGB 4:30 / ÇS 6:54 | Depolama tahminimizi doğruluyor: ölçülen **46,9 MB/tetik** vs tahmin 51 (%9 sapma) |
+| 🔍 **Terra çıktısında filigran?** Hiçbir kaynak bildirmiyor (DJI deneme kısıtları listesinde de yok), ama DJI'ın açık beyanı da yok | **İlk uçuşta doğrula** (ölçüm #6): `.tif`'i QGIS'te aç + `gdalinfo`. Kalite raporunda logo **normaldir** — demo o raporu göstermiyor. Filigran çıkarsa görseli **ODM ortosundan** üret |
+
+**Pilotun ölçeceği 4 şey üretim motorunu belirleyecek:** ① ODM M3M bant hizalaması ② Terra-ODM
+NDVI farkı ③ dk/ha + tepe RAM (32 GB'da) ④ gerçek GB/dönüm.
+**Karar ağacı:** ODM çalıştı → ücretsiz kal (~$300/yıl Terra) · ODM çalışmadı → Metashape ·
+zonasyon/VRA **ürün** olacaksa → Fields. Tam gerekçe ve kaynaklar: eylem planı **§12**.
+
 ### ⚠️ CONTRACT TARAFINDA BEKLEYEN — sonraki oturumun ilk işi
 | # | İş | Neden kritik |
 |---|---|---|

@@ -150,6 +150,9 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 4. **M3M ham kare XMP'sinde** `SensorGain`, `ExposureTime`, `Irradiance` ve **vinyet parametreleri**
    gerçekten var mı (§3-W1'in ön koşulu)
 5. **ODM'nin M3M bant hizalaması** — topluluk kayması bildiriyor; sizde de var mı
+6. **Terra çıktısında filigran/logo var mı** — `.tif`'i QGIS'te aç + `gdalinfo` metadata.
+   Hiçbir kaynak filigran bildirmiyor ama DJI'ın açık beyanı da yok (§12.6). Filigran
+   çıkarsa demo görselini **ODM ortosundan** üretin
 
 ---
 
@@ -1401,7 +1404,44 @@ PİLOT SONU
            ticari $1.990/yıl. ⚠️ CLI yok — insan-döngüsünde kalır
 ```
 
-## 12.6 Tek cümlelik cevap
+## 12.6 Terra çıktılarında DJI logosu / filigran var mı? — **kanıt taraması**
+
+**Kısa cevap: Raster çıktılarda (GeoTIFF ortho/DSM/indeks) filigran veya logo bildiren
+hiçbir kaynak yok. Ama DJI'ın "filigran yoktur" diyen açık bir beyanı da yok.**
+Aşağıda kanıtın tamamı — doğrudan teyit değil, **güçlü dolaylı kanıt.**
+
+### Filigran OLMADIĞINA işaret eden 5 kanıt
+
+| # | Kanıt | Kaynak |
+|---|---|---|
+| 1 | **DJI deneme sürümü kısıtlarını tek tek sayıyor** — 500 fotoğraf · LiDAR 8 GB · 1 ay · tek bilgisayar. **Filigran bu listede YOK.** DJI kısıtları açıkça saydığı için, olsaydı burada olurdu | DJI Terra FAQ (resmi) |
+| 2 | **Resmi çıktı dokümanı** (dizin yapısı + format listesi: DOM/DSM GeoTIFF, tek-bant stitched, 5 indeks, LAS/LAZ, tiles) **filigran/marka hiç geçmiyor** | DJI "2D Maps & 3D Models Results and Contents" (resmi) |
+| 3 | **DJI Kullanım Koşulları çıktı üzerinde marka/atıf ZORUNLULUĞU getirmiyor**; yerel üretilen çıktılar üzerinde DJI mülkiyet iddiası da yok | dji.com/terms |
+| 4 | Çıktılar **standart GeoTIFF/LAS/DXF** — QGIS/ArcGIS'te analiz için tüketiliyor. Filigran bu analitik amacı bozardı | DJI + üçüncü taraf dokümanları |
+| 5 | Kullanıcı forumlarında/topluluklarda **filigran şikâyeti bulunamadı** (arama yapıldı) | topluluk taraması |
+
+### DJI markası taşıyan tek yer: **kalite raporu**
+
+Terra bir **"Quality Report" PDF** üretiyor (görüntü sayısı, kamera kalibrasyon doğruluğu,
+üretim süresi vb.). Bu **DJI'ın kendi ürettiği bir belge** — marka taşıması doğaldır.
+⚠️ **Ama demonuz bu raporu göstermiyor.** Demo akışı: Terra GeoTIFF → sizin
+`ndvi_prioritizer`'ınız → sizin ÖN RAPOR ekranınız. **Terra'nın raporu hiç görünmüyor.**
+
+### ⚠️ Doğrulanamayan kısım — 10 dakikalık kesin test
+
+DJI'ın "çıktılarda filigran yoktur" diyen **açık bir beyanı yok**; yukarıdaki kanıt
+*yokluk kanıtı + dolaylı göstergeler*. Terra 3 ay ücretsiz elinizde olduğu için
+**kesin testi kendiniz yapın (ölçüm #6, §2.4):**
+
+1. Küçük bir set işleyin (ör. 60-100 görüntü)
+2. Çıkan `.tif`'i **QGIS'te açın**, tam yakınlaştırın, köşeleri ve kenarları kontrol edin
+3. `gdalinfo` ile metadata'ya bakın (marka/creator alanı var mı)
+4. Kalite raporunu ayrıca açın — orada logo **beklenen** davranıştır, sorun değil
+
+**Yedek garanti:** ODM açık kaynak; çıktısında marka **yapısal olarak yok.** Filigran
+çıkarsa demo görselini ODM ortosundan üretirsiniz — zaten ikinci motor olarak koşacak.
+
+## 12.7 Tek cümlelik cevap
 
 **Demo ve 1 aylık pilot için üçünden hiçbirini satın almayın.** Elinizdeki **Terra hediyesi
 (3 ay, sınırsız fotoğraf)** + **ODM (ücretsiz, CLI'li)** ikilisi her ikisini de tam karşılıyor
