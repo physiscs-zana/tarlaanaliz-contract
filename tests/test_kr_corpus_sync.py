@@ -42,9 +42,24 @@ class TestTargetsAreDeclaredWithReasons:
         repos = {t.repo for t in _sync.TARGETS}
         assert "tarlaanaliz-worker" in repos and "tarlaanaliz-platform" in repos
 
-    def test_both_corpus_files_are_covered(self) -> None:
+    def test_only_the_real_copy_target_is_copied(self) -> None:
+        """1b: `kr_registry.md` KOPYA HEDEFİ DEĞİLDİR — o bir yerel render.
+
+        İlk tasarım onu kopya sayıyordu; gerçek depolarda ölçüldü ki kardeş dosyalar
+        aynı KR'leri farklı biçimde anlatan AYRI dokümanlar (platform 143, worker 313
+        benzersiz satır). Kopya listesinde kalması, kör kopyalamayı tekrar davet ederdi.
+        """
         sources = {t.source for t in _sync.TARGETS}
-        assert sources == {"docs/TARLAANALIZ_SSOT_v1_2_0.txt", "ssot/kr_registry.md"}
+        assert sources == {"docs/TARLAANALIZ_SSOT_v1_2_0.txt"}, (
+            f"kopya hedefleri değişmiş: {sources}. `kr_registry.md` geri eklenmişse, "
+            "kardeş depoların yerel içeriği ezilir."
+        )
+
+    def test_local_renderings_are_pointer_checked(self) -> None:
+        """Yerel render'lar kopyalanmaz ama BAŞIBOŞ da bırakılmaz: işaretçi taşımalı."""
+        repos = {repo for repo, _ in _sync.POINTER_TARGETS}
+        assert repos == {"tarlaanaliz-platform", "tarlaanaliz-worker"}
+        assert "KANONİK" in _sync.POINTER_MARK
 
     def test_sources_exist_in_this_repo(self) -> None:
         for target in _sync.TARGETS:

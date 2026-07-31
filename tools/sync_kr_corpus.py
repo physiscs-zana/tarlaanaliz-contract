@@ -56,12 +56,29 @@ TARGETS: tuple[Target, ...] = (
            "Platform KR-093/KR-019/KR-033'ü UYGULAR; normatif metni görmek zorundadır."),
     Target("docs/TARLAANALIZ_SSOT_v1_2_0.txt", "tarlaanaliz-worker",
            "docs/TARLAANALIZ_SSOT_v1_2_0.txt",
-           "Worker KR-018/KR-070/KR-072 uygular; bugün korpusu HİÇ taşımıyor (ölçüldü)."),
-    Target("ssot/kr_registry.md", "tarlaanaliz-platform", "docs/kr/kr_registry.md",
-           "Platform'un mevcut kopyası bayat (KR-093 yok)."),
-    Target("ssot/kr_registry.md", "tarlaanaliz-worker", "docs/reference/kr_registry.md",
-           "Worker'ın mevcut kopyası bayat (936 satır, KR-093 yok)."),
+           "Worker KR-018/KR-070/KR-072 uygular; korpusu 2026-07-31'e dek HİÇ taşımıyordu."),
 )
+
+#: 🔄 1b (2026-07-31) — `kr_registry.md` KOPYA HEDEFİ OLMAKTAN ÇIKARILDI.
+#:
+#: İlk tasarımda kardeş depoların `kr_registry.md` dosyaları "bayat kopya" sayılıyordu.
+#: `--apply` gerçek depolarda koşturulunca ölçüldü: DEĞİLLER. Ayrışan içerik incelendiğinde
+#: görüldü ki bu dosyalar aynı KR'leri **farklı BİÇİMDE** anlatan YEREL RENDER'lardır:
+#:   platform → `**Başlık:** / **Gerekçe:** / **Applies to:**` biçimi, 23 KR'de yerel metin
+#:   worker   → `**Normatif özet:**` biçimi, 35 KR'de yerel özet + sürüm/senkron notları
+#: contract'ın registry'si ise 8 bölümlü şablon kullanır. Yani üçü aynı dosyanın kopyaları
+#: değil, üç ayrı DOKÜMAN.
+#:
+#: Birleştirme (1b) bu yüzden "kopyala" değil "SINIFLANDIR" oldu:
+#:   * Kanonik KR metni = `docs/TARLAANALIZ_SSOT_v1_2_0.txt` (ikisine de senkronlandı ✅)
+#:   * Kardeş `kr_registry.md` = YEREL RENDER; başına kanonik kaynağa işaretçi konur ve
+#:     çelişkide kanonik metin kazanır. İçerik KORUNUR (kimse veri kaybetmez).
+#: Aşağıdaki kontrol, o işaretçinin varlığını ölçer (kopya eşitliği DEĞİL).
+POINTER_TARGETS: tuple[tuple[str, str], ...] = (
+    ("tarlaanaliz-platform", "docs/kr/kr_registry.md"),
+    ("tarlaanaliz-worker", "docs/reference/kr_registry.md"),
+)
+POINTER_MARK = "KANONİK KR METNİ BURADA DEĞİL"
 
 
 def _normalized_hash(path: Path) -> str:
@@ -120,6 +137,24 @@ def survey() -> List[Dict[str, object]]:
         else:
             row["state"] = "IN_SYNC"
         rows.append(row)
+
+    for repo, destination in POINTER_TARGETS:
+        path = WORKSPACE / repo / destination
+        if not (WORKSPACE / repo).exists():
+            state = "REPO_ABSENT"
+        elif not path.exists():
+            state = "MISSING"
+        elif POINTER_MARK in path.read_text(encoding="utf-8", errors="replace"):
+            state = "POINTER_OK"
+        else:
+            state = "POINTER_MISSING"
+        rows.append({
+            "source": "(işaretçi kontrolü — kopya DEĞİL)",
+            "repo": repo,
+            "destination": destination,
+            "reason": "Yerel render; kanonik metne işaretçi taşımalı (1b).",
+            "state": state,
+        })
     return rows
 
 
@@ -144,6 +179,7 @@ def main() -> int:
 
     absent = [r for r in rows if r["state"] == "REPO_ABSENT"]
     copyable = [r for r in rows if r["state"] in ("MISSING", "STALE")]
+    pointerless = [r for r in rows if r["state"] == "POINTER_MISSING"]
     divergent = [r for r in rows if r["state"] == "DIVERGENT"]
 
     if args.apply:
@@ -177,7 +213,11 @@ def main() -> int:
         print(f"\n❌ {len(copyable)} hedef bayat (güvenle kopyalanabilir).")
         print("   Düzeltme (bu depoda): python tools/sync_kr_corpus.py --apply")
         print("   Sonra her kardeş depoda commit + PR (SDLC_GATES §3C).")
-    if divergent or copyable:
+    if pointerless:
+        print(f"\n❌ {len(pointerless)} yerel render kanonik metne İŞARETÇİ taşımıyor.")
+        for row in pointerless:
+            print(f"   - {row['repo']}/{row['destination']}")
+    if divergent or copyable or pointerless:
         return 1
     print("\n✅ KR korpusu tüm ölçülebilir hedeflerde güncel.")
     return 0
