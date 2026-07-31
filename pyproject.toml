@@ -24,10 +24,11 @@ pyyaml = "^6.0.1"
 pydantic = "^2.5.3"
 
 [tool.poetry.group.dev.dependencies]
-# AK-4 (2026-07-31): pytest 9.x — yerel geliştirme sürümüyle CI AYNI olmalı.
-# Bkz. requirements-dev.txt (CI'ın tek bağımlılık kaynağı); ikisi hizalı tutulur.
-pytest = "^9.0.0"
-pytest-cov = "^7.0.0"
+# AK-4 (2026-07-31): kapıyı koşturan araç TAM SÜRÜME sabit — yerel makine ile CI birebir
+# aynı pytest'te koşar (8.x/9.x sapması kapıya güveni yok ediyordu).
+# requirements-dev.txt ile BİRLİKTE değiştirilir; ayrışırlarsa sapma geri gelir.
+pytest = "9.0.2"
+pytest-cov = "7.0.0"
 pytest-xdist = "^3.5.0"
 black = "^23.12.1"
 ruff = "^0.1.9"

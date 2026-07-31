@@ -10,7 +10,11 @@
 # `<9` sınırı CI'ı 8.4.2'ye düşürüyordu ve kapılar İKİ FARKLI sürümde doğrulanıyordu.
 # Kapının yerelde geçip CI'da farklı davranması, kapıya olan güveni yok eder.
 # Kural: contract/edge/worker/platform AYNI standardı kullanır — sürüm sapması da bir sapmadır.
+# AYRIM: kapıyı KOŞTURAN araç TAM SÜRÜME sabitlenir (pytest, pytest-cov) — geliştirme
+# makinesiyle CI birebir aynı sürümde koşar. Şemaları DOĞRULAYAN kütüphaneler aralıkla
+# tutulur (yama alsınlar). Yükseltme: yerelde kur, yeşili gör, AŞAĞIDAKİ SATIRI ve
+# pyproject.toml'u BİRLİKTE değiştir — ikisi ayrışırsa AK-4 geri gelir.
 jsonschema>=4.20.0,<5
-pytest>=9.0.0,<10
-pytest-cov>=7.0.0,<8
+pytest==9.0.2
+pytest-cov==7.0.0
 pyyaml>=6.0.1,<7
