@@ -119,17 +119,35 @@ class TestVocabularyStaysInSync:
             "iddiayı doğrulayamaz."
         )
 
-    def test_undeclared_requirements_are_explicit_open_items(self) -> None:
-        """`null` = 'henüz beyan edilmedi'; sessiz eksiklik değil, AÇIK KALEM."""
+    def test_no_requirement_is_left_undeclared(self) -> None:
+        """AK-1 kapandı: `null` (beyan edilmemiş) gereksinim KALMADI.
+
+        `CHLOROPHYLL_A` contract'a özgü, formülü hiçbir yerde tanımlı olmayan bir addı;
+        bant gereksinimi bu yüzden `null` bırakılmıştı (uydurmamak için). Ad, worker'da
+        GERÇEKTEN uygulanan indeksle birleştirildi (`LCI`) → gereksinim ölçülebilir oldu.
+        Yeni bir `null` eklenirse burası kırmızıya döner ve eylem planına açık kalem
+        yazılmasını zorlar.
+        """
         requirements = _matrix()["index_requirements"]
         undeclared = [k for k, v in requirements.items() if v is None]
-        assert undeclared == ["CHLOROPHYLL_A"], (
-            f"beyan edilmemiş gereksinim kümesi değişti: {undeclared}. Yeni bir `null` "
-            "eklendiyse eylem planına açık kalem olarak işleyin; kaldırıldıysa bu testi "
-            "güncelleyin."
+        assert not undeclared, (
+            f"beyan edilmemiş bant gereksinimi var: {undeclared}. Ya formülü ölçüp yazın "
+            "(kaynak: worker `src/indices/`), ya eylem planı §14.5.1'e açık kalem ekleyip "
+            "bu testi bilinçli olarak güncelleyin — sessiz `null` bırakmayın."
         )
-        open_item = _schema()["x-layer-classes"].get("x-open-item", "")
-        assert "CHLOROPHYLL_A" in open_item, "açık kalem şemada da yazılı olmalı"
+
+    def test_lci_requirement_matches_worker_implementation(self) -> None:
+        """AK-1: gereksinim worker'ın FİİLİ formülünden gelir, tahminden değil.
+
+        `tarlaanaliz-worker/src/indices/lci.py` → `LCI = (NIR − RedEdge)/(NIR + RedEdge)`.
+        NDRE ile aynı formül (LCICalculator, NDRECalculator'dan türer) → aynı bantlar.
+        """
+        requirements = _matrix()["index_requirements"]
+        assert set(requirements["LCI"]) == {"RED_EDGE", "NIR"}
+        assert set(requirements["LCI"]) == set(requirements["NDRE"]), (
+            "LCI ve NDRE aynı formülü paylaşır (worker H9/MD-9 kararı); bant gereksinimleri "
+            "ayrışamaz. Ayrışıyorsa biri yanlış ölçülmüş demektir."
+        )
 
 
 class TestProducibility:
@@ -184,6 +202,40 @@ class TestProducibility:
         assert "BLUE" in requirements["EVI"]
         basic = _matrix()["capabilities"]["DJI_MAVIC_3M"]
         assert not set(requirements["EVI"]) <= _effective_bands(basic)
+
+
+class TestCrossRepoNamesAreUnified:
+    """Dört depo AYNI adı kullanır — contract'a özgü ad icat edilmez (AK-1 kararı).
+
+    `CHLOROPHYLL_A` yalnız contract'ta yaşayan bir addı; worker aynı büyüklüğü `LCI`
+    olarak hesaplıyordu. İki ad = iki sözlük = doğrulanamaz kapı. Ad birleştirildi.
+    """
+
+    def test_lci_is_the_canonical_name(self) -> None:
+        assert "LCI" in _layer_types()
+        assert "CHLOROPHYLL_A" not in _layer_types()
+
+    def test_old_contract_only_name_is_gone_from_value_positions(self) -> None:
+        offenders: list[str] = []
+        for name, entry in _matrix()["capabilities"].items():
+            if "CHLOROPHYLL_A" in _listed_indices(entry):
+                offenders.append(f"matris:{name}")
+        if "CHLOROPHYLL_A" in _matrix().get("index_requirements", {}):
+            offenders.append("matris:index_requirements")
+        if "CHLOROPHYLL_A" in _classes():
+            offenders.append("x-layer-classes.map")
+        assert not offenders, (
+            f"contract'a özgü ad geri gelmiş: {offenders}. Worker'daki uygulama `LCI`; "
+            "iki ad tutmak iki sözlük demektir."
+        )
+
+    def test_matrix_prose_does_not_advertise_the_old_name(self) -> None:
+        """Açıklama metni de güncel olmalı — 'chlorophyll-a' listeleyen bant sınıfı kalmasın."""
+        classes = _matrix()["band_classes"]
+        for name, entry in classes.items():
+            assert "chlorophyll" not in str(entry.get("description", "")).lower(), (
+                f"band_classes.{name} açıklaması hâlâ eski adı listeliyor"
+            )
 
 
 class TestRenameIsComplete:

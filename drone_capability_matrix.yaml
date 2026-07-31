@@ -27,7 +27,7 @@ capabilities:
     red_edge_sentinel2_band: B5
     available_indices:
       core: [NDVI, NDRE, GNDVI, CIR]
-      extended: [EVI, SAVI, CHLOROPHYLL_A]
+      extended: [EVI, SAVI, LCI]
       thermal: []
     calibration_class: absolute
     thermal_variant:
@@ -46,7 +46,7 @@ capabilities:
     red_edge_sentinel2_band: B5
     available_indices:
       core: [NDVI, NDRE, GNDVI, CIR]
-      extended: [EVI, SAVI, CHLOROPHYLL_A]
+      extended: [EVI, SAVI, LCI]
       thermal: []
     calibration_class: absolute
     notes: >
@@ -72,7 +72,7 @@ capabilities:
     red_edge_sentinel2_band: B5
     available_indices:
       core: [NDVI, NDRE, GNDVI, CIR]
-      extended: [EVI, SAVI, CHLOROPHYLL_A]
+      extended: [EVI, SAVI, LCI]
       thermal: [CWSI, CANOPY_TEMP, CANOPY_SOIL_DELTA, CANOPY_TEMP_UNIFORMITY]
     calibration_class: absolute
     thermal_sensor: FLIR_BOSON_320
@@ -111,10 +111,12 @@ index_requirements:
   SAVI:          [RED, NIR]
   EVI:           [BLUE, RED, NIR]
   CIR:           [GREEN, RED, NIR]     # class: composite — yalancı-renk render (NIR-R-G)
-  CHLOROPHYLL_A: null                  # AÇIK KALEM: formülü bu depoda tanımlı değil
-  # ^ worker'da `LCI` var ((NIR-RE)/(NIR+RED)) ama AYNI AD DEĞİL. Tahminle bant yazmak,
-  #   doğrulanamaz bir kapı üretirdi; `null` = "gereksinim henüz beyan edilmedi" ve testler
-  #   bunu bilerek atlamak yerine AÇIKÇA açık kalem sayar (eylem planı §14.5).
+  LCI:           [RED_EDGE, NIR]       # tarlaanaliz-worker/src/indices/lci.py
+  # ^ AK-1 kapandı: eski ad `CHLOROPHYLL_A` idi ve formülü HİÇBİR YERDE tanımlı değildi, bu
+  #   yüzden gereksinimi `null` bırakılmıştı. Ad worker'daki gerçek uygulamayla birleştirildi:
+  #   LCI = (NIR - RedEdge) / (NIR + RedEdge). NDRE ile AYNI FORMÜL (LCICalculator(NDRECalculator),
+  #   worker H9/MD-9 kararı) ama ayrı okuma: NDRE genel canlılık, LCI klorofil bozulması.
+  #   ⇒ 4 bantlı drone da ÜRETEBİLİR; matriste `extended` altında kalması bir ÜRÜN kararıdır.
 
 # Band class definitions
 band_classes:
@@ -124,7 +126,7 @@ band_classes:
     report_level: "Temel Sağlık Raporu"
   EXTENDED_5BAND:
     minimum_bands: [BLUE, GREEN, RED, RED_EDGE, NIR]
-    description: "Genişletilmiş 5 bant — EVI, SAVI, chlorophyll-a, Sentinel-2 uyumlu"
+    description: "Genişletilmiş 5 bant — EVI, SAVI, LCI, Sentinel-2 uyumlu"
     report_level: "Genişletilmiş Rapor"
   THERMAL:
     requires: [LWIR]

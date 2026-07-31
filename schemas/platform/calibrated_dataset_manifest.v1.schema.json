@@ -122,13 +122,13 @@
             "CIR",
             "EVI",
             "SAVI",
-            "CHLOROPHYLL_A",
+            "LCI",
             "CWSI",
             "CANOPY_TEMP",
             "CANOPY_SOIL_DELTA",
             "CANOPY_TEMP_UNIFORMITY"
           ],
-          "description": "Çıktı katmanının KANONİK türü. ORTHO/DSM raster ürünleridir; kalan değerler drone_capability_matrix.yaml → available_indices (core+extended+thermal) kümesinden TÜRETİLMİŞTİR, ayrı bir vocabulary DEĞİLDİR. Opsiyonel: eski üreticiler alanı atlar. `type` alanıyla karıştırılmaz — `type` tüketici-tanımlı serbest etikettir.\n\n📐 **Sınıflandırma (2026-07-31/D9):** Bu enum tek bir düz liste değildir; her değerin bir SINIFI vardır (`x-layer-classes`) ve üretilebilirlik sınıfa göre farklı çalışır — bkz. aşağıdaki `x-layer-classes` ile drone_capability_matrix.yaml → `index_requirements`.\n\n🔄 **`IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY` (2026-07-31/D9②):** Termal kamera 'sulama verimliliği' ÖLÇMEZ — verimlilik, uygulanan su miktarı ve bitki su tüketimi bilinmeden hesaplanamaz (ikisi de bu sistemde YOK). LWIR'den doğrudan türetilebilen büyüklük **kanopi sıcaklığının tarla içi tekdüzeliğidir** ve sulama sorunlarının bir VEKİL göstergesidir (proxy). Ad, ölçülen şeyi söylemeliydi. Yeniden adlandırma bu turda **bedava**: `layer_type` bu turda eklendi (üretici yok) ve eski ad kardeş depoların hiçbirinde geçmiyor (ölçüldü). Bir sonraki turda MAJOR olurdu."
+          "description": "Çıktı katmanının KANONİK türü. ORTHO/DSM raster ürünleridir; kalan değerler drone_capability_matrix.yaml → available_indices (core+extended+thermal) kümesinden TÜRETİLMİŞTİR, ayrı bir vocabulary DEĞİLDİR. Opsiyonel: eski üreticiler alanı atlar. `type` alanıyla karıştırılmaz — `type` tüketici-tanımlı serbest etikettir.\n\n📐 **Sınıflandırma (2026-07-31/D9):** Bu enum tek bir düz liste değildir; her değerin bir SINIFI vardır (`x-layer-classes`) ve üretilebilirlik sınıfa göre farklı çalışır — bkz. aşağıdaki `x-layer-classes` ile drone_capability_matrix.yaml → `index_requirements`.\n\n🔄 **`IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY` (2026-07-31/D9②):** Termal kamera 'sulama verimliliği' ÖLÇMEZ — verimlilik, uygulanan su miktarı ve bitki su tüketimi bilinmeden hesaplanamaz (ikisi de bu sistemde YOK). LWIR'den doğrudan türetilebilen büyüklük **kanopi sıcaklığının tarla içi tekdüzeliğidir** ve sulama sorunlarının bir VEKİL göstergesidir (proxy). Ad, ölçülen şeyi söylemeliydi. Yeniden adlandırma bu turda **bedava**: `layer_type` bu turda eklendi (üretici yok) ve eski ad kardeş depoların hiçbirinde geçmiyor (ölçüldü). Bir sonraki turda MAJOR olurdu.\n\n🔄 **`CHLOROPHYLL_A` → `LCI` (2026-07-31, AK-1):** ad, WORKER'DA GERÇEKTEN UYGULANAN indeksle aynı hâle getirildi — `tarlaanaliz-worker/src/indices/lci.py`: `LCI = (NIR − RedEdge) / (NIR + RedEdge)`. `CHLOROPHYLL_A` contract'a özgü, formülü hiçbir yerde tanımlı olmayan bir addı; bant gereksinimi bu yüzden `null` bırakılmıştı (uydurmamak için). Artık ad tek → gereksinim ÖLÇÜLEBİLİR: `[RED_EDGE, NIR]`.\n\n⚠️ **LCI ile NDRE aynı FORMÜLÜ paylaşır** (worker: `LCICalculator(NDRECalculator)`, H9/MD-9 denetim kararı) — ikisi bilerek ayrı tutulur: NDRE genel canlılık, LCI klorofil bozulmasına özgü okuma (fıstık psillid balözü tespitinde NDWI+Green ile birlikte kullanılıyor). Biri diğerinin yerine 'sadeleştirilemez'.\n\n**Tüketici borcu:** platform `src/core/domain/value_objects/spectral_tier.py:51` `EXTENDED_INDICES` sabiti `CHLOROPHYLL_A` yazıyor → `LCI` olmalı (P15)."
         },
         "band": {
           "type": "string",
@@ -162,15 +162,18 @@
       "GNDVI": "index",
       "EVI": "index",
       "SAVI": "index",
-      "CHLOROPHYLL_A": "index",
       "CIR": "composite",
       "CWSI": "derived_metric",
       "CANOPY_TEMP": "derived_metric",
       "CANOPY_SOIL_DELTA": "derived_metric",
-      "CANOPY_TEMP_UNIFORMITY": "derived_metric"
+      "CANOPY_TEMP_UNIFORMITY": "derived_metric",
+      "LCI": "index"
     },
-    "x-open-item": "CHLOROPHYLL_A'nın FORMÜLÜ bu depoda tanımlı değildir; worker'da `LCI` var ama aynı ad değil. Bant gereksinimi bu yüzden `null` bırakıldı (uydurulmadı) — bkz. drone_capability_matrix.yaml → index_requirements.CHLOROPHYLL_A. Kapatılması bir agronomi/uzaktan-algılama kararıdır (eylem planı §14.5).",
-    "x-kr-ref": ["KR-018", "KR-082"]
+    "x-open-item": "AK-1 KAPANDI (2026-07-31): `CHLOROPHYLL_A` → `LCI` yeniden adlandırıldı ve bant gereksinimi worker'ın uygulamasından ölçüldü (`src/indices/lci.py`: (NIR−RedEdge)/(NIR+RedEdge) → [RED_EDGE, NIR]). Artık `index_requirements`'ta `null` girdi YOKTUR.",
+    "x-kr-ref": [
+      "KR-018",
+      "KR-082"
+    ]
   },
   "x-form-role": {
     "role": "platform_package_aggregate",

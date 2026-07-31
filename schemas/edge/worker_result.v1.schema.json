@@ -27,7 +27,24 @@
     "crop_type": {
       "type": "string",
       "minLength": 1,
-      "description": "Crop type of the field, e.g. cotton, wheat."
+      "description": "Crop type of the field, e.g. cotton, wheat.\n\nÜrün — KANONİK vocabulary (BÜYÜK harf, 8 değer; `enums/crop_type.enum.v1.json` ile birebir, drift testle bağlandı).\n\n⚠️ **2026-07-31 — ZORLANABİLİR HÂLE GETİRİLDİ.** Bu alan `{\"type\": \"string\"}` idi: açıklaması kanonik enum'a *atıf yapıyordu* ama şema hiçbir şeyi zorlamıyordu (C0'ın manifest formlarında kapattığı 'prose var, zorlanabilirlik yok' sınıfının aynısı). Sonuç ölçüldü: contract içinde İKİ ürün vocabulary'si yaşıyordu — kanonik BÜYÜK harf 8 değer ve edge'in vendored kopyasındaki küçük harf 5 değer. **Kural: contract/edge/worker/platform AYNI standardı kullanır.**",
+      "enum": [
+        "COTTON",
+        "PISTACHIO",
+        "CORN",
+        "WHEAT",
+        "SUNFLOWER",
+        "GRAPE",
+        "OLIVE",
+        "RICE"
+      ],
+      "x-vocabulary-source": "enums/crop_type.enum.v1.json",
+      "x-compat-accepted": {
+        "change": "serbest dize → kanonik ürün vocabulary'si (enum, 8 değer)",
+        "date": "2026-07-31",
+        "rationale": "Biçimsel daraltma, ama ölçüldü: platform ürün adlarını ZATEN kanonik BÜYÜK harfle üretiyor (tarlaanaliz-platform/src/core/domain/value_objects/crop_type.py:113,130 — CropType sabitleri COTTON/CORN/... biçiminde), yani olay şemalarının üreticisi kırılmaz. `worker_result.v1` için ise kod düzeyinde ÜRETİCİ YOK (edge/src ve worker/src'de tek eşleşme yok) ve platformun şema zorlaması varsayılan KAPALI (settings.py:190 worker_result_schema_enforce=False). Küçük harf yalnız edge'in vendored kopyasında + fixture'larında yaşıyor → E16 ile hizalanır.",
+        "ref": "eylem planı §14.5.1/AK-7 · kullanıcı direktifi: dört depo aynı standardı kullanır"
+      }
     },
     "analysis_layers": {
       "type": "array",

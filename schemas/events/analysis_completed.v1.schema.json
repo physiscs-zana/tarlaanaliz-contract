@@ -70,7 +70,10 @@
       "properties": {
         "actor_type": {
           "type": "string",
-          "enum": ["SYSTEM", "SERVICE"],
+          "enum": [
+            "SYSTEM",
+            "SERVICE"
+          ],
           "description": "Actor type (always SYSTEM or SERVICE for AI analysis)"
         },
         "actor_service": {
@@ -82,7 +85,10 @@
           "description": "Worker instance ID that processed the job"
         }
       },
-      "required": ["actor_type", "actor_service"],
+      "required": [
+        "actor_type",
+        "actor_service"
+      ],
       "unevaluatedProperties": false
     },
     "AnalysisCompletedData": {
@@ -112,7 +118,11 @@
         },
         "status": {
           "type": "string",
-          "enum": ["SUCCESS", "PARTIAL_SUCCESS", "FAILED"],
+          "enum": [
+            "SUCCESS",
+            "PARTIAL_SUCCESS",
+            "FAILED"
+          ],
           "description": "Analysis completion status"
         },
         "analysis_type": {
@@ -121,7 +131,24 @@
         },
         "crop_type": {
           "type": "string",
-          "description": "Crop type (reference: enums/crop_type.enum.v1.json - 8 GAP crops)"
+          "description": "Crop type (reference: enums/crop_type.enum.v1.json - 8 GAP crops).\n\nÜrün — KANONİK vocabulary (BÜYÜK harf, 8 değer; `enums/crop_type.enum.v1.json` ile birebir, drift testle bağlandı).\n\n⚠️ **2026-07-31 — ZORLANABİLİR HÂLE GETİRİLDİ.** Bu alan `{\"type\": \"string\"}` idi: açıklaması kanonik enum'a *atıf yapıyordu* ama şema hiçbir şeyi zorlamıyordu (C0'ın manifest formlarında kapattığı 'prose var, zorlanabilirlik yok' sınıfının aynısı). Sonuç ölçüldü: contract içinde İKİ ürün vocabulary'si yaşıyordu — kanonik BÜYÜK harf 8 değer ve edge'in vendored kopyasındaki küçük harf 5 değer. **Kural: contract/edge/worker/platform AYNI standardı kullanır.**",
+          "enum": [
+            "COTTON",
+            "PISTACHIO",
+            "CORN",
+            "WHEAT",
+            "SUNFLOWER",
+            "GRAPE",
+            "OLIVE",
+            "RICE"
+          ],
+          "x-vocabulary-source": "enums/crop_type.enum.v1.json",
+          "x-compat-accepted": {
+            "change": "serbest dize → kanonik ürün vocabulary'si (enum, 8 değer)",
+            "date": "2026-07-31",
+            "rationale": "Biçimsel daraltma, ama ölçüldü: platform ürün adlarını ZATEN kanonik BÜYÜK harfle üretiyor (tarlaanaliz-platform/src/core/domain/value_objects/crop_type.py:113,130 — CropType sabitleri COTTON/CORN/... biçiminde), yani olay şemalarının üreticisi kırılmaz. `worker_result.v1` için ise kod düzeyinde ÜRETİCİ YOK (edge/src ve worker/src'de tek eşleşme yok) ve platformun şema zorlaması varsayılan KAPALI (settings.py:190 worker_result_schema_enforce=False). Küçük harf yalnız edge'in vendored kopyasında + fixture'larında yaşıyor → E16 ile hizalanır.",
+            "ref": "eylem planı §14.5.1/AK-7 · kullanıcı direktifi: dört depo aynı standardı kullanır"
+          }
         },
         "summary": {
           "$ref": "#/$defs/ResultSummary",
@@ -166,7 +193,13 @@
       "properties": {
         "overall_health": {
           "type": "string",
-          "enum": ["EXCELLENT", "GOOD", "FAIR", "POOR", "CRITICAL"],
+          "enum": [
+            "EXCELLENT",
+            "GOOD",
+            "FAIR",
+            "POOR",
+            "CRITICAL"
+          ],
           "description": "Overall field health"
         },
         "health_score": {
@@ -204,7 +237,13 @@
         },
         "type": {
           "type": "string",
-          "enum": ["RASTER", "VECTOR", "HEATMAP", "CLASSIFICATION", "DETECTION"],
+          "enum": [
+            "RASTER",
+            "VECTOR",
+            "HEATMAP",
+            "CLASSIFICATION",
+            "DETECTION"
+          ],
           "description": "Layer type"
         },
         "uri": {
@@ -214,7 +253,12 @@
         },
         "format": {
           "type": "string",
-          "enum": ["GEOTIFF", "PNG", "GEOJSON", "SHAPEFILE"],
+          "enum": [
+            "GEOTIFF",
+            "PNG",
+            "GEOJSON",
+            "SHAPEFILE"
+          ],
           "description": "Layer format"
         },
         "sha256": {
@@ -227,7 +271,14 @@
           "description": "Reference to layer style in layer_registry"
         }
       },
-      "required": ["layer_id", "name", "type", "uri", "format", "sha256"],
+      "required": [
+        "layer_id",
+        "name",
+        "type",
+        "uri",
+        "format",
+        "sha256"
+      ],
       "unevaluatedProperties": false
     },
     "ProcessingTime": {
@@ -253,7 +304,11 @@
           "description": "AI inference time in seconds"
         }
       },
-      "required": ["started_at", "completed_at", "duration_seconds"],
+      "required": [
+        "started_at",
+        "completed_at",
+        "duration_seconds"
+      ],
       "unevaluatedProperties": false
     },
     "ModelInfo": {
@@ -275,7 +330,11 @@
           "description": "Model weights SHA-256 hash"
         }
       },
-      "required": ["model_name", "model_version", "model_fingerprint"],
+      "required": [
+        "model_name",
+        "model_version",
+        "model_fingerprint"
+      ],
       "unevaluatedProperties": false
     },
     "AnalysisError": {
@@ -296,7 +355,11 @@
           "description": "Whether error is retryable"
         }
       },
-      "required": ["error_code", "error_message", "retryable"],
+      "required": [
+        "error_code",
+        "error_message",
+        "retryable"
+      ],
       "unevaluatedProperties": false
     },
     "EventMetadata": {
