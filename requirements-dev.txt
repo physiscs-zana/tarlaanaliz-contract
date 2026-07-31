@@ -1,3 +1,20 @@
 # SEC-FIX: pinned versions to prevent uncontrolled updates
+#
+# ⚠️ Bu dosya CI'ın TEK bağımlılık kaynağıdır (D4, 2026-07-31).
+# Eskiden workflow içinde elle yazılmış bir liste vardı (`jsonschema pytest pytest-cov`)
+# ve pyproject.toml ile ayrışmıştı: `pyyaml` yalnız pyproject'te olduğu için
+# tests/test_calibrated_manifest_fields.py'nin 18 testi CI'da SESSİZCE atlanıyordu (Q2).
+# Buraya yeni bir test bağımlılığı eklerken pyproject.toml [tool.poetry] ile hizalı tutun.
+#
+# pytest 9.x ZORUNLU (2026-07-31, AK-4 kararı): geliştirme makinesinde 9.0.2 koşuyor;
+# `<9` sınırı CI'ı 8.4.2'ye düşürüyordu ve kapılar İKİ FARKLI sürümde doğrulanıyordu.
+# Kapının yerelde geçip CI'da farklı davranması, kapıya olan güveni yok eder.
+# Kural: contract/edge/worker/platform AYNI standardı kullanır — sürüm sapması da bir sapmadır.
+# AYRIM: kapıyı KOŞTURAN araç TAM SÜRÜME sabitlenir (pytest, pytest-cov) — geliştirme
+# makinesiyle CI birebir aynı sürümde koşar. Şemaları DOĞRULAYAN kütüphaneler aralıkla
+# tutulur (yama alsınlar). Yükseltme: yerelde kur, yeşili gör, AŞAĞIDAKİ SATIRI ve
+# pyproject.toml'u BİRLİKTE değiştir — ikisi ayrışırsa AK-4 geri gelir.
 jsonschema>=4.20.0,<5
-pytest>=7.4.0,<9
+pytest==9.0.2
+pytest-cov==7.0.0
+pyyaml>=6.0.1,<7

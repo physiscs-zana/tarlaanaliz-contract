@@ -1,0 +1,876 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/edge/intake_manifest.v1.schema.json",
+  "title": "IntakeManifest",
+  "description": "İstasyona alınan batch manifesti — chain-of-custody kanıt kaydı. KR-072 + KR-073 kanonik. SUPERSET (contracts v3.0.0): oneOf ile iki ayrık formu valide eder — (1) platform-kanonik form; (2) edge operasyonel form (kiosk'un gerçek emit ettiği). Edge=üretici, Platform=tüketici: bu oneOf edge↔platform kontrat boşluğunu kapatır.",
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/PlatformForm"
+    },
+    {
+      "$ref": "#/$defs/EdgeForm"
+    }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "PlatformForm": {
+      "type": "object",
+      "title": "Platform-canonical intake manifest",
+      "description": "İstasyona alınan batch manifesti (platform-kanonik form). batch_id = batch_<24hex>; files[].sha256_hash; dataset_status; AvScanResult.findings(threat_type).",
+      "required": [
+        "batch_id",
+        "kiosk_id",
+        "operator_id",
+        "card_id",
+        "drone_serial",
+        "drone_model",
+        "files",
+        "signature",
+        "av_scan_result",
+        "created_at"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string",
+          "pattern": "^batch_[a-z0-9]{24}$",
+          "description": "Batch kimliği. Format: batch_{24-char-hex}. Eşleştirme hiyerarşisi: MissionID → BatchID → FieldID."
+        },
+        "kiosk_id": {
+          "type": "string",
+          "description": "Hangi istasyondan yüklendiği. mTLS sertifikası ile eşleşmeli."
+        },
+        "operator_id": {
+          "type": "string",
+          "description": "İşlemi yapan operatörün user_id değeri. Audit log için kritik (PII değil, pseudonymous)."
+        },
+        "card_id": {
+          "type": "string",
+          "description": "SD kart envanter kimliği. QR etiket veya fiziksel etiket ile eşleşmeli."
+        },
+        "drone_serial": {
+          "type": "string",
+          "description": "EXIF'ten çıkarılan drone seri numarası. drone_registry.yaml'daki kayıtlı seri numaralarıyla whitelist kontrolü yapılır. Kayıtlı değilse batch REJECTED_QUARANTINE."
+        },
+        "drone_model": {
+          "type": "string",
+          "enum": [
+            "DJI_MAVIC_3M",
+            "DJI_M350_RTK_SENTERA_6X",
+            "WINGTRAONE_GEN2_MICASENSE_REDEDGE_P",
+            "PARROT_ANAFI_USA_SEQUOIA_PLUS",
+            "AGEAGLE_EBEE_X_ALTUM_PT"
+          ],
+          "description": "Drone model enum değeri (drone-agnostik). DJI_MAVIC_3M birincil/önerilen; desteklenen diğer modeller enum'da kayıtlı. KR-015 + KR-030 + KR-034.",
+          "x-inlined-from": {
+            "ref": "../../enums/drone_type.enum.v1.json",
+            "source_id": "https://api.tarlaanaliz.com/enums/drone_type.enum.v1.json",
+            "keys": [
+              "enum",
+              "type"
+            ],
+            "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+          }
+        },
+        "mission_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^mission_[a-z0-9]{24}$",
+          "description": "Eşleştirilen görev kimliği (opsiyonel). EXIF veya dosya adından çıkarılır. Bulunamazsa coğrafi eşleştirme denenir, yoksa manuel inceleme kuyruğu."
+        },
+        "field_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^field_[a-z0-9]{24}$",
+          "description": "Eşleştirilen tarla kimliği (opsiyonel). Coğrafi eşleştirme sonucu veya explicit."
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "description": "İstasyona alınan dosyaların listesi. Her dosya için hash zorunlu.",
+          "items": {
+            "type": "object",
+            "unevaluatedProperties": false,
+            "required": [
+              "filename",
+              "size_bytes",
+              "sha256_hash",
+              "mime_type"
+            ],
+            "properties": {
+              "filename": {
+                "type": "string",
+                "description": "Dosya adı. Whitelist uzantıları: .tif, .tiff, .jpg, .jpeg, .raw, .dng."
+              },
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "sha256_hash": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$",
+                "description": "SHA-256 özet değeri. Hash uyuşmazlığı → REJECTED_QUARANTINE."
+              },
+              "mime_type": {
+                "type": "string",
+                "enum": [
+                  "image/tiff",
+                  "image/jpeg",
+                  "image/x-raw",
+                  "image/x-dng"
+                ]
+              },
+              "captured_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "EXIF'ten çekim zamanı."
+              },
+              "gps_lat": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "GPS enlemi (WGS84)."
+              },
+              "gps_lon": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "description": "GPS boylamı (WGS84)."
+              }
+            }
+          }
+        },
+        "signature": {
+          "type": "string",
+          "description": "GPG/RSA dijital imza. Kiosk'un özel anahtarı ile imzalanır; platform kiosk'un public key'i ile doğrular."
+        },
+        "av_scan_result": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "status",
+            "scanned_at",
+            "engine_id",
+            "signatures_version"
+          ],
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "CLEAN",
+                "THREAT_FOUND",
+                "SCAN_ERROR"
+              ],
+              "description": "CLEAN olmadan batch RELEASE edilemez."
+            },
+            "scanned_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "engine_id": {
+              "type": "string",
+              "description": "AV motor kimliği."
+            },
+            "signatures_version": {
+              "type": "string",
+              "description": "AV imza veri tabanı versiyonu."
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string"
+                  },
+                  "threat_name": {
+                    "type": "string"
+                  },
+                  "threat_type": {
+                    "type": "string",
+                    "enum": [
+                      "MALWARE",
+                      "HASH_MISMATCH",
+                      "POLICY_VIOLATION",
+                      "FILE_CORRUPTION",
+                      "SUSPICIOUS_METADATA",
+                      "UNAUTHORIZED_FILE_TYPE",
+                      "SIZE_ANOMALY",
+                      "TIMESTAMP_ANOMALY",
+                      "DUPLICATE_SUBMISSION",
+                      "TAMPERED_SIGNATURE",
+                      "MISSING_MANIFEST",
+                      "INVALID_GEOLOCATION",
+                      "ANTIVIRUS_ALERT",
+                      "UNKNOWN_ORIGIN",
+                      "FAILED_INTEGRITY_CHECK"
+                    ],
+                    "x-inlined-from": {
+                      "ref": "../../enums/threat_type.enum.v1.json",
+                      "source_id": "https://api.tarlaanaliz.com/enums/threat_type.enum.v1.json",
+                      "keys": [
+                        "enum",
+                        "type"
+                      ],
+                      "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+                    }
+                  }
+                },
+                "unevaluatedProperties": false
+              }
+            },
+            "quarantined": {
+              "type": "boolean",
+              "description": "THREAT_FOUND durumunda true; dosyalar karantinaya alındı."
+            }
+          },
+          "description": "AV tarama sonucu (AV1 — edge taraması). av_scan_result olmadan batch RELEASE edilemez."
+        },
+        "dataset_status": {
+          "type": "string",
+          "enum": [
+            "RAW_INGESTED",
+            "RAW_SCANNED_EDGE_OK",
+            "RAW_HASH_SEALED",
+            "CALIBRATED",
+            "CALIBRATED_SCANNED_CENTER_OK",
+            "DISPATCHED_TO_WORKER",
+            "ANALYZED",
+            "DERIVED_PUBLISHED",
+            "ARCHIVED",
+            "REJECTED_QUARANTINE"
+          ],
+          "description": "Dataset yaşam döngüsü durumu. KR-072 state machine. İstasyon tarafı: RAW_INGESTED → RAW_SCANNED_EDGE_OK → RAW_HASH_SEALED.",
+          "x-inlined-from": {
+            "ref": "../../enums/dataset_status.enum.v1.json",
+            "source_id": "https://api.tarlaanaliz.com/enums/dataset_status.enum.v1.json",
+            "keys": [
+              "enum",
+              "type"
+            ],
+            "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+          }
+        },
+        "available_bands": {
+          "type": "array",
+          "minItems": 4,
+          "items": {
+            "type": "string",
+            "enum": [
+              "GREEN",
+              "RED",
+              "RED_EDGE",
+              "NIR",
+              "BLUE",
+              "LWIR"
+            ]
+          },
+          "description": "Sensörün ürettiği spektral bantlar. Minimum 4 bant zorunlu (GREEN + RED + RED_EDGE + NIR). Blue bant mevcutsa genişletilmiş analiz, LWIR mevcutsa termal pipeline etkinleşir. drone_capability_matrix.yaml ile çapraz doğrulanır. KR-018/KR-082 v1.2.0."
+        },
+        "calibration_type": {
+          "type": "string",
+          "enum": [
+            "ABSOLUTE",
+            "RELATIVE",
+            "PANEL_ABSOLUTE",
+            "DLS2_RELATIVE"
+          ],
+          "description": "Radyometrik kalibrasyon tipi (KR-018). DJI Mavic 3M RELATIVE üretir. Opsiyonel, geriye uyumlu; edge→platform→worker calibration_metadata.calibration_type için KAYNAK. Platform ABSOLUTE'u worker PANEL_ABSOLUTE'una normalize eder; yoksa CALIBRATED→PANEL_ABSOLUTE varsayar (güvenlik-ağı). Kanonik vocabulary: enums/calibration_type.enum.v1.json."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Manifest oluşturulma zamanı (ISO 8601)."
+        },
+        "quarantined_file_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Edge/AV1 tarafında manifest gönderilmeden ÖNCE yerelde karantinaya alınıp düşürülen dosya sayısı (bu dosyalar files[]'a GİRMEZ). Opsiyonel, geriye uyumlu — pre-v7.2.0 üreticiler atlar. Platform admin panosunda >0 iken DAİMA uyarı olarak yüzeye çıkarılır. Operatör görünürlüğü değil; merkez/AV2 REJECTED_QUARANTINE'den ayrı sinyaldir."
+        },
+        "quarantined_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Edge/AV1 tarafında yerelde düşürülen karantina dosyalarının toplam boyutu (bayt). Opsiyonel, geriye uyumlu. quarantined_file_count ile birlikte anlamlıdır."
+        },
+        "priority_zones": {
+          "type": "array",
+          "maxItems": 500,
+          "description": "Öncelik bölgeleri — PLATFORM formu. EdgeForm ile aynı zone verisini taşır, ancak visualizations alanı GÖRELİ YOL değil NESNE ANAHTARI (object_key) tutar. Bu form, platformun sakladığı/döndürdüğü normalize edilmiş görünümdür (KG-0.a-EK). ÖN RAPOR okuma ucunun (P6) kaynağıdır. Opsiyonel, geriye uyumlu.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "patch_id": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{32}$",
+                "description": "UUID4 hex (32 chars, no dashes)."
+              },
+              "geom": {
+                "type": "object",
+                "description": "GeoJSON Polygon (WGS84). HC-02 compliant: patch boundary only, never atomic GPS point.",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Polygon"
+                  },
+                  "coordinates": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "array",
+                      "minItems": 4,
+                      "items": {
+                        "type": "array",
+                        "minItems": 2,
+                        "maxItems": 3,
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180,
+                            "description": "Boylam (longitude), WGS84 DERECE. |değer| ≤ 180."
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90,
+                            "description": "Enlem (latitude), WGS84 DERECE. |değer| ≤ 90."
+                          }
+                        ],
+                        "items": {
+                          "type": "number"
+                        },
+                        "description": "GeoJSON koordinat çifti **[boylam, enlem]** — sıra RFC 7946 gereği lon,lat'tır (lat,lon DEĞİL). Üçüncü eleman (yükseklik) opsiyoneldir.\n\n⚠️ **2026-07-31/G3 — sınırlar EKLENDİ.** Öncesinde `{\"type\":\"number\"}` idi ve şema şunların HEPSİNİ kabul ediyordu (ölçüldü): UTM METRE koordinatları (`[500000, 4000000]`), enlem 91, boylam −181. Yani yanlış CRS'teki bir poligon sözleşmeden sessizce geçiyor, ardından `ST_SetSRID(...,4326)` onu **yanlış CRS ile damgalıyordu** (G4). Sınırlar, D7'de `observed_footprint_wkt` için konan derece ayırıcısının GeoJSON karşılığıdır — aynı kural, aynı gerekçe.\n\n🔴 **ŞEMANIN ZORLAYAMADIKLARI (bilerek yazılı):** ① halka KAPANIŞI (ilk nokta = son nokta) — JSON Schema elemanlar arası eşitlik ifade edemez ② KENDİ KENDİNİ KESEN poligon (papyon/bowtie) ③ halka yönü (sağ-el kuralı). Bu üçü **tüketicide** doğrulanmalıdır (platform ingest: `ST_IsValid` + kapanış kontrolü). Şema bunları gördüğünü İDDİA ETMEZ."
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "additionalProperties": false
+              },
+              "priority_level": {
+                "type": "string",
+                "enum": [
+                  "EXPRESS",
+                  "NORMAL"
+                ]
+              },
+              "ndvi_value": {
+                "type": "number",
+                "minimum": -1.0,
+                "maximum": 1.0,
+                "description": "Patch mean NDVI value."
+              },
+              "sampling_reason": {
+                "type": "string",
+                "enum": [
+                  "NDVI_THRESHOLD",
+                  "RANDOM_SAMPLE"
+                ]
+              },
+              "visualizations": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "Nesne deposu ANAHTARLARI (object keys) — PLATFORM tarafından üretilir (KG-0.a-EK kural 1). Edge'in manifestte verdiği göreli yol ASLA anahtar olarak kullanılmaz/kalıcılaştırılmaz; buradaki değer platformun DÖNDÜRDÜĞÜ anahtardır. Beklenen şema: {tenant}/{dataset_id}/patches/{patch_id}/{ad}. Desen, tenant/dataset BİÇİMİNİ dondurmaz ama güvenlik-anlamlı YAPIYI zorlar: mutlak yol reddedilir (ilk karakter alfanumerik), '..' traversal reddedilir (segmentlerde '.' yok) ve '/patches/' öncesi en az iki segment şarttır — bu sonuncusu edge'in 'patches/<id>/...' göreli yolunun anahtar olarak sızmasını engeller.",
+                "properties": {
+                  "true_color": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(/[A-Za-z0-9_-]+)+/patches/[a-f0-9]{32}/true_color\\.jpg$"
+                  },
+                  "false_color": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(/[A-Za-z0-9_-]+)+/patches/[a-f0-9]{32}/false_color\\.jpg$"
+                  },
+                  "ndvi_overlay": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(/[A-Za-z0-9_-]+)+/patches/[a-f0-9]{32}/ndvi_overlay\\.png$"
+                  }
+                },
+                "required": [
+                  "true_color",
+                  "false_color",
+                  "ndvi_overlay"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "patch_id",
+              "geom",
+              "priority_level",
+              "ndvi_value",
+              "sampling_reason"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "EdgeForm": {
+      "description": "Edge operasyonel form (kiosk emitter). schema_version=1.2; batch_id=BATCH_YYYYMMDD_HHMMSS_XXXX; drone_make+drone_model(inline enum); files[].sha256; available_bands; priority_zones(NDVI); correlation_id.",
+      "type": "object",
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "const": "1.2"
+        },
+        "batch_id": {
+          "type": "string",
+          "pattern": "^BATCH_[0-9]{8}_[0-9]{6}_[A-Z0-9]{4}$",
+          "description": "Batch identifier. Format: BATCH_YYYYMMDD_HHMMSS_XXXX."
+        },
+        "kiosk_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Kiosk station identifier (maps to station_id). Must match mTLS certificate."
+        },
+        "operator_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Operator user_id performing the intake. Pseudonymous, not PII."
+        },
+        "card_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "SD card inventory ID. QR label or physical tag."
+        },
+        "drone_serial": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Serial number of the drone. Must be registered in drone_registry.yaml."
+        },
+        "drone_make": {
+          "type": "string",
+          "enum": [
+            "DJI",
+            "WingtraOne",
+            "Parrot",
+            "AgEagle"
+          ],
+          "description": "Drone manufacturer short name (edge-internal validation)."
+        },
+        "drone_model": {
+          "type": "string",
+          "enum": [
+            "DJI_MAVIC_3M",
+            "DJI_M350_RTK_SENTERA_6X",
+            "WINGTRAONE_GEN2_MICASENSE_REDEDGE_P",
+            "PARROT_ANAFI_USA_SEQUOIA_PLUS",
+            "AGEAGLE_EBEE_X_ALTUM_PT"
+          ],
+          "description": "Drone model enum from Contract SSOT drone_type.enum.v1. Sent to platform."
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "filename": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$",
+                "description": "SHA-256 hash of file content."
+              },
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "mime_type": {
+                "type": "string",
+                "enum": [
+                  "image/tiff",
+                  "image/jpeg",
+                  "image/x-raw",
+                  "image/x-dng"
+                ]
+              },
+              "captured_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "EXIF capture timestamp."
+              }
+            },
+            "required": [
+              "filename",
+              "sha256",
+              "size_bytes",
+              "mime_type"
+            ],
+            "additionalProperties": false
+          },
+          "description": "List of files contained in the ingested card."
+        },
+        "signature": {
+          "type": "string",
+          "minLength": 1,
+          "description": "GPG/RSA digital signature. Kiosk private key signs; platform verifies."
+        },
+        "av_scan_result": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "CLEAN",
+                "THREAT_FOUND",
+                "SCAN_ERROR"
+              ]
+            },
+            "scanned_at": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "engine_id": {
+              "type": "string"
+            },
+            "signatures_version": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "scanned_at",
+            "engine_id",
+            "signatures_version"
+          ],
+          "additionalProperties": false,
+          "description": "AV1 edge scan result. CLEAN required for batch release."
+        },
+        "available_bands": {
+          "type": "array",
+          "minItems": 4,
+          "items": {
+            "type": "string",
+            "enum": [
+              "GREEN",
+              "RED",
+              "RED_EDGE",
+              "NIR",
+              "BLUE",
+              "LWIR"
+            ]
+          },
+          "description": "Spectral bands produced by the sensor. Minimum 4 required (GREEN+RED+RED_EDGE+NIR)."
+        },
+        "calibration_type": {
+          "type": "string",
+          "enum": [
+            "ABSOLUTE",
+            "RELATIVE",
+            "PANEL_ABSOLUTE",
+            "DLS2_RELATIVE"
+          ],
+          "description": "Radyometrik kalibrasyon tipi (KR-018). DJI Mavic 3M RELATIVE üretir. Opsiyonel, geriye uyumlu; edge→platform→worker calibration_metadata.calibration_type için KAYNAK. Platform ABSOLUTE'u worker PANEL_ABSOLUTE'una normalize eder; yoksa CALIBRATED→PANEL_ABSOLUTE varsayar (güvenlik-ağı). Kanonik vocabulary: enums/calibration_type.enum.v1.json."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp of manifest creation."
+        },
+        "quarantined_file_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of files AV1 quarantined/dropped locally BEFORE manifest emission (never enter files[]). Optional, backward compatible. Platform surfaces as an always-on admin warning when >0."
+        },
+        "quarantined_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total size in bytes of the AV1-quarantined files dropped locally. Optional, backward compatible. Meaningful together with quarantined_file_count."
+        },
+        "correlation_id": {
+          "type": "string",
+          "pattern": "^corr_[a-f0-9]{16,32}$",
+          "description": "Request-scoped trace identifier."
+        },
+        "mission_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "description": "Optional planned mission identifier."
+        },
+        "field_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid",
+          "description": "Optional field identifier from spatial matching."
+        },
+        "mission_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "description": "Uçuş tarihi (ISO YYYY-MM-DD). `sorties[].crop_type` ile birlikte fenolojik evreyi çözer (`phenology_calendar.yaml`) → NDVI eşikleri buna göre seçilir. Opsiyonel, geriye uyumlu.\n\n**C11 (2026-07-31):** Bu alan edge'in vendored sözleşmesinde ZATEN CANLIYDI, kanonikte yoktu — bir **AK-4 edge-ileri sapması**. I-5 gereği sapma yalnız GEÇİCİ olabilir; burada kanoniğe absorbe edildi."
+        },
+        "sorties": {
+          "type": "array",
+          "maxItems": 100,
+          "description": "Bu partide uçulan her tarla için sortie kaydı: hangi tarla, hangi ürün, hangi ayak izi. Sortie-başına NDVI önceliklendirmesini sürer. Opsiyonel, geriye uyumlu.\n\n**C11 (2026-07-31) — AK-4 absorpsiyonu.** Edge'in vendored sözleşmesinde canlıydı, kanonikte yoktu. ÖLÇÜLDÜ: edge'in `intake_manifest_valid.json` fixture'ı kanoniğe karşı **2 hata** veriyordu ve ikisinin de tek sebebi buydu (`sorties` + `mission_date` bilinmiyor → `oneOf` hiçbir dala uymuyor → `unevaluatedProperties: false`). D10/E2 gereği C8'den ÖNCE absorbe edilmesi zorunluydu.\n\n⚠️ **Dizi opsiyoneldir**, ama bir sortie yazıldıysa `bbox` ZORUNLUDUR — hiç sortie yoksa bbox de yoktur (E9'un mixed-crop yolu bu boşlukta yaşar).",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sortie_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Sortie'yi parti içinde tekilleştiren kimlik."
+              },
+              "field_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Uçulan tarlanın kimliği."
+              },
+              "field_name": {
+                "type": "string",
+                "description": "İnsan-okunur tarla adı (opsiyonel). KR-071: kişisel veri taşımamalıdır."
+              },
+              "crop_type": {
+                "type": "string",
+                "enum": [
+                  "COTTON",
+                  "PISTACHIO",
+                  "CORN",
+                  "WHEAT",
+                  "SUNFLOWER",
+                  "GRAPE",
+                  "OLIVE",
+                  "RICE"
+                ],
+                "x-vocabulary-source": "enums/crop_type.enum.v1.json",
+                "description": "Ürün — KANONİK vocabulary (BÜYÜK harf, 8 değer), `enums/crop_type.enum.v1.json` ile birebir (drift testle bağlandı).\n\n🔴 **BİLİNÇLİ SAPMA — edge bugün KÜÇÜK harf yazıyor (→ E16).** Edge'in vendored kopyası `[\"cotton\",\"corn\",\"pistachio\",\"grape\",\"rice\"]` diyor. Ölçüldü: kanonik şemaların **10'unda 10'u** BÜYÜK harf (8'i enum'a `$ref`, 2'si satır içi). Küçük harfin kökeni `edge/worker_result.v1.crop_type`'ın SERBEST METİN olması ve açıklamasındaki *\"e.g. cotton, wheat\"* örneği (kök neden ayrı kalem: AK-7). İki vocabulary kanoniğe TAŞINMAZ — absorpsiyon kanonik biçimle yapıldı; eşlemeyi edge C8'de yapar.\n\n⚠️ Küme de genişledi (5 → 8; WHEAT/SUNFLOWER/OLIVE): genişleme edge üreticisini KIRMAZ.",
+                "x-kr-ref": [
+                  "KR-030"
+                ]
+              },
+              "area_ha": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Sortie alanı (hektar)."
+              },
+              "planned_altitude_m": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Planlanan uçuş irtifası (m AGL). KR-092 fenolojik irtifa/hız parametreleriyle karşılaştırılır."
+              },
+              "bbox": {
+                "type": "object",
+                "description": "Sortie ayak izinin WGS84 sınırlayıcı kutusu. HC-02/HC-08: bu bir tarla KAPSAMIDIR (dikdörtgen), atomik GPS noktası DEĞİLDİR — `priority_zones.geom` / `observed_footprint_wkt` ile aynı izinli sınıf.",
+                "properties": {
+                  "lat_min": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "lat_max": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "lon_min": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "lon_max": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  }
+                },
+                "required": [
+                  "lat_min",
+                  "lat_max",
+                  "lon_min",
+                  "lon_max"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "sortie_id",
+              "field_id",
+              "crop_type",
+              "bbox"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "priority_zones": {
+          "type": "array",
+          "maxItems": 500,
+          "description": "M1 NdviPrioritizer output (FAZ 8.5) -- problem-zone patches + random sample. Optional, backward compatible.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "patch_id": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{32}$",
+                "description": "UUID4 hex (32 chars, no dashes)."
+              },
+              "geom": {
+                "type": "object",
+                "description": "GeoJSON Polygon (WGS84). HC-02 compliant: patch boundary only, never atomic GPS point.",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Polygon"
+                  },
+                  "coordinates": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "array",
+                      "minItems": 4,
+                      "items": {
+                        "type": "array",
+                        "minItems": 2,
+                        "maxItems": 3,
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180,
+                            "description": "Boylam (longitude), WGS84 DERECE. |değer| ≤ 180."
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90,
+                            "description": "Enlem (latitude), WGS84 DERECE. |değer| ≤ 90."
+                          }
+                        ],
+                        "items": {
+                          "type": "number"
+                        },
+                        "description": "GeoJSON koordinat çifti **[boylam, enlem]** — sıra RFC 7946 gereği lon,lat'tır (lat,lon DEĞİL). Üçüncü eleman (yükseklik) opsiyoneldir.\n\n⚠️ **2026-07-31/G3 — sınırlar EKLENDİ.** Öncesinde `{\"type\":\"number\"}` idi ve şema şunların HEPSİNİ kabul ediyordu (ölçüldü): UTM METRE koordinatları (`[500000, 4000000]`), enlem 91, boylam −181. Yani yanlış CRS'teki bir poligon sözleşmeden sessizce geçiyor, ardından `ST_SetSRID(...,4326)` onu **yanlış CRS ile damgalıyordu** (G4). Sınırlar, D7'de `observed_footprint_wkt` için konan derece ayırıcısının GeoJSON karşılığıdır — aynı kural, aynı gerekçe.\n\n🔴 **ŞEMANIN ZORLAYAMADIKLARI (bilerek yazılı):** ① halka KAPANIŞI (ilk nokta = son nokta) — JSON Schema elemanlar arası eşitlik ifade edemez ② KENDİ KENDİNİ KESEN poligon (papyon/bowtie) ③ halka yönü (sağ-el kuralı). Bu üçü **tüketicide** doğrulanmalıdır (platform ingest: `ST_IsValid` + kapanış kontrolü). Şema bunları gördüğünü İDDİA ETMEZ.",
+                        "x-compat-accepted": {
+                          "change": "koordinat sınırları eklendi (serbest number → lon[-180,180] / lat[-90,90])",
+                          "date": "2026-07-31",
+                          "rationale": "Biçimsel daraltma. Ölçüldü: sınırsız hâl UTM metre koordinatlarını, enlem 91'i ve boylam −181'i kabul ediyordu; yani yanlış CRS'teki poligon sözleşmeden geçip `ST_SetSRID(...,4326)` ile yanlış damgalanıyordu (G3/G4). Meşru bir WGS84 poligonu bu sınırların DIŞINDA OLAMAZ — reddedilen tek şey zaten hatalı veridir. Üretici (edge NdviPrioritizer) WGS84 üretir; kırılan üretici yoktur.",
+                          "ref": "eylem planı §14.5 (G3/G4) · denetim bulguları G3, G4"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "additionalProperties": false
+              },
+              "priority_level": {
+                "type": "string",
+                "enum": [
+                  "EXPRESS",
+                  "NORMAL"
+                ]
+              },
+              "ndvi_value": {
+                "type": "number",
+                "minimum": -1.0,
+                "maximum": 1.0,
+                "description": "Patch mean NDVI value."
+              },
+              "sampling_reason": {
+                "type": "string",
+                "enum": [
+                  "NDVI_THRESHOLD",
+                  "RANDOM_SAMPLE"
+                ]
+              },
+              "visualizations": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "patches/<patch_id>/ altındaki GÖRELİ YOLLAR -- path traversal açıkça yasak. ⚠️ Bunlar M1'deki YEREL DOSYA TANIMLAYICILARIDIR, nesne deposu anahtarı DEĞİLDİR (KG-0.a-EK kural 1): platform bu yolu S3 anahtarı olarak kabul etmez, imzalamaz ve kalıcılaştırmaz; anahtarı platform üretir ve PlatformForm.priority_zones[].visualizations içinde döndürür.",
+                "properties": {
+                  "true_color": {
+                    "type": "string",
+                    "pattern": "^patches/[a-f0-9]{32}/true_color\\.jpg$"
+                  },
+                  "false_color": {
+                    "type": "string",
+                    "pattern": "^patches/[a-f0-9]{32}/false_color\\.jpg$"
+                  },
+                  "ndvi_overlay": {
+                    "type": "string",
+                    "pattern": "^patches/[a-f0-9]{32}/ndvi_overlay\\.png$"
+                  }
+                },
+                "required": [
+                  "true_color",
+                  "false_color",
+                  "ndvi_overlay"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "patch_id",
+              "geom",
+              "priority_level",
+              "ndvi_value",
+              "sampling_reason"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "schema_version",
+        "batch_id",
+        "kiosk_id",
+        "operator_id",
+        "card_id",
+        "drone_serial",
+        "drone_make",
+        "drone_model",
+        "files",
+        "signature",
+        "av_scan_result",
+        "available_bands",
+        "created_at",
+        "correlation_id"
+      ],
+      "title": "Edge operational intake manifest",
+      "unevaluatedProperties": false
+    }
+  },
+  "x-kr-ref": [
+    "KR-072",
+    "KR-073",
+    "KR-015",
+    "KR-030"
+  ],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-07-31"
+}

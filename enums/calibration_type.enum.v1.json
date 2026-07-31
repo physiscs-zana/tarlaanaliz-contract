@@ -23,20 +23,64 @@
   "x-normalization": {
     "description": "Cross-layer normalizasyon sözleşmesi (önceden şemalarda dağınık/örtük idi).",
     "ABSOLUTE -> PANEL_ABSOLUTE": "Platform, edge/worker ABSOLUTE değerini worker PANEL_ABSOLUTE'una normalize eder (ABSOLUTE ≡ Pix4D panel reflektans).",
-    "missing -> PANEL_ABSOLUTE": "Edge CALIBRATED ama calibration_type yoksa platform PANEL_ABSOLUTE varsayar (güvenlik-ağı).",
-    "hard_reject": ["NONE"]
+    "missing": {
+      "policy": "FAIL-CLOSED",
+      "description": "Kalibrasyon tipi BİLDİRİLMEMİŞSE hiçbir bağlamda bir tip VARSAYILMAZ. Eksik bilgi, en güçlü sınıfa değil, kabul edilmemeye yorumlanır (KR-018/082 sert kapıdır).",
+      "edge/calibrated_dataset_manifest": "Alan zaten `required`; yokluğu geçersiz manifesttir (edge `calibrated_validator` CHECK 2 ile de doğrular). Paket CALIBRATED olamaz.",
+      "platform/calibrated_dataset_manifest": "Tip yoksa platform **NONE** yazar (kalibrasyon yok ⇒ KR-018/082 HARD REJECT). Paketi PANEL_ABSOLUTE'a YÜKSELTMEK YASAKTIR.",
+      "worker/analysis_job,worker/calibration_metadata,worker/calibrated_dataset": "NONE kabul edilir ve analiz kapısında reddedilir; tip yokluğu 'analiz edilebilir' anlamına gelmez.",
+      "edge/intake_manifest": "Kalibrasyon ÖNCESİ bağlam — yokluk normaldir ve hiçbir tip varsayılmaz; tip kalibrasyon çıktısında belirir."
+    },
+    "hard_reject": [
+      "NONE"
+    ],
+    "x-superseded-2026-07-31": {
+      "what": "Eski global 'eksikse PANEL_ABSOLUTE varsay' güvenlik-ağı kuralı KALDIRILDI.",
+      "why": "Denetim bulgusu S1 (KRİTİK): kural fail-OPEN idi. Kalibre edilmemiş (ham DN — sensör sayımı, reflektans değil) bir paket alanı hiç yazmadan worker spektral eşiklerinin REFERANS sınıfına yükseliyordu. Zincir üç halkalıydı: ① alan opsiyonel ② platform bağlam alt-kümesinde NONE yoktu (dürüst değer yazılamıyordu) ③ bu kural eksikliği en güçlü sınıfa çeviriyordu. Ham DN'yi kalibre reflektans sanan bir NDVI eşiği, tarlada YANLIŞ agronomik karar üretir.",
+      "evidence": "Kural canlı koda birebir geçmişti: tarlaanaliz-platform/src/infrastructure/messaging/worker_job_publisher.py:80-84 → 'status CALIBRATED → PANEL_ABSOLUTE (güvenlik-ağı)'. Aynı fonksiyonun 4. adımı zaten NONE üretiyor (fail-closed), yani NONE sistemde AKIYOR; yalnız kalibre manifestte yazılamıyordu.",
+      "consumer_obligation": "Platform: yukarıdaki 3. adım kaldırılmalı, tip yoksa NONE yazılmalı (P-kalemi; eylem planı §14.1/D8)."
+    }
   },
   "x-context-subsets": {
     "description": "Her şema bağlam-bazlı katı bir alt-küme kullanır (strict validation korunur); bu enum yalnız kanonik vocabulary + eşlemenin SSOT'udur.",
-    "edge/intake_manifest": ["ABSOLUTE", "RELATIVE", "PANEL_ABSOLUTE", "DLS2_RELATIVE"],
-    "edge/calibrated_dataset_manifest": ["ABSOLUTE", "RELATIVE"],
-    "worker/analysis_job,worker/calibration_metadata,worker/calibrated_dataset": ["ABSOLUTE", "PANEL_ABSOLUTE", "DLS2_RELATIVE", "RELATIVE", "NONE"],
-    "worker/expert_labeling_card.calibration_assumed": ["PANEL_ABSOLUTE", "DLS2_RELATIVE", "RELATIVE", "AGNOSTIC"]
+    "edge/intake_manifest": [
+      "ABSOLUTE",
+      "RELATIVE",
+      "PANEL_ABSOLUTE",
+      "DLS2_RELATIVE"
+    ],
+    "edge/calibrated_dataset_manifest": [
+      "ABSOLUTE",
+      "RELATIVE"
+    ],
+    "worker/analysis_job,worker/calibration_metadata,worker/calibrated_dataset": [
+      "ABSOLUTE",
+      "PANEL_ABSOLUTE",
+      "DLS2_RELATIVE",
+      "RELATIVE",
+      "NONE"
+    ],
+    "worker/expert_labeling_card.calibration_assumed": [
+      "PANEL_ABSOLUTE",
+      "DLS2_RELATIVE",
+      "RELATIVE",
+      "AGNOSTIC"
+    ],
+    "platform/calibrated_dataset_manifest": [
+      "ABSOLUTE",
+      "PANEL_ABSOLUTE",
+      "DLS2_RELATIVE",
+      "RELATIVE",
+      "NONE"
+    ]
   },
   "x-separate-axis": {
     "calibration_method": "AYRI eksen — bu enum DEĞİL. Reflektans yöntemleri: REFLECTANCE_PANEL/DLS_IRRADIANCE/EMPIRICAL_LINE (datasets/calibration_certificate, edge/calibration_result reflektans). Termal fabrika yöntemleri: FACTORY_RADIOMETRIC/FACTORY_RADIOMETRIC_ILS (platform/calibration_result, edge/calibration_result termal). Bunlar sensör-tipine özgüdür ve calibration_type ile birleştirilmez."
   },
-  "x-kr-ref": ["KR-018", "KR-082"],
+  "x-kr-ref": [
+    "KR-018",
+    "KR-082"
+  ],
   "notes": {
     "breaking_change_policy": "Adding a new calibration_type value is non-breaking (MINOR). Removing or renaming is breaking (MAJOR) and requires a migration guide.",
     "usage": "Kalibrasyon tipi alanları (calibration_type, expert_labeling_card.calibration_assumed) bu kanonik vocabulary'ye atıf yapar. Şemalar bağlam-bazlı alt-kümeyi inline tutar; bu dosya değer anlamları + normalizasyon eşlemesinin SSOT'udur."

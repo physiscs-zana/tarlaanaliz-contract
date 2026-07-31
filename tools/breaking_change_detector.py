@@ -8,13 +8,67 @@ Generates machine-readable report and PR comment format.
 Usage:
     python3 tools/breaking_change_detector.py --old v1.0.0 --new v1.1.0
     python3 tools/breaking_change_detector.py --pr-comment
+
+KAPSAM — 2026-07-31 (KADEME 0 / D3) ile ÖZYİNELEMELİ hâle getirildi
+--------------------------------------------------------------------
+Karşılaştırma artık şema ağacının HER düğümünde yapılır. Her düğümde
+enum / const / type / required / properties / pattern / min-max eksenleri
+karşılaştırılır; alt şemalara şu anahtarlardan inilir:
+
+    harita : properties, patternProperties, $defs, definitions, dependentSchemas
+    tekil  : items, contains, if, then, else, not, propertyNames,
+             additionalProperties, unevaluatedProperties,
+             additionalItems, unevaluatedItems
+    liste  : allOf, anyOf, oneOf, prefixItems   (indekse göre eşlenir)
+
+Ayrıca `x-context-subsets` (bağlam-bazlı KABUL listeleri; bkz.
+`enums/calibration_type.enum.v1.json`) enum ekseniyle aynı kuralla karşılaştırılır:
+bir bağlamdan değer düşmesi o bağlam için MAJOR'dır.
+
+NEDEN (ölçüm, 2026-07-31 10-disiplin denetimi — SD1/SD2/Y5):
+    `schemas/worker/expert_review_queue.v1.schema.json` içindeki
+    `properties.escalation_reason.enum`'dan `QUARANTINE_CAUTION` silindi (= MAJOR
+    breaking) ve araç **"Breaking Changes: 0"** dedi. Eski sürüm yalnız KÖK düzeyindeki
+    `enum` ve `properties` sözlüğünü okuyordu; `$defs`, `items`, `oneOf/allOf/if-then`
+    altındaki her şey görünmezdi. O turun 17 semantik değişikliğinin yalnız 4'ü görülmüştü.
+    Kural: "Yeşil ama yalan bir kapı, kırmızı bir kapıdan tehlikelidir."
+
+BEYANLI DARALTMA — `x-compat-accepted` (2026-07-31, D7 ile eklendi)
+--------------------------------------------------------------------
+Kısıt/desen/enum EKLEMEK biçimsel olarak breaking'dir, ama bazen gerçek dünyada
+kimseyi kırmaz (tipik: alanın ÖLÇÜLMÜŞ biçimde hiç üreticisi yoktur). Böyle bir
+değişiklik ya sürümü gereksiz MAJOR'a çeker ya da ekip kapıyı görmezden gelmeye
+başlar — ikisi de kapıyı öldürür. Bu yüzden istisna **sessiz değil beyanlıdır**:
+
+    "observed_footprint_wkt": {
+      "maxLength": 4096,
+      "x-compat-accepted": {"change": "...", "date": "...", "rationale": "...", "ref": "..."}
+    }
+
+Dedektör o düğümdeki daraltmayı NON_BREAKING'e indirir ama **gerekçeyi raporda
+yankılar** (PR yorumunda görünür kalır). Kapsam bilerek dar: yalnız
+`MIN_MAX_TIGHTENED`, `PATTERN_TIGHTENED`, `ENUM_CONSTRAINT_ADDED` indirilebilir.
+**Alan silme · enum DEĞERİ silme · `required` genişletme · tip daraltma ASLA indirilemez.**
+
+BİLİNEN SINIRLAR (bilerek — kapı bunları GÖRDÜĞÜNÜ iddia etmez):
+    * `$ref` **çözülmez**. `$ref` hedefi değişirse `REF_CHANGED` olarak raporlanır
+      (NON_BREAKING) ama sınıflandırılmaz — insan incelemesi gerekir (SDLC_GATES §3E).
+    * `description` farkları yalnız KÖK düzeyde raporlanır (aksi hâlde her tur binlerce
+      DOCUMENTATION satırı üretirdi).
+    * Desen (`pattern`) değişikliği daraltma/genişletme ayrımı yapılmadan BREAKING
+      sayılır (karar verilemez problem; muhafazakâr taraf seçildi).
+
+ÇIKIŞ KODLARI:
+    0 = breaking yok · 1 = breaking var · 2 = ARACIN KENDİSİ ÇALIŞAMADI
+    (okunamayan/bozuk şema, beklenmeyen hata). 2, CI'da "kapı bozuk" demektir ve
+    "breaking yok" ile karıştırılmamalıdır.
 """
 
 import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Any
+from typing import Dict, List, Optional, Set, Tuple, Any
 from enum import Enum
 
 
@@ -25,22 +79,88 @@ class ChangeType(Enum):
     FIELD_TYPE_CHANGED = "FIELD_TYPE_CHANGED"
     FIELD_MADE_REQUIRED = "FIELD_MADE_REQUIRED"
     ENUM_VALUE_REMOVED = "ENUM_VALUE_REMOVED"
+    ENUM_CONSTRAINT_ADDED = "ENUM_CONSTRAINT_ADDED"
+    CONST_CHANGED = "CONST_CHANGED"
+    CONTEXT_SUBSET_VALUE_REMOVED = "CONTEXT_SUBSET_VALUE_REMOVED"
+    COMPOSITION_BRANCH_CHANGED = "COMPOSITION_BRANCH_CHANGED"
     SCHEMA_REMOVED = "SCHEMA_REMOVED"
     ARRAY_ITEMS_CHANGED = "ARRAY_ITEMS_CHANGED"
     MIN_MAX_TIGHTENED = "MIN_MAX_TIGHTENED"
     PATTERN_TIGHTENED = "PATTERN_TIGHTENED"
-    
+
     # Non-breaking changes (allow MINOR version bump)
     FIELD_ADDED_OPTIONAL = "FIELD_ADDED_OPTIONAL"
     ENUM_VALUE_ADDED = "ENUM_VALUE_ADDED"
+    CONTEXT_SUBSET_VALUE_ADDED = "CONTEXT_SUBSET_VALUE_ADDED"
+    TYPE_WIDENED = "TYPE_WIDENED"
+    REF_CHANGED = "REF_CHANGED"
+    NORMATIVE_ANNOTATION_CHANGED = "NORMATIVE_ANNOTATION_CHANGED"
     SCHEMA_ADDED = "SCHEMA_ADDED"
     DESCRIPTION_CHANGED = "DESCRIPTION_CHANGED"
     MIN_MAX_RELAXED = "MIN_MAX_RELAXED"
     PATTERN_RELAXED = "PATTERN_RELAXED"
-    
+
     # Documentation only (allow PATCH version bump)
     EXAMPLE_CHANGED = "EXAMPLE_CHANGED"
     NOTES_CHANGED = "NOTES_CHANGED"
+
+
+# --- Draft 2020-12 alt-şema taşıyan anahtarlar ------------------------------
+# Değeri TEK bir alt şema olanlar
+SUBSCHEMA_SINGLE: Tuple[str, ...] = (
+    "items", "contains", "if", "then", "else", "not", "propertyNames",
+    "additionalProperties", "unevaluatedProperties",
+    "additionalItems", "unevaluatedItems",
+)
+# Değeri {ad: alt şema} haritası olanlar
+SUBSCHEMA_MAPS: Tuple[str, ...] = (
+    "properties", "patternProperties", "$defs", "definitions", "dependentSchemas",
+)
+# Değeri alt şema LİSTESİ olanlar (indekse göre eşlenir)
+SUBSCHEMA_LISTS: Tuple[str, ...] = ("allOf", "anyOf", "oneOf", "prefixItems")
+
+# Bileşim (composition) anahtarlarında hangi yön kırıcıdır:
+#   allOf/prefixItems  → dal EKLEMEK kısıt ekler   ⇒ breaking
+#   anyOf/oneOf        → dal ÇIKARMAK seçenek siler ⇒ breaking
+COMPOSITION_BREAKING_ON: Dict[str, str] = {
+    "allOf": "added",
+    "prefixItems": "added",
+    "anyOf": "removed",
+    "oneOf": "removed",
+}
+
+# --- Beyanlı daraltma (accepted tightening) ---------------------------------
+# Bir DARALTMA (kısıt/desen/enum EKLEME) biçimsel olarak breaking'dir; ama bazen
+# gerçek dünyada kimseyi kırmaz — tipik örnek: alanın HİÇ ÜRETİCİSİ yoktur
+# (ölçülmüş), yalnız tüketicileri vardır. Böyle bir değişiklik ya sürümü gereksiz
+# MAJOR'a çeker ya da ekip kapıyı görmezden gelmeye başlar; ikisi de kapıyı öldürür.
+#
+# Çözüm: SESSİZ istisna değil, BEYANLI istisna. İlgili düğüme `x-compat-accepted`
+# konur; dedektör o düğümdeki daraltmayı NON_BREAKING'e indirir ama gerekçeyi
+# RAPORDA yankılar (PR yorumunda görünür, incelenebilir kalır).
+#
+# ⚠️ Kapsam bilerek DAR: yalnız aşağıdaki sınıflar indirilebilir. Alan silme,
+# enum DEĞERİ silme, `required` genişletme ve tip daraltma ASLA indirilemez.
+# Tüketicinin KOD olarak uyguladığı `x-` blokları. Şema doğrulamasını değiştirmezler,
+# davranışı değiştirirler → sessiz kalamazlar (bkz. _compare_normative_annotations).
+# `x-updated` bilerek YOK: her turda değişir, sinyal değil gürültü üretir.
+NORMATIVE_ANNOTATION_KEYS: Tuple[str, ...] = (
+    "x-normalization",
+    "x-layer-classes",
+    "x-form-role",
+    "x-derived-from",
+    "x-preliminary-content",
+)
+
+ACCEPTANCE_KEY = "x-compat-accepted"
+ACCEPTABLE_TYPES = frozenset({
+    ChangeType.MIN_MAX_TIGHTENED.value,
+    ChangeType.PATTERN_TIGHTENED.value,
+    ChangeType.ENUM_CONSTRAINT_ADDED.value,
+    ChangeType.COMPOSITION_BRANCH_CHANGED.value,
+})
+#: Beyan bu alanları taşımak ZORUNDA (boş kaşe olmasın diye; tests ile zorlanır).
+ACCEPTANCE_REQUIRED_FIELDS = ("change", "date", "rationale", "ref")
 
 
 class BreakingChangeDetector:
@@ -50,7 +170,10 @@ class BreakingChangeDetector:
         self.old_dir = old_dir
         self.new_dir = new_dir
         self.changes: List[Dict[str, Any]] = []
-    
+        # Okunamayan dosyalar SESSİZ geçilemez: okunamayan bir şema "değişiklik yok"
+        # gibi görünür ve kapı yalan söyler. main() bu sayaç >0 iken exit 2 verir.
+        self.load_errors: List[str] = []
+
     def load_schema(self, path: Path) -> Dict:
         """Load JSON Schema file"""
         try:
@@ -58,8 +181,9 @@ class BreakingChangeDetector:
                 return json.load(f)
         except Exception as e:
             print(f"⚠️  Warning: Could not load {path}: {e}")
+            self.load_errors.append(f"{path}: {e}")
             return {}
-    
+
     def get_schema_files(self, directory: Path) -> Set[Path]:
         """Get all schema files in directory"""
         return set(directory.rglob('*.json'))
@@ -87,94 +211,11 @@ class BreakingChangeDetector:
             })
             return
         
-        # Compare properties
-        old_props = old_schema.get('properties', {})
-        new_props = new_schema.get('properties', {})
-        
-        old_required = set(old_schema.get('required', []))
-        new_required = set(new_schema.get('required', []))
-        
-        # Check for removed fields
-        removed_fields = set(old_props.keys()) - set(new_props.keys())
-        for field in removed_fields:
-            self.changes.append({
-                'type': ChangeType.FIELD_REMOVED.value,
-                'severity': 'BREAKING',
-                'file': schema_path,
-                'field': field,
-                'message': f"Field removed: {field} in {schema_path}"
-            })
-        
-        # Check for added required fields (breaking)
-        added_required = new_required - old_required
-        for field in added_required:
-            if field in new_props and field not in old_props:
-                self.changes.append({
-                    'type': ChangeType.FIELD_MADE_REQUIRED.value,
-                    'severity': 'BREAKING',
-                    'file': schema_path,
-                    'field': field,
-                    'message': f"New required field added: {field} in {schema_path}"
-                })
-            elif field in old_props:
-                self.changes.append({
-                    'type': ChangeType.FIELD_MADE_REQUIRED.value,
-                    'severity': 'BREAKING',
-                    'file': schema_path,
-                    'field': field,
-                    'message': f"Field made required: {field} in {schema_path}"
-                })
-        
-        # Check for type changes
-        for field in set(old_props.keys()) & set(new_props.keys()):
-            old_type = old_props[field].get('type')
-            new_type = new_props[field].get('type')
-            
-            if old_type and new_type and old_type != new_type:
-                self.changes.append({
-                    'type': ChangeType.FIELD_TYPE_CHANGED.value,
-                    'severity': 'BREAKING',
-                    'file': schema_path,
-                    'field': field,
-                    'old_type': old_type,
-                    'new_type': new_type,
-                    'message': f"Type changed: {field} from {old_type} to {new_type} in {schema_path}"
-                })
-            
-            # Check for pattern changes
-            old_pattern = old_props[field].get('pattern')
-            new_pattern = new_props[field].get('pattern')
-            
-            if old_pattern and new_pattern and old_pattern != new_pattern:
-                # This is potentially breaking (tightened pattern)
-                self.changes.append({
-                    'type': ChangeType.PATTERN_TIGHTENED.value,
-                    'severity': 'BREAKING',
-                    'file': schema_path,
-                    'field': field,
-                    'old_pattern': old_pattern,
-                    'new_pattern': new_pattern,
-                    'message': f"Pattern changed: {field} in {schema_path} (potentially breaking)"
-                })
-            
-            # Check for min/max changes
-            self.check_constraint_changes(old_props[field], new_props[field], schema_path, field)
-        
-        # Check for added optional fields (non-breaking)
-        added_optional = set(new_props.keys()) - set(old_props.keys()) - added_required
-        for field in added_optional:
-            self.changes.append({
-                'type': ChangeType.FIELD_ADDED_OPTIONAL.value,
-                'severity': 'NON_BREAKING',
-                'file': schema_path,
-                'field': field,
-                'message': f"Optional field added: {field} in {schema_path}"
-            })
-        
-        # Check enum changes
-        self.compare_enums(old_schema, new_schema, schema_path)
-        
-        # Check description changes (documentation only)
+        # ÖZYİNELEMELİ karşılaştırma — kök düğümden başlar, tüm alt şemalara iner.
+        self.compare_node(old_schema, new_schema, schema_path, "")
+
+        # Check description changes (documentation only) — YALNIZ kök düzeyde;
+        # her düğümde raporlansaydı gürültü sinyali bastırırdı.
         if old_schema.get('description') != new_schema.get('description'):
             self.changes.append({
                 'type': ChangeType.DESCRIPTION_CHANGED.value,
@@ -182,77 +223,507 @@ class BreakingChangeDetector:
                 'file': schema_path,
                 'message': f"Description updated in {schema_path}"
             })
-    
+
+    # ------------------------------------------------------------------ #
+    # Özyinelemeli çekirdek (D3)                                          #
+    # ------------------------------------------------------------------ #
+
+    @staticmethod
+    def _loc(pointer: str, field: str = "") -> str:
+        """İnsan-okunur konum: `properties.escalation_reason.enum` gibi."""
+        parts = [p for p in (pointer, field) if p]
+        return ".".join(parts) if parts else "<root>"
+
+    @staticmethod
+    def _type_set(node: Dict) -> Optional[Set[str]]:
+        """`type` değerini kümeye çevir (dize veya dizi olabilir)."""
+        raw = node.get('type')
+        if raw is None:
+            return None
+        if isinstance(raw, str):
+            return {raw}
+        if isinstance(raw, list):
+            return {t for t in raw if isinstance(t, str)}
+        return None
+
+    @staticmethod
+    def _value_key(value: Any) -> str:
+        """Hashlenemeyen enum değerleri (dict/list) için kararlı anahtar."""
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return json.dumps(value, sort_keys=True, ensure_ascii=False)
+        return json.dumps(value, sort_keys=True, ensure_ascii=False)
+
+    def compare_node(self, old_node: Any, new_node: Any, schema_path: str, pointer: str) -> None:
+        """Bir şema düğümünü karşılaştır ve TÜM alt şemalara in.
+
+        `pointer` düğümün kök'e göre yolu (`properties.escalation_reason` gibi);
+        mesajlarda konum olarak kullanılır.
+        """
+        if not isinstance(old_node, dict) or not isinstance(new_node, dict):
+            return
+
+        loc = self._loc(pointer)
+
+        self._compare_value_list(
+            old_node.get('enum'), new_node.get('enum'), schema_path, loc,
+            ChangeType.ENUM_VALUE_REMOVED, ChangeType.ENUM_VALUE_ADDED, "Enum value",
+        )
+        self._compare_enum_constraint_added(old_node, new_node, schema_path, loc)
+        self._compare_context_subsets(old_node, new_node, schema_path, loc)
+        self._compare_normative_annotations(old_node, new_node, schema_path, loc)
+        self._compare_const(old_node, new_node, schema_path, loc)
+        self._compare_type(old_node, new_node, schema_path, loc)
+        self._compare_pattern(old_node, new_node, schema_path, loc)
+        self.check_constraint_changes(old_node, new_node, schema_path, loc)
+        self._compare_ref(old_node, new_node, schema_path, loc)
+        self._compare_properties_and_required(old_node, new_node, schema_path, pointer)
+        self._recurse(old_node, new_node, schema_path, pointer)
+
+    def _recurse(self, old_node: Dict, new_node: Dict, schema_path: str, pointer: str) -> None:
+        """Alt şema taşıyan tüm anahtarlara in (yalnız İKİ tarafta da var olanlara).
+
+        Yalnız kesişime inilir: yeni eklenen bir alt şemanın iç kısıtları eski veriyi
+        kırmaz (o alan zaten yoktu) — aksi hâlde her yeni alan sahte breaking üretirdi.
+        """
+        for key in SUBSCHEMA_SINGLE:
+            if isinstance(old_node.get(key), dict) and isinstance(new_node.get(key), dict):
+                self.compare_node(old_node[key], new_node[key], schema_path,
+                                  self._loc(pointer, key))
+
+        for key in SUBSCHEMA_MAPS:
+            old_map, new_map = old_node.get(key), new_node.get(key)
+            if not isinstance(old_map, dict) or not isinstance(new_map, dict):
+                continue
+            # `properties` add/remove ayrıca _compare_properties_and_required'da raporlanır;
+            # burada yalnız ORTAK olanların İÇİNE iniyoruz.
+            for name in set(old_map) & set(new_map):
+                self.compare_node(old_map[name], new_map[name], schema_path,
+                                  self._loc(pointer, f"{key}.{name}"))
+
+        for key in SUBSCHEMA_LISTS:
+            old_list, new_list = old_node.get(key), new_node.get(key)
+            if not isinstance(old_list, list) or not isinstance(new_list, list):
+                # HİÇ YOKKEN bileşim kısıtı EKLEMEK de bir daraltmadır ve eski sürümde
+                # sessizdi: iki tarafta da liste şartı arandığı için `allOf` yokken
+                # eklenmesi HİÇ raporlanmıyordu (2026-07-31/KADEME 3'te ölçüldü —
+                # expert_review_queue'ya 5 blok eklendi, dedektör "0 değişiklik" dedi).
+                if isinstance(new_list, list) and old_list is None:
+                    self._record({
+                        'type': ChangeType.COMPOSITION_BRANCH_CHANGED.value,
+                        'severity': 'BREAKING',
+                        'file': schema_path,
+                        'field': self._loc(pointer, key),
+                        'old_count': 0,
+                        'new_count': len(new_list),
+                        'message': (
+                            f"Composition constraint added: {self._loc(pointer, key)} did not "
+                            f"exist, now has {len(new_list)} branch(es) in {schema_path}"
+                        ),
+                    }, new_node)
+                continue
+            self._compare_composition_arity(key, old_list, new_list, schema_path, pointer)
+            for index in range(min(len(old_list), len(new_list))):
+                self.compare_node(old_list[index], new_list[index], schema_path,
+                                  self._loc(pointer, f"{key}[{index}]"))
+
+    def _compare_composition_arity(self, key: str, old_list: List, new_list: List,
+                                   schema_path: str, pointer: str) -> None:
+        """`allOf/anyOf/oneOf/prefixItems` dal SAYISI değişimi."""
+        if len(old_list) == len(new_list):
+            return
+        grew = len(new_list) > len(old_list)
+        direction = 'added' if grew else 'removed'
+        breaking = COMPOSITION_BREAKING_ON.get(key) == direction
+        self.changes.append({
+            'type': ChangeType.COMPOSITION_BRANCH_CHANGED.value,
+            'severity': 'BREAKING' if breaking else 'NON_BREAKING',
+            'file': schema_path,
+            'field': self._loc(pointer, key),
+            'old_count': len(old_list),
+            'new_count': len(new_list),
+            'message': (
+                f"Composition branch {direction}: {self._loc(pointer, key)} "
+                f"{len(old_list)} -> {len(new_list)} in {schema_path}"
+            ),
+        })
+
+    def _compare_value_list(self, old_values: Any, new_values: Any, schema_path: str,
+                            loc: str, removed_type: ChangeType, added_type: ChangeType,
+                            label: str) -> None:
+        """Kabul listesi (enum / bağlam alt kümesi) karşılaştırması."""
+        if not isinstance(old_values, list) or not isinstance(new_values, list):
+            return
+        old_map = {self._value_key(v): v for v in old_values}
+        new_map = {self._value_key(v): v for v in new_values}
+        if not old_map and not new_map:
+            return
+
+        for key in old_map.keys() - new_map.keys():
+            self.changes.append({
+                'type': removed_type.value,
+                'severity': 'BREAKING',
+                'file': schema_path,
+                'field': loc,
+                'value': old_map[key],
+                'message': f"{label} removed: {old_map[key]} at {loc} in {schema_path}",
+            })
+        for key in new_map.keys() - old_map.keys():
+            self.changes.append({
+                'type': added_type.value,
+                'severity': 'NON_BREAKING',
+                'file': schema_path,
+                'field': loc,
+                'value': new_map[key],
+                'message': f"{label} added: {new_map[key]} at {loc} in {schema_path}",
+            })
+
+    # -- beyanlı daraltma ------------------------------------------------- #
+
+    @staticmethod
+    def _acceptance(node: Dict) -> Optional[Dict]:
+        """Düğümdeki `x-compat-accepted` beyanı (varsa)."""
+        declaration = node.get(ACCEPTANCE_KEY)
+        return declaration if isinstance(declaration, dict) else None
+
+    def _record(self, change: Dict[str, Any], new_node: Dict) -> None:
+        """Değişikliği kaydet; beyanlı DARALTMA ise NON_BREAKING'e indir.
+
+        İndirme SESSİZ DEĞİLDİR: gerekçe mesaja yazılır ve raporda görünür.
+        """
+        declaration = self._acceptance(new_node)
+        if (
+            declaration is not None
+            and change['severity'] == 'BREAKING'
+            and change['type'] in ACCEPTABLE_TYPES
+        ):
+            change = dict(change)
+            change['severity'] = 'NON_BREAKING'
+            change['accepted'] = declaration
+            change['message'] = (
+                f"ACCEPTED TIGHTENING (declared): {change['message']} "
+                f"| gerekçe: {declaration.get('rationale', '<gerekçe yok>')} "
+                f"| ref: {declaration.get('ref', '<ref yok>')}"
+            )
+        self.changes.append(change)
+
+    def _compare_enum_constraint_added(self, old_node: Dict, new_node: Dict,
+                                       schema_path: str, loc: str) -> None:
+        """Serbest bir alana SONRADAN `enum` koymak daraltmadır.
+
+        Eski değer listesi karşılaştırması iki tarafta da `enum` şartı koştuğu için
+        bu sınıfı HİÇ görmüyordu: `{"type":"string"}` → `{"type":"string","enum":[...]}`
+        değişikliği sessizce geçiyordu (ör. `qc_report.flags[]` kapalı vocabulary'ye
+        çevrilirken).
+        """
+        if 'enum' in old_node or not isinstance(new_node.get('enum'), list):
+            return
+        self._record({
+            'type': ChangeType.ENUM_CONSTRAINT_ADDED.value,
+            'severity': 'BREAKING',
+            'file': schema_path,
+            'field': loc,
+            'new_values': new_node['enum'],
+            'message': (
+                f"Enum constraint added: {loc} was unconstrained, now limited to "
+                f"{new_node['enum']} in {schema_path}"
+            ),
+        }, new_node)
+
+    def _compare_context_subsets(self, old_node: Dict, new_node: Dict,
+                                 schema_path: str, loc: str) -> None:
+        """`x-context-subsets` — bağlam-bazlı KABUL listeleri (enum ile aynı ağırlık).
+
+        Bir bağlamdan değer düşerse o bağlamdaki üreticiler kırılır; şema `enum`'u
+        değişmediği için klasik enum karşılaştırması bunu göremez
+        (bkz. `enums/calibration_type.enum.v1.json`).
+        """
+        old_subsets = old_node.get('x-context-subsets')
+        new_subsets = new_node.get('x-context-subsets')
+        if not isinstance(old_subsets, dict) or not isinstance(new_subsets, dict):
+            return
+        for context in set(old_subsets) & set(new_subsets):
+            self._compare_value_list(
+                old_subsets[context], new_subsets[context], schema_path,
+                self._loc(loc if loc != "<root>" else "", f"x-context-subsets.{context}"),
+                ChangeType.CONTEXT_SUBSET_VALUE_REMOVED,
+                ChangeType.CONTEXT_SUBSET_VALUE_ADDED,
+                "Context-subset value",
+            )
+        for context in set(old_subsets) - set(new_subsets):
+            if isinstance(old_subsets[context], list):
+                self.changes.append({
+                    'type': ChangeType.CONTEXT_SUBSET_VALUE_REMOVED.value,
+                    'severity': 'BREAKING',
+                    'file': schema_path,
+                    'field': f"x-context-subsets.{context}",
+                    'message': (
+                        f"Context subset removed: {context} in {schema_path} "
+                        "(that context loses its declared vocabulary)"
+                    ),
+                })
+        for context in set(new_subsets) - set(old_subsets):
+            if isinstance(new_subsets[context], list):
+                self.changes.append({
+                    'type': ChangeType.CONTEXT_SUBSET_VALUE_ADDED.value,
+                    'severity': 'NON_BREAKING',
+                    'file': schema_path,
+                    'field': f"x-context-subsets.{context}",
+                    'message': (
+                        f"Context subset added: {context} = {new_subsets[context]} "
+                        f"in {schema_path}"
+                    ),
+                })
+
+    def _compare_normative_annotations(self, old_node: Dict, new_node: Dict,
+                                       schema_path: str, loc: str) -> None:
+        """Doğrulamayı değiştirmeyen ama DAVRANIŞI belirleyen `x-` bloklarını görünür kıl.
+
+        Bu depoda bazı `x-` blokları normatiftir: tüketiciler onları KOD olarak uygular.
+        Örnek (2026-07-31/D8): `calibration_type.enum` → `x-normalization` bloğundaki
+        *"eksikse PANEL_ABSOLUTE varsay"* kuralı platform kodunda birebir uygulanıyordu
+        (`worker_job_publisher.py:80-84`). Bu kuralın fail-open'dan FAIL-CLOSED'a çevrilmesi
+        hiçbir belgeyi/şemayı 'geçersiz' yapmaz — yani klasik şema diff'i onu HİÇ GÖRMEZ,
+        ama tüketicinin davranışını değiştirmesi ZORUNLUDUR.
+
+        Bu yüzden bu bloklar NON_BREAKING olarak ama **"manual review required"** damgasıyla
+        raporlanır. `x-updated` gibi tarih alanları bilerek KAPSAM DIŞIDIR (gürültü).
+        """
+        for key in NORMATIVE_ANNOTATION_KEYS:
+            old_value, new_value = old_node.get(key), new_node.get(key)
+            if old_value == new_value or (old_value is None and new_value is None):
+                continue
+            self.changes.append({
+                'type': ChangeType.NORMATIVE_ANNOTATION_CHANGED.value,
+                'severity': 'NON_BREAKING',
+                'file': schema_path,
+                'field': self._loc(loc if loc != "<root>" else "", key),
+                'message': (
+                    f"Normative annotation changed: {key} at {loc} in {schema_path} "
+                    "— validation is unaffected but CONSUMER BEHAVIOUR may be; manual review required"
+                ),
+            })
+
+    def _compare_const(self, old_node: Dict, new_node: Dict, schema_path: str, loc: str) -> None:
+        if 'const' not in old_node and 'const' not in new_node:
+            return
+        if old_node.get('const') == new_node.get('const'):
+            return
+        self.changes.append({
+            'type': ChangeType.CONST_CHANGED.value,
+            'severity': 'BREAKING',
+            'file': schema_path,
+            'field': loc,
+            'old_value': old_node.get('const'),
+            'new_value': new_node.get('const'),
+            'message': (
+                f"Const changed: {loc} {old_node.get('const')!r} -> "
+                f"{new_node.get('const')!r} in {schema_path}"
+            ),
+        })
+
+    def _compare_type(self, old_node: Dict, new_node: Dict, schema_path: str, loc: str) -> None:
+        """Tip kümesi DARALMASI kırıcıdır; genişleme (`["string","null"]`) değildir."""
+        old_types, new_types = self._type_set(old_node), self._type_set(new_node)
+        if not old_types or not new_types or old_types == new_types:
+            return
+        dropped = old_types - new_types
+        if dropped:
+            self.changes.append({
+                'type': ChangeType.FIELD_TYPE_CHANGED.value,
+                'severity': 'BREAKING',
+                'file': schema_path,
+                'field': loc,
+                'old_type': sorted(old_types),
+                'new_type': sorted(new_types),
+                'message': (
+                    f"Type changed: {loc} from {sorted(old_types)} to {sorted(new_types)} "
+                    f"in {schema_path}"
+                ),
+            })
+        else:
+            self.changes.append({
+                'type': ChangeType.TYPE_WIDENED.value,
+                'severity': 'NON_BREAKING',
+                'file': schema_path,
+                'field': loc,
+                'message': (
+                    f"Type widened: {loc} {sorted(old_types)} -> {sorted(new_types)} "
+                    f"in {schema_path}"
+                ),
+            })
+
+    def _compare_pattern(self, old_node: Dict, new_node: Dict, schema_path: str, loc: str) -> None:
+        """Desen değişimi/eklenmesi — daraltma/genişletme ayrımı KARAR VERİLEMEZ,
+        muhafazakâr taraf seçilir (BREAKING)."""
+        old_pattern, new_pattern = old_node.get('pattern'), new_node.get('pattern')
+        if new_pattern is None or old_pattern == new_pattern:
+            return
+        self._record({
+            'type': ChangeType.PATTERN_TIGHTENED.value,
+            'severity': 'BREAKING',
+            'file': schema_path,
+            'field': loc,
+            'old_pattern': old_pattern,
+            'new_pattern': new_pattern,
+            'message': (
+                f"Pattern {'added' if old_pattern is None else 'changed'}: {loc} in "
+                f"{schema_path} (potentially breaking)"
+            ),
+        }, new_node)
+
+    def _compare_ref(self, old_node: Dict, new_node: Dict, schema_path: str, loc: str) -> None:
+        """`$ref` hedefi değişimi — ÇÖZÜLMEZ, yalnız görünür kılınır (bilinen sınır)."""
+        old_ref, new_ref = old_node.get('$ref'), new_node.get('$ref')
+        if old_ref == new_ref or (old_ref is None and new_ref is None):
+            return
+        self.changes.append({
+            'type': ChangeType.REF_CHANGED.value,
+            'severity': 'NON_BREAKING',
+            'file': schema_path,
+            'field': loc,
+            'old_ref': old_ref,
+            'new_ref': new_ref,
+            'message': (
+                f"$ref retargeted: {loc} {old_ref} -> {new_ref} in {schema_path} "
+                "(NOT resolved by this tool — manual review required)"
+            ),
+        })
+
+    def _compare_properties_and_required(self, old_node: Dict, new_node: Dict,
+                                         schema_path: str, pointer: str) -> None:
+        """Bu düğümdeki `properties` ekleme/silme + `required` genişlemesi."""
+        old_props = old_node.get('properties')
+        new_props = new_node.get('properties')
+        old_props = old_props if isinstance(old_props, dict) else {}
+        new_props = new_props if isinstance(new_props, dict) else {}
+
+        old_required = set(old_node.get('required', []) or [])
+        new_required = set(new_node.get('required', []) or [])
+
+        if not old_props and not new_props and old_required == new_required:
+            return
+
+        for field in sorted(set(old_props) - set(new_props)):
+            self.changes.append({
+                'type': ChangeType.FIELD_REMOVED.value,
+                'severity': 'BREAKING',
+                'file': schema_path,
+                'field': self._loc(pointer, field),
+                'message': f"Field removed: {self._loc(pointer, field)} in {schema_path}",
+            })
+
+        added_required = new_required - old_required
+        for field in sorted(added_required):
+            if field in new_props and field not in old_props:
+                detail = "New required field added"
+            else:
+                # `field in old_props` VE `required`da olmayan alanlar burada;
+                # `properties`de hiç tanımlı olmayan required alanlar da (eski sürüm
+                # bunları SESSİZ atlıyordu) buraya düşer.
+                detail = "Field made required"
+            self.changes.append({
+                'type': ChangeType.FIELD_MADE_REQUIRED.value,
+                'severity': 'BREAKING',
+                'file': schema_path,
+                'field': self._loc(pointer, field),
+                'message': f"{detail}: {self._loc(pointer, field)} in {schema_path}",
+            })
+
+        for field in sorted(set(new_props) - set(old_props) - added_required):
+            self.changes.append({
+                'type': ChangeType.FIELD_ADDED_OPTIONAL.value,
+                'severity': 'NON_BREAKING',
+                'file': schema_path,
+                'field': self._loc(pointer, field),
+                'message': f"Optional field added: {self._loc(pointer, field)} in {schema_path}",
+            })
+
     def check_constraint_changes(self, old_prop: Dict, new_prop: Dict, schema_path: str, field: str):
-        """Check for constraint changes (min/max, minLength/maxLength, etc.)"""
-        
+        """Check for constraint changes (min/max, minLength/maxLength, etc.)
+
+        Kısıtın SONRADAN EKLENMESİ de daraltmadır (eski sürüm yalnız iki tarafta da
+        var olan kısıtları karşılaştırıyordu; `maxLength` eklemek görünmezdi).
+        """
+
         constraints = [
             ('minimum', 'increased'),
+            ('exclusiveMinimum', 'increased'),
             ('maximum', 'decreased'),
+            ('exclusiveMaximum', 'decreased'),
             ('minLength', 'increased'),
             ('maxLength', 'decreased'),
             ('minItems', 'increased'),
-            ('maxItems', 'decreased')
+            ('maxItems', 'decreased'),
+            ('minProperties', 'increased'),
+            ('maxProperties', 'decreased'),
         ]
-        
+
         for constraint, direction in constraints:
             old_val = old_prop.get(constraint)
             new_val = new_prop.get(constraint)
-            
-            if old_val is not None and new_val is not None:
-                if direction == 'increased' and new_val > old_val:
-                    self.changes.append({
-                        'type': ChangeType.MIN_MAX_TIGHTENED.value,
-                        'severity': 'BREAKING',
-                        'file': schema_path,
-                        'field': field,
-                        'constraint': constraint,
-                        'old_value': old_val,
-                        'new_value': new_val,
-                        'message': f"Constraint tightened: {field}.{constraint} {direction} from {old_val} to {new_val} in {schema_path}"
-                    })
-                elif direction == 'decreased' and new_val < old_val:
-                    self.changes.append({
-                        'type': ChangeType.MIN_MAX_TIGHTENED.value,
-                        'severity': 'BREAKING',
-                        'file': schema_path,
-                        'field': field,
-                        'constraint': constraint,
-                        'old_value': old_val,
-                        'new_value': new_val,
-                        'message': f"Constraint tightened: {field}.{constraint} {direction} from {old_val} to {new_val} in {schema_path}"
-                    })
-    
+
+            if new_val is None or not isinstance(new_val, (int, float)):
+                continue
+
+            if old_val is None:
+                self._record({
+                    'type': ChangeType.MIN_MAX_TIGHTENED.value,
+                    'severity': 'BREAKING',
+                    'file': schema_path,
+                    'field': field,
+                    'constraint': constraint,
+                    'old_value': None,
+                    'new_value': new_val,
+                    'message': (
+                        f"Constraint added: {field}.{constraint} = {new_val} in {schema_path}"
+                    ),
+                }, new_prop)
+                continue
+
+            if not isinstance(old_val, (int, float)):
+                continue
+
+            tightened = (direction == 'increased' and new_val > old_val) or \
+                        (direction == 'decreased' and new_val < old_val)
+            if tightened:
+                self._record({
+                    'type': ChangeType.MIN_MAX_TIGHTENED.value,
+                    'severity': 'BREAKING',
+                    'file': schema_path,
+                    'field': field,
+                    'constraint': constraint,
+                    'old_value': old_val,
+                    'new_value': new_val,
+                    'message': (
+                        f"Constraint tightened: {field}.{constraint} {direction} from "
+                        f"{old_val} to {new_val} in {schema_path}"
+                    ),
+                }, new_prop)
+            elif new_val != old_val:
+                self.changes.append({
+                    'type': ChangeType.MIN_MAX_RELAXED.value,
+                    'severity': 'NON_BREAKING',
+                    'file': schema_path,
+                    'field': field,
+                    'constraint': constraint,
+                    'old_value': old_val,
+                    'new_value': new_val,
+                    'message': (
+                        f"Constraint relaxed: {field}.{constraint} from {old_val} to "
+                        f"{new_val} in {schema_path}"
+                    ),
+                })
+
     def compare_enums(self, old_schema: Dict, new_schema: Dict, schema_path: str):
-        """Compare enum values"""
-        old_enum = set(old_schema.get('enum', []))
-        new_enum = set(new_schema.get('enum', []))
-        
-        if not old_enum and not new_enum:
-            return
-        
-        # Check for removed enum values (breaking)
-        removed_values = old_enum - new_enum
-        for value in removed_values:
-            self.changes.append({
-                'type': ChangeType.ENUM_VALUE_REMOVED.value,
-                'severity': 'BREAKING',
-                'file': schema_path,
-                'value': value,
-                'message': f"Enum value removed: {value} in {schema_path}"
-            })
-        
-        # Check for added enum values (non-breaking)
-        added_values = new_enum - old_enum
-        for value in added_values:
-            self.changes.append({
-                'type': ChangeType.ENUM_VALUE_ADDED.value,
-                'severity': 'NON_BREAKING',
-                'file': schema_path,
-                'value': value,
-                'message': f"Enum value added: {value} in {schema_path}"
-            })
-    
+        """Kök düzeyi enum karşılaştırması (geriye uyumluluk kabuğu).
+
+        Özyinelemeli yol `compare_node` üzerindedir; bu metot dış çağrıcılar için durur.
+        """
+        self._compare_value_list(
+            old_schema.get('enum'), new_schema.get('enum'), schema_path, "<root>",
+            ChangeType.ENUM_VALUE_REMOVED, ChangeType.ENUM_VALUE_ADDED, "Enum value",
+        )
+
     def scan_tree(self, old_dir: Path, new_dir: Path) -> None:
         """Walk a matched old/new directory tree and accumulate detected changes.
 
@@ -377,6 +848,14 @@ class BreakingChangeDetector:
 
 def main():
     """Main CLI"""
+    # Windows konsolu (cp1254) UTF-8 olmayan çıktıda çöker — `tools/validate.py` ile
+    # aynı kalıcı düzeltme (2026-07-05). Bu satır olmadan araç Windows'ta HİÇ koşmuyordu
+    # ve SDLC_GATES §1C "detector çalıştırıldı" maddesi uygulanamıyordu.
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8")
+
     parser = argparse.ArgumentParser(
         description='Detect breaking changes in TarlaAnaliz contracts'
     )
@@ -403,9 +882,14 @@ def main():
     # The canonical enum SSOT (crop_type, phenology_stage, analysis_type, ...)
     # lives at top-level enums/; enum value removals/renames are MAJOR breaking
     # and must not be invisible to the detector.
-    print(f"🔍 Comparing contracts (schemas/ + enums/)...")
-    print(f"   Old: {old_dir}")
-    print(f"   New: {new_dir}\n")
+    #
+    # ⚠️ İLERLEME METNİ **stderr**'e gider. 2026-07-31'de ölçüldü: bu üç satır stdout'a
+    # basıldığı için CI'ın `--json > breaking_changes.json` çıktısı geçersiz JSON oluyordu;
+    # `json.load` patlıyor, CI'daki `if` bloğu else dalına düşüp **has_breaking=false**
+    # yazıyordu. Yani kapı, `continue-on-error` olmasa bile DAİMA "breaking yok" derdi.
+    print("🔍 Comparing contracts (schemas/ + enums/)...", file=sys.stderr)
+    print(f"   Old: {old_dir}", file=sys.stderr)
+    print(f"   New: {new_dir}\n", file=sys.stderr)
 
     detector = BreakingChangeDetector(old_dir / 'schemas', new_dir / 'schemas')
     detector.scan_tree(detector.old_dir, detector.new_dir)  # schemas/
@@ -416,7 +900,7 @@ def main():
         detector.scan_tree(enums_old, enums_new)  # enums/
 
     categorized_changes = detector.categorize()
-    
+
     # Output format
     if args.json:
         print(json.dumps(categorized_changes, indent=2))
@@ -424,7 +908,13 @@ def main():
         print(detector.generate_pr_comment(categorized_changes))
     else:
         print(detector.generate_report(categorized_changes))
-    
+
+    # Okunamayan şema = kapı KÖR. "breaking yok" ile karıştırılmamalı → exit 2.
+    if detector.load_errors:
+        for err in detector.load_errors:
+            print(f"❌ Unreadable schema (gate is blind): {err}", file=sys.stderr)
+        sys.exit(2)
+
     # Exit code
     if categorized_changes['has_breaking']:
         sys.exit(1)  # Breaking changes detected
@@ -433,4 +923,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as exc:  # noqa: BLE001 — kapı sessizce ölmemeli
+        print(f"❌ breaking_change_detector crashed: {exc}", file=sys.stderr)
+        sys.exit(2)

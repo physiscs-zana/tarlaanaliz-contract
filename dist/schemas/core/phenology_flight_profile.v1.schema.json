@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/core/phenology_flight_profile.v1.schema.json",
+  "title": "PhenologyFlightProfile",
+  "description": "Bitki bazında, fenolojik evreye göre önerilen drone uçuş yüksekliği/hızı ve tarama sıklığı tablosu. Pilot görevi için 'o tarihte geçerli evre → uçuş parametreleri' eşlemesini besler (KR-016). Tarama sıklığı KR-024 ile hizalıdır. Uçuş değerleri karar-destektir; sistem ilaçlama kararı vermez (KR-025). Kaynak: TarlaAnaliz_Tarama_ve_Bag_Ilaclama_Referansi_v2.0.",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": [
+    "version",
+    "source",
+    "platform",
+    "global_flight",
+    "disclaimer",
+    "crops"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Veri dosyası semver sürümü."
+    },
+    "source": {
+      "type": "string",
+      "description": "Değerlerin türetildiği kanonik referans doküman adı."
+    },
+    "platform": {
+      "type": "string",
+      "description": "GSD/uçuş değerlerinin baz alındığı drone/sensör platformu (ör. DJI Mavic 3M)."
+    },
+    "global_flight": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "flight_window_local",
+        "min_sun_angle_deg",
+        "overlap_forward_pct",
+        "overlap_side_pct",
+        "max_legal_altitude_m_agl"
+      ],
+      "description": "Tüm evreler için ortak operasyonel uçuş ayarları (referans §8).",
+      "properties": {
+        "flight_window_local": {
+          "type": "string",
+          "description": "Önerilen yerel uçuş saati penceresi (radyometri için)."
+        },
+        "min_sun_angle_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 90,
+          "description": "Asgari güneş açısı (derece)."
+        },
+        "overlap_forward_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "İleri (frontal) örtüşme (%)."
+        },
+        "overlap_side_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Yan (side) örtüşme (%)."
+        },
+        "max_legal_altitude_m_agl": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Azami yasal uçuş yüksekliği (m AGL); üzeri SHGM izni gerektirir."
+        }
+      }
+    },
+    "disclaimer": {
+      "type": "string",
+      "description": "Karar-destek ve sınırlama notu (KR-025: sistem ilaçlama kararı vermez)."
+    },
+    "crops": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/CropProfile"
+      },
+      "description": "Kapsanan her bitki için fenolojik uçuş profili."
+    }
+  },
+  "$defs": {
+    "Range": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        }
+      },
+      "description": "min ≤ max aralık. Tüketici tek değer isterse ortalamayı kullanır."
+    },
+    "MonthDay": {
+      "type": "string",
+      "pattern": "^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$",
+      "description": "Yıldan bağımsız MM-DD; bölgesel takvim penceresi için."
+    },
+    "CropProfile": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "crop_type",
+        "label_tr",
+        "anchor",
+        "stages"
+      ],
+      "properties": {
+        "crop_type": {
+          "type": "string",
+          "enum": [
+            "COTTON",
+            "PISTACHIO",
+            "CORN",
+            "WHEAT",
+            "SUNFLOWER",
+            "GRAPE",
+            "OLIVE",
+            "RICE"
+          ],
+          "description": "Kanonik bitki tipi.",
+          "x-inlined-from": {
+            "ref": "../../enums/crop_type.enum.v1.json",
+            "source_id": "https://api.tarlaanaliz.com/enums/crop_type.enum.v1.json",
+            "keys": [
+              "enum",
+              "type"
+            ],
+            "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+          }
+        },
+        "label_tr": {
+          "type": "string",
+          "description": "Türkçe görünen ad."
+        },
+        "anchor": {
+          "$ref": "#/$defs/StageAnchor"
+        },
+        "stages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/StageProfile"
+          },
+          "description": "Fenolojik sıra ile evre profilleri."
+        }
+      }
+    },
+    "StageAnchor": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "mode",
+        "confirm_with_farmer"
+      ],
+      "description": "Görev/analiz talebi tarihinde evrenin nasıl belirleneceği (KR-016: o tarihte geçerli evre).",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "REGIONAL_CALENDAR",
+            "FARMER_ANCHOR"
+          ],
+          "description": "REGIONAL_CALENDAR: bugünün tarihi + bölgesel takvimden evre çıkarılır (yalnız stage.regional_window dolu olan bitkilerde). FARMER_ANCHOR: çiftçiden dikim/çıkış tarihi veya mevcut evre alınır."
+        },
+        "confirm_with_farmer": {
+          "type": "boolean",
+          "description": "Sistem ön-doldursa bile çiftçi onayı istenir mi (bölgesel tarihler ortalamadır)."
+        },
+        "question_tr": {
+          "type": "string",
+          "description": "FARMER_ANCHOR modunda çiftçiye sorulacak metin / dropdown açıklaması."
+        }
+      }
+    },
+    "StageProfile": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "stage",
+        "label_tr",
+        "bbch",
+        "scan_frequency",
+        "altitude_m",
+        "speed_ms"
+      ],
+      "properties": {
+        "stage": {
+          "type": "string",
+          "enum": [
+            "GRAPE_BUDBREAK_SHOOT",
+            "GRAPE_PREFLOWER_FLOWER",
+            "GRAPE_FRUITSET_CLOSURE",
+            "GRAPE_VERAISON_MATURITY",
+            "CORN_EMERGENCE_V5",
+            "CORN_V6_PRETASSEL",
+            "CORN_TASSEL_SILK",
+            "CORN_GRAINFILL",
+            "OLIVE_DORMANCY_BUD",
+            "OLIVE_LEAF_SHOOT",
+            "OLIVE_INFLOR_FLOWER",
+            "OLIVE_FRUITSET_PIT",
+            "OLIVE_VERAISON_MATURITY",
+            "OLIVE_HARVEST"
+          ],
+          "description": "Kanonik fenolojik evre kodu.",
+          "x-inlined-from": {
+            "ref": "../../enums/phenology_stage.enum.v1.json",
+            "source_id": "https://api.tarlaanaliz.com/enums/phenology_stage.enum.v1.json",
+            "keys": [
+              "enum",
+              "type"
+            ],
+            "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+          }
+        },
+        "label_tr": {
+          "type": "string",
+          "description": "Türkçe evre adı."
+        },
+        "bbch": {
+          "type": "string",
+          "description": "BBCH (gerekirse Feekes/V-R) ölçek aralığı."
+        },
+        "scan_frequency": {
+          "$ref": "#/$defs/ScanFrequency"
+        },
+        "altitude_m": {
+          "$ref": "#/$defs/Range",
+          "description": "Önerilen uçuş yüksekliği aralığı (m AGL)."
+        },
+        "speed_ms": {
+          "$ref": "#/$defs/Range",
+          "description": "Önerilen uçuş hızı aralığı (m/s)."
+        },
+        "gsd_cm": {
+          "$ref": "#/$defs/Range",
+          "description": "Beklenen çok-spektral GSD aralığı (cm/piksel)."
+        },
+        "regional_window": {
+          "type": "object",
+          "unevaluatedProperties": false,
+          "required": [
+            "start",
+            "end"
+          ],
+          "description": "Bölgesel (GAP) yaklaşık tarih penceresi; yalnız REGIONAL_CALENDAR çapasında kullanılır. Ortalamadır, kesin değildir.",
+          "properties": {
+            "start": {
+              "$ref": "#/$defs/MonthDay"
+            },
+            "end": {
+              "$ref": "#/$defs/MonthDay"
+            }
+          }
+        },
+        "primary_targets_tr": {
+          "type": "string",
+          "description": "Bu evrede öncelikli tarama hedefleri (H/Z/Y)."
+        }
+      }
+    },
+    "ScanFrequency": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "every_days_min",
+        "every_days_max",
+        "critical_window"
+      ],
+      "description": "Tarama gün aralığı (KR-024 ile hizalı). 'Haftada 1' = 7/7; 'Haftada 1–2' = 4/7; 'Haftada 2' = 3/4; 'haftalık→2 haftalık' = 7/14.",
+      "properties": {
+        "every_days_min": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "İki tarama arası asgari gün."
+        },
+        "every_days_max": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "İki tarama arası azami gün."
+        },
+        "critical_window": {
+          "type": "boolean",
+          "description": "Yüksek risk evresi (sıklık artırılır)."
+        },
+        "outbreak_every_days": {
+          "$ref": "#/$defs/Range",
+          "description": "Aktif salgın/zirve baskıda önerilen sıklaştırılmış aralık (gün); yoksa atlanır."
+        },
+        "rain_triggered": {
+          "type": "boolean",
+          "description": "Yağış sonrası ek uçuş tetiklenir mi."
+        }
+      }
+    }
+  },
+  "x-bound": "TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.",
+  "x-kr-ref": [
+    "KR-016",
+    "KR-024",
+    "KR-025"
+  ],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-05-29"
+}

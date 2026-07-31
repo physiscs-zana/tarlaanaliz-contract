@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/events/dataset_unquarantined.v1.schema.json",
+  "title": "DatasetUnquarantinedEvent",
+  "description": "Domain event: Dataset karantinadan çıkarıldı (admin kararıyla serbest bırakma) — KR-072. Platform tarafından yayınlanır (dataset.unquarantined). NOT: edge tarafında REJECTED_QUARANTINE geri dönüşsüzdür; bu event platform yönetim katmanı içindir.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "$ref": "#/$defs/EventId",
+      "description": "Olay benzersiz kimliği."
+    },
+    "event_type": {
+      "type": "string",
+      "const": "dataset.unquarantined",
+      "description": "Olay tipi sabiti."
+    },
+    "event_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version"
+    },
+    "aggregate_type": {
+      "type": "string",
+      "const": "dataset",
+      "description": "Aggregate type"
+    },
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^dataset_[a-z0-9]{24}$",
+      "description": "Dataset identifier (aggregate root)"
+    },
+    "occurred_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "When the event occurred (ISO 8601 UTC)"
+    },
+    "actor": {
+      "$ref": "#/$defs/Actor",
+      "description": "Admin/service that released the dataset"
+    },
+    "data": {
+      "$ref": "#/$defs/DatasetUnquarantinedData",
+      "description": "Event-specific data"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EventMetadata",
+      "description": "Event metadata (correlation, causation, etc.)"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "occurred_at",
+    "actor",
+    "data"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "EventId": {
+      "type": "string",
+      "pattern": "^event_[a-z0-9]{24}$",
+      "description": "Event identifier format: event_{24-char-hex}"
+    },
+    "Actor": {
+      "type": "object",
+      "title": "Actor",
+      "description": "Admin/service that triggered the event",
+      "properties": {
+        "actor_type": {
+          "type": "string",
+          "enum": [
+            "SYSTEM",
+            "SERVICE",
+            "USER"
+          ],
+          "description": "Actor type"
+        },
+        "actor_service": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Service name (when actor_type=SERVICE/SYSTEM)"
+        },
+        "actor_user_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Admin user id (when actor_type=USER, pseudonymous, no PII)"
+        }
+      },
+      "required": [
+        "actor_type"
+      ],
+      "unevaluatedProperties": false
+    },
+    "DatasetUnquarantinedData": {
+      "type": "object",
+      "title": "Dataset Unquarantined Data",
+      "description": "Data specific to dataset release-from-quarantine event",
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^dataset_[a-z0-9]{24}$",
+          "description": "Dataset identifier"
+        },
+        "status_from": {
+          "type": "string",
+          "const": "REJECTED_QUARANTINE",
+          "description": "Status before release"
+        },
+        "status_to": {
+          "type": "string",
+          "enum": [
+            "RAW_INGESTED",
+            "RAW_SCANNED_EDGE_OK",
+            "RAW_HASH_SEALED",
+            "CALIBRATED",
+            "CALIBRATED_SCANNED_CENTER_OK"
+          ],
+          "description": "Status after admin release — MUST be one of the pre-quarantine states (same set as dataset_status x-state-machine.rejection.from). REJECTED_QUARANTINE (terminal) and forward/terminal states (ANALYZED/DERIVED_PUBLISHED/ARCHIVED) are NOT allowed. Ref: enums/dataset_status.enum.v1.json. KR-072 chain-of-custody admin-override edge."
+        },
+        "release_reason": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Admin justification for release (PII-free, audit-logged)"
+        },
+        "admin_user_id": {
+          "type": "string",
+          "description": "Releasing admin (pseudonymous, no PII)"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "status_from",
+        "release_reason"
+      ],
+      "unevaluatedProperties": false
+    },
+    "EventMetadata": {
+      "type": "object",
+      "title": "Event Metadata",
+      "description": "Event correlation and tracing metadata",
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "description": "Correlation ID for tracing related events"
+        },
+        "causation_id": {
+          "type": "string",
+          "description": "ID of event/command that caused this event"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing ID"
+        },
+        "partition_key": {
+          "type": "string",
+          "description": "Event stream partition key (typically aggregate_id)"
+        },
+        "sequence_number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Sequence number within aggregate"
+        },
+        "source_service": {
+          "type": "string",
+          "description": "Service that emitted the event"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
+    }
+  },
+  "x-kr-ref": [
+    "KR-072"
+  ],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-05-30"
+}

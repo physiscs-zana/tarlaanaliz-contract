@@ -93,6 +93,18 @@ Bu doküman, `tarlaanaliz-contracts` tarafında API/JSON Schema sözleşmelerini
   - `schemas/platform/calibrated_dataset_manifest.v1.schema.json`
   - `schemas/platform/calibration_result.v1.schema.json`
   - `schemas/platform/qc_report.v1.schema.json`
+- **⚠️ `calibrated_dataset_manifest.v1` İKİ FORMDUR — aynı ad, farklı rol (C0, 2026-07-31):**
+
+  | Dosya | Rol | Sahip olduğu alanlar |
+  |---|---|---|
+  | `schemas/edge/calibrated_dataset_manifest.v1` | **Kalibrasyon kanıtı** (kiosk-emitted) | `calibration_result`, `qc_report`, `tool_name/version`, `calibrated_at` |
+  | `schemas/platform/calibrated_dataset_manifest.v1` | **Paket agregası** (dataset katmanı) | `outputs[]`, `reports[]`, `reflectance_scale`, `producer_tool` |
+
+  Her iki şemada makine-okunur **`x-form-role`** bloğu vardır (`role`, `owns`, `not_owned_here`,
+  `counterpart`, `field_placement_rule`) ve `tests/test_manifest_form_roles.py` bunu doğrular.
+  **Yeni alan eklemeden önce hangi formun sahibi olduğu yazılı belirlenir** — ad benzerliğine
+  bakarak hedef seçmek kusurdur. `priority_zones` / yama görselleri **hiçbirine ait değildir**;
+  onlar `schemas/edge/intake_manifest.v1` → `EdgeForm.priority_zones[].visualizations` altındadır.
 - **Hard gate:** `analysis_job.v1` yalnızca `CALIBRATED_SCANNED_CENTER_OK` dataset_ref kabul eder.
 
 ---

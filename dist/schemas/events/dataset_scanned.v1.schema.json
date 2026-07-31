@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/events/dataset_scanned.v1.schema.json",
+  "title": "DatasetScannedEvent",
+  "description": "Domain event: Dataset AV taramasi tamamlandi — KR-073. AV1 (edge) veya AV2 (platform) sonucu.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "$ref": "#/$defs/EventId",
+      "description": "Olay benzersiz kimligi."
+    },
+    "event_type": {
+      "type": "string",
+      "const": "dataset.scanned",
+      "description": "Olay tipi sabiti."
+    },
+    "event_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version"
+    },
+    "aggregate_type": {
+      "type": "string",
+      "const": "dataset",
+      "description": "Aggregate type"
+    },
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^dataset_[a-z0-9]{24}$",
+      "description": "Dataset identifier (aggregate root)"
+    },
+    "occurred_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "When the event occurred (ISO 8601 UTC)"
+    },
+    "actor": {
+      "$ref": "#/$defs/Actor",
+      "description": "System/service that performed the scan"
+    },
+    "data": {
+      "$ref": "#/$defs/DatasetScannedData",
+      "description": "Event-specific data"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EventMetadata",
+      "description": "Event metadata (correlation, causation, etc.)"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "occurred_at",
+    "actor",
+    "data"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "EventId": {
+      "type": "string",
+      "pattern": "^event_[a-z0-9]{24}$",
+      "description": "Event identifier format: event_{24-char-hex}"
+    },
+    "Actor": {
+      "type": "object",
+      "title": "Actor",
+      "description": "System/service that triggered the event",
+      "properties": {
+        "actor_type": {
+          "type": "string",
+          "enum": [
+            "SYSTEM",
+            "SERVICE"
+          ],
+          "description": "Actor type"
+        },
+        "actor_service": {
+          "type": "string",
+          "description": "Service name (e.g., 'edge-station', 'av-scanner')"
+        },
+        "worker_id": {
+          "type": "string",
+          "description": "Worker instance ID"
+        }
+      },
+      "required": [
+        "actor_type",
+        "actor_service"
+      ],
+      "unevaluatedProperties": false
+    },
+    "DatasetScannedData": {
+      "type": "object",
+      "title": "Dataset Scanned Data",
+      "description": "Data specific to dataset scan event",
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^dataset_[a-z0-9]{24}$",
+          "description": "Dataset identifier"
+        },
+        "mission_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^mission_[a-z0-9]{24}$",
+          "description": "Associated mission identifier"
+        },
+        "status_from": {
+          "type": "string",
+          "enum": [
+            "RAW_INGESTED",
+            "RAW_SCANNED_EDGE_OK",
+            "RAW_HASH_SEALED",
+            "CALIBRATED",
+            "CALIBRATED_SCANNED_CENTER_OK",
+            "DISPATCHED_TO_WORKER",
+            "ANALYZED",
+            "DERIVED_PUBLISHED",
+            "ARCHIVED",
+            "REJECTED_QUARANTINE"
+          ],
+          "description": "Status before scan",
+          "x-inlined-from": {
+            "ref": "../../enums/dataset_status.enum.v1.json",
+            "source_id": "https://api.tarlaanaliz.com/enums/dataset_status.enum.v1.json",
+            "keys": [
+              "enum",
+              "type"
+            ],
+            "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+          }
+        },
+        "status_to": {
+          "type": "string",
+          "enum": [
+            "RAW_INGESTED",
+            "RAW_SCANNED_EDGE_OK",
+            "RAW_HASH_SEALED",
+            "CALIBRATED",
+            "CALIBRATED_SCANNED_CENTER_OK",
+            "DISPATCHED_TO_WORKER",
+            "ANALYZED",
+            "DERIVED_PUBLISHED",
+            "ARCHIVED",
+            "REJECTED_QUARANTINE"
+          ],
+          "description": "Status after scan",
+          "x-inlined-from": {
+            "ref": "../../enums/dataset_status.enum.v1.json",
+            "source_id": "https://api.tarlaanaliz.com/enums/dataset_status.enum.v1.json",
+            "keys": [
+              "enum",
+              "type"
+            ],
+            "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+          }
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "scan_stage": {
+              "type": "string",
+              "enum": [
+                "AV1_EDGE",
+                "AV2_PLATFORM"
+              ],
+              "description": "Scan stage (AV1 or AV2)",
+              "x-inlined-from": {
+                "ref": "../../enums/scan_stage.enum.v1.json",
+                "source_id": "https://api.tarlaanaliz.com/enums/scan_stage.enum.v1.json",
+                "keys": [
+                  "enum",
+                  "type"
+                ],
+                "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+              }
+            },
+            "result": {
+              "type": "string",
+              "enum": [
+                "PASS",
+                "FAIL"
+              ],
+              "description": "Scan result"
+            },
+            "scan_report_id": {
+              "type": "string",
+              "pattern": "^report_[a-z0-9]{24}$",
+              "description": "Scan report identifier"
+            }
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "required": [
+        "dataset_id",
+        "status_from",
+        "status_to"
+      ],
+      "unevaluatedProperties": false
+    },
+    "EventMetadata": {
+      "type": "object",
+      "title": "Event Metadata",
+      "description": "Event correlation and tracing metadata",
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "description": "Correlation ID for tracing related events"
+        },
+        "causation_id": {
+          "type": "string",
+          "description": "ID of event/command that caused this event"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing ID"
+        },
+        "partition_key": {
+          "type": "string",
+          "description": "Event stream partition key (typically aggregate_id)"
+        },
+        "sequence_number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Sequence number within aggregate"
+        },
+        "source_service": {
+          "type": "string",
+          "description": "Service that emitted the event"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
+    }
+  },
+  "x-kr-ref": [
+    "KR-073"
+  ],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-03-03"
+}

@@ -1,0 +1,1069 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/worker/analysis_result.v1.schema.json",
+  "title": "AnalysisResult",
+  "description": "AI analysis result — SUPERSET contract (contracts v3.0.0). Validates BOTH the orchestration form (structured summary/layers/metrics, result_<24hex> ids) AND the worker runtime fail-closed form (flat detections/index_maps/refly_*/model_metadata, UUID job_id). PII-free. KR-025: NO pesticide/recommendation fields.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/ResultId",
+      "description": "Unique result identifier (orchestration form). Optional — worker runtime payloads omit it."
+    },
+    "job_id": {
+      "type": "string",
+      "anyOf": [
+        {
+          "pattern": "^job_[a-z0-9]{24}$"
+        },
+        {
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }
+      ],
+      "description": "Associated job identifier. Accepts orchestration form (job_<24hex>) and worker runtime form (UUID)."
+    },
+    "field_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Associated field identifier. Plain string (worker) or field_<24hex> (orchestration)."
+    },
+    "mission_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Associated mission identifier. Plain string (worker) or mission_<24hex> (orchestration)."
+    },
+    "result_uri": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uri",
+      "description": "G-7 (2026-06-01): result package / primary layer URI (s3:// or https://). Platform worker_bridge reads this into dataset.result_uri. Optional/null until worker uploads result artifacts (index_maps upload)."
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "SUCCESS",
+        "PARTIAL_SUCCESS",
+        "FAILED",
+        "COMPLETED",
+        "REJECTED"
+      ],
+      "description": "Result status. Orchestration: SUCCESS/PARTIAL_SUCCESS/FAILED. Worker runtime: COMPLETED/FAILED/REJECTED."
+    },
+    "result_mode": {
+      "type": "string",
+      "enum": [
+        "FULL_REPORT",
+        "PARTIAL_REPORT",
+        "INDICES_ONLY",
+        "NO_RESULT"
+      ],
+      "description": "Fail-closed output level (KR-019 / KARAR-13). Worker runtime field."
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Layer-1 final_confidence. Worker runtime field."
+    },
+    "low_confidence_flag": {
+      "type": "boolean",
+      "default": false
+    },
+    "analysis_type": {
+      "type": "string",
+      "description": "Single analysis type (orchestration form, reference: enums/analysis_type.enum.v1.json)"
+    },
+    "analysis_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "DISEASE",
+          "PEST",
+          "WEED",
+          "GENERAL"
+        ]
+      },
+      "description": "Requested analysis types (worker runtime form)"
+    },
+    "crop_type": {
+      "type": "string",
+      "enum": [
+        "COTTON",
+        "PISTACHIO",
+        "CORN",
+        "WHEAT",
+        "SUNFLOWER",
+        "GRAPE",
+        "OLIVE",
+        "RICE"
+      ],
+      "description": "Crop type (GAP crop_type enum, see enums/crop_type.enum.v1.json; CORN kanonik / MAIZE legacy alias)",
+      "x-inlined-from": {
+        "ref": "../../enums/crop_type.enum.v1.json",
+        "source_id": "https://api.tarlaanaliz.com/enums/crop_type.enum.v1.json",
+        "keys": [
+          "enum",
+          "type"
+        ],
+        "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+      }
+    },
+    "summary": {
+      "$ref": "#/$defs/ResultSummary",
+      "description": "High-level summary of findings (orchestration form). Carries optional yield_estimate (KR-089)."
+    },
+    "layers": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/LayerRef"
+      },
+      "description": "Output layer references (orchestration form)"
+    },
+    "metrics": {
+      "$ref": "#/$defs/Metrics",
+      "description": "Quantitative metrics (orchestration form)"
+    },
+    "detections": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Detection"
+      },
+      "default": [],
+      "description": "Specific detections (diseases, pests, weeds)"
+    },
+    "index_maps": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "NDVI/NDRE index map URLs (always shared in PARTIAL and INDICES_ONLY modes). Worker runtime field.",
+      "properties": {
+        "ndvi_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ndre_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ndwi_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gndvi_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "format": {
+            "type": "string"
+          }
+        }
+      },
+      "default": [],
+      "description": "Generic output artifacts (worker runtime form)"
+    },
+    "suppressed_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Fields suppressed due to result_mode (fail-closed masking)"
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": [],
+      "description": "Reason codes for suppression or escalation"
+    },
+    "expert_escalation_required": {
+      "type": "boolean",
+      "default": false
+    },
+    "refly_recommended": {
+      "type": "boolean",
+      "default": false
+    },
+    "refly_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "CLOUD_COVER",
+        "BLUR",
+        "OVERLAP_GAP",
+        "VALID_PIXEL_LOW",
+        "THERMAL_QC_FAIL",
+        "BAND_ALIGNMENT_WARN",
+        null
+      ]
+    },
+    "refly_detail": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 200
+    },
+    "refly_urgency": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "7_DAYS",
+        "3_DAYS",
+        "ASAP",
+        null
+      ]
+    },
+    "affected_zone": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "GeoJSON polygon of affected area"
+    },
+    "field_baseline_deviation": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "Temporal baseline deviation (null if baseline not available)"
+    },
+    "temporal_baseline_status": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "NOT_AVAILABLE",
+        "BUILDING",
+        "READY",
+        "STALE",
+        null
+      ]
+    },
+    "baseline_source_window_days": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "training_suggested_priority": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "HIGH",
+        "MEDIUM",
+        "LOW",
+        null
+      ],
+      "description": "KR-032: Export priority. HIGH=uncertainty>=0.65 OR OOD OR agreement<0.6"
+    },
+    "thermal_results": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "KR-084: Thermal pipeline results (null if LWIR not available). Inline worker form; the richer standalone form lives in worker/thermal_analysis_result.v1.",
+      "properties": {
+        "canopy_temp_celsius": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "cwsi": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "delta_from_ambient": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "irrigation_efficiency": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "model_metadata": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Worker runtime model metadata (flat form). The orchestration form uses model_info ($defs/ModelInfo).",
+      "properties": {
+        "model_id": {
+          "type": "string"
+        },
+        "model_version": {
+          "type": "string"
+        },
+        "adapter_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "capability_mode": {
+          "type": "string"
+        },
+        "inference_stage": {
+          "type": "string"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "model_info": {
+      "$ref": "#/$defs/ModelInfo",
+      "description": "Model fingerprint and metadata (orchestration form)"
+    },
+    "quality": {
+      "$ref": "#/$defs/QualityMetrics",
+      "description": "Result quality metrics (orchestration form)"
+    },
+    "processing_time_ms": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "data_confidence_warning": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 256,
+      "description": "KM-02: Warning flag for crops with limited training data (e.g. 'limited_training_data:critical_gap')"
+    },
+    "created_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "Result creation timestamp (orchestration form)"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Additional metadata"
+    },
+    "tile_counts": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "G-10 (2026-07-13, KR-088 preliminary report): aggregate green-vs-problem summary of the worker inference tile scan — how many tiles were scanned, how many are healthy (green/problem-free), how many are anomalous (problematic). The worker_bridge consumer persists this per-mission into field_index_timeseries; it is the farmer preliminary report's 'healthy tiles / problem tiles' signal. Source: worker PipelineResponse.tile_count_total/healthy/anomaly. NOT emitted under NO_RESULT (fail-closed). KR-071: aggregate count, not PII. Kept at top level (NOT under summary) because it does NOT depend on ResultSummary's required overall_health/health_score/area_analyzed_hectares/coverage_percent fields, which the worker runtime form does not compute.",
+      "properties": {
+        "total": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Total number of tiles scanned"
+        },
+        "healthy": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Number of healthy (green/problem-free) tiles"
+        },
+        "anomaly": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Number of anomalous (problematic) tiles"
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "required": [
+    "job_id",
+    "status"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "ResultId": {
+      "type": "string",
+      "pattern": "^result_[a-z0-9]{24}$",
+      "description": "Result identifier format: result_{24-char-hex}"
+    },
+    "ResultSummary": {
+      "type": "object",
+      "title": "Result Summary",
+      "description": "High-level summary of analysis findings",
+      "properties": {
+        "overall_health": {
+          "type": "string",
+          "enum": [
+            "EXCELLENT",
+            "GOOD",
+            "FAIR",
+            "POOR",
+            "CRITICAL"
+          ],
+          "description": "Overall field health assessment"
+        },
+        "health_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Numeric health score (0-100)"
+        },
+        "area_analyzed_hectares": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Area successfully analyzed (hectares)"
+        },
+        "coverage_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Coverage percentage of field"
+        },
+        "issues_detected": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of issues detected"
+        },
+        "critical_issues": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of critical issues requiring immediate attention"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Human-readable summary"
+        },
+        "index_averages": {
+          "type": "object",
+          "description": "KR-088: Field-wide vegetation index averages (optional, populated when inference pipeline is active)",
+          "properties": {
+            "ndvi_mean": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1,
+              "description": "NDVI field average"
+            },
+            "ndre_mean": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1,
+              "description": "NDRE field average"
+            },
+            "ndwi_mean": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1,
+              "description": "NDWI field average"
+            },
+            "gndvi_mean": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1,
+              "description": "GNDVI field average"
+            },
+            "evi_mean": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1,
+              "description": "EVI field average"
+            },
+            "savi_mean": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1,
+              "description": "SAVI field average"
+            }
+          },
+          "unevaluatedProperties": false
+        },
+        "yield_estimate": {
+          "$ref": "#/$defs/YieldEstimate",
+          "description": "KR-089: Optional pre-harvest yield estimate. Populated only when a production-grade yield model exists for the crop. KR-025 does NOT apply: this is an observational measurement (kg/dönüm), not a treatment recommendation."
+        }
+      },
+      "required": [
+        "overall_health",
+        "health_score",
+        "area_analyzed_hectares",
+        "coverage_percent"
+      ],
+      "unevaluatedProperties": false
+    },
+    "LayerRef": {
+      "type": "object",
+      "title": "Layer Reference",
+      "description": "Reference to output layer (map, visualization)",
+      "properties": {
+        "layer_id": {
+          "type": "string",
+          "pattern": "^layer_[a-z0-9]{24}$",
+          "description": "Unique layer identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Layer name"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "RASTER",
+            "VECTOR",
+            "HEATMAP",
+            "CLASSIFICATION",
+            "DETECTION"
+          ],
+          "description": "Layer type"
+        },
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI to layer file"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "GEOTIFF",
+            "PNG",
+            "GEOJSON",
+            "SHAPEFILE"
+          ],
+          "description": "Layer format"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Layer file hash"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Layer file size"
+        },
+        "style_ref": {
+          "type": "string",
+          "description": "Reference to layer style (from layer_registry)"
+        },
+        "bounds": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "Bounding box [west, south, east, north]"
+        },
+        "preview_uri": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI to preview thumbnail"
+        }
+      },
+      "required": [
+        "layer_id",
+        "name",
+        "type",
+        "uri",
+        "format",
+        "sha256"
+      ],
+      "unevaluatedProperties": false
+    },
+    "Metrics": {
+      "type": "object",
+      "title": "Metrics",
+      "description": "Quantitative analysis metrics per KR-002 map layers",
+      "properties": {
+        "health_distribution": {
+          "type": "object",
+          "properties": {
+            "excellent_percent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "good_percent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "fair_percent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "poor_percent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "critical_percent": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "unevaluatedProperties": false
+        },
+        "stress_indicators": {
+          "type": "object",
+          "properties": {
+            "water_stress_area_hectares": {
+              "type": "number",
+              "minimum": 0
+            },
+            "nitrogen_stress_area_hectares": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "unevaluatedProperties": false
+        },
+        "custom_metrics": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Analysis-specific custom metrics"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Detection": {
+      "type": "object",
+      "title": "Detection",
+      "description": "Specific detection (disease, pest, weed). SUPERSET: validates both the orchestration form (detection_id/type/class/severity) and the worker runtime form (class_id/class_name/risk_level/segmentation fields).",
+      "properties": {
+        "detection_id": {
+          "type": "string",
+          "description": "Unique detection identifier (orchestration form)"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "DISEASE",
+            "PEST",
+            "WEED",
+            "OTHER"
+          ],
+          "description": "Detection type (orchestration form)"
+        },
+        "class": {
+          "type": "string",
+          "description": "Specific class (orchestration form, e.g. 'cotton_leaf_spot')"
+        },
+        "class_id": {
+          "type": "string",
+          "description": "Class id (worker runtime form, from config/crops/<crop>.yaml)"
+        },
+        "class_name": {
+          "type": "string",
+          "description": "Class name (worker runtime form)"
+        },
+        "class_name_tr": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Turkish class name (worker runtime form)"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Detection confidence (0-1)"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "CRITICAL"
+          ],
+          "description": "Severity level (orchestration form)"
+        },
+        "risk_level": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "CRITICAL"
+          ],
+          "description": "Risk level (worker runtime form)"
+        },
+        "area_hectares": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Affected area (hectares, orchestration form)"
+        },
+        "geometry": {
+          "type": "object",
+          "description": "GeoJSON geometry of affected area (orchestration form)"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 500,
+          "description": "Detection description (orchestration form)"
+        },
+        "bbox": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "x_min": {
+              "type": "number"
+            },
+            "y_min": {
+              "type": "number"
+            },
+            "x_max": {
+              "type": "number"
+            },
+            "y_max": {
+              "type": "number"
+            }
+          }
+        },
+        "mask_url": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tile_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ndvi_value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "ndre_value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "sub_specialty": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "HEALTH",
+            "DISEASE",
+            "PEST",
+            "FUNGUS",
+            "WEED",
+            "WATER_STRESS",
+            "NITROGEN_STRESS",
+            "THERMAL_STRESS",
+            "SALT_STRESS",
+            "BENEFICIAL",
+            "GENERAL",
+            null
+          ],
+          "description": "result-rich-axis (2026-07-12, Gap #2, worker v1.4.0 AK-4 aynası): RICH sub-specialty token for this detection — the expert_labeling_card 'sub_specialty' of class_id. Gives the farmer-facing result the SAME rich axis the expert_review_queue already carries (FUNGUS separable from DISEASE; WATER_/NITROGEN_/SALT_/THERMAL_STRESS separable from GENERAL). Value set VENDORED verbatim (AK-4) from enums/analysis_type.enum.v1.json (platform-authoritative KR-002 taxonomy: 11 codes incl. BENEFICIAL v1.3.0); worker assigns per class_id via src/core/services/feedback/sub_specialty_resolver.py::resolve_rich_sub_specialty, enum parity-locked by worker tests/contract/test_sub_specialty_enum_lock.py. HEALTH/BENEFICIAL enum-valid for parity but never emitted as detections. Optional/backward-compatible: pre-rich producers and non-carded classes omit it (null). KR-071: enum-constrained label, no PII.",
+          "default": null
+        },
+        "detection_type": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "disease",
+            "pest",
+            "weed",
+            "abiotic",
+            null
+          ],
+          "description": "result-rich-axis (2026-07-12, Gap #2): COARSE sub-specialty token — the expert_labeling_card 'category' of class_id (worker resolve_sub_specialty). Same 4-value axis as expert_review_queue.detection_type. Runs ALONGSIDE the rich sub_specialty. Optional/backward-compatible: null for non-carded classes. KR-071: no PII.",
+          "default": null
+        },
+        "rgb_uri": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "description": "FAZ 6.1 / T2.1 — RGB tile source URL (S3/MinIO). Per-tile origin reference used by KR-032 training feedback export."
+        },
+        "ms_uri": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri",
+          "description": "FAZ 6.1 / T2.1 — Multispectral tile source URL (S3/MinIO)."
+        },
+        "confidence_components": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "FAZ 6.1 / KM-06 — three independent confidence signals (final_confidence = 0.40*margin + 0.30*(1-epistemic) + 0.30*agreement). Emitted only when KR-029 grade allows (A/B).",
+          "properties": {
+            "margin_confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "epistemic_uncertainty": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "agreement_score": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "polygon_geojson": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "T1.3 Yol C — JSON-serialised GeoJSON Geometry (Polygon / MultiPolygon) for the detection's segmentation mask boundary. EPSG:4326 lon/lat."
+        },
+        "pixel_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "T1.3 Yol C — segmentation mask foreground pixel count for this detection."
+        }
+      },
+      "required": [
+        "confidence"
+      ],
+      "unevaluatedProperties": false
+    },
+    "ModelInfo": {
+      "type": "object",
+      "title": "Model Information",
+      "description": "Model fingerprint and metadata for reproducibility (orchestration form)",
+      "properties": {
+        "model_name": {
+          "type": "string",
+          "description": "Model name"
+        },
+        "model_version": {
+          "type": "string",
+          "description": "Model version"
+        },
+        "model_fingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Model weights SHA-256 hash"
+        },
+        "framework": {
+          "type": "string",
+          "description": "ML framework (e.g., PyTorch, TensorFlow)"
+        },
+        "framework_version": {
+          "type": "string",
+          "description": "Framework version"
+        },
+        "trained_on": {
+          "type": "string",
+          "description": "Training dataset identifier"
+        },
+        "training_date": {
+          "$ref": "#/$defs/Date",
+          "description": "Model training date"
+        }
+      },
+      "required": [
+        "model_name",
+        "model_version",
+        "model_fingerprint"
+      ],
+      "unevaluatedProperties": false
+    },
+    "QualityMetrics": {
+      "type": "object",
+      "title": "Quality Metrics",
+      "properties": {
+        "image_quality_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Input image quality score (0-100)"
+        },
+        "cloud_cover_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Cloud cover percentage"
+        },
+        "shadow_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Shadow percentage"
+        },
+        "blur_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Blur score (lower is better)"
+        },
+        "overall_quality": {
+          "type": "string",
+          "enum": [
+            "EXCELLENT",
+            "GOOD",
+            "FAIR",
+            "POOR"
+          ],
+          "description": "Overall quality assessment"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "YieldEstimate": {
+      "type": "object",
+      "title": "Yield Estimate",
+      "description": "KR-089: Pre-harvest yield estimate (observational measurement, NOT a recommendation). Optional — only populated when a production-grade model for this crop is available; otherwise field is omitted.",
+      "properties": {
+        "expected_yield_kg_per_donum": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Estimated yield in kilograms per dönüm (1 dönüm = 1000 m²)"
+        },
+        "confidence_interval_kg_per_donum": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[lower_bound, upper_bound] of yield estimate (typically 90% or 95% CI). lower <= expected <= upper"
+        },
+        "model_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "description": "Yield model identifier (matches model_registry.yaml entry)"
+        },
+        "model_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50,
+          "description": "Yield model version (semver or training-date tag)"
+        },
+        "valid_for_phenology_weeks": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 52
+          },
+          "minItems": 1,
+          "description": "Phenology weeks for which this estimate is valid (typically late-season weeks where yield signal is strong)"
+        },
+        "weeks_to_harvest": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 52,
+          "description": "Estimated weeks remaining until harvest based on phenology"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "SPECTRAL_TIMESERIES",
+            "PHENOLOGY_REGRESSION",
+            "DEEP_LEARNING",
+            "ENSEMBLE"
+          ],
+          "description": "Modelling approach used to derive the estimate"
+        }
+      },
+      "required": [
+        "expected_yield_kg_per_donum",
+        "confidence_interval_kg_per_donum",
+        "model_id",
+        "model_version",
+        "method"
+      ],
+      "unevaluatedProperties": false
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
+    },
+    "Date": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO 8601 date (YYYY-MM-DD)"
+    }
+  },
+  "x-kr-025-note": "KR-025: This schema MUST NOT contain recommendation, prescription, or spraying decision fields. The system provides observational analysis (map layers, detections, metrics) only. Pesticide, fertilization, and irrigation action decisions are explicitly out of scope.",
+  "notes": {
+    "pii_free": "This schema contains NO PII. All references are to IDs, not user information.",
+    "superset": "contracts v3.0.0: merged the orchestration analysis_result with the worker runtime analysis_result (interface/contracts/analysis_result.v1). required reduced to the common intersection (job_id, status); all producer-specific fields are optional.",
+    "layer_registry": "Layer style_ref references platform/layer_registry.v1.schema.json for consistent styling per KR-064.",
+    "kr_reference": "Analysis result maps defined in KR-002 (7 map layers only). Result delivery per KR-017, KR-071 (one-way flow).",
+    "one_way_flow": "Result is final output from worker. No feedback loop to worker (one-way flow per KR-071).",
+    "map_layers_only": "Results are MAP LAYERS only (per KR-002). No prescriptions, no recommendations for actions."
+  }
+}

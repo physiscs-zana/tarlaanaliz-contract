@@ -106,7 +106,57 @@ The validator (`tools/validate.py`) and CI workflow check for these automaticall
 
 ### 5. KR (Business Rule) References
 
-Business rules are referenced as `KR-NNN` throughout the codebase. The canonical source is `ssot/kr_registry.md`. Key KRs for this repo:
+Business rules are referenced as `KR-NNN` throughout the codebase.
+
+**Canonical KR sources — there are TWO and they OVERLAP.**
+
+⚠️ **Do not trust a number written here — run the generator.** Counts in this file went
+stale twice and caused two real misdiagnoses (see the note below). The authoritative
+answer is whatever this command prints *today*:
+
+```bash
+python -c "import sys; sys.path.insert(0,'tests'); from test_kr_reference_integrity import _ssot_defined_krs as s, _registry_defined_krs as r, _collect_kr_refs as x; a,b=s(),r(); print(f'SSOT text {len(a)} | registry {len(b)} | union {len(a|b)} | BOTH {len(a&b)} | referenced by schemas {len(x())}')"
+```
+
+| File | Role | Heading forms it uses |
+|---|---|---|
+| `docs/TARLAANALIZ_SSOT_v1_2_0.txt` | Full KR corpus; **byte-identical with the platform copy** (aligned 2026-07-31) — the cross-repo artifact | `## [KR-019]`, combined `## [KR-018 / KR-082]`, typo `## # [KR-033]`, bracket-less `### KR-017` |
+| `ssot/kr_registry.md` | Contract-only registry; 8-section normative bodies (Amaç/MUST/Kanıt/Audit/…) | `### KR-070`, `## KR-088` |
+
+The extractor in `tests/test_kr_reference_integrity.py` recognises **all four heading
+forms at any heading level**; use it rather than writing a new regex.
+
+🔴 **Known problem — a KR body must not live in two places.** The measurement above shows
+a large intersection: those KRs have a normative body in **both** files, and they have
+already drifted at least once (audit finding AR1: KR-093's two bodies disagree on content
+*and* status mapping). `tests/test_single_normative_body.py` freezes this debt so it can
+only shrink; which file stays normative is a coordinator decision tracked as **D16** in
+`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §14.4. Until it lands: treat the union as
+canonical and cite the registry body when the two disagree.
+
+> ⚠️ Two earlier versions of this section were wrong and both caused real misdiagnoses:
+> it first claimed `ssot/kr_registry.md` was *the* canonical source, then that the registry
+> holds "only 6 of ~49, complementary". Both were hardcoded numbers that measurement
+> contradicted. Hence the rule above: **publish the generator, not the number.**
+
+A KR referenced via `x-kr-ref` must be defined in **at least one** of the two;
+`tests/test_kr_reference_integrity.py` enforces this (dangling-reference gate), and the
+extractor there recognises **all four heading forms** at any heading level.
+
+Where the data-layer KR bodies actually live (measured, do not guess):
+`KR-092`/`KR-093` → SSOT text **and** registry · `KR-088`/`KR-091` → registry only
+(the SSOT text mentions them in a single cross-reference line, which is **not** a definition).
+
+> ⚠️ Two earlier versions of this section were wrong and both caused real misdiagnoses:
+> it first claimed `ssot/kr_registry.md` was *the* canonical source, then that the registry
+> holds "only 6 of ~49, complementary". Measurement says otherwise: the registry holds **54**
+> definitions and the two sources are **largely nested**, not complementary.
+> ⏳ **Open item:** "the same KR must not have a normative body in two places" is a real
+> problem (audit finding AR1/AR3) but it is a **decision**, not a rename — tracked as **D16**
+> in `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §14.4. Until that decision lands, treat the
+> union as canonical and cite the registry body when the two disagree.
+
+Key KRs for this repo:
 - **KR-050**: PII minimization (no email/TCKN/OTP)
 - **KR-081**: Contract-first / Schema gates (CI)
 - **KR-072**: Dataset lifecycle + chain of custody

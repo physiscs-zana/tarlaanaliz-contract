@@ -18,9 +18,9 @@
     "GENERAL"
   ],
   "metadata": {
-    "version": "1.4.1",
-    "lastUpdated": "2026-07-12",
-    "changeNote": "PATCH (v1.4.1): THERMAL_STRESS.requires_bands tam sete genişletildi ([GREEN,RED,RED_EDGE,NIR,LWIR]) — CWSI/canopy-soil delta için vejetasyon bağlamı fiziksel olarak gerekli; üretilebilen drone kümesi değişmez (tüm termal droneler 4 multispektral bandı da taşır). bandRequirements.description kesişim kuralı 'effective_bands = supported_bands ∪ thermal_variant.thermal_bands' olarak netleştirildi (DJI_M350_RTK_SENTERA_6X termal varyant türetilebilirliği artık kuraldan tutarlı çıkar). enforcement:advisory notu eklendi. Enum dizisi DEĞİŞMEDİ → non-breaking (PATCH). Önceki v1.4.0 (MINOR): bandRequirements eklendi — her map-layer için requires_bands + availability (KR-018 bant-gate tek-kaynak). analysis_type.requires_bands ∩ drone_capability_matrix.yaml supported_bands = o drone ile üretilebilir katman. THERMAL_STRESS→availability requires_thermal_payload (LWIR bandı ister; yalnız termal-payload'lı dronelar). BENEFICIAL→enum_valid_not_yet_emittable (model olgunlaşınca aktifleşir). Enum dizisi DEĞİŞMEDİ → non-breaking (MINOR). v1.3.0: BENEFICIAL eklendi (faydalı böcek / doğal düşman zengin alt-uzmanlık yuvası — Gap #1; worker v1.3.0'un AK-4 kanonik aynası, devir spec: worker denetim/beneficial_ve_sonuc_ekseni_devir_spec_2026_07_11.md). KR-002 renk/deseni (Turkuaz/Teal + doğal düşman ikonu) worker önerisinden benimsendi (kanonik = KR-002 SSOT). v1.2.0: SALT_STRESS eklendi (Platform KR-002 katmanı — toprak tuzluluğu stresi, Kahverengi/Bej + tuz kristali deseni). v1.1.0: GENERAL eklendi (Worker fallback analysis_type).",
+    "version": "1.4.3",
+    "lastUpdated": "2026-07-31",
+    "changeNote": "PATCH (v1.4.3, 2026-07-31 — D17/A1): WATER_STRESS `availability` **available → proxy_only**. GEREKÇE (üç kaynağın çeliştiği ölçüldü): ① KG-0.f karar kaydı *\"gerçek WATER_STRESS için CWSI (termal) veya NDWI/NDMI (SWIR) gerekir, ikisi de yok\"* diyor ve WATER_STRESS'i THERMAL_STRESS ile birlikte optik sınırın (−) tarafına koyuyor ② bu enum ise `available` diyordu (yalnız GREEN/RED/RED_EDGE/NIR ile) ③ `report_phase.x-preliminary-content.stage_b` onu uzman kapısı ÖNCESİNDE çiftçiye teslim ediyordu. Yani sözleşme, sensörün ölçemediği bir katmanı 'mevcut' ilan edip doğrulanmamış hâlde teslim ediyordu. Bu turda `stage_b`'den de ÇIKARILDI. Yeni `availability` değeri `proxy_only` **additive**'dir (mevcut değerler değişmedi) → non-breaking. \n\nÖNCEKİ v1.4.2 (KG-0.f çapraz atfı — A2 düzeltmesiyle EKSİKSİZ alıntı): KG-0.f, YZ hedefini 'böcek türü + birey sayısı' yerine 'zararlı hasar izi sınıfı + şiddeti' olarak tanımlar (gerekçe: optik sınır, ÇS GSD ~9200 µm vs tekil böcek tanıma eşiği ~80 µm) ve **ÜÇ** katmanın üretilemez/sınırlı kalmasını onaylar: BENEFICIAL (`enum_valid_not_yet_emittable` — model olgunluğu), THERMAL_STRESS (`requires_thermal_payload` — 'Mavic 3M'de üretilemez') **ve WATER_STRESS** (CWSI/SWIR yok). ⚠️ v1.4.2 notu ilk iki katmanı sayıp WATER_STRESS'i ATLIYORDU (denetim bulgusu A2: seçici alıntı) — bu sürümde tamamlandı. Karar kaydı: docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md §9 KARAR 0.f. \n\nÖNCEKİ v1.4.1: THERMAL_STRESS.requires_bands tam sete genişletildi ([GREEN,RED,RED_EDGE,NIR,LWIR]) — CWSI/canopy-soil delta için vejetasyon bağlamı fiziksel olarak gereklidir.",
     "kr002_reference": "Analysis types defined in KR-002 (Harita katmanı anlamları). These are map layers with specific colors and patterns.",
     "bandRequirements": {
       "description": "KR-018 bant-gate tek-kaynak: her map-layer'ın üretimi için gereken minimum bantlar (requires_bands) + üretilebilirlik durumu (availability). Kesişim kuralı: analysis_type.requires_bands ⊆ drone'un ETKİN bant kümesi (effective_bands) ise o katman o drone ile üretilebilir. effective_bands = drone_capability_matrix.yaml[drone].supported_bands ∪ (termal payload takılıysa drone_capability_matrix.yaml[drone].thermal_variant.thermal_bands). Örn. DJI_M350_RTK_SENTERA_6X termal varyantta effective_bands = [BLUE,GREEN,RED,RED_EDGE,NIR,LWIR] → THERMAL_STRESS türetilebilir; termal payload'sız temel konfigürasyonda LWIR yoktur, türetilemez. Bant sözlüğü drone_capability_matrix.yaml ile ortaktır (GREEN/RED/RED_EDGE/NIR/BLUE/LWIR).",
@@ -29,20 +29,120 @@
       "availabilityValues": {
         "available": "Bant gereksinimi birincil BASIC_4BAND platformda (DJI_MAVIC_3M) karşılanır; katman üretilebilir.",
         "requires_thermal_payload": "LWIR (termal) bandı gerekir; yalnız termal-payload'lı dronelarla üretilebilir (DJI_M350_RTK_SENTERA_6X termal varyant, AGEAGLE_EBEE_X_ALTUM_PT). Mavic 3M'de üretilemez.",
-        "enum_valid_not_yet_emittable": "Enum'da parite için geçerli, ancak mevcut multispektral çözünürlük + model olgunluğuyla henüz emit edilemez; model olgunlaşınca aktifleşir."
+        "enum_valid_not_yet_emittable": "Enum'da parite için geçerli, ancak mevcut multispektral çözünürlük + model olgunluğuyla henüz emit edilemez; model olgunlaşınca aktifleşir.",
+        "proxy_only": "Katman ÜRETİLEBİLİR ama ölçtüğü şeyin DOĞRUDAN ölçümü değildir; vekil (proxy) göstergedir. Doğrudan ölçüm için gereken bant/sensör bu donanımda YOKTUR. Vekil katman uzman kapısı ÖNCESİNDE çiftçiye SUNULMAZ (KR-093 stage_b dışıdır) — vekil bir gösterge, doğrulanmış bir bulgu gibi teslim edilemez."
       },
       "byLayer": {
-        "HEALTH": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
-        "DISEASE": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
-        "PEST": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
-        "FUNGUS": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
-        "WEED": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
-        "WATER_STRESS": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
-        "NITROGEN_STRESS": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
-        "THERMAL_STRESS": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR", "LWIR"], "availability": "requires_thermal_payload" },
-        "SALT_STRESS": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" },
-        "BENEFICIAL": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "enum_valid_not_yet_emittable" },
-        "GENERAL": { "requires_bands": ["GREEN", "RED", "RED_EDGE", "NIR"], "availability": "available" }
+        "HEALTH": {
+          "requires_bands": [
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR"
+          ],
+          "availability": "available"
+        },
+        "DISEASE": {
+          "requires_bands": [
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR"
+          ],
+          "availability": "available"
+        },
+        "PEST": {
+          "requires_bands": [
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR"
+          ],
+          "availability": "available"
+        },
+        "FUNGUS": {
+          "requires_bands": [
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR"
+          ],
+          "availability": "available"
+        },
+        "WEED": {
+          "requires_bands": [
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR"
+          ],
+          "availability": "available"
+        },
+        "WATER_STRESS": {
+          "requires_bands": [
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR"
+          ],
+          "availability": "proxy_only",
+          "proxy_basis": {
+            "direct_measurement_requires": [
+              "LWIR (CWSI — kanopi-hava sıcaklık farkı)",
+              "SWIR (NDMI/NDWI-Gao)"
+            ],
+            "available_on_reference_hardware": false,
+            "what_4_bands_give": "GREEN/RED/RED_EDGE/NIR ile hesaplanabilen su göstergeleri VEKİLDİR. Bu bant kümesindeki 'NDWI' McFeeters formudur (su KÜTLESİ tespiti); bitki su içeriğini ölçen Gao formu SWIR ister ve bu donanımda yoktur.",
+            "decision_record": "KG-0.f — plan §9: 'gerçek WATER_STRESS için CWSI (termal) veya NDWI/NDMI (SWIR) gerekir, ikisi de yok'"
+          },
+          "x-updated": "2026-07-31"
+        },
+        "NITROGEN_STRESS": {
+          "requires_bands": [
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR"
+          ],
+          "availability": "available"
+        },
+        "THERMAL_STRESS": {
+          "requires_bands": [
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR",
+            "LWIR"
+          ],
+          "availability": "requires_thermal_payload"
+        },
+        "SALT_STRESS": {
+          "requires_bands": [
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR"
+          ],
+          "availability": "available"
+        },
+        "BENEFICIAL": {
+          "requires_bands": [
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR"
+          ],
+          "availability": "enum_valid_not_yet_emittable"
+        },
+        "GENERAL": {
+          "requires_bands": [
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR"
+          ],
+          "availability": "available"
+        }
       }
     },
     "layerMapping": {
@@ -231,6 +331,21 @@
         "THERMAL_STRESS": "Thermal Stress",
         "SALT_STRESS": "Salt Stress",
         "BENEFICIAL": "Beneficial Insect"
+      }
+    },
+    "indexDefinitions": {
+      "description": "Katman↔indeks eşlemesinde ADI GEÇEN her türetilmiş büyüklüğün TANIMI. 2026-07-31'de ölçüldü (denetim bulgusu A3): `stress_ratio` depo genelinde **3 yerde atıf alıyor, 0 yerde tanımlıydı** — üstelik KR-093'ün zorunlu teslimat kaleminin (`WATER_STRESS`) kaynağı olarak. Tanımsız bir büyüklük ne üretilebilir ne denetlenebilir: her tüketici kendi formülünü uydurur.",
+      "stress_ratio": {
+        "status": "UNDEFINED_PENDING_DECISION",
+        "referenced_by": [
+          "docs/TARLAANALIZ_SSOT_v1_2_0.txt (KR-093 gövdesi)",
+          "ssot/kr_registry.md (KR-093 gövdesi)",
+          "enums/report_phase.enum.v1.json (PRELIMINARY açıklaması)"
+        ],
+        "problem": "Formülü hiçbir kanonik kaynakta YOK. Worker'ın `channel_spec.py` dosyası `derived_indices` listesinde `stress_ratio` adını taşıyor ama hesabı `feature_extraction.compute_indices_v2` çıktısında yok — yani ad var, üretim yok.",
+        "why_not_guessed": "Tahminle formül yazmak, doğrulanamaz bir kapı üretir ve yanlış agronomik karara yol açar. `CHLOROPHYLL_A`→`LCI` vakasında olduğu gibi, ad ancak UYGULAMASI olan taraftan ölçülerek tanımlanır.",
+        "blocked_on": "WATER_STRESS artık `proxy_only` (D17/A1) ve ön fazdan çıkarıldı; bu yüzden `stress_ratio` bugün ZORUNLU bir teslimat kalemi DEĞİLDİR. Tanım, termal/SWIR donanım kararıyla birlikte verilir (eylem planı §14.5.1/AK-9).",
+        "until_then": "Hiçbir üretici bu adı emit ETMEMELİDİR; hiçbir tüketici onu beklememelidir. KR-093 metinlerindeki `WATER_STRESS←stress_ratio` eşlemesi bu karar verilene kadar ASKIDADIR."
       }
     }
   },

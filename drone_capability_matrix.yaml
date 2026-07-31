@@ -27,7 +27,7 @@ capabilities:
     red_edge_sentinel2_band: B5
     available_indices:
       core: [NDVI, NDRE, GNDVI, CIR]
-      extended: [EVI, SAVI, CHLOROPHYLL_A]
+      extended: [EVI, SAVI, LCI]
       thermal: []
     calibration_class: absolute
     thermal_variant:
@@ -46,7 +46,7 @@ capabilities:
     red_edge_sentinel2_band: B5
     available_indices:
       core: [NDVI, NDRE, GNDVI, CIR]
-      extended: [EVI, SAVI, CHLOROPHYLL_A]
+      extended: [EVI, SAVI, LCI]
       thermal: []
     calibration_class: absolute
     notes: >
@@ -72,13 +72,51 @@ capabilities:
     red_edge_sentinel2_band: B5
     available_indices:
       core: [NDVI, NDRE, GNDVI, CIR]
-      extended: [EVI, SAVI, CHLOROPHYLL_A]
-      thermal: [CWSI, CANOPY_TEMP, CANOPY_SOIL_DELTA, IRRIGATION_EFFICIENCY]
+      extended: [EVI, SAVI, LCI]
+      thermal: [CWSI, CANOPY_TEMP, CANOPY_SOIL_DELTA, CANOPY_TEMP_UNIFORMITY]
     calibration_class: absolute
     thermal_sensor: FLIR_BOSON_320
     notes: >
       Fabrika radyometrik kalibrasyon + termal (FLIR Boson 320x256).
       Fixed-wing — geniş alan verimliliği + multispektral + termal.
+
+# ---------------------------------------------------------------------------
+# Index band requirements  [D9 / 2026-07-31]
+# ---------------------------------------------------------------------------
+# NEDEN: `available_indices` bir drone'un neyi ÜRETEBİLDİĞİNİ elle yazıyordu; hangi
+# indeksin hangi bandı GEREKTİRDİĞİ hiçbir yerde makine-okunur değildi (denetim
+# yakınsaması Y4: A8/A10 + S10/S11). Bu yüzden "4 bantlı drone + EVI" gibi imkânsız
+# bir liste hiçbir kapıya takılmazdı ve `layer_type` iddiası doğrulanamıyordu.
+#
+# KAYNAK — UYDURULMADI, worker'ın FİİLİ formüllerinden ölçüldü:
+#   tarlaanaliz-worker/src/core/services/inference/feature_extraction.py:207-222
+#     NDVI  = (NIR - R) / (NIR + R)                     -> RED, NIR
+#     NDRE  = (NIR - RE) / (NIR + RE)                   -> RED_EDGE, NIR
+#     GNDVI = (NIR - G) / (NIR + G)                     -> GREEN, NIR
+#     EVI   = 2.5(NIR - R)/(NIR + 6R - 7.5B + 1)        -> BLUE, RED, NIR
+#             (kod: B yoksa EVI sıfırlanır -> Blue ZORUNLU)
+#     SAVI  = ((NIR - R)/(NIR + R + L))(1 + L), L=0.5   -> RED, NIR   (Blue GEREKMEZ)
+#
+# ⚠️ SAVI ölçümü, "SAVI'yi core'a al" önerisinin (A10) neden bir ÜRÜN kararı olduğunu
+# gösterir: SAVI 4 bantla ÜRETİLEBİLİR, ama bir drone'un onu SUNMASI ayrı bir karardır.
+# Bu tablo yalnız İMKÂNSIZ iddiaları yasaklar; eksik listelemeyi hata saymaz.
+#
+# Kapsam: yalnız `class: index` ve `class: composite` (bkz. platform/calibrated_dataset_manifest
+# → x-layer-classes). `raster_product` (ORTHO/DSM) bant gerektirmez; `derived_metric`
+# (termal) band_classes.THERMAL.requires ile kapılanır.
+index_requirements:
+  NDVI:          [RED, NIR]
+  NDRE:          [RED_EDGE, NIR]
+  GNDVI:         [GREEN, NIR]
+  SAVI:          [RED, NIR]
+  EVI:           [BLUE, RED, NIR]
+  CIR:           [GREEN, RED, NIR]     # class: composite — yalancı-renk render (NIR-R-G)
+  LCI:           [RED_EDGE, NIR]       # tarlaanaliz-worker/src/indices/lci.py
+  # ^ AK-1 kapandı: eski ad `CHLOROPHYLL_A` idi ve formülü HİÇBİR YERDE tanımlı değildi, bu
+  #   yüzden gereksinimi `null` bırakılmıştı. Ad worker'daki gerçek uygulamayla birleştirildi:
+  #   LCI = (NIR - RedEdge) / (NIR + RedEdge). NDRE ile AYNI FORMÜL (LCICalculator(NDRECalculator),
+  #   worker H9/MD-9 kararı) ama ayrı okuma: NDRE genel canlılık, LCI klorofil bozulması.
+  #   ⇒ 4 bantlı drone da ÜRETEBİLİR; matriste `extended` altında kalması bir ÜRÜN kararıdır.
 
 # Band class definitions
 band_classes:
@@ -88,7 +126,7 @@ band_classes:
     report_level: "Temel Sağlık Raporu"
   EXTENDED_5BAND:
     minimum_bands: [BLUE, GREEN, RED, RED_EDGE, NIR]
-    description: "Genişletilmiş 5 bant — EVI, SAVI, chlorophyll-a, Sentinel-2 uyumlu"
+    description: "Genişletilmiş 5 bant — EVI, SAVI, LCI, Sentinel-2 uyumlu"
     report_level: "Genişletilmiş Rapor"
   THERMAL:
     requires: [LWIR]

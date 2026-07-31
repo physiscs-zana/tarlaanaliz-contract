@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/platform/payment_intent.v2.schema.json",
+  "title": "PaymentIntent",
+  "description": "PaymentIntent v2 — KR-033 kanonik ödeme sözleşmesi. SSOT Uyum: 1.2.0 (2026-02-24).\nDeğişiklikler v1'e göre: receipt_blob_id zorunlu alan; admin_note + rejection_reason eklendi; status enum PAID kanonik (APPROVED/EXPIRED kaldırıldı); field_id eklendi (IBAN eşleştirme); otomatik expire kaldırıldı.\nBkz. enums/payment_status.enum.v2.json + enums/payment_method.enum.v1.json",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": [
+    "intent_id",
+    "payer_user_id",
+    "target_type",
+    "target_id",
+    "amount_kurus",
+    "currency",
+    "method",
+    "status",
+    "price_snapshot_id",
+    "created_at"
+  ],
+  "properties": {
+    "intent_id": {
+      "type": "string",
+      "pattern": "^pi_[a-z0-9]{24}$",
+      "description": "PaymentIntent benzersiz kimliği. Format: pi_{24-char-hex}. Bir kez oluşturulur, değişmez."
+    },
+    "payer_user_id": {
+      "type": "string",
+      "description": "Ödemeyi yapan kullanıcının user_id değeri (pseudonymous — PII değil)."
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "MISSION",
+        "SUBSCRIPTION"
+      ],
+      "description": "Ödeme hedefi tipi. MISSION = tek seferlik analiz; SUBSCRIPTION = Sezonluk Paket."
+    },
+    "target_id": {
+      "type": "string",
+      "description": "Hedefin ID değeri: mission_id veya subscription_id."
+    },
+    "field_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^field_[a-z0-9]{24}$",
+      "description": "İlgili tarla ID'si. IBAN_TRANSFER eşleştirme için opsiyonel — admin panelinde otomatik listeler. KR-033 §5 Admin Eşleştirme Akışı."
+    },
+    "amount_kurus": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Tutar — kuruş cinsinden (örn: 2500 = 25,00 TL). Negatif değer yasak."
+    },
+    "currency": {
+      "type": "string",
+      "const": "TRY",
+      "description": "Para birimi. Şu an yalnızca TRY desteklenmektedir."
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "CREDIT_CARD",
+        "IBAN_TRANSFER"
+      ],
+      "description": "Ödeme yöntemi: CREDIT_CARD veya IBAN_TRANSFER.",
+      "x-inlined-from": {
+        "ref": "../../enums/payment_method.enum.v1.json",
+        "source_id": "https://api.tarlaanaliz.com/enums/payment_method.enum.v1.json",
+        "keys": [
+          "enum",
+          "type"
+        ],
+        "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PAYMENT_PENDING",
+        "PENDING_ADMIN_REVIEW",
+        "PAID",
+        "REJECTED",
+        "CANCELLED",
+        "REFUNDED"
+      ],
+      "description": "Ödeme durumu. Tüm geçişler PaymentStateMachine üzerinden yapılır — bypass yasaktır.",
+      "x-inlined-from": {
+        "ref": "../../enums/payment_status.enum.v2.json",
+        "source_id": "https://api.tarlaanaliz.com/enums/payment_status.enum.v2.json",
+        "keys": [
+          "enum",
+          "type"
+        ],
+        "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+      }
+    },
+    "price_snapshot_id": {
+      "type": "string",
+      "description": "Sipariş anında alınan fiyat anlık görüntüsü (immutable). pricing.v1.schema.json referansı."
+    },
+    "receipt_blob_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "IBAN_TRANSFER: kullanıcı tarafından POST /payments/intents/{id}/upload-receipt ile yüklenen dekont referansı. Platform DB'de yalnızca opak blob ID saklanır (PII vault sorumluluğu). E-posta ile gönderim desteklenmez."
+    },
+    "payment_provider_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "CREDIT_CARD: ödeme sağlayıcısının işlem/session referans ID'si."
+    },
+    "rejection_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "REJECTED durumunda CENTRAL_ADMIN tarafından girilmesi zorunlu red gerekçesi. Kullanıcıya SMS+bildirim ile iletilir."
+    },
+    "admin_note": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "PAID/REJECTED/REFUNDED aksiyonlarında CENTRAL_ADMIN tarafından girilmesi zorunlu yönetici notu. Audit log'a yazılır."
+    },
+    "admin_user_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Manuel aksiyon yapan CENTRAL_ADMIN user_id. PAYMENT.MARK_PAID ve PAYMENT.REJECTED audit olaylarında zorunludur."
+    },
+    "paid_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "PAID durumuna geçiş zamanı (ISO 8601)."
+    },
+    "rejected_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "REJECTED durumuna geçiş zamanı (ISO 8601)."
+    },
+    "cancelled_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "CANCELLED durumuna geçiş zamanı (ISO 8601)."
+    },
+    "refunded_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "REFUNDED durumuna geçiş zamanı (ISO 8601)."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Intent oluşturulma zamanı (ISO 8601)."
+    },
+    "updated_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "Son güncelleme zamanı (ISO 8601)."
+    },
+    "correlation_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Audit log correlation ID — WORM log standardına göre zorunlu."
+    }
+  },
+  "$defs": {},
+  "x-business-rules": {
+    "no_auto_expire": "Otomatik expire yoktur. PAYMENT_PENDING intent'ler yalnızca admin kararıyla CANCELLED yapılır.",
+    "paid_immutable": "PAID olan intent tekrar PAID yapılamaz. CANCELLED/REJECTED intent PAID yapılamaz.",
+    "state_machine": "Tüm durum geçişleri PaymentStateMachine servisi üzerinden yapılır. Bypass PaymentTransitionError döner ve audit log'a yazılır.",
+    "admin_required_fields": "mark-paid: admin_note zorunlu. reject: rejection_reason zorunlu. Tüm admin aksiyonlarında admin_user_id zorunlu.",
+    "receipt_channel": "IBAN_TRANSFER dekontu yalnızca POST /payments/intents/{id}/upload-receipt ile yüklenir. E-posta kanal değildir.",
+    "mission_gate": "PAID olmadan Mission ASSIGNED olamaz.",
+    "subscription_gate": "PAID olmadan Subscription ACTIVE olamaz; PENDING_PAYMENT iken scheduler çalışmaz."
+  },
+  "x-audit-events": [
+    "PAYMENT.INTENT_CREATED",
+    "PAYMENT.MARK_PAID",
+    "PAYMENT.WEBHOOK_PAID",
+    "PAYMENT.REJECTED",
+    "PAYMENT.CANCELLED",
+    "PAYMENT.REFUNDED"
+  ],
+  "x-api-endpoints": {
+    "farmer": [
+      "POST /payments/intents",
+      "GET /payments/intents/{id}",
+      "GET /payments/intents/{id}/instructions",
+      "POST /payments/intents/{id}/upload-receipt",
+      "POST /payments/intents/{id}/cancel"
+    ],
+    "provider_callback": [
+      "POST /payments/webhook/{provider}"
+    ],
+    "admin": [
+      "GET /admin/payments/intents?status=PAYMENT_PENDING",
+      "GET /admin/payments/intents?field_id={id}",
+      "POST /admin/payments/intents/{id}/mark-paid",
+      "POST /admin/payments/intents/{id}/reject",
+      "POST /admin/payments/intents/{id}/refund"
+    ]
+  },
+  "x-kr-ref": "KR-033",
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-02-24"
+}

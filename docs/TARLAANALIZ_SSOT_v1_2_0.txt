@@ -1,10 +1,5 @@
 # TarlaAnaliz – Tek Kaynak Gerçek (SSOT) v1.2.0
 
-> **Versiyon:** 1.2.0
-> **Yayın Tarihi:** 2026-02-24
-> **Contract Versiyon Uyum:** 2.0.1 (2026-03-06)
-> **Bu Dosyanın Son Güncelleme:** 2026-03-07
-
 kurallar; daima buradaki kurallara kıdemli SDLC uzmanı, Technical Writer / SSOT Custodian, Domain Expert (AgriTech), Data Engineer / Pipeline Architect , Security Architect, QA Engineer / Test Architect, Kıdemli yazılım mimarı ve yazılım mühendisi olarak sadık kalmalısın;
 
 **KR Şablonu (Kanonik):**
@@ -36,9 +31,11 @@ kurallar; daima buradaki kurallara kıdemli SDLC uzmanı, Technical Writer / SSO
 ### C) Orchestration & Operations
 - KR-017 — YZ Analiz Hattı (Şemsiye KR: 070–073 ayrıştırması)
 - KR-015 — Pilot kapasite/planlama alt kuralları
+- KR-092 — Fenolojik/Sezonluk Uçuş Parametreleri (İrtifa & Hız → pilota teslim)
 
 ### D) Payments & Governance
 - KR-033 — Ödeme + Manuel Onay + Audit
+- KR-093 — Çiftçi Ön Raporu (İki-Fazlı Teslimat: PRELIMINARY → FULL; KR-019 önü)
 
 ### E) Risk & Business Continuity
 - KR-034 — Drone Tedarik Bağımsızlığı (DJI Aktif Operasyon Planı)
@@ -133,6 +130,10 @@ kurallar; daima buradaki kurallara kıdemli SDLC uzmanı, Technical Writer / SSO
 **Üyelik:** PWA veya web üzerinden üye olunur. İl, ilçe, ad, soyad ve telefon numarası alınır; üye olunca kendi sayfasına yönlendirilir.
 
 **Tarla Kaydı:** Her tarla için il, ilçe, mahalle/köy, ada, parsel ve alan (m²) girilir. Sistem benzersiz FieldID üretir.
+
+**[KR-013-1] Asgari Tarla Büyüklüğü:** Bir tarla en az **5 dönüm** (5.000 m² = 0,5 ha) olmalıdır. Backend, 5 dönümün altındaki tarla kaydını reddeder (hard-gate). Gerekçe: drone tarama operasyonunun teknik/ekonomik alt eşiği.
+
+**[KR-013-2] Tarama için Komşu Tarla Şartı:** Bir tarlada **tarama/analiz (görev)** başlatılabilmesi için, çiftçinin **aynı mahallede** (il+ilçe+mahalle/köy) en az bir **başka** kayıtlı tarlasının daha olması gerekir. **İlk tarla girişi engellenmez**; ancak tek tarla için görev/tarama oluşturulamaz. Bu bilgi, çiftçiye tarla ekleme sayfasında kalıcı bilgi notu ile bildirilir. Gerekçe: drone izole tek tarla için değil, aynı bölgedeki tarla kümesi için uçurulur.
 
 **Tekil Kayıt Kuralı:**
 [EK: Kod/Şema örnekleri bu sürümden çıkarıldı. (Contracts repo’da kanonik)]
@@ -480,31 +481,45 @@ Her iki sensör de Pix4Dfields'te tam radyometrik kalibrasyon desteğindedir.
 
 ---
 
-## [KR-083] İl Operatörü
+## [KR-083] İlçe Temsilcisi
 
-**Rol Kodu:** ProvinceOperator
-**Gelir Payı:** Sözleşmeye göre %5-%15 kar payı alır (admin panelden tanımlanır).
+> GOVERNANCE (2026-06-26): Rol "İl Operatörü / ProvinceOperator / IL_OPERATOR" → "İlçe
+> Temsilcisi / DISTRICT_REP" olarak hizalandı (canlı kod bu ilçe-bazlı modeli uyguluyordu;
+> karar kaydı: docs/governance/kr083_district_rep_2026-06.md). Audit event adı
+> `PROVINCE_OPERATOR.RATE_CHANGED` → `DISTRICT_REP.RATE_CHANGED`.
+
+> GOVERNANCE (2026-06-27): Kar payı modeli ürün sahibi kararıyla **BRÜT → NET** ve ödeme
+> zamanlaması **aylık → sezon sonu** olarak değiştirildi. Taban artık o ilçede *tahsil edilen*
+> ödemelerden (iadeler düşülmüş) pilot hakedişleri çıkarılarak bulunur. Karar kaydı:
+> docs/governance/kr083_net_profit_2026-06.md.
+
+**Rol Kodu:** DISTRICT_REP (İlçe Temsilcisi; eski ProvinceOperator / IL_OPERATOR DEPRECATED)
+**Gelir Payı:** Sözleşmeye göre %5-%15 **net kâr** payı alır (admin panelden tanımlanır).
 
 **İhtiyaç:** KPI + kapasite planlama (abonelik sayısı, hizmet verilen alan, ödeme toplamı, ilçe yoğunluğu, SLA).
 
-**PII Kuralı:** İl Operatörü **PII GÖRMEZ**.
+**PII Kuralı:** İlçe Temsilcisi **PII GÖRMEZ**.
 
 **Sunum İki Katmanlı:**
 - (A) Merkez - PII ayrı
-- (B) Operatör - SubscriberRef + ilçe veya 1-2 km grid
+- (B) İlçe Temsilcisi - SubscriberRef + ilçe veya 1-2 km grid
 
 **Kar Payı Hesaplama ve Ödeme Mekanizması:**
 
 [ZORUNLU] Hesaplama sistem tarafından **otomatik** yapılır. Manuel hesaplama kabul edilmez.
 
-Formül:
+Formül (NET kâr modeli — 2026-06-27 governance; bkz. docs/governance/kr083_net_profit_2026-06.md):
 ```
-kar_payı = tamamlanan_abonelik_alanı_donum
-           × sezon_analiz_sayısı
-           × kar_payı_oranı (%)
+gelir_tabanı = Σ(o ilçede tahsil edilen abonelik ödemeleri; payment_intent = PAID)
+             − Σ(o ilçedeki iadeler / refund)
+harcananlar  = Σ(o ilçedeki görevlerin pilot hakedişleri)
+net_taban    = gelir_tabanı − harcananlar
+kar_payı     = max(0, net_taban) × kar_payı_oranı (%)
 ```
 
-[ZORUNLU] Ödeme döngüsü: Ayın ilk 7 günü içinde, pilot hakediş ödemeleriyle aynı döngüde (bkz. **[KR-031]**).
+[ZORUNLU] net_taban < 0 ise kar_payı = 0 (zarar payı temsilciden geri alınmaz — no clawback).
+
+[ZORUNLU] Ödeme döngüsü: **Sezon sonunda** — o ilçedeki aboneliklerin sezonu (end_date) tamamlandıktan sonra hesaplanır ve ödenir. (Aylık pilot hakediş döngüsünden ayrıdır; krş. **[KR-031]**.)
 
 [ZORUNLU] Onay hiyerarşisi:
 - BILLING_ADMIN hesaplanan tutarı raporlar ve ödeme için sunar.
@@ -512,7 +527,7 @@ kar_payı = tamamlanan_abonelik_alanı_donum
 
 [ZORUNLU] Oran değişikliği:
 - Yalnızca CENTRAL_ADMIN yapabilir.
-- Değişiklik audit log'a yazılır (`PROVINCE_OPERATOR.RATE_CHANGED`: eski oran, yeni oran, geçerlilik tarihi).
+- Değişiklik audit log'a yazılır (`DISTRICT_REP.RATE_CHANGED`: eski oran, yeni oran, geçerlilik tarihi).
 - Değişiklik **geriye dönük uygulanamaz**; yalnızca bir sonraki ödeme döngüsünden itibaren geçerlidir.
 
 ---
@@ -571,14 +586,27 @@ kar_payı = tamamlanan_abonelik_alanı_donum
 - **[KR-064]:** Layer Registry (THERMAL_STRESS katmanı)
 
 ---
-## [KR-019] Expert Portal (Uzman İnceleme)
+## [KR-019] Expert Portal + Konsensüs Yayın Kapısı (Uzman İnceleme)
 
-- Uzman portalı, modelin düşük güven verdiği veya çelişkili durumlarda manuel inceleme için kullanılır (**PII görünmez**)
+- Uzman portalı manuel inceleme için kullanılır (**PII görünmez**)
 - Üyelik self-signup **değildir**: uzman hesabı ADMIN kontrollü açılır (curated onboarding)
 - Bildirim kanalları: **SMS + web portal içi gerçek zamanlı bildirim (WebSocket)**; e-posta kullanılmaz
 - Erişim kuralı: uzman **yalnızca kendisine atanmış** incelemeleri görür (ownership check zorunlu)
 - Uzman karar formatı (özet): `confirmed | corrected | rejected | needs_more_expert`
 - Uzman geri bildirimi `training_grade` ile etiketlenir: `enum A|B|C|D|REJECT`; ayrıca `grade_reason` alanı tutulur (max 200 karakter)
+
+### Konsensüs Yayın Kapısı (zorunlu — düşük-güvenle sınırlı değil)
+- AI analizi **her başarılı sonuç için** uzman onayından geçmeden çiftçiye yayınlanmaz; görev `PENDING_REVIEW`'da tutulur (yalnız düşük-güven değil, tüm sonuçlar)
+- Yayın kararı **tek noktada** verilir; terminal durumlar (`DONE` + dataset `DERIVED_PUBLISHED`) **yalnız** bu kapıdan set edilebilir — HTTP PATCH ve repo update doğrudan set'i reddeder (409)
+- **N-uzman konsensüsü (naif verdict değil):** aynı sonucun TÜM kardeş incelemeleri değerlendirilir — bekleyen kardeş → yayın YOK; tümü bitti + herhangi RED → `EXPERT_REJECTED` (yayın YOK); tümü ONAY → yayın
+- **TOCTOU serileştirme:** kapı geçişi mission satır kilidiyle serileştirilir → çift-yayın / çift-hakediş (KR-031) engellenir
+- Pilot hakedişi (KR-031) yalnız uzman onaylı yayında, best-effort üretilir (KR-066)
+
+### Sunum & Wire
+- Yayınlanan sonucun **sunumu** ayrıca ödeme kapısına tabidir: ödenmemiş sonuç/tile için HTTP **402** (bkz KR-033)
+- Kapı olayları platform-dışına wire ile yayılır: `analysis.review_requested` + `expert.review_decided` (`gate_outcome` gerçek konsensüs kararı, PII'siz, best-effort)
+
+**Cross-refs:** KR-031 (pilot hakedişi), KR-033 (ödeme kapısı), KR-066 (best-effort/KVKK), KR-063 (RBAC), KR-093 (çiftçi ön raporu — bu kapının ÖNÜNDEKİ tespit-içermeyen faz; bu kapıyı zayıflatmaz, yalnız uzman-doğrulanmış bulgu içermeyen indeks görünümünü ayrı faz olarak tanımlar). Tasarım/gerekçe: `docs/adr/ADR-004-expert-consensus-gate.md`, `ADR-005-payment-gate.md`, `ADR-006-wire-emission.md`, `ADR-007-preliminary-farmer-view.md`; runbook: `docs/runbooks/expert_approval_workflow.md`.
 
 ---
 
@@ -611,16 +639,165 @@ kar_payı = tamamlanan_abonelik_alanı_donum
 
 ## [KR-024] Önerilen Tarama Periyodu (Gün)
 
+**Kapsam (Tarla, 2026-06-14 itibarıyla — 7 bitki):**
+
 | Bitki | Önerilen Periyot (gün) |
 |-------|------------------------|
-| Pamuk | 7-10 |
-| Antep Fıstığı | 10-15 |
 | Mısır | 15-20 |
-| Buğday | 10-15 |
-| Ayçiçeği | 7-10 |
-| Üzüm | 7-10 |
-| Zeytin | 15-20 |
-| Kırmızı Mercimek | 10-15 |
+| Üzüm | 7-14 |
+| Zeytin | 14-21 |
+| Kiraz | 14-21 |
+| Pamuk | 7-10 |
+| Antep Fıstığı | 14-21 |
+| Çeltik | 7-10 |
+
+**Arşiv (Tarla kapsamı dışı — izlenebilirlik için referans, geçersiz):**
+İncir (14-21), Buğday (10-15), Ayçiçeği (7-10), Fındık (10-15),
+Arpa (10-15), Patates (7-10), Mercimek (10-15), Elma (10-15),
+Şeftali (10-15).
+
+> **Not (2026-06-14):** Çeltik (RICE) Worker'da research/blocked_by_data
+> iskelet olarak eklendi (config/crops/rice.yaml) — kalibre açık veri gelene
+> kadar Stage 2 model çalıştırılmaz (KR-018 hard-gate, fail-closed). İncir,
+> platform CropType VO'sunda aktif değildi; aktif kapsam koda hizalandı.
+
+---
+
+## [KR-092] Fenolojik/Sezonluk Uçuş Parametreleri (İrtifa & Hız)
+
+**Amaç:** Bir görevin uçuş parametrelerini (uçuş yüksekliği Y ve uçuş hızı v) bitki türü + fenolojik evre/sezon haftasına göre türetmek; böylece hedef GSD (yer örnekleme mesafesi, cm/piksel) tutturularak analiz kalitesi sabitlenir ve bu parametreler pilota görev alındığında kendi ekranında + KMZ uçuş planında ulaştırılır. KR-024 (önerilen tarama periyodu, gün) "ne sıklıkta" sorusunu yanıtlar; KR-092 "hangi yükseklik ve hangi hızda" sorusunu yanıtlayarak onu tamamlar.
+
+**Kapsam / Applies-to:** platform (pilot uygulaması + görev API'si), worker (routing/rapor bağlamı), edge-kiosk (KMZ uçuş planı üretimi). GAP kapsamındaki 5 aktif ürün: PAMUK, MISIR, ÇELTİK, ÜZÜM, ANTEP FISTIĞI.
+
+### Zorunluluklar (MUST)
+
+[ZORUNLU] GAP kapsamındaki 5 aktif ürün (COTTON/CORN/RICE/GRAPE/PISTACHIO) için haftalık sezonluk uçuş parametrelerinin **tek yetkili kaynağı** `data/seasonal_flight_calendar.json`'dır. Bu dosya `docs/domain/tarama_protokolu_v1.6.txt` §10 (haftalık tablolar) belgesinden türetilir ve her sezon başı revize edilir. Kapsam-dışı/arşiv ürünler ve evre-bazlı (stage) profil için `data/phenology_flight_profiles.json` fallback olarak kullanılır.
+
+[ZORUNLU] Uçuş parametresi çözümü (resolution) şu zincirle yapılır: `crop_type` + `mission_date` → bölgesel haftalık pencere (regional weekly window, MM-DD tarih aralığı) → o haftanın (BBCH evresi, altitude_m, speed_ms, öncelikli hedef, kritik-mi) değerleri. Ekim/uyanma çapa tarihi bölgesel takvime gömülüdür; bu çözüm için veritabanına yeni bir "ekim tarihi" alanı EKLENMEZ (mevcut evre-tarih çözümü `stage_for_date()` deseniyle tutarlı).
+
+[ZORUNLU] Türetilen (Y, v) çifti şu fiziksel/mevzuat sınırlarını ihlal edemez:
+- **GSD hedefi:** RGB GSD = H/37,2 · ÇS (multispektral) GSD = H/21,7 (H = metre, GSD = cm/piksel).
+- **Sensör hız sınırı:** H/v ≥ 3,9 (Mavic 3M min tetik aralığı 0,7 sn; aksi halde DJI Pilot 2 hızı otomatik kısıtlar).
+- **Yasal irtifa:** ≤ 120 m AGL (SHGM); VLOS yatayda ≤ 500 m.
+- **Güneş açısı:** > 30° (aksi halde radyometrik kalite düşer).
+- Haftalık takvimdeki operasyonel aralık: irtifa 25–120 m, hız 3–10 m/s, %80 ileri / %70 yan örtüşme, %65 saha verimi.
+
+[ZORUNLU] Çözülen haftalık parametreler pilota **iki kanaldan** ulaştırılır: (1) pilot görev ekranında o haftanın değerleri öne çıkarılır (Y, v, hafta no, BBCH, öncelikli hedef, ★ kritik işareti) ve tüm sezon tablosu görülebilir; (2) `GET /missions/{id}/flight-route.kmz` çıktısındaki uçuş planına aynı (Y, v) işlenir. KMZ'de 5 aktif ürün için varsayılan (50 m / 5 m/s) yerine haftalık takvim değerleri kullanılır.
+
+[ZORUNLU] Kritik (★) haftalarda (haftada 2 uçuş önerilen zirve fenolojik pencereler) takvim `critical=true` işaretini taşır; bu bilgi pilota ve planlamaya iletilir. Kritik hafta kararı takvimden okunur, kod içinde yeniden hesaplanmaz.
+
+[ZORUNLU] Her uçuşun başında ve sonunda CRP (kalibrasyon paneli) radyometrik kalibrasyonu yapılır (KR-018/KR-082 hard-gate); DLS (ışık sensörü) tek başına yeterli değildir. Uçuş parametresi türetimi bu kalibrasyon zorunluluğunu ortadan kaldırmaz.
+
+### Kanıt / Artefact
+- `data/seasonal_flight_calendar.json` — 5 aktif ürün × haftalık satırlar (week, date_start, date_end, bbch, stage_label_tr, priority_target_tr, altitude_m, speed_ms, critical)
+- `docs/domain/tarama_protokolu_v1.6.txt` §10 — türetimin kanonik kaynak belgesi (GSD/limitler §2, §11.1–11.2)
+- Görev yanıtı: `GET /pilots/me/missions` → `weekly_flight{}` alanı; `GET /missions/{id}/season-flight-schedule` → tam sezon tablosu
+- `flight-route.kmz` — pilota inen uçuş planında Y/v gömülü
+
+### Audit / Log
+- `FLIGHT.PARAMS_RESOLVED` — crop_type + mission_date → hafta/evre + (Y, v) çözüldü (correlation_id)
+- `FLIGHT.PARAMS_FALLBACK` — haftalık takvimde eşleşme yok → phenology profili/güvenli varsayılan kullanıldı
+- `FLIGHT.KMZ_EMITTED` — KMZ uçuş planı çözülen parametrelerle üretildi
+
+### Hata Modları
+- `mission_date` takvim penceresi dışında (sezon öncesi/sonrası) → en yakın sınır haftasına snap edilir; log `FLIGHT.PARAMS_FALLBACK`; pilota "sezon dışı, en yakın hafta gösteriliyor" bilgi notu
+- Ürün 5 aktif ürün dışında (arşiv) → haftalık takvim uygulanmaz; evre-bazlı `phenology_flight_profiles.json` fallback; yoksa parametre önerilmez, KMZ güvenli varsayılana düşer ve bunu loglar
+- Türetilen (Y, v) fiziksel sınırı (H/v ≥ 3,9 veya ≤ 120 m) ihlal ederse → değer reddedilir, en yakın geçerli değere clamp edilir + `FLIGHT.PARAMS_RESOLVED` uyarı bayrağı
+
+### Test / Kabul Kriterleri
+- 5 aktif ürün için, sezon içi bir `mission_date` verildiğinde doğru hafta + (Y, v) döner (sınır tarihleri dahil: pencere başı/sonu)
+- Kritik hafta (★) sorgusunda `critical=true` döner
+- Sezon dışı tarih → en yakın hafta + fallback log
+- Arşiv ürün → haftalık takvim uygulanmaz, fallback devreye girer
+- Türetilen tüm satırlarda H/v ≥ 3,9 ve altitude ≤ 120 m (regresyon testi tüm takvim satırlarını tarar)
+- Pilot ekranında o hafta öne çıkar + tam sezon tablosu açılır; KMZ indirildiğinde Y/v doğru gömülüdür
+
+### Disclaimer (Karar Desteği — Katı Kural Değil)
+Takvim değerleri **karar desteğidir**; parsel gözlemi, yerel fenoloji (sıcak yıllarda evreler ~1-2 hafta erkene çekilebilir) ve TÜS/UTAEM bültenleriyle rafine edilir. Sistem ilaçlama kararı vermez (KR-025); yalnız tarama parametresi önerir.
+
+**Kaynak:** `docs/domain/tarama_protokolu_v1.6.txt` (Sürüm 1.6 birleşik, §10 Sezonluk Uçuş Takvimi).
+
+### Cross-refs
+- **[KR-024]:** Önerilen tarama periyodu (gün) — KR-092 bunun irtifa/hız boyutunu tamamlar
+- **[KR-016]:** Drone-Tarla-Bitki eşleştirme/routing
+- **[KR-018 / KR-082]:** Radyometrik kalibrasyon hard-gate (CRP her uçuş)
+- **[KR-025]:** Analiz içeriği — "sistem ilaçlama kararı vermez"
+- **[KR-015]:** Pilot kapasite/planlama
+- **[KR-084]:** Termal pipeline (aynı uçuşta termal bant varsa)
+
+> **Sürüm notu (2026-07-05):** KR-092 eklendi (geriye uyumlu ekleme → SemVer minor niteliğinde). KR-084 emsaliyle uyumlu olarak SSOT dosya adı/sürümü değiştirilmedi; yaşayan dokümana normatif KR eklendi. Makine-okunur kaynak `data/seasonal_flight_calendar.json`; kanonik kaynak belge `docs/domain/tarama_protokolu_v1.6.txt`.
+
+---
+
+## [KR-093] Çiftçi Ön Raporu (İki-Fazlı Teslimat: PRELIMINARY → FULL)
+
+> 🔒 **TEK NORMATİF GÖVDE (2026-07-31, D16-b).** Bu KR'nin normatif metni YALNIZ buradadır. `ssot/kr_registry.md` artık bu başlık için **türetilmiş bir işaretçi** tutar (gövde tutmaz). Gerekçe: KR-093'ü uygulayan taraf PLATFORM'dur ve platform deposunda bu dosyanın kopyası vardır; `kr_registry.md` ise yalnız contract deposunda yaşar. Ölçüldü — Y-D (Aşama A) genişlemesinin MUST maddeleri yalnız registry'de duruyordu, yani kuralı uygulayacak olan onu GÖREMİYORDU. Birleştirmede registry'ye özgü iki madde (Aşama A tespit değildir · yeni faz eklenmez) buraya taşındı; hiçbir madde silinmedi.
+
+**Amaç:** Çiftçiye iki fazlı teslimat sağlamak. Uçuş + radyometrik kalibrasyon (KR-018) sonrası worker'ın ürettiği **deterministik indeks katmanları** (ortomozaik + NDVI/NDRE/stres) hazır olur olmaz, çiftçi bunları uzman konsensüs onayından (KR-019) ÖNCE **"ÖN RAPOR" (PRELIMINARY)** olarak görebilir. Uzman onayı sonrası aynı sonuç, uzman-doğrulanmış bulguların açıldığı **"TAM RAPOR" (FULL)** fazına geçer. Böylece çiftçi uçuştan hemen sonra tarlasının genel durumunu görür; kesin bulgular yine uzman kapısından geçer.
+
+**KR-019 ile ilişki (KRİTİK — çelişki yok):** KR-019 **tam rapor** (uzman-doğrulanmış bulgular: hastalık/zararlı/yabancı-ot tespitleri + uzman düzeltmeleri) için fail-closed yayın kapısıdır ve **DEĞİŞMEZ**. KR-093 bu kapının ÖNÜNDE, **tespit içermeyen** deterministik indeks görünümünü ayrı bir faz olarak tanımlar. Ön rapor, KR-019'un koruduğu uzman-doğrulanmış bulguları **İÇERMEZ**; dolayısıyla KR-019'un yayın kapısını zayıflatmaz. KR-019'daki "çiftçiye yayınlanmaz" kısıtı tespit/uzman-bağımlı içerik için **aynen** geçerlidir.
+
+**Faz ekseni bağımsızlığı:** `report_phase ∈ {PRELIMINARY, FULL}` **onay fazıdır**; şu iki mevcut eksenle KARIŞTIRILMAZ: (1) `result_mode` (FULL_REPORT/PARTIAL_REPORT/INDICES_ONLY/NO_RESULT) sensör-bandı fail-closed modudur; (2) `report_tier` (TEMEL/GENISLETILMIS/KAPSAMLI) bant sınıfı kalite seviyesidir. Bu üç eksen bağımsızdır.
+
+**Kapsam / Applies-to:** platform (results özet API'si + çiftçi bildirimi + PWA görünümü). worker yalnız zaten ürettiği indeks katmanlarını verir (yeni worker çıktısı YOK). Tespitler ve uzman-bağımlı katmanlar bu KR'nin kapsamı DIŞINDADIR (uzman onayına dek gizli).
+
+### Zorunluluklar (MUST)
+
+[ZORUNLU] **İçerik kapalı listedir ve İKİ AŞAMALIDIR.** `PRELIMINARY` fazında çiftçiye sunulabilecek içerik YALNIZCA aşağıdaki iki aşamadan ibarettir; listede olmayan hiçbir alan ön fazda sunulmaz. Makine-okunur kanonik kaynak: `enums/report_phase.enum.v1.json` → `x-preliminary-content` (bu metinle AYNI olmak zorundadır).
+
+  - **Aşama A (kalibrasyon sonrası — worker sonucu HENÜZ YOK; mission `UPLOADED`):** öncelik bölgeleri — `geom` (poligon) + `ndvi_value` + `priority_level` + `ndvi_overlay` görseli. Kaynak: `analysis_priority_zones` (edge NdviPrioritizer çıktısı; `intake_manifest.v1` `EdgeForm.priority_zones` üzerinden taşınır). ⟵ KG-0.b-R (Y-D) eklentisi, 2026-07-30 onaylı.
+  - **Aşama B (worker sonucu geldi — mission `IN_ANALYSIS`/`PENDING_REVIEW`):** ortomozaik + deterministik indeks katmanları (`HEALTH`←ndvi, `NITROGEN_STRESS`←ndre) + `overall_health_index`. ⚠️ 2026-07-31/D17: `WATER_STRESS` bu listeden ÇIKARILDI — katman VEKİLDİR (`analysis_type.enum` → `availability: proxy_only`; doğrudan ölçümü CWSI/LWIR veya NDMI/SWIR ister, ikisi de referans donanımda yoktur — KG-0.f) ve kaynağı `stress_ratio` hiçbir kanonik kaynakta TANIMLI DEĞİLDİR.
+
+[ZORUNLU] **Aşama A tespit DEĞİLDİR.** Öncelik bölgesi bir gözlemsel indeks türevidir (NDVI eşiği + poligon); sınıf/etiket/şiddet taşımaz. Bu nedenle KR-019'u zayıflatmaz ve KR-025'i (reçete/ilaçlama kararı yok) ihlal etmez.
+
+[ZORUNLU] **Yeni mission state / yeni faz EKLENMEZ.** `report_phase` kümesi `{PRELIMINARY, FULL}` olarak kalır (ADR-007 §2 korunur); faz yalnız `mission.status`'tan türetilir ve harita kanonik `mission_status.enum.v1` adlarıyla yazılır.
+
+[ZORUNLU] Tespitler (`findings`: hastalık/zararlı/yabancı-ot), uzman düzeltmeleri ve uzman-bağımlı katmanlar PRELIMINARY yanıtında **YER ALMAZ** (fail-closed; sunum katmanı DTO'su bu bulguları hiç döndürmez).
+
+[ZORUNLU] PRELIMINARY yanıtı görsel olarak **"ÖN RAPOR — uzman doğrulaması beklemede"** ibaresini taşır: bulguların kesin olmadığı ve nihai raporun uzman onayı sonrası yayınlanacağı çiftçiye açıkça belirtilir. Bu disclaimer FULL fazında **"TAM RAPOR (uzman onaylı)"** ibaresiyle değiştirilir.
+
+[ZORUNLU] Ödeme kapısı (KR-033) PRELIMINARY için de **geçerlidir**: ödenmemiş sonuç/tile → HTTP 402. Ön rapor ücretsiz teaser DEĞİLDİR; indeks katmanı gerçek analiz ürünüdür. (Kapı önce ödeme (402), sonra faz türetme sırasıyla uygulanır.)
+
+[ZORUNLU] `report_phase` **yalnız KR-019 kapısından türetilir**, bağımsız set edilemez: mission `PENDING_REVIEW` (ve öncesi `ANALYZING`) → `PRELIMINARY`; mission `DONE` (konsensüs ONAY, KR-019 yayın) → `FULL`. Faz geçişi tek yönlüdür ve terminal FULL yalnız uzman onay kapısı sonucudur.
+
+[ZORUNLU] Konsensüs **RED** (mission `EXPERT_REJECTED`) → ön rapor **GERİ ÇEKİLİR**: results özet API'si HTTP **409** ("bu analiz uzman incelemesinde onaylanmadı; sonuç yayınlanmadı") döner, hiçbir katman/indeks sunulmaz. **ESCALATED** (bekleyen kardeş inceleme / `needs_more_expert` → mission `PENDING_REVIEW`'da kalır) → henüz karar olmadığından `PRELIMINARY` olarak **kalır**. Hiçbir durumda tespit ön fazda sızmaz.
+
+[ZORUNLU] Bildirim: worker sonucu geldiğinde (mission `PENDING_REVIEW`'a geçtiğinde), uzman kapısıyla **PARALEL**, `analysis.preliminary_ready` wire olayı + çiftçiye SMS/WebSocket "ön analiziniz hazır" bildirimi üretilir (best-effort, KR-066). Bu, KR-019'un FULL "sonuç hazır" bildirimini (uzman onayı sonrası) **DEĞİŞTİRMEZ** — ondan ayrı, ek bir bildirimdir. Telefon (PII) wire'a girmez; producer async çözer (KR-071).
+
+[ZORUNLU] KR-025 korunur: PRELIMINARY hiçbir ilaçlama/tedavi/reçete kararı içermez; yalnız gözlemsel indeks katmanları ve sağlık indeksi sunar.
+
+### Kanıt / Artefact
+- `report_phase` alanı — `ResultSummaryDTO` (platform sunum sözleşmesi); değer PRELIMINARY|FULL
+- `analysis_preliminary_ready.v1` — contract wire event şeması (PII'siz: mission_id, field_id, report_tier)
+- FE ön/tam faz rozeti + disclaimer (`web/.../results/[missionId]`); "Benim Sayfam"da kalıcı iki-aşamalı süreç açıklaması
+
+### Audit / Log
+- `WORKER_BRIDGE.PRELIMINARY_READY` — mission PENDING_REVIEW; ön bildirim + wire olayı yayınlandı (correlation_id)
+- `analysis.preliminary_ready` — dış tüketiciler için wire olayı (best-effort)
+
+### Hata Modları
+- mission `EXPERT_REJECTED` → 409 (ön rapor geri çekildi; katman sunulmaz)
+- ödenmemiş sonuç/tile → 402 (KR-033; PRELIMINARY dahil)
+- sonucun sahibi değil → 403 (RBAC, fail-closed)
+- ön bildirim yayını hatası → best-effort yutulur (KR-066); sonuç işleme (commit) bozulmaz
+
+### Test / Kabul Kriterleri
+- PENDING_REVIEW mission → GET `/results/{id}/summary` → `report_phase=PRELIMINARY` + yalnız indeks katmanı + `findings`/tespit **yok**
+- Uzman onayı (mission DONE) → `report_phase=FULL`
+- Konsensüs RED (mission EXPERT_REJECTED) → 409 (geri çekildi)
+- Ödenmemiş → 402 (faz türetmeden ÖNCE)
+- mission PENDING_REVIEW'a geçtiğinde `analysis.preliminary_ready` + çiftçi ön bildirimi tetiklenir (best-effort)
+
+### Cross-refs
+- **[KR-019]:** Uzman konsensüs yayın kapısı — DOKUNULMAZ; KR-093 onun önündeki tespit-içermeyen fazdır
+- **[KR-033]:** Ödeme kapısı — PRELIMINARY dahil geçerli (402)
+- **[KR-025]:** Analiz içeriği — "sistem ilaçlama kararı vermez" (ön rapor da vermez)
+- **[KR-066]:** Best-effort yan-etki / KVKK (ön bildirim)
+- **[KR-071]:** Tek-yön veri akışı / PII wire'a girmez
+- **[KR-017] / [KR-064]:** YZ analiz hattı + katman sunumu (tile/registry)
+- **[KR-088] / [KR-091]:** Dashboard/timeseries — onay-öncesi yazım ayrı bir KR-019 açık kalemidir (bu KR'nin kapsamı dışı; `docs/security/open_items_decisions_2026-06.md`)
+
+> **Sürüm notu (2026-07-06):** KR-093 eklendi (geriye uyumlu ekleme → SemVer minor niteliğinde). KR-019 metni DEĞİŞMEDİ; yalnız KR-093'e cross-ref eklendi. KR-084/KR-092 emsaliyle uyumlu olarak SSOT dosya adı/sürümü değiştirilmedi; yaşayan dokümana normatif KR eklendi. Contract eşdeğeri: `analysis_preliminary_ready.v1` + `report_phase`. Gerekçe/tasarım: `docs/adr/ADR-007-preliminary-farmer-view.md`.
 
 ---
 
@@ -983,8 +1160,11 @@ Tüm olaylar BÖLÜM 3 log standardına uygun JSONL formatında üretilir. `corr
 | `PAYMENT.REJECTED` | Admin red aksiyonu |
 | `PAYMENT.CANCELLED` | Kullanıcı veya admin iptali |
 | `PAYMENT.REFUNDED` | Admin iade aksiyonu |
+| `PAYMENT.SLA_BREACH` | IBAN onay SLA ihlali (T+1 17:00 aşımı) — CENTRAL_ADMIN'e otomatik uyarı |
+| `PAYMENT.ESCALATED` | BILLING_ADMIN şüpheli makbuz eskalasyonu — `escalation_reason` zorunlu |
 
 > `PAYMENT.MARK_PAID` ve `PAYMENT.REJECTED` olaylarında `admin_user_id` ve `admin_note` / `rejection_reason` alanları zorunludur.
+> `PAYMENT.ESCALATED` olayında `billing_admin_id`, `escalation_reason` ve `payment_intent_id` alanları zorunludur.
 
 ---
 
@@ -1120,9 +1300,10 @@ Bu bölüm, **[KR-001] Proje Özeti** içindeki "Sabit Çerçeve" maddelerinin *
 | COOP_VIEWER | Kooperatif izleyici | Sadece özet/rapor |
 | PILOT | Drone pilotu | Görev gör, uçuş yap, veri teslim et, hakediş önizle |
 | STATION_OPERATOR | Yerel istasyon operatörü | Kiosk ingest, eşleştirme, karantina/antivirüs sonuçları |
-| IL_OPERATOR | İl Operatörü | PII görmeden KPI/özet gelir ve operasyon metrikleri |
+| DISTRICT_REP | İlçe Temsilcisi | PII görmeden KPI/özet gelir ve operasyon metrikleri (eski IL_OPERATOR/ProvinceOperator DEPRECATED; bkz. **[KR-083]**) |
 | CENTRAL_ADMIN | Merkez yönetici | Fiyat/PriceBook, kurum onayı, rol atama, audit |
 | AI_SERVICE | YZ analiz servisi | Job tüket, rapor üret, sonuç yaz |
+| BILLING_ADMIN | Ödeme Yöneticisi | IBAN dekont onayı, geri ödeme (limit altı), kar payı raporlama. PII: telefonu yalnızca maskeli görür. Limit üstünde CENTRAL_ADMIN eskalasyonu zorunlu. Detay: **[KR-033]**, **[KR-083]** |
 | EXPERT | Uzman | İnceleme görüntüle, verdict ver, PII görmez |
 
 ---
@@ -1428,6 +1609,8 @@ Bu bölüm; ana iş akışlarının iş planı anlatısında zaten bulunan kıs�
 **Tarla Ekleme:**
 - il/ilçe/mahalle/köy + ada/parsel + alan (m²); sistem FieldID üretir
 - Tekil kayıt kuralı: il+ilçe+mahalle/köy+ada+parsel kombinasyonu tekrar edemez
+- Asgari tarla büyüklüğü: en az 5 dönüm (5.000 m²); altındaki kayıt backend'de reddedilir (hard-gate) [KR-013-1]
+- Tarama/görev şartı: aynı mahallede (il+ilçe+mahalle/köy) en az bir başka kayıtlı tarla gerekir; ilk tarla girişi muaf, çiftçiye bilgi notu ile bildirilir [KR-013-2]
 - Bitki türü tanımı (tarla bazında); birden fazla bitki varsa alan (m²) ile ayrı ayrı
 - Analiz talebi: bitki türü bazında; Sezonluk Paket veya tek seferlik
 - Bitki türü değişimi: yılda 1 defa, sadece 1 Ekim - 31 Aralık (backend kuralı)
@@ -1634,6 +1817,15 @@ WORM/immutable audit olayları:
 - `JOB.CANCEL`
 - `SECURITY.DENY` (mTLS fail, allowlist fail, signature fail)
 - `RESULT.SIGNATURE_FAIL`
+- `PAYMENT.SLA_BREACH` — IBAN onay SLA ihlali (T+1 aşımı); bkz. **[KR-033]** §10
+- `PAYMENT.ESCALATED` — BILLING_ADMIN şüpheli makbuz eskalasyonu; bkz. **[KR-033]** §10
+- `THERMAL.PIPELINE_ACTIVATED` — termal bant algılandı, pipeline başlatıldı; bkz. **[KR-084]**
+- `THERMAL.CALIBRATION_VERIFIED` — termal kalibrasyon kanıtı doğrulandı
+- `THERMAL.QC_PASS/WARN/FAIL` — termal QC sonucu
+- `THERMAL.RESULT_PUBLISHED` — termal katmanlar rapora eklendi
+- `SCAN_POLICY.BYPASS_ACTIVATED` — AV tarama BYPASS modu etkinleştirildi; bkz. **[KR-073]**
+- `SCAN_POLICY.BYPASS_EXTENDED` — BYPASS süresi uzatıldı
+- `DISTRICT_REP.RATE_CHANGED` — İlçe Temsilcisi kar payı oranı değişikliği; bkz. **[KR-083]**
 
 ---
 
@@ -1676,10 +1868,17 @@ Bu bölüm, güvenlik kurallarını **tekrar etmek** için değil; SSOT içinde 
 - **Radyometrik kalibrasyon hard gate:** [KR-018] (alias: [KR-082])
 - **Spektral kapasite algılama + graceful degradation:** [KR-018/KR-082] (v1.2.0)
 - **Termal veri işleme ve sulama stresi:** [KR-084]
+- **Fenolojik/sezonluk uçuş parametreleri (irtifa & hız → pilota teslim):** [KR-092]
 - **SDLC güvenlik kapıları + kabul kriterleri:** [KR-040]–[KR-043]
 - **Audit/WORM olay şeması + correlation_id:** BÖLÜM 3
 - **Threat model:** BÖLÜM 4
 - **Saha güvenlik checklist:** EK-SOP-SEC
+- **Ödeme akışı + manuel onay + BILLING_ADMIN operasyonları:** [KR-033]
+- **Çiftçi ön raporu (iki-fazlı teslimat, KR-019 önü — tespit-içermeyen indeks fazı):** [KR-093]
+- **İl Operatörü kar payı mekanizması:** [KR-083]
+- **Pilot hakediş doğrulama (expected vs observed):** [KR-065]
+- **Mimari Karar Kayıtları:** ADR-001 (9 durumlu state machine), ADR-002 (graceful degradation modeli)
+- **Platform derin denetim raporu:** `docs/migration_guides/PLATFORM_DEEP_AUDIT_v1_2_0.md`
 
 
 # BÖLÜM 6: TEST SENARYOLARI

@@ -20,6 +20,169 @@
 
 ---
 
+## 0.B EN GÜNCEL OTURUM (2026-07-31, ikinci oturum) — **KADEME 0→5 + öz-denetim**
+
+> ### 🔚 OTURUM KAPANIŞ ÖZETİ
+> **Yapılan:** eylem planı §14'ün **beş kademesi** (KADEME 0,1,2,3 tam · 4 kısmi · 5 kısmi) +
+> onaylanan iki karar (**§14.2.1 `$ref` inline** · **D16-b tek gövde**) + **D18-b** + **AK-10**.
+> **Sayılar:** yerelde **910 test / 2 beyanlı xfail / 0 skip** · `validate.py` **96 dosya / 0 hata**
+> · dedektör **0 breaking** · **CI 9/9 yeşil** (`headRefOid` her turda doğrulandı).
+> **Yeni:** 9 test dosyası · 3 araç (`inline_refs.py`, `sync_kr_corpus.py` + `validate.py` genişletildi)
+> · `dist/schemas/` yayın biçimi (68 dosya, harici `$ref` 0).
+>
+> **⚠️ ÖZ-DENETİMDE BULDUĞUM KENDİ HATALARIM (4 adet, hepsi düzeltildi):**
+> 1. `analysis_type.enum`'a konvansiyon dışı **üst düzey `version`** alanı ekledim → kaldırıldı.
+> 2. D17'de makine-okunur listeden `WATER_STRESS`'i çıkardım ama **KR-093'ün iki prose gövdesi
+>    bayat kaldı** → AR1'in yenisini ürettim; düzeltildi + kalıcı "makine↔metin" kapısı yazıldı.
+> 3. D16-b gerekçemde **"registry yalnız contract'ta yaşar"** dedim — sığ `ls` yüzünden YANLIŞ;
+>    derin ölçüm yönü değiştirmedi ama gerekçe **senkron mekanizması**na dayandırıldı.
+> 4. Tekil-gövde kapım **başlık** sayıyordu, **gövde** değil → göçü göremiyordu; damga tabanlı
+>    ölçüme çevrildi (mutasyonla kanıtlandı).
+>
+> **Kapı kanıtı:** 26 kapının **22'si mutasyonla** doğrulandı · 2'si kısmi (kardeş depo gerekiyor)
+> · 2'si henüz koşulmadı (C8 töreni · CI parite kararı).
+>
+> **📌 SONRAKİ OTURUM: eylem planı §14.7** — sıralı iş listesi oradadır (C8'i açan 7 kalem,
+> 7 kardeş depo işi, bloke kalemler, kapı borcu). Bu dosya iş listesi tutmaz.
+
+
+**Yapılan:** Eylem planı **§14.0 (D1…D6)** — *"kapılar dürüst hale gelsin"*. Altısı da bitti,
+üstüne denetimde görülmemiş **dördüncü bir CI yalanı** bulunup kapatıldı (D3-b).
+
+### Depo durumu
+- Dal `feat/contract-tur1` · süit **735 passed / 2 xfailed (beyanlı) / 0 skipped** · RC=0
+- `validate.py` 89 dosya / 0 hata · dedektör (master…HEAD): **breaking 0** — artık *ölçülmüş* sıfır
+- ⚠️ Tur içi beklenen kırmızılar artık **beyanlı**: `CONTRACTS_VERSION.md` →
+  `**Checksum State:** PENDING_REPIN`. Bu satırı **üç kapı** okuyor ve `pin_version.py`
+  C8'de dosyayı baştan ürettiği için **beyan kendini siler** → üç kapı aynı anda sertleşir.
+
+### Neyin yalan olduğu ölçüldü (özet — kanıt arşivde)
+| Kapı | Eski davranış | Şimdi |
+|---|---|---|
+| `breaking_change_detector` | iç içe enum/`$defs`/`items`/`oneOf` **kör**; Windows'ta hiç koşmuyor; bozuk şemayı sessizce yutuyor | özyinelemeli + `x-context-subsets` + UTF-8 + okunamayan şema = **exit 2** |
+| CI breaking adımı | `continue-on-error: true` **ve** banner stdout'a basıldığı için JSON bozuluyor → `has_breaking=false` (iki bağımsız yalan) | beyan kapısı: **beyan edilmemiş breaking build'i düşürür**; bozuk JSON = FAIL |
+| `verify-checksums` | `summary.needs`'te yok | özet + fail koşulunda; uyuşmazlık **beyansızsa** düşürür |
+| Sessiz atlama | 18 test `pyyaml` yok diye sessizce atlanıyordu | `conftest.py`: **beyan edilmemiş skip = oturum kırmızı** |
+| KR çıkarıcısı | registry'nin **54 tanımından 6'sını** görüyordu; Q5 kapısı boştu | her başlık düzeyi + 4 biçim; "anılmak ≠ tanımlı" |
+| Release checklist | annotated tag adımı **yok**; `PENDING_PROPAGATION` kontrolü yok | §3G tag töreni + propagation **testi** |
+
+### ✅ KADEME 1 de bu oturumda yapıldı (contract yarısı)
+**D7** `footprint_wkt` → `sees_patch_ids[]` + WKT derece-ayırıcısı + `footprint_crs` +
+`crs_mismatch` vocabulary'si · **D8** kalibrasyon fail-open → **FAIL-CLOSED** + `NONE` ·
+**D9** `x-layer-classes` + `IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY` +
+`index_requirements` (worker formüllerinden ölçüldü) · plan dışı **D3-c** (dedektörde 3 boşluk).
+⏳ **İki maliyet penceresi kapatıldı** — ikisi de sonraki turda MAJOR olurdu.
+
+### ✅ KADEME 2 de bu oturumda yapıldı (iş kalemleri)
+**C11** `sorties[]` + `mission_date` kanoniğe absorbe edildi — ölçüm: edge'in gerçek fixture'ı
+kanoniğe karşı 2 hata veriyordu, absorpsiyondan sonra (ürün adları kanonikleştirilerek) **geçiyor** ·
+**C2″** hükmü düzeltildi (edge regex DEĞİŞMEZ; eski hüküm `ManifestWriter`'ı kendi manifestine
+karşı kırardı) · **E3** `$ref` kararı yazıldı (§14.2.1, **onay bekliyor**) · **E5** `relative_path`
+deseni ODM/GDAL/boşluk/Türkçe adlarını kabul ediyor, traversal korumasını koruyor (13 vaka) ·
+**E6** `maxItems` 8000. **Aktif kilit:** E11 **C8'den önce merge edilmez** (E4).
+
+### ✅ KADEME 3 de bu oturumda yapıldı
+**D12** konsensüs dışlaması (`consensus_participation: EXCLUDED`) + JOIN anahtarı (`tile_id`) +
+grup yasağı · **D13** seçim kanıtı (π_h + rotation + bucket) · **D14** öncelik kuralı +
+`spot_check_suppressed` · **D15** `confidence_score: const 0` + 2-MINOR deprecation penceresi ·
+plan dışı **D3-d** (hiç yokken bileşim eklemek dedektöre görünmüyordu).
+⚠️ Worker/platform yarıları açık: **W8** (emisyon) · **P16** (konsensüs yolu EXCLUDED saymamalı).
+
+### ⚠️ KADEME 4 kısmen yapıldı
+**D17** `WATER_STRESS` → `proxy_only` + ön fazdan çıkarıldı (üç kaynak çelişiyordu: KG-0.f
+*"CWSI/SWIR gerekir, ikisi de yok"* ↔ enum `available` ↔ stage_b uzman kapısı ÖNCESİ teslim) +
+A2 changeNote eksiksiz alıntı · **D18** `api/` ağacı artık PII taranıyor (ilk taramada gerçek
+isabet: `$.info.contact.email`) + `phone` kapsam-duyarlı + `pyproject` yasak listesi 3→6 hizalandı ·
+**D16** kapı/tanım/doküman parçaları: tekil-gövde borcu donduruldu (**50 KR iki gövdeli**),
+`stress_ratio` beyanlı tanımsız, CLAUDE.md artık **sayı değil üretici komut** yayımlıyor.
+
+### ✅ D16-b · D18-b · KADEME 5 (yapılabilir kısmı) da bu oturumda
+**D16-b** KR-093 **tek gövdeye** indi: normatif metin SSOT metninde, registry 24 satırlık
+işaretçi. Karar ölçümle: her iki dosyanın da alt-akış kopyaları BAYAT (registry'nin
+platform/worker kopyalarında KR-093 başlığı bile yok) → belirleyici fark **senkron
+mekanizması**: SSOT metninin var, registry'nin yok. Registry'ye özgü iki MUST taşındı,
+kayıpsızlık testle zorlanıyor. Borç **50 → 49**.
+**D18-b** OpenAPI künyesindeki e-posta **silindi**; PII kapısı artık **istisnasız**.
+**KADEME 5**: G3/G4 yapıldı — `geom` artık UTM metre / enlem 91 / boylam −181 reddediyor
+(D7'deki WKT derece ayırıcısının GeoJSON karşılığı); şemanın ZORLAYAMADIKLARI (halka
+kapanışı, papyon) açıkça yazıldı ve regresyon kaydına alındı. K2 için **0.h karar taslağı**
+yazıldı. Kalan KADEME 5 kalemlerinin hepsi E13/motor · agronomi · başka depo bağımlısı.
+
+### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **C8 ön koşulları**
+⛔ **§14.2.1 `$ref` inline onayı** · ⛔ **D16-b2** (kalan 49 KR göçü) · **AK-10** (KR korpusu
+dağıtımı fiilen kırık: worker SSOT metnini hiç taşımıyor) · **0.h** onayı.
+Sonra C8 töreni: sürüm + annotated tag + 3 depo pin (SDLC_GATES §3G).
+**D16-b:** KR-093'ün iki gövdesi (SSOT metni 10 satır ↔ registry 98 satır) hangi kaynakta
+birleşecek? SSOT metni çapraz-repo (platform ile bayt-özdeş), registry tam gövdeleri taşıyor.
+Karar verilmeden gövde taşımak **normatif içerik kaybı** riski taşıdığı için bu turda yapılmadı.
+Karar sonrası: göç + registry → türetilmiş dizin + `KNOWN_DUAL_BODY_COUNT` düşürülür + **D16-c**
+(K3/K5 saklama/rıza MUST'ları) yazılır.
+
+**Karar bekleyenler:** **§14.2.1** `$ref` inline kararı (C8'in ön koşulu) · **D4-b** (parite
+kapısı CI'da koşsun mu) · **D4-c** (`drone_capability_matrix.yaml` normatif ama checksum/dedektör
+kapsamı DIŞINDA) · **SD8** (etiketsiz 16 sürüm) · **C6b/E13** · **AK-8** (mahsul GRUBU ekseni).
+*(AK-1 `CHLOROPHYLL_A` → `LCI` ile KAPANDI · AK-4 pytest sabitlemesiyle KAPANDI · AK-7 beş
+crop alanı kanonik sözlüğe bağlanarak KAPANDI.)*
+
+**Başka depoya düşen iş (bu depodan yapılamaz):** **E15** edge `qc_report_writer` —
+`min(...,1.0)` kırpması + `except → 0.0` sessiz yolu fail-loud olmalı · **P14** platform
+`worker_job_publisher.py:80-84` fail-open `PANEL_ABSOLUTE` adımı · **E16** edge ürün sözlüğü
+(küçük→BÜYÜK harf + vendored + fixture) · **P15** platform `spectral_tier.py:51` → `LCI` ·
+**W8** worker denetim satırı emisyonu (π_h/bucket zaten hesaplanıyor) · **P16** platform
+konsensüs yolu `EXCLUDED` satırı saymamalı.
+
+> 📌 **Bu turda doğan açık kalemlerin TAMAMI tek yerde:** eylem planı **§14.5.1** (AK-1…AK-8;
+> ✅ işaretliler aynı turda kapatıldı). Ayrıca kardeş depo işleri: E15 · E16 · P14 · P15 · P16 · W8.
+> Bu dosya iş listesi tutmaz; yalnız oraya işaret eder.
+
+**Kanıt:** `denetim/denetim_raporu_2026-07-31_kademe0_kapi_mutasyonlari.md` (her kapının
+mutasyon kaydı). **İş listesi:** yalnız eylem planı §14.
+
+---
+
+## 0.A ÖNCEKİ OTURUM (2026-07-31) — Contract Tur 1 + 10-disiplin bağımsız denetim
+
+**Yapılan:** Contract Tur 1'in şema kalemleri tamamlandı (dal `feat/contract-tur1`, 7 commit):
+**C0** (iki-form ayrımı zorlanabilir) · **C9+C10** (KR-093 içerik + statü eşlemesi) · **C-SSOT**
+(iki SSOT kopyası bayt-özdeş) · **C-PARITE** (9 yanlış parite iddiası) · **C2′** (PlatformForm
+`priority_zones` + `object_key`) · **C1′+C3′** (`layer_type`/`band`/`calibration_type`, `raw_frames`)
+· **AL-C1+AL-C2** (i.i.d. denetim kanalı). 7 yeni test dosyası, **704 test**.
+
+**Sonra:** 10 disiplinden bağımsız denetim (agronomi/entomoloji · sensör-kalibrasyon · ML/DS ·
+pentest · sistem mimarisi · QA · SDLC · KVKK · edge/embedded · GIS/jeodezi) → ajanlar arası
+tartışma (4 çatışma çözüldü) → senkronizasyon çatışma matrisi → ana ajanın kanıta karşı ölçümü.
+
+### 📊 Sonuç: 146 bulgu (14 KRİTİK · 45 YÜKSEK) — 10/10 KRİTİK **doğrulandı**
+
+⚠️ **Turun şema işi büyük ölçüde doğru, ama KANIT KAPILARININ ÇOĞU YALAN SÖYLÜYOR.** En sert üç ölçüm:
+- `breaking_change_detector` **iç içe enum'lara kör** — `QUARANTINE_CAUTION` silindi, dedektör
+  "0 breaking" dedi. ⇒ commit mesajlarındaki *"0 breaking"* ifadesi bu tur için **kanıt değil**.
+- Yeni 156 testin **%40'ı CI'da hiç koşmuyor** (45 parite skip + 18 `pyyaml` skip).
+- Breaking kapısı `continue-on-error: true`; `verify-checksums` `summary.needs`'te **yok**.
+
+### ✅ O OTURUMUN DEVRETTİĞİ İŞ — **KADEME 0** → **2026-07-31 ikinci oturumda YAPILDI** (bkz. §0.B)
+
+Eylem planı **§14.0** (D1…D6): CI teli · KR başlık çıkarıcısı · dedektör özyineleme · parite
+kapısı canlandırma · `xfail(strict)` · release checklist tag adımı.
+**Gerekçe:** bu altısı kapanmadan Kademe 1-4'ün hiçbirinin doğrulaması güvenilir değildi.
+
+**Tam sıra:** `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` **§14** (18 kalem, ⛔ işaretliler C8 öncesi).
+**Kanıt:** `denetim/denetim_raporu_2026-07-31_10disiplin.md`.
+
+### ⏳ Kapanan maliyet pencereleri (bu tur yapılmazsa MAJOR olur)
+- **D9②** `IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY`: `layer_type`'ın üreticisi yok → **bedava**
+- **D7** `raw_frames[].footprint_wkt` kaldırma: üreticisi (E11) yok → **breaking değil**
+
+### 🔒 C8 sıralama kilitleri (D10)
+**E11 C8'den ÖNCE merge edilmez** (geri dönüşü olmayan karantina) · **C11 C8'den ÖNCE** ·
+**C2″'de edge regex DEĞİŞMEZ** · **C8'de `$ref`'ler inline** (air-gap).
+
+### Durum
+Dal `feat/contract-tur1` push'lu · `validate.py` 89/0 · `pytest` 704 geçti + 1 **beklenen**
+checksum kırmızısı (C8'de kapanır) · çalışma dizini temiz.
+
+---
+
 ## 0. EN GÜNCEL OTURUM (2026-07-30) — Fotogrametri motor kararı + Karar Günü (7 karar) + tek eylem planı
 
 **İstek:** DJI Terra / PIX4Dfields / Agisoft Metashape karşılaştırması → demo+pilot planı →

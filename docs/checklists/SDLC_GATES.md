@@ -150,12 +150,32 @@ KONTROLLER:
 
 Yayın (release) öncesi yapılacak son kontroller.
 
+> ⚠️ **2026-07-31 (KADEME 0 / D6) — bu kapı iki yerde yalan söylüyordu:**
+> ① **Annotated tag adımı hiç yoktu** (SD8). Değişmez I-2 *"her contract sürümü annotated
+> `vX.Y.Z` etiketi alır"* diyor; ölçüm ise **20 sürüme karşılık 4 etiket** buldu — yani I-2
+> bugün tutmuyor. Adım aşağıda §3G'ye eklendi.
+> ② **`PENDING_PROPAGATION` release kapısında yoktu** (SD7): `tests/test_vendored_parity.py`
+> içindeki bu liste *"kanonik ileri, vendored henüz almadı"* beyanıdır ve C8 töreninin
+> görevi tam olarak onu **boşaltmaktır**. Kontrol edilmediği için beyanlar bayatlayabiliyordu.
+>
+> 🔴 **Koordinatör kararı bekliyor (SD8, §14.6):** etiketsiz 16 eski sürüm için
+> *retro-tag mı, "etiketsiz sürümler" kayıt notu mu?* Karar verilene kadar I-2'nin
+> "tarihsel olarak da tutuyor" biçiminde raporlanması YASAK.
+
 ## 3A) Versiyon + Changelog
 
 - [ ] `CONTRACTS_VERSION.md` doğru semver içeriyor
   - Breaking-change varsa: MAJOR bump yapıldı (örn: v1.x.x → v2.0.0)
   - Non-breaking değişiklik: MINOR veya PATCH
 - [ ] `CONTRACTS_VERSION.md` sha256 hash güncel (tüm şema dosyaları dahil)
+- [ ] **`**Checksum State:** PENDING_REPIN` satırı KALKTI.**
+      Bu satır tur içi "beklenen kırmızı"nın makine-okunur beyanıdır; `tools/pin_version.py`
+      dosyayı baştan ürettiği için re-pin ile kendiliğinden kaybolur. **Hâlâ duruyorsa
+      re-pin yapılmamıştır** — CI `verify-checksums` işi uyarıya düşer, `pytest` ise
+      `test_real_repo_checksum_verifies`'i `xfail` sayar. İkisi de release'de KABUL EDİLMEZ.
+      ```bash
+      grep -n "Checksum State" CONTRACTS_VERSION.md   # ÇIKTI BOŞ OLMALI
+      ```
 - [ ] `CHANGELOG.md` bu release için tüm değişiklikleri kapsıyor:
   - `### Breaking Changes` bölümü (varsa)
   - `### Added / Changed / Fixed` bölümleri
@@ -173,6 +193,38 @@ Yayın (release) öncesi yapılacak son kontroller.
 - [ ] edge repo: `CONTRACTS_VERSION.md` bu release ile eşleşiyor
 - [ ] worker repo: `CONTRACTS_VERSION.md` bu release ile eşleşiyor
 - [ ] Tüm consumer'larda SHA-256 hash uyumu doğrulandı
+- [ ] **`PENDING_PROPAGATION` BOŞ** (SD7). `tests/test_vendored_parity.py` içindeki bu sözlük
+      *"kanonik ileri gitti, vendored kopya henüz almadı"* beyanıdır. C8 töreninin işi onu
+      **boşaltmaktır**; dolu kalırsa release, kendi beyanına göre yarım demektir.
+      Kontrol elle değil **testle** yapılır (checklist maddesi ile kod aynı şeyi söyler):
+      ```bash
+      python -m pytest tests/test_vendored_parity.py::test_pending_propagation_is_empty -v
+      ```
+      Tur içinde bu test `xfail`'dir (beyan açık); `pin_version.py` re-pin'i beyanı silince
+      **gerçek kırmızıya** döner ve yayılım yapılmadan release'i durdurur.
+- [ ] **KR korpusu tüketicilere HİZALI** (AK-10). Ölçüldü (2026-07-31): platform kopyaları
+      bayat, **worker SSOT metnini hiç taşımıyordu** — yani KR-093'ü uygulayacak taraf kuralı
+      göremiyordu. Kapı artık ölçüyor:
+      ```bash
+      python tools/sync_kr_corpus.py --check     # bu depoda; sapma varsa RC=1
+      python tools/sync_kr_corpus.py --apply     # kopyalar; sonra HER kardeş depoda AYRI commit+PR
+      ```
+- [ ] **Yayın biçimi (`dist/schemas/`) GÜNCEL** (E3 / §14.2.1 kararı). Kanonik şemalar
+      `enums/`'a **38 harici `$ref`** veriyor; hava-boşluklu M1 bunları çözemez. Tüketiciye
+      giden biçim satır içi alınmış olandır:
+      ```bash
+      python tools/inline_refs.py --check        # bayatsa RC=1
+      python tools/inline_refs.py --write        # yeniden üret (enum değiştiyse ZORUNLU)
+      ```
+      ⚠️ `dist/schemas/` **git'te izlenir** — `.gitignore`'da bilinçli istisnası vardır.
+- [ ] **Vendored parite kapısı YEREL koşuldu.** ⚠️ Bu kapı **CI'da KOŞMAZ**: kardeş depolar
+      (`tarlaanaliz-edge`, `tarlaanaliz-worker`) GitHub Actions'ta checkout edilmiyor, testler
+      `kardeş depo yok` gerekçesiyle atlanıyor (atlama artık CI özetinde görünür ama yine de
+      **ölçüm yapılmamış** demektir). C8'de kardeş depoların yanında koşturun:
+      ```bash
+      python -m pytest tests/test_vendored_parity.py -v -rs
+      ```
+      Beklenen: **0 skip**. Skip görüyorsanız depo düzeni yanlış (üç depo aynı üst dizinde olmalı).
 
 ## 3D) SSOT 1.2.0 Özgül Kontroller — [YENİ]
 
@@ -185,12 +237,66 @@ Yayın (release) öncesi yapılacak son kontroller.
 
 ## 3E) Son Testler
 
-- [ ] `python -m pytest tests/ -v` — tüm testler PASS
+- [ ] `python -m pytest tests/ -v -rs` — tüm testler PASS · **`SKIP BÜTÇESİ: 0`**
+      (`-rs` zorunlu: sessiz atlama yeşil sayılmaz. `tests/conftest.py` beyan edilmemiş
+      atlama gerekçesinde oturumu zaten düşürür; release'de **beyanlı olsa bile** skip
+      kabul edilmez — kardeş depolar yanınızdayken koşun.)
+- [ ] **`xfail` sayısı 0** — tur içi beklenen kırmızı (`test_real_repo_checksum_verifies`)
+      re-pin ile gerçek PASS'a dönmüş olmalı. `strict=True` olduğu için beyan silinmeden
+      re-pin yapılırsa süit **XPASS** ile kırmızıya döner; bu bir hata değil, hatırlatmadır.
+- [ ] **`-m "not release_gate"` KULLANILMADI** — deselect `tests/conftest.py` tarafından
+      reddedilir (exit 4). Kırmızıyı gizlemek çözmek değildir.
 - [ ] `python tools/validate.py` — EXIT 0
-- [ ] `python tools/breaking_change_detector.py` — rapor incelendi
+- [ ] `python tools/breaking_change_detector.py --old <base> --new .` — rapor incelendi.
+      Çıkış kodu sözleşmesi: **0** breaking yok · **1** breaking var · **≥2 araç çalışamadı
+      (kapı KÖR — "breaking yok" ile karıştırmayın)**. `$ref` hedefleri **çözülmez**;
+      `REF_CHANGED` satırları elle incelenir.
+      ```bash
+      OUT=$(python tools/breaking_change_detector.py --old ../old --new . --json); RC=$?
+      echo "RC=$RC"   # <-- kod KOMUTTAN okunur; pipe'ta $? yanıltır
+      ```
 
 ## 3F) SSOT Dokümantasyon
 
 - [ ] `docs/ssot/kr_registry.md` son KR Registry versiyonu (v8+)
 - [ ] `docs/ssot/GOVERNANCE_PACK_v1_0_1.md` güncel
 - [ ] `docs/ssot/contracts_ssot.md` bu release ile uyumlu
+
+## 3G) Release töreni — ANNOTATED TAG (değişmez I-2) 🔴 [YENİ · D6]
+
+> **Neden ayrı bir madde:** etiketsiz sürüm **eksik release**'tir — tüketici `vX.Y.Z` ile
+> pinleyemez, `git describe` bulanık kalır (`vA.B.C-N-g…`) ve I-2 raporlanamaz hâle gelir.
+> Ölçüm (2026-07-31): **20 sürüm / 4 annotated etiket.** Adım checklist'te olmadığı için
+> atlanmıştı; artık atlanamaz.
+
+**Sıra — hepsi bu depoda (yerel makine), belirtilen sırayla:**
+
+```bash
+# 1) Sürümü pinle (CONTRACTS_VERSION.md'yi baştan üretir; PENDING_REPIN beyanı burada silinir)
+python tools/pin_version.py --minor            # veya --major --breaking / --patch
+
+# 2) Kapılar — hepsi yeşil olmadan etiket YOK
+python tools/validate.py
+python -m pytest tests/ -v -rs                 # SKIP 0 · xfail 0 · release_gate deselect YOK
+python tools/pin_version.py --verify
+
+# 3) Release commit'i
+git add -A && git commit -m "release: contracts vX.Y.Z"
+
+# 4) ANNOTATED tag (hafif/lightweight tag KABUL EDİLMEZ — objectype 'tag' olmalı)
+git tag -a vX.Y.Z -m "contracts vX.Y.Z — <tek satır özet>"
+git push origin master --follow-tags
+
+# 5) Etiketin gerçekten annotated olduğunu DOĞRULA (iddia değil ölçüm)
+git for-each-ref refs/tags/vX.Y.Z --format='%(objecttype) %(refname:short)'   # -> "tag vX.Y.Z"
+git describe --tags HEAD                                                      # -> temiz "vX.Y.Z"
+```
+
+- [ ] Etiket **annotated** (`%(objecttype)` = `tag`; `commit` çıkarsa lightweight'tır → silip yeniden atın)
+- [ ] `git describe --tags HEAD` temiz `vX.Y.Z` döndürüyor
+- [ ] Etiket push edildi (`git ls-remote --tags origin | grep vX.Y.Z`)
+- [ ] Üç tüketici deposunda sürüm dizesi hizalandı (I-1) ve platform submodule pini bu **etiketli commit**
+
+⛔ **Bilinen eksik (koordinatör kararı bekliyor — §14.6/SD8):** etiketsiz 16 tarihsel sürüm.
+Karar verilmeden I-2 "tarihsel olarak da tutuyor" diye raporlanamaz; bugün yalnız
+**v6.1.0 · v7.0.1 · v7.1.0 · v7.2.0** annotated'tır.

@@ -4,7 +4,21 @@
 
 **Release Date:** 2026-07-14T09:25:31.730700Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `5d3c204d0cad6946939c90c9778c9d1d9df3e69b78207ee8ce638ac3bd494c02`
+**Contracts Checksum (SHA-256):** `5d3c204d0cad6946939c90c9778c9d1d9df3e69b78207ee8ce638ac3bd494c02`  
+**Checksum State:** PENDING_REPIN — tur `feat/contract-tur1` sürüyor
+
+> **PENDING_REPIN ne demek (2026-07-31, KADEME 0/D1+D5):** Bu tur boyunca `schemas/`+`enums/`
+> ağacı değişti ama agrega checksum **bilerek** yeniden pinlenmedi — ara re-pin, yayımlanmış
+> `v7.2.0` etiketinin checksum anlamını bozar. Tek re-pin noktası **C8 release törenidir**.
+>
+> Bu satır **makine-okunur bir beyandır** ve iki kapı tarafından okunur:
+> * `.github/workflows/contract_validation.yml` → `verify-checksums` işi: uyuşmazlık
+>   **beyan edilmişse** uyarı verip geçer, **beyan edilmemişse BUILD'İ DÜŞÜRÜR**.
+> * `tests/test_pin_version.py::test_real_repo_checksum_verifies` → `xfail(strict=True)`.
+>
+> **Kendini temizler:** `tools/pin_version.py` bu dosyayı baştan üretir, yani C8'de re-pin
+> yapıldığı anda bu satır kaybolur ve iki kapı da otomatik olarak sertleşir. C8'den önce
+> elle silmek = kapıyı yalan söyletmek (`docs/checklists/SDLC_GATES.md` §3A).
 
 ---
 

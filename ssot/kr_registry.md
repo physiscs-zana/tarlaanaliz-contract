@@ -1240,3 +1240,28 @@ Bir görevin uçuş yüksekliği (Y) ve hızı (v) değerlerini bitki türü + s
 - KR-024 (fenoloji fallback), KR-016 (uçuş rotası/KMZ), KR-018 (kalibrasyon hard-gate), KR-082 (kalibrasyon sertifikası), KR-025 (karar desteği sınırı), KR-015 (pilot planlama)
 
 ---
+
+## KR-093 — Çiftçi Ön Raporu (İki-Fazlı Teslimat: PRELIMINARY → FULL)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-07-31, D16-b).**
+> KR-093'ün tek normatif metni: **`docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-093]`**.
+>
+> **Karar gerekçesi (ölçümle, tahminle değil):**
+> 1. **Her iki dosyanın da alt-akış kopyaları BAYAT.** Ölçüldü: `kr_registry.md`'nin platform
+>    (`docs/kr/`, `contracts/ssot/`) ve worker (`docs/reference/`) kopyalarının **hiçbirinde**
+>    KR-093 başlığı yok; SSOT metninin platform kopyası da contract'tan farklı. Yani dağıtım
+>    kâğıt üzerinde var, içerikte yok.
+> 2. **Fark: senkron MEKANİZMASI.** SSOT metni C-SSOT turunda bayt-özdeş hâle getirildi ve
+>    `tests/test_kr_reference_integrity.py` onu koruyor. `kr_registry.md` için **hiçbir senkron
+>    aracı yok** (`tools/sync_to_repos.sh` yalnız `schemas/`+`enums/`+`CONTRACTS_VERSION.md`
+>    taşır — plan kalemi C-SSOT-2). Tutulamayan bir kaynağı normatif ilan etmek, çürümeyi
+>    kurala dönüştürmektir.
+> 3. **Kayıp yok:** bu dosyaya özgü iki MUST maddesi — *"Aşama A tespit değildir"* ve
+>    *"yeni mission state / yeni faz eklenmez"* — ve Aşama A içerik listesi (kaynak:
+>    `analysis_priority_zones`) SSOT metnine **taşındı**; ortak maddeler zaten oradaydı.
+>
+> ⚠️ Bu başlık altına **yeniden gövde yazılmaz** — `tests/test_single_normative_body.py`
+> ikili gövde borcunu dondurur ve yeni ikili gövdeyi kırmızıya çevirir.
+
+---
+

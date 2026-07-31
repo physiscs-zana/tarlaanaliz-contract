@@ -171,19 +171,26 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 
 | # | İş | Tip | Bağımlılık |
 |---|---|---|---|
-| **C0** 🔴 | **ÖN KOŞUL (2026-07-31 denetimi).** İki `calibrated_dataset_manifest.v1` formunun rol ayrımını sabitle: **edge formu = kiosk kanıt manifesti** (`calibration_result`+`qc_report`) · **platform formu = dataset-katmanı paket agregası** (`outputs[]`/`reports[]`). Zaten belgeli (`schemas/edge/…:5` + `ssot/contracts_ssot.md:93`) ama **plan bunu ayırt etmiyordu** → C1/C2/C3 yanlış dosyayı hedefliyordu | PATCH | — |
+| ✅ **C0** | **YAPILDI (2026-07-31, dal `feat/contract-tur1`).** İki `calibrated_dataset_manifest.v1` formunun rol ayrımı **makine-okunur** hâle getirildi. ⚠️ *Uygulama sırasında düzeltilen varsayım:* prose çapraz-atıf **iki yönde de zaten vardı** (`edge/…:5` **ve** `platform/…:5`) — eksik olan belge değil, **zorlanabilirlik**ti; prose C1/C2/C3'ün yanlış dosyayı hedeflemesini engelleyememişti. **Yapılan:** her iki şemaya `x-form-role` (`role`, `emitter`, `purpose`, `counterpart`=karşı `$id`, `owns[]`, `not_owned_here`, `field_placement_rule`) + `x-updated` · `ssot/contracts_ssot.md` KR-072'ye alan-sahipliği tablosu · **`tests/test_manifest_form_roles.py` (12 test)** — `counterpart`↔`$id` birebir, `owns[]` hayalî alan sayamaz, iki form aynı alanı sahiplenemez, **C2 regresyon kapısı** (`patches`/`priority_zones` calibrated manifest'e sızmaz). **C5 kalan deltası da bu commit'te:** `analysis_type.enum` v1.4.1→**v1.4.2** KG-0.f çapraz atfı (davranış değişikliği yok). **Doğrulama:** validate 89/0 · pytest 560+12 · breaking **0** | PATCH | — |
 | **C1′** | **`schemas/platform/calibrated_dataset_manifest.v1`** → `outputs[].file_artifact`'e opsiyonel **`layer_type`** (ortho/ndvi/ndre/ndwi) + **`calibration_tier`** ekle. ⚠️ **Yeni `index_layers[]` dizisi AÇILMAZ** — `outputs[]`, `reflectance_scale` (`reflectance_0_1/0_100/scaled_int/unknown`) ve `producer_tool` **zaten mevcut**, tekrarlanmaz | MINOR | 0.a, 0.c, C0 |
-| **C2′** 🔴 | **`schemas/edge/intake_manifest.v1`** → **`PlatformForm`'a `priority_zones` ekle** (bugün **yalnız `EdgeForm`'da** var) ve `visualizations`'a **`object_key`** koy. `EdgeForm`'daki göreli yol `x-deprecated` işaretlenir, **kaldırılmaz** (non-breaking). ⚠️ Eski C2 `calibrated_dataset_manifest`'i hedefliyordu — **o şemada `patches` alanı YOK** (contract genelinde 0 eşleşme) | MINOR | 0.a, C0 |
-| **C2″** | Edge aynası: `priority_zone.py:31,55` regex + `max_length=128` `object_key` için genişletilir (vendored senkron) | — | C2′ |
+| ✅ **C2′** | **YAPILDI (2026-07-31).** `PlatformForm`'a **`priority_zones`** eklendi (opsiyonel, `maxItems:500`) — EdgeForm ile **aynı zone verisi + aynı `required`**, ama `visualizations` **göreli yol değil nesne anahtarı** tutar. **Plandan bilinçli sapma:** EdgeForm'daki göreli yol **deprecate EDİLMEDİ** — edge hangi dosyaları ürettiğini bildirmek zorunda ve anahtarı üretemez; fiilen deprecate edilen *"bu yolu S3 anahtarı olarak kullanmak"* ve bu artık açıklamada yazılı. ⚠️ **Desen ölçülerek sertleştirildi:** ilk yazım tenant/dataset **biçimini donduruyordu** (platformun `dataset_…` önekiyle çakışırdı) **ve `a/../b` traversal geçiyordu**; biçim yerine **güvenlik-anlamlı yapı** zorlanıyor (mutlak yol RED · `..` RED · `/patches/` öncesi ≥2 segment ⇒ edge göreli yolu anahtar olarak **sızamaz**). 7 vaka ile doğrulandı. ⚠️ **`oneOf` ayrımı ölçüldü:** tek dayanağın `unevaluatedProperties` olduğunu varsaymıştım — gerçekte **üç katman** var (① unevaluated ② kimlik biçimleri `^batch_[a-z0-9]{24}$` ③ `files[].sha256_hash`↔`sha256`). Ayrım sağlam; test yine de iki örneğin **tam olarak bir** dala uyduğunu doğruluyor. **Kapı:** `tests/test_intake_manifest_forms.py` (16 test) + platform örneğine `object_key` gösterimi | MINOR | ✅ |
+| **C2″** ⚠️ | **YENİDEN YAZILDI (2026-07-31, D10-E1).** ~~"`priority_zone.py:31,55` regex + `max_length=128` `object_key` için genişletilir"~~ hükmü **YANLIŞTI ve uygulanırsa edge'i kırardı:** edge **göreli yol** üretir, nesne anahtarını **platform** üretir (KG-0.a-EK kural 1) — regex `object_key` için genişletilseydi `ManifestWriter` kendi ürettiği manifesti reddederdi. **Doğru iş:** edge regex'i **DEĞİŞMEZ**; C8'de yapılacak tek şey vendored kopyayı kanonikle yeniden hizalamak (C-VENDOR kalemi kapsar) | — | C2′, **C8** |
 | **C3′** | **`schemas/edge/calibrated_dataset_manifest.v1`** → `raw_frames[]` ekle (opsiyonel; yalnız seçilmiş kareler: `{object_key, frame_id, footprint_wkt, band}`). Kare seçimi kalibrasyon çıktısıdır → **edge formu** | MINOR | 0.c, C0 |
-| ~~**C4**~~ | ~~`intake_manifest.v1` → `sorties[].bbox` politikası~~ → **CONTRACT KALEMİ DEĞİL (2026-07-31).** `sorties` contract'ın **hiçbir** şemasında yok (repo geneli tarandı); yalnız **edge-yerel** görev manifestinde (`aggregator.py:101,151`). Var olmayan alan `required` yapılamaz → karar **E9'a taşındı**, C8 tören maliyeti **yok** | — | — |
+| **C4** ⚠️ | **İKİ KEZ DÜZELTİLDİ (2026-07-31).** ~~"contract kalemi değil"~~ hükmü de **eksikti.** Ölçüm: `sorties` **kanonik** contract'ta yok — ama **edge'in vendored interface sözleşmesinde VAR** (`tarlaanaliz-edge/interface/contracts/schemas/edge/intake_manifest.v1.schema.json`), üstelik `mission_date` ile birlikte. Yani bu bir **AK-4 edge-ileri sapmasıdır** (edge kanonikten önce re-pinlemiş), "yok" değil. **Ayrıca planın önermesi de yanlıştı:** *"bbox'ı zorunlu yapmak breaking"* — `bbox` o şemada **ZATEN `required`** (`sorties[].required = [sortie_id, field_id, crop_type, bbox]`). Yani karar verilecek bir şey kalmamış. **Gerçek durum:** `sorties` **dizisi** opsiyonel → hiç sortie yoksa bbox da yok → E9'un mixed-crop yolu. **Yapılacak → C11** | — | → **C11** |
+| **C11** ⬜ | **AK-4 absorpsiyonu: `sorties[]` + `mission_date` kanoniğe alınsın.** Edge vendored sözleşmesinde canlı, kanonikte yok → I-5 gereği sapma **yalnız geçici** olabilir. `sorties[]`: `{sortie_id, field_id, field_name, crop_type, area_ha, planned_altitude_m, bbox}`, `required=[sortie_id, field_id, crop_type, bbox]`, dizi **opsiyonel** (geriye uyumlu) · `mission_date`: `["string","null"]`, `format: date`. Eklendiğinde `EdgeForm`'a girer (kaynak edge'dir) | MINOR | C0 |
 | ~~**C5**~~ | ~~`analysis_type.enum.v1` → "üretilemez" notu~~ → **YAPILDI (v1.4.1'de mevcut, 2026-07-31 doğrulandı).** `BENEFICIAL → availability: enum_valid_not_yet_emittable` (*"model olgunluğuyla henüz emit edilemez"*) · `THERMAL_STRESS → requires_thermal_payload` (*"**Mavic 3M'de üretilemez**"*). İkisi de **makine-okunur**. Kalan tek delta: `changeNote`'a KG-0.f çapraz atfı → **C0 ile aynı commit** | — | — |
-| **C9** 🔴 | **KR-093 içerik tanımını genişlet (2026-07-31 denetimi).** Bugün iki kanonik artefakt PRELIMINARY içeriğini **"YALNIZ/ONLY"** diyerek kapatıyor: `analysis_preliminary_ready.v1` (*"carries **ONLY** deterministic index layers (HEALTH/NITROGEN_STRESS/WATER_STRESS) + overall_health_index"*) ve `report_phase.enum.v1` (*"**Yalnız** deterministik indeks katmanları… sunulur"*). Y-D'nin göstereceği **öncelik bölgesi (poligon + `ndvi_value` + `ndvi_overlay`)** bu listede **YOK** → liste genişletilir. **Ön koşul: KR-093 kaydı `ssot/kr_registry.md`'ye taşınmalı (bugün KR-092'de bitiyor)** | MINOR | 0.b-R |
-| **C10** 🔴 | **`report_phase.x-derived-from.mapping`'i kalibrasyon-sonrasına aç.** Bugün tam 4 giriş var (`ANALYZING/PENDING_REVIEW → PRELIMINARY`, `DONE → FULL`, `EXPERT_REJECTED → WITHDRAWN`); Y-D raporu **kalibrasyondan hemen sonra** gösteriliyor ve o an mission `UPLOADED` (`mission.py:84`) → **mapping'de karşılığı yok.** Bunun "çalışıyor" görünmesinin tek sebebi platform kodundaki catch-all `else PRELIMINARY` (`results_service_impl.py:227`) — yani platform **kanonikten geniş**. Ya `UPLOADED → PRELIMINARY` eklenir ya *"listelenmeyen statüler PRELIMINARY (fail-closed)"* yazılır. **Aynı turda:** mapping'deki **kanonik olmayan `ANALYZING`** adı `IN_ANALYSIS`'e çevrilir (`mission_status.enum.v1`'de `ANALYZING` yok; platform-içi ad — çeviri `mission.py:27`'de belgeli) | MINOR | 0.b-R, C9 |
+| ✅ **C9** | **YAPILDI (2026-07-31).** KR-093 kanonik registry'ye taşındı (`ssot/kr_registry.md`, 8 bölümlü format, platform normatif metninden; **KG-0.b-R eklentisi işaretli** + AK-4 çapraz-repo notu). `report_phase.enum.v1`'e **`x-preliminary-content`** kapalı listesi eklendi: **Aşama A** (kalibrasyon sonrası — `geom`/`ndvi_value`/`priority_level`/`ndvi_overlay`) · **Aşama B** (worker sonrası — ortho + HEALTH/NITROGEN_STRESS/WATER_STRESS + `overall_health_index`, **özgün tanım değişmedi**) · **`never`** (findings/detections/prescription…). `analysis_preliminary_ready.v1`'in faz-düzeyi *"ONLY"* iddiası **olayın kendi payload'ına daraltıldı**. ⚠️ **Ek bulgu:** contract'ın kendi `docs/TARLAANALIZ_SSOT_v1_2_0.txt` kopyası **KR-084'te bitiyor**, platform kopyası KR-093'e gidiyor — aynı adlı iki SSOT metni **ayrışmış** (hizalama ayrı kalem). **Platform borcu:** iki kopyanın aynalanması | MINOR | ✅ |
+| ~~**C9-eski**~~ | ~~**KR-093 içerik tanımını genişlet (2026-07-31 denetimi).**~~ Bugün iki kanonik artefakt PRELIMINARY içeriğini **"YALNIZ/ONLY"** diyerek kapatıyor: `analysis_preliminary_ready.v1` (*"carries **ONLY** deterministic index layers (HEALTH/NITROGEN_STRESS/WATER_STRESS) + overall_health_index"*) ve `report_phase.enum.v1` (*"**Yalnız** deterministik indeks katmanları… sunulur"*). Y-D'nin göstereceği **öncelik bölgesi (poligon + `ndvi_value` + `ndvi_overlay`)** bu listede **YOK** → liste genişletilir. **Ön koşul: KR-093 kaydı `ssot/kr_registry.md`'ye taşınmalı (bugün KR-092'de bitiyor)** | MINOR | 0.b-R |
+| ✅ **C10** | **YAPILDI (2026-07-31).** Mapping **kanonik adlarla** yeniden yazıldı ve Y-D anı eklendi: `UPLOADED`/`IN_ANALYSIS`/`PENDING_REVIEW` → `PRELIMINARY` · `DELIVERED` → `FULL` · `EXPERT_REJECTED` → WITHDRAWN(409). **`unlisted_status_behavior: FAIL-CLOSED`** eklendi — *"listelenmeyen = PRELIMINARY"* yasaklandı (aksi hâlde `DRAFT`/`PLANNED` ön rapor üretirdi). **`platform_internal_aliases`** ile platform çevrimi belgelendi. ⚠️ **Denetimde sanılandan büyük çıktı:** kanonik-dışı ad **iki taneydi** — `ANALYZING`(→`IN_ANALYSIS`) **ve `DONE`**(→`DELIVERED`), yani dört girişin ikisi. **Kapı kanıtlandı:** yeni test eski mapping ile düşüyor, yenisiyle geçiyor. **Platform borcu:** `results_service_impl.py:227` catch-all'u kanonik mapping'e daraltılmalı (P12 kabul kriteri) | MINOR | ✅ |
+| ~~**C10-eski**~~ | ~~**`report_phase.x-derived-from.mapping`'i kalibrasyon-sonrasına aç.**~~ Bugün tam 4 giriş var (`ANALYZING/PENDING_REVIEW → PRELIMINARY`, `DONE → FULL`, `EXPERT_REJECTED → WITHDRAWN`); Y-D raporu **kalibrasyondan hemen sonra** gösteriliyor ve o an mission `UPLOADED` (`mission.py:84`) → **mapping'de karşılığı yok.** Bunun "çalışıyor" görünmesinin tek sebebi platform kodundaki catch-all `else PRELIMINARY` (`results_service_impl.py:227`) — yani platform **kanonikten geniş**. Ya `UPLOADED → PRELIMINARY` eklenir ya *"listelenmeyen statüler PRELIMINARY (fail-closed)"* yazılır. **Aynı turda:** mapping'deki **kanonik olmayan `ANALYZING`** adı `IN_ANALYSIS`'e çevrilir (`mission_status.enum.v1`'de `ANALYZING` yok; platform-içi ad — çeviri `mission.py:27`'de belgeli) | MINOR | 0.b-R, C9 |
 | **C6** ⚠️ | **KOŞULLU AÇIK — "kapandı, iş yok" HÜKMÜ GERİ ALINDI (2026-07-31).** Enum kanonik olarak `ABSOLUTE / PANEL_ABSOLUTE / DLS2_RELATIVE / RELATIVE / NONE / AGNOSTIC` içeriyor ve `RELATIVE` = *"Saha-bazlı göreli kalibrasyon (ör. **DJI Mavic 3M çıktısı**)"*. **AMA** `x-context-subsets` ölçüldü: `edge/calibrated_dataset_manifest` alt kümesi **yalnız `["ABSOLUTE","RELATIVE"]`** — `DLS2_RELATIVE` **kabul edilmiyor** (buna karşılık `edge/intake_manifest` alt kümesi onu içeriyor). → **E13 kararı `DLS2_RELATIVE` çıkarsa contract değişikliği ZORUNLU** (alt küme + şema enum'u genişletilir; **MINOR, breaking değil**). `RELATIVE` çıkarsa iş yok. **Sıra düzeltmesi: E13 kararı C6'dan ÖNCE gelir** (planda ters yazılmıştı) | koşullu MINOR | **E13 kararı** |
 | **C7** | `frame_analysis_job.v1` **yeni şema** — tekil kare analiz işi (doğrulandı: `schemas/worker/` altında **yok**) | MINOR | C1′, C3′ |
 | **AL-C1** 🔴 | `expert_review_queue.v1` → `escalation_reason`'a **additive 7. değer `AUDIT_SAMPLE`**. Doğrulandı: kanonik **ve** worker vendored kopya **tam 6 değer**. Detay §11.2 | MINOR | — |
 | **AL-C2** 🔴 | `expert_review_queue.v1` → `audit_sample: bool` + `audit_stratum: string` (platform-otoriter eksen: crop×layer×fenoloji). Detay §11.2 | MINOR | — |
+| ✅ **C-SSOT** | **YAPILDI (2026-07-31) — iki SSOT kopyası hizalandı.** `docs/TARLAANALIZ_SSOT_v1_2_0.txt` contract kopyası platform kopyasıyla **bayt-özdeş** hâle getirildi (git'te ikisi de LF). **Ölçüm:** platform 4 KR fazla (**KR-088/091/092/093**), contract'ta **fazla KR yok**; 27 contract-only satırın tamamı bayat (eski başlık · **IL_OPERATOR** metni — contract'ın kendi `role.enum.v1`'i `DISTRICT_REP` kanonik/`IL_OPERATOR` DEPRECATED diyor · 2026-06-14 öncesi KR-024 tablosu) → **kaybedilen özgün içerik yok.** **Kapı:** `tests/test_kr_reference_integrity.py` (10 test) — her `x-kr-ref` KR'si iki kanonik kaynağın **birleşiminde** tanımlı olmalı; hizalama-öncesi durumda **düşüyor** (kanıtlandı). ⚠️ **Yan bulgu 1:** `ssot/kr_registry.md` yalnız **6 KR** tutuyor (088–093), tam korpus SSOT metninde (~49) — `CLAUDE.md`'nin *"kanonik kaynak kr_registry.md"* ifadesi **yanlıştı, düzeltildi.** ⚠️ **Yan bulgu 2:** KİRAZ çelişkisi üçüncü kaynağa yayıldı (bkz. KG-0.d-EK) | — | ✅ |
+| ✅ **C-PARITE** | **YAPILDI (2026-07-31) — 9 yanlış parite iddiası düzeltildi.** Dokuz kanonik şema *"... interface/contracts/... ile **birebir uyumludur**"* diyordu; ölçüldü: **9/9'u bayt düzeyinde YANLIŞ**, ama **9/9'unun `properties` + `required` kümeleri birebir aynı**. Tek fark tutarlı bir idiom: kanonik `unevaluatedProperties: false` ↔ vendored `additionalProperties: false`. 9/9'da aynı olması bunun **çürüme değil bilinçli konvansiyon** olduğunu gösteriyor → **yanlış olan iddianın ifadesiydi.** Dokuz açıklama da gerçek sözleşmeyi anlatacak biçimde düzeltildi. **Kapı:** `tests/test_vendored_parity.py` (38 test) — parite + *"birebir uyumludur"* ifadesinin geri gelmesini yasaklayan sözcük kapısı (kanıtlandı: eski ifade dönünce düşüyor) + idiom farkının belgeli kalması. ⚠️ **Kapı kendi eksik düzeltmemi yakaladı:** ilk turda 6 şema bulmuştum, test kalan **3'ünü** (worker `calibration_metadata`/`expert_feedback`/`expert_review_queue`) gösterdi. **Not:** kardeş depo yoksa test **atlar** (skip), CI'da yeşil sanılmasın | — | ✅ |
+| **C-VENDOR** ⬜ | **C8'de yapılacak vendored yayılımı:** ① worker `interface/contracts/analysis_type.enum.v1.json` **v1.4.1** → kanonik **v1.4.2** (C0'da bump edildi; enum dizisi aynı, yalnız `changeNote`) ② edge vendored `calibrated_dataset_manifest` + `intake_manifest` bu turun değişikliklerini almalı ③ dokuz şemanın düzeltilmiş açıklaması vendored kopyalara da yansır. **Bugün kırık yok:** worker/edge kendi hash kapılarını kullanır (I-4), ama sürüm dizesi hizası C8'in şartıdır (I-1) | — | C8 |
+| **C-SSOT-2** ⬜ | **Kök neden açık:** `docs/TARLAANALIZ_SSOT_v1_2_0.txt` **hiçbir senkron aracının kapsamında değil** (`tools/sync_to_repos.sh` yalnız `schemas/`+`enums/`+`CONTRACTS_VERSION.md` taşıyor). Bu yüzden iki kopya sessizce ayrıştı. → Dosya, worker'daki gibi **salt-okunur drift dedektörüne** eklenmeli (kopyalama değil, uyarı). *Şimdi yapılmadı: rsync yolu burada test edilemez, körlemesine tooling değişikliği yapılmadı.* | tooling | — |
 | **C8** | **Release töreni (I-1..I-5):** sürüm bump → **annotated `vX.Y.Z` tag** → `CONTRACTS_SHA256.txt` → platform submodule pin → worker vendor alt-kümesi → 3 repoda sürüm dizesi hizası. ⚠️ **Edge formuna dokunan her değişiklik** (C2′/C3′/C6) edge `interface/contracts/` vendored kopyası + **KR-041 hash** turunu da tetikler — şema açıklaması *"birebir uyumludur"* diyor | **zorunlu** | tur içeriği |
 
 ⚠️ **C8 her contract turunda tekrarlanır ve +1-2 gün maliyeti vardır.** İki tur:
@@ -192,6 +199,17 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 >
 > **TUR 1 = C0 + C1′ + C2′ + C2″ + C3′ + C9 + C10 + AL-C1 + AL-C2** *(+ C6 koşullu, E13 kararına bağlı)*
 > **TUR 2 = C7** (tekil görüntü, demo sonrası)
+>
+> **📍 Tur 1 ilerleme (dal: `feat/contract-tur1`)** — ✅ C0 · ✅ C9 · ✅ C10 · ✅ C-SSOT · ✅ C-PARITE ·
+> ✅ C2′ · ✅ C1′ · ✅ C3′ · ✅ **AL-C1** · ✅ **AL-C2** · ⬜ C6 *(E13 bekliyor)* ·
+> ⬜ C2″ *(edge turu)* · ⬜ **C8 töreni**
+> **⇒ Contract tarafı şema kalemleri TAMAM.** Kalan: C6 (E13'e bağlı) · edge turu · C8.
+> *(demo kritik yolunun ⓪ adımı — P6/P12'nin ön koşulu — kapandı)*
+>
+> ⚠️ **Tur boyunca `pin_version.py --verify` KIRMIZIDIR** — agrega checksum bilerek re-pin
+> edilmez; ara re-pin yayımlanmış `7.2.0` etiketinin checksum anlamını bozar. Tek re-pin noktası
+> **C8**'dir. (`test_pin_version::test_real_repo_checksum_verifies` bu yüzden tur boyunca düşer;
+> diğer 560 test yeşil kalmalıdır.)
 >
 > **Neden AL-C1/C2 Tur 1'de:** ikisi de saf **additive** (1 enum değeri + 2 opsiyonel alan) → aynı MINOR'a
 > sığar; **[0] ölçüm temelinin tek açılabilir kilidi** (§11.5) ve C8 töreni tur başına +1-2 gün.
@@ -248,6 +266,7 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 | **P9a** 🔴 | **PİLOT KOTA TAVANI — Dalga 2, E12 ile AYNI sürümde.** `daily_image_capacity` için sabit üst sınır + aşımda kuyruğa alma. Bu, §10.5'in *"kota manuel sınırlanır"* kaçış yolunun uygulamasıdır ve **E12'nin ön koşuludur** (KİLİT-2 kapalı: `should_send_to_expert` çağrısız) | `worker_bridge_consumer.py:1085-1112` | **E12 ile aynı sürüm** |
 | **P9b** | **Gerçek uzman kapasitesi ölçümü + kalıcı kota** (S2 bütçesi B girdisi) | aynı dosya | Dalga 4 · **üretim öncesi kapı** |
 | **P10** | **POLİGON-KMZ çıktısı ekle.** Mevcut generator **waypoint** rotası üretiyor (docstring: "DJI Ground Station veya Litchi"). Haritalama görevinde Pilot 2'ye **waypoint değil poligon** verilmeli — Pilot 2 o zaman bindirme / gimbal −90° / shutter tetiklemesini **kendisi** kurar. Waypoint KMZ'de fotogrametri parametreleri kaybolur | `src/core/domain/services/flight_route_generator.py:331` (`flight_route_to_kmz`) | 0.d |
+| **P13** ⬜ | **Doküman çelişkisi (2026-07-31 taraması):** `docs/architecture/end_to_end_workflow.md` **satır 30** *"C13/C15/C16/**C17** açık"* diyor, ama aynı dosyadaki **C17 satırı "ÇÖZÜLDÜ (2026-07-29, Faz 3)"**. Başlık özeti bayat → C17 listeden çıkarılmalı. Aynı turda C13/C15/C16 durum güncellemeleri de işlenir (metinler §9.1-B'de hazır) | `docs/architecture/end_to_end_workflow.md` | — |
 | **P11** | *(uzun vade)* **WPML üretimi** — `.kmz` içinde `template.kml` + `waylines.wpml` (DJI Cloud API açık spesifikasyonu). Pilot cihaza dokunmadan görev gönderimi | aynı dosya | P10 |
 
 ## 3.5 WEB / ARAYÜZ (`tarlaanaliz-platform/web`) — 🆕 2026-07-31 denetiminde eklendi
@@ -884,7 +903,38 @@ kararı gerektirir. (−) İki ürün = iki fenolojik takvim, iki eşik seti.
 **Yan karar (ücretsiz kazanç).** BUĞDAY `strong` + `bookable:True` ama edge eşik/fenoloji
 tablosunda **yok**. İki YAML girdisi eklenerek güçlü verili üçüncü ürün açılacaktır (E8).
 
-**EK BULGU — KİRAZ: SİPARİŞ EDİLEBİLİR AMA İKİ YERDEN DÜŞÜYOR (2026-07-30 doğrulama turu).**
+> ## ✅ KG-0.d-EK **KAPANDI — YANLIŞ BULGU** (2026-07-31, kod-teyitli)
+>
+> **Aşağıdaki "KİRAZ sipariş edilebiliyor" tespiti YANLIŞTIR.** Koordinatör (A) seçeneğini
+> onayladı, ancak uygulamadan önce yapılan ölçüm gösterdi ki **kapatılacak bir risk yok** —
+> ve `bookable: false` yazmak **yanlış** olurdu.
+>
+> **Neden yanlıştı:** `crop_readiness.bookable` **"çiftçi sipariş edebilir"** demek DEĞİLDİR.
+> Sipariş yolunda **iki ayrı kapı** var ve ikisi de fail-closed uygulanıyor:
+>
+> | Kapı | Anlamı | Nerede uygulanıyor | CHERRY | RICE |
+> |---|---|---|---|---|
+> | **`is_gap_offered`** (KR-015 sunum kapsamı) | "bu sezon GAP'ta satılıyor mu" | `fields.py:273` · `change_crop_type.py:107` · missions · subscriptions | ❌ **`GAP_OFFERED_CROPS` = {COTTON, CORN, PISTACHIO, RICE, GRAPE}** → tarla bile açılamaz | ✅ |
+> | **`is_bookable`** (teslim edilebilirlik) | "model bu ürün için sonuç üretebilir mi" | **`missions.py:293`** · **`subscriptions.py:170`** | — | ❌ `False` → **booking reddedilir** |
+>
+> ⇒ **CHERRY çift kapılı kapalı:** tarla oluşturulamaz, ürün değiştirilemez, booking'e hiç gelmez.
+> ⇒ **RICE ters yönde de güvenli:** sunuluyor ama `is_bookable=False` → *"para alınıp teslim
+> edilemeyen analiz"* riski de kapalı (VO docstring'inin tam olarak kaçındığı şey).
+>
+> **Dört küme BİLEREK farklıdır** — `crop_type.py:50-68`'de 2026-07 denetim kararı olarak yazılı:
+> (1) `GAP_OFFERED_CROPS` (5, satılan) ⊂ (2) `_VALID_CODES` (7, VO-geçerli: +OLIVE +CHERRY) ·
+> (3) wire `crop_type.enum.v1` (8) · (4) worker-internal (12). *"hiçbiri diğerinin yanlış kopyası
+> değildir"*. Benim (ve önceki turun) hatası bu eksenleri **tek eksen sanmaktı**.
+>
+> **`bookable: false` yazmak ayrıca teknik olarak da yanlış olurdu:**
+> `tests/unit/test_crop_readiness_manifest_sync.py:97-105` `bookable == (stage1 ∈ {production,
+> pilot})` kuralını bağlıyor ve CHERRY'nin `stage1`'i gerçekten `pilot`. Elle düzenleme, tam da
+> o testin yakalamak için var olduğu **"insan sync hatası"** olurdu.
+>
+> **Sonuç:** kod değişikliği **YAPILMADI**; KİRAZ'ı ticari olarak **açma** işi §13 birikmiş
+> işler listesine (Ekim 2026+) alındı. **E8'in sıralaması da bu yüzden düzeltildi** (aşağıya bkz.).
+
+**~~EK BULGU — KİRAZ: SİPARİŞ EDİLEBİLİR AMA İKİ YERDEN DÜŞÜYOR~~ (2026-07-30 doğrulama turu — YÜRÜRLÜKTEN KALKTI, gerekçe kaydı olarak korunur).**
 Üç kaynak çapraz okundu (`crop_readiness.json` · `crop_type.enum.v1.json` · edge
 `ndvi_thresholds.yaml`/`phenology_calendar.yaml`):
 
@@ -903,12 +953,31 @@ tablosunda YOK → önceliklendirme eşiksiz kalır.
 SUNFLOWER ve OLIVE `bookable:False`, yani sipariş edilemedikleri için eksiklikleri **zararsız**.
 Sipariş edilebilen ve fiilen kırılan tek ürün olan KİRAZ ise listede yok.
 
-**Düzeltme (E8 kapsamı):**
-1. **Önce KİRAZ kararı** — ya `bookable:False` yapılır (en hızlı, riski anında kapatır) ya da
-   contract enum'a eklenip (**breaking değil, MINOR**) edge tablosu yazılır. Bu bir **ürün
-   kararıdır**, mühendislik değil.
-2. **Sonra WHEAT** (zaten planlı, wire-enum'da var, tek eksik edge tablosu).
-3. **SUNFLOWER/OLIVE ertelenebilir** — `bookable:False` oldukları sürece acil değil.
+**⚠️ EK KANIT (2026-07-31, SSOT hizalaması) — KİRAZ artık ÜÇÜNCÜ yerde de çelişiyor.**
+Contract'ın `docs/TARLAANALIZ_SSOT_v1_2_0.txt` kopyası platform'unkiyle hizalandığında, platform'un
+**2026-06-14 tarihli KR-024 tablosu** contract'a girdi ve o tablo **`| Kiraz | 14-21 |`** satırını
+içeriyor. Yani artık contract deposunun **kendi normatif metni** kirazı desteklenen ürün sayıyor,
+ama **kendi `crop_type.enum.v1`'i CHERRY'yi tanımıyor** (doğrulandı: `False`).
+→ Tablo **bilerek olduğu gibi alındı** (kaynağa sadakat + bayt-özdeşlik korundu); çelişki
+gizlenmedi, buraya yazıldı. **KG-0.d-EK kararı artık üç kaynağı birden bağlar:**
+`crop_readiness.json` (bookable) · `crop_type.enum.v1` (wire) · SSOT KR-024 tablosu (normatif metin).
+
+**~~Düzeltme (E8 kapsamı)~~ → YENİDEN DÜZELTİLDİ (2026-07-31): sıralamanın dayanağı çürüdü.**
+Eski sıralama *"KİRAZ sipariş edilebilen ve fiilen kırılan tek ürün"* varsayımına dayanıyordu;
+o varsayım **yanlış** (yukarıdaki kapanış kutusu). **Doğru ölçüt: `GAP_OFFERED_CROPS`** —
+bu sezon fiilen satılan **5 ürün**: `COTTON, CORN, PISTACHIO, RICE, GRAPE`.
+
+| Ürün | Satılıyor mu (`is_gap_offered`) | Wire enum | Edge tablosu | E8 önceliği |
+|---|---|---|---|---|
+| COTTON · CORN · PISTACHIO · GRAPE · RICE | ✅ | ✅ | ✅ | **iş yok** |
+| WHEAT | ❌ satılmıyor | ✅ | ❌ | 🟡 **düşük** — satışa açılırsa gerekir |
+| CHERRY | ❌ satılmıyor | ❌ | ❌ | 🟡 §13 (Ekim+) |
+| SUNFLOWER · OLIVE | ❌ satılmıyor | ✅ | ❌ | 🟢 ertelenebilir |
+
+⇒ **E8'de bugün ACİL İŞ YOK.** Satılan 5 ürünün beşinde de edge eşik + fenoloji tablosu **var**
+(doğrulandı). WHEAT'in *"iki YAML girdisiyle güçlü verili ürün açılır"* kazancı gerçek ama
+**satış kapsamına alınması ayrı bir ürün kararına bağlı** — o karar verilmeden tablo yazmak
+kullanılmayan config üretir. → E8 **§13'e (Ekim+) taşındı.**
 
 **Etkilenen:** E8 (kapsam düzeltmesi) · W7 · contract `crop_type.enum.v1` (KİRAZ kararına bağlı)
 · pilot planı P-3 · demo tasarımı
@@ -1334,6 +1403,7 @@ Artık yapılacak işler için **bu bölüm otoriterdir**; o iki dosya gerekçe/
 |---|---|---|---|
 | **AL-C1** 🔴 | `expert_review_queue.v1` → `escalation_reason` enum'una **additive 7. değer `AUDIT_SAMPLE`**. Bugün i.i.d. denetim tile'ını taşıyacak bir neden **yok**; mevcut güven-temelli bir neden altında yollamak hem **yansızlığı bozar** hem `escalation_total{reason}` metriğini kirletir. Worker enum'a **tek taraflı ekleyemez** (§2.1 platform-otoriter) | ✅ Kanonik contract **ve** worker vendored kopya: tam **6 değer** (`LOW_CONFIDENCE, LOW_AGREEMENT, OOD_DETECTED, HIGH_EPISTEMIC, EXPERT_RE_TRIGGER, QUARANTINE_CAUTION`) — `AUDIT_SAMPLE` yok | 🔴 [0]'ın ön-koşulu |
 | **AL-C2** 🔴 | `expert_review_queue.v1` → **denetim-modu alanları**: `audit_sample: bool` + `audit_stratum: string`. ⚠️ `audit_stratum` platform-otoriter eksende ifade edilmeli (`crop_type` × `analysis_type` × fenoloji-penceresi); eksen karışımı **şema hatasıdır** | Devir spesi §3-B: **bilimsel olarak A'dan üstün**; A+B **birlikte** önerilir (A metrik temizliği, B körlük) | 🔴 [0]'ın ön-koşulu |
+| **AL-C3** 🟡 | **(YENİ, 2026-07-31)** `confidence_score`'u denetim satırında da tel üzerinden kaldır — tam anti-anchoring fail-closed. Bu turda YAPILMADI: alan `required` + `type: number`; nullable'a genişletmek `breaking_change_detector`'a göre **MAJOR** (ölçüldü) ve tur MINOR'du. Sınıf etiketleri (predicted_class/detection_type/sub_specialty) **zaten kaldırıldı**. Kalan risk yalnız skaler güvenin uzmana gösterilmesi → **AL-P1 portal yükümlülüğü** ile örtülüyor | Devir spesi §3-B; `x-anti-anchoring.residual_portal_obligation` | 🟡 v2/MAJOR |
 | — | ⚠️ AL-C1/C2 **C8 sürüm törenine** dahildir (annotated tag + SHA256 + 3 repo pin). **TUR 1'e dâhildir** (2026-07-31 kararı — eski *"C-Tur-2 ile birleştirilebilir"* ifadesi **yürürlükten kalktı**; Tur 2 demo sonrası olduğu için [0] ölçüm temelini bloke ediyordu). Bkz. §3.1 "TUR TANIMI" | — | — |
 
 **Kaynak devir spesi:** `tarlaanaliz-worker/denetim/audit_escalation_reason_devir_spec_2026_07_19.md`
@@ -1582,3 +1652,319 @@ ticarileşmeyecek bir hat için düşünün.
 - [PIX4Dfields + M3M ölçülmüş vaka (Pix4D resmi blog)](https://www.pix4d.com/blog/input-savings-mavic-3-m) — 50 ha, 727 RGB + 2.908 ÇS, 34,1 GB, RGB 4:30 / ÇS 6:54, GSD 2,24/3,73 cm
 - [PIX4Dfields deneme kısıtı](https://support.pix4d.com/hc/en-us/articles/360000831403) — deneme sürümünde **export yok**
 - [ODM multispektral (M3M v3.5.3+)](https://docs.opendronemap.org/multispectral/) · [`--radiometric-calibration`](https://docs.opendronemap.org/arguments/radiometric-calibration/)
+
+
+---
+
+# 13. BİRİKMİŞ İŞLER — EKİM 2026 VE SONRASI
+
+> **Ne zaman bakılır:** FAZ 0 (pilot + demo) kapandıktan sonra. Bu bölümdeki hiçbir kalem
+> demo ya da pilot için gerekli DEĞİLDİR — buraya bilinçli olarak ertelendiler.
+> **Kural:** bir kalem buradan yukarı (§3 iş tabloları) ancak **yazılı bir karar** ile çıkar.
+
+## 13.1 Ürün kapsamı — yeni mahsul satışa açma
+
+| # | İş | Neden ertelendi | Gerçek maliyeti |
+|---|---|---|---|
+| **B13-1** | **KİRAZ'ı ticari olarak aç** *(KG-0.d-EK "seçenek B")* | 2026-07-31'de ölçüldü: **kapatılacak risk yok** — CHERRY `GAP_OFFERED_CROPS`'ta değil, tarla bile açılamıyor. Açmak **yeni özellik**, hata düzeltme değil | **Dört yerde birden:** ① platform `GAP_OFFERED_CROPS`'a `CHERRY` ② contract `crop_type.enum.v1`'e `CHERRY` (**MINOR**, + C8 töreni) ③ edge `ndvi_thresholds.yaml` + `phenology_calendar.yaml` ④ fiyat/fenoloji kayıtları. ⚠️ `data_status: limited` → tespit kalitesi zayıf olur; **ÖN RAPOR (indeks) sorunsuz** çalışır |
+| **B13-2** | **BUĞDAY'ı ticari olarak aç** | Wire enum'da **var**, edge tablosunda yok; ama `GAP_OFFERED_CROPS`'ta da yok → bugün satılmıyor. Tablo yazmak, satış kararı olmadan **kullanılmayan config** üretir | ① `GAP_OFFERED_CROPS`'a `WHEAT` ② edge iki YAML girdisi (**birkaç saat**) ③ fiyat kaydı. **Veri `strong`** → en ucuz gerçek kazanç, satış kararı verilirse ilk sıradaki |
+| **B13-3** | SUNFLOWER / OLIVE tabloları | İkisi de satılmıyor **ve** `stage1: research` → `is_bookable` zaten reddediyor | Düşük; B13-2 ile aynı desen |
+
+> ⚠️ **Dört eksen kuralı (2026-07 denetim kararı, `crop_type.py:50-68`):** bir mahsulü açmak
+> **tek yerde** yapılmaz. `GAP_OFFERED_CROPS` (satılan) · VO `_VALID_CODES` (domain-geçerli) ·
+> wire `crop_type.enum.v1` (mesaj) · worker-internal (12) **ayrı eksenlerdir**; biri diğerinin
+> kopyası değildir. Yalnız birini değiştirmek sessiz kırık üretir.
+
+## 13.2 Tesisat ve yönetişim
+
+| # | İş | Neden ertelendi |
+|---|---|---|
+| **B13-4** | **C-SSOT-2** — `TARLAANALIZ_SSOT_v1_2_0.txt` senkron aracına **salt-okunur drift dedektörü** olarak eklensin | Kök neden kapatıldı ama tekrarı önleyen otomasyon yok; rsync yolu bu turda test edilemedi |
+| **B13-5** | **C11** — `sorties[]` + `mission_date` AK-4 absorpsiyonu (edge vendored'da var, kanonikte yok) | I-5 gereği sapma geçici olmalı; ama demo yoluna girmiyor |
+| **B13-6** | **P13** — platform `end_to_end_workflow.md:30` başlık özeti bayat (*"C17 açık"* ↔ C17 satırı *"ÇÖZÜLDÜ"*) | Doküman tutarlılığı; kod etkisi yok |
+| **B13-7** | `## # [KR-033]` başlık yazım hatası (SSOT metni) | Bayt-özdeşlik korunsun diye bilerek düzeltilmedi; platform düzeltince aynı turda gelir |
+| **B13-8** | **E8** — edge eşik/fenoloji tabloları (WHEAT/SUNFLOWER/OLIVE/CHERRY) | Satılan 5 ürünün **beşinde de** tablo mevcut → bugün acil iş yok; B13-1/B13-2'ye bağlı |
+
+## 13.3 Ölçek ve model hattı *(zaten §11'de izleniyor, buraya yalnız takvim için)*
+
+| # | İş | Tetikleyici |
+|---|---|---|
+| **B13-9** | **P9b** — gerçek uzman kapasitesi ölçümü + kalıcı kota | Üretim ölçeğine geçiş kapısı |
+| **B13-10** | **P7** — TKGM feature flag | Kurumsal protokol gelince |
+| **B13-11** | **AL-W4…AL-W10** — S2 bütçe, SupCon, Mahalanobis vb. | [0] ölçüm temeli + pilot verisi |
+
+
+---
+
+# 14. TUR 1 DENETİM SONRASI — ÇÖZÜM SIRASI (2026-07-31)
+
+> **Kaynak:** 10 disiplinli bağımsız denetim → ajanlar arası tartışma → senkronizasyon çatışma
+> matrisi → ana ajanın kanıta karşı kendi ölçümü. **146 bulgu** (14 KRİTİK / 45 YÜKSEK).
+> **Kanıt arşivi:** `denetim/denetim_raporu_2026-07-31_10disiplin.md` — o dosya iş listesi DEĞİLDİR.
+> ⛔ = **C8 release töreninden ÖNCE zorunlu.**
+>
+> ### 📍 İlerleme
+> **KADEME 0 ✅ TAMAM (2026-07-31)** — D1…D6 + plan dışı D3-b · CI'da **9/9 yeşil** (PR #21,
+> `headRefOid` doğrulandı) · kanıt: `denetim/denetim_raporu_2026-07-31_kademe0_kapi_mutasyonlari.md`.
+> **KADEME 1 ✅ contract yarısı TAMAM** — D7 · D8 · D9 + plan dışı D3-c. Maliyet pencereleri
+> **kapatıldı** (D7 `footprint_wkt` kaldırma · D9② yeniden adlandırma — ikisi de bu turda bedavaydı).
+> **KADEME 2 ✅ iş kalemleri TAMAM** — C11 absorpsiyonu (D10-E2) · C2″ hükmü düzeltildi (E1) ·
+> `$ref` kararı yazıldı (E3 → §14.2.1, **onay bekliyor**) · `relative_path` deseni gerçek çıktıyı
+> kabul ediyor (E5) · `maxItems` 8000 (E6). **Aktif kilit:** E11 **C8'den önce merge edilmez** (E4).
+> **KADEME 3 ✅ TAMAM** — D12…D15 + plan dışı D3-d (bileşim körlüğü). Denetim satırı artık
+> ölçtüğü sistemi değiştiremiyor: konsensüs dışı · JOIN anahtarlı · gruba bağlanamaz ·
+> seçim kanıtı (π_h) taşır · model güveni kapalı.
+> **KADEME 4 ⚠️ kısmen TAMAM** — D17 (WATER_STRESS `proxy_only` + ön fazdan çıktı) ve D18
+> (`api/` PII taraması + kapsam-duyarlı `phone`) bitti; D16'nın kapı/tanım/doküman parçaları
+> yapıldı, **GÖÇ parçası (D16-b) koordinatör kararına bırakıldı** — hangi kaynak normatif
+> kalacak? Karar verilmeden gövde taşımak normatif içerik kaybı riski taşıyor.
+> **Sıradaki: KADEME 5 (§14.5) ve C8 ön koşulları** — ⛔ kalemler: D16-b · §14.2.1 `$ref` onayı.
+> **Açık kalan kararlar:** **§14.2.1 `$ref` onayı** · **D4-b** (parite kapısı CI'da) · **D4-c**
+> (matris sürümleme kapsamı) · **SD8** (etiketsiz 16 sürüm) · **C6b/E13** · **AK-1** CHLOROPHYLL_A.
+> **Başka depoya düşen iş:** **E15** (edge fail-loud) · **P14** (platform fail-open adımı) ·
+> **E16** (edge ürün adı biçimi + vendored yenileme).
+> **Turda doğan açık kalemlerin TAMAMI:** §14.5.1 tablosu (AK-1…AK-7).
+
+**Öncelik hiyerarşisi (çatışma çözerken kullanılan ölçüt sırası):**
+① fiziksel/ölçüm geçerliliği → ② geri alınamazlık → ③ güvenlik değişmezi → ④ istatistiksel
+geçerlilik → ⑤ kanıt/kapı bütünlüğü → ⑥ mimari tutarlılık → ⑦ süreç kolaylığı.
+Anahtar ilke: **"Yeşil ama yalan bir kapı, kırmızı bir kapıdan tehlikelidir."**
+
+## 14.0 KADEME 0 — Kapılar dürüst hale gelsin (her şeyden ÖNCE) — ✅ **TAMAMLANDI (2026-07-31)**
+
+> **Durum:** D1…D6 **altısı da yapıldı** · süit **735 geçti / 2 beyanlı xfail / 0 skip** ·
+> her kapı **mutasyonla** doğrulandı (kanıt: `denetim/denetim_raporu_2026-07-31_kademe0_kapi_mutasyonlari.md`).
+> Turda **beyan edilmemiş breaking yok** — ve bu artık *ölçülmüş* bir sıfır, kör bir sıfır değil.
+
+| # | İş | Durum | Kapatır | Dosya |
+|---|---|---|---|---|
+| ✅ **D1** | `verify-checksums` → `summary.needs` **ve** fail koşuluna girdi · breaking adımından `continue-on-error: true` kaldırıldı · *"Don't fail - just warn"* yerine **beyan kapısı**: breaking **yasak değil, BEYAN EDİLMEMİŞ olması yasak** (`CONTRACTS_VERSION.md` → `**Breaking Change:** YES`) · dedektör çıkış kodu sözleşmesi **0/1/≥2** ve `≥2 = kapı KÖR` ayrı hata · `detect-breaking-changes` da `summary` fail koşuluna eklendi (push'ta `skipped` kabul) | ✅ | SD3, SD5 | `.github/workflows/contract_validation.yml` |
+| ✅ **D2** | Çıkarıcı **her başlık düzeyinde 4 biçimi** tanıyor. ⚠️ **Ölçüm plandan büyük çıktı:** registry `^## ` regex'iyle **54 tanımın 6'sını** görüyordu (%89 kör, Q6 doğrulandı) ve SSOT metnindeki 3 köşeli-parantezsiz başlık da kaçıyordu. **Q5 de kapatıldı:** `test_data_layer_kr_present_in_ssot_text` alt-dize kontrolüydü → KR-088/091 için **tamamen boştu** (o ikisi metinde yalnız çapraz-atıf satırında geçiyor, gövdeleri registry'de); artık **tanım başlığı** şartı var. `CLAUDE.md`'nin KR tablosu ölçülen sayılarla düzeltildi (birleşim 55 · kesişim 50 → AR3 doğrulandı, iki kaynak **iç içe**) | ✅ | Q6, **Q5**, AR3 | `tests/test_kr_reference_integrity.py`, `CLAUDE.md` |
+| ✅ **D3** | `compare_schemas` **özyinelemeli** (`properties`/`patternProperties`/`$defs`/`items`/`contains`/`if-then-else`/`not`/`propertyNames`/`allOf`/`anyOf`/`oneOf`/`prefixItems`) + **25 testlik regresyon süiti**. **Plan dışı 3 ek bulgu bu turda kapatıldı:** ① `x-context-subsets` (bağlam-bazlı KABUL listeleri, `calibration_type.enum`) enum ekseni gibi karşılaştırılıyor — değer düşmesi MAJOR ② okunamayan şema artık **exit 2** (eskiden sessizce `{}` dönüyordu = kapı kör) ③ **Windows'ta araç HİÇ koşmuyordu** (cp1254 emoji çökmesi) → `validate.py`'deki kalıcı UTF-8 düzeltmesi buraya da alındı, yani SDLC_GATES §1C maddesi ilk kez uygulanabilir | ✅ | SD1, SD2, Y5 | `tools/breaking_change_detector.py`, `tests/test_breaking_detector_recursion.py` |
+| ✅ **D3-b** 🆕 | **BU OTURUMDA BULUNAN DÖRDÜNCÜ YALAN:** dedektör ilerleme başlığını **stdout**'a basıyordu; CI `--json > breaking_changes.json` yönlendirmesi geçersiz JSON üretiyor, `json.load` patlıyor ve CI'ın `if` bloğu **else** dalına düşerek `has_breaking=false` yazıyordu. ⇒ `continue-on-error` hiç olmasaydı bile kapı **daima "breaking yok"** derdi. Banner `stderr`'e alındı + CI'ya *"bozuk JSON asla breaking-yok diye okunamaz"* adımı + `test_cli_json_output_is_parseable` regresyonu | ✅ | (denetimde yoktu) | aynı |
+| ✅ **D4** | CI bağımlılıkları **tek kaynağa** indi (`requirements-dev.txt`; `pyyaml` + `pytest-cov` eklendi → Q2'nin 18 sessiz atlaması bitti) · `paths:` filtresi testlerin **ölçülen** okuma yollarından türetildi (`ssot/**`, `docs/**`, `drone_capability_matrix.yaml`, `pyproject.toml`, `requirements-dev.txt`) · `pytest -rs` + **`tests/conftest.py` atlama kapısı**: beyan edilmemiş her skip gerekçesi oturumu düşürür, CI özetine skip bütçesi yazılır | ✅ | SD6, Q2, Q3, Q7 | CI, `requirements-dev.txt`, `tests/conftest.py` |
+| ⬜ **D4-b** 🔴 | **AÇIK KALAN — koordinatör kararı:** parite kapısı CI'da **hâlâ ölçüm yapmıyor** (kardeş depolar Actions'ta checkout edilmiyor → 45 test *beyanlı* atlanıyor). Bu tur atlamayı **görünür** kıldı ve C8'de **yerel koşum**u zorunlu yaptı, ama Y3/AR4'ün kökü (çapraz-repo sapmayı CI'da gören kapı yok) duruyor. **Karar:** ya CI'a kardeş depo erişimi (PAT/secret) verilir, ya "parite yalnız C8'de yerel ölçülür" **yazılı** kabul edilir | ⬜ | AR4, Y3, E14 | CI |
+| ✅ **D5** | `test_real_repo_checksum_verifies` → `release_gate` + `xfail(strict=True)`; koşul **makine-okunur beyandan** okunuyor: `CONTRACTS_VERSION.md` → `**Checksum State:** PENDING_REPIN`. Aynı beyanı **üç kapı** okuyor (CI checksum işi · pin testi · `PENDING_PROPAGATION` testi) ve `pin_version.py` dosyayı baştan ürettiği için **C8'de kendini siler** → üç kapı aynı anda sertleşir. `-m "not release_gate"` `tests/conftest.py` tarafından **reddediliyor** (exit 4) | ✅ | Q1, Ç6, SD4 | `tests/release_state.py`, `tests/test_pin_version.py`, `pyproject.toml`, `CONTRACTS_VERSION.md` |
+| ✅ **D6** | SDLC_GATES §3A'ya *"PENDING_REPIN kalkmış olmalı"* · §3C'ye **`PENDING_PROPAGATION` boş** kapısı (checklist maddesi değil **test**: `test_pending_propagation_is_empty`, tur içi xfail → release'de gerçek kırmızı) + *"parite CI'da koşmaz, C8'de yerel koş"* · §3E'ye `-rs`/skip-0/xfail-0/deselect-yok + dedektör çıkış kodu sözleşmesi · **yeni §3G: annotated tag töreni** (`git tag -a` + `%(objecttype)`=`tag` doğrulaması + `git describe` + push) | ✅ | SD7, SD8 | `docs/checklists/SDLC_GATES.md`, `tests/test_vendored_parity.py` |
+
+**Kapıların mutasyon kanıtı (hepsi bu oturumda koşuldu):** ① `escalation_reason`'dan `QUARANTINE_CAUTION`
+silindi → dedektör **BREAKING** dedi, CI kapısı *"beyan edilmemiş breaking"* ile düşürdü (eskiden 0 breaking)
+② eski dedektörle yeni süit **21/25 düşüyor** ③ `PENDING_REPIN` beyanı silindi → pin + propagation testleri
+**gerçek kırmızı** ④ beyansız `pytest.skip("pyyaml yok")` → oturum **RC=1** ⑤ `-m "not release_gate"` → **RC=4**
+⑥ KR-093 tanımı iki kaynaktan silindi → **3 test kırmızı**; `## KR-093`→`### KR-093` biçim değişimi ise
+**yanlış alarm üretmedi**.
+
+## 14.1 KADEME 1 — Geri alınamaz + maliyet penceresi kapanıyor — ✅ **contract yarısı TAMAM (2026-07-31)**
+
+> **Durum:** D7/D8/D9'un **contract** kalemleri yapıldı · süit **790 geçti / 2 beyanlı xfail / 0 skip** ·
+> dedektör **0 breaking** · her kapı mutasyonla doğrulandı (kanıt aynı denetim dosyasına eklendi).
+> ⚠️ **D7'nin EDGE KODU yarısı açık** (aşağıda **E15**) — ayrı depo, ayrı PR.
+
+| # | İş | Durum | Kapatır |
+|---|---|---|---|
+| ✅ **D7** | **Ç7 tek hamle — contract yarısı.** `raw_frames[].footprint_wkt` **KALDIRILDI** → **`sees_patch_ids[]`** (`minItems:1`, `maxItems:500`, `^[a-f0-9]{32}$` — desen `priority_zones.patch_id` ile **test tarafından bağlandı**) ve **`required`'a girdi**: KG-0.c gereği bir karenin listede olmasının tek meşru gerekçesi budur · `observed_footprint_wkt` **KALDI** + `maxLength:4096` + **desen** (EWKT RED · `POLYGON/MULTIPOLYGON` şart · tam kısmı 4+ basamaklı koordinat RED = *"\|koordinat\|>180 ⇒ derece değil"* ayırıcısı; ondalık hassasiyet serbest — 8 vakayla doğrulandı) · **`footprint_crs`** (`const: EPSG:4326`) eklendi · **`crs_mismatch` bağlandı:** `qc_report.flags[]` serbest dizeden **kapalı vocabulary'ye** çevrildi (5 değer; kaynak: üreticinin fiilen yazdığı bayraklar, `qc_report_writer.py:157-165`) · `raw_frames.maxItems` 5000→**8000** (D11/E6 buraya alındı: 25 m uçuş 5.229 kare) | ✅ | E7, G2, K7, P3, **G1**, Y2, (E6) |
+| ⬜ **E15** 🔴 | **D7'nin EDGE KODU yarısı (bu depoda YAPILAMAZ):** `qc_report_writer._geometric_coverage` → `min(...,1.0)` kırpması **kaldırılır** (oran ≫1 = CRS uyuşmazlığı; kırpma onu *"kusursuz kapsama"* yalanına çeviriyor) · iki `except → 0.0`/`pass` yolu **fail-loud** olur · `footprint_crs` okunur, uyuşmazlıkta `crs_mismatch` bayrağı yazılır. **Kanıt:** `qc_report_writer.py:245-289` · **KR-065 ödeme** kararı bu değere bağlı | ⬜ | G1 (kod yarısı) |
+| ✅ **D8** | **C6a — fail-open kapatıldı.** Enum'un global *"eksikse PANEL_ABSOLUTE varsay"* güvenlik-ağı **kaldırıldı**, yerine **bağlam-bazlı `missing: {policy: FAIL-CLOSED}`** kondu (5 bağlam ayrı ayrı yazılı) · `platform/calibrated_dataset_manifest` alt-kümesine **`NONE`** eklendi (dürüst değer yazılabilsin diye) · `hard_reject: [NONE]` korundu. ⚠️ **Ölçümle çözülen çelişki:** C1′ turunda yazılan `test_none_is_excluded` **tam tersini** iddia ediyordu; ölçüm kuralın **canlı kodda** olduğunu gösterdi (`worker_job_publisher.py:80-84` → *"status CALIBRATED → PANEL_ABSOLUTE (güvenlik-ağı)"*) ve aynı fonksiyonun 4. adımının **zaten NONE ürettiğini** — yani NONE sistemde akıyordu, yalnız kalibre manifestte yazılamıyordu. Test gerekçesiyle **tersine çevrildi**. **Edge alt-kümesi bilerek DAR bırakıldı** (edge kalibrasyon başarısızsa manifest üretmez — `calibrated_validator` CHECK 2) → bileşim kararı **C6b/E13**'te | ✅ | S1 |
+| ⬜ **P14** 🔴 | **D8'in PLATFORM yarısı:** `worker_job_publisher.py:80-84` üçüncü adım (`status CALIBRATED → PANEL_ABSOLUTE`) **kaldırılmalı**, tip yoksa **`NONE`** yazılmalı. Contract artık bunu normatif olarak söylüyor (`x-normalization.missing.policy = FAIL-CLOSED` + `x-superseded-2026-07-31.consumer_obligation`) | ⬜ | S1 (kod yarısı) |
+| ✅ **D9** | **Ç5 zinciri tamam.** ① **`x-layer-classes`** eklendi (`raster_product` / `index` / `composite` / `derived_metric` + 13 değerin haritası) ② **`IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY`** (şema enum'u **ve** matris; ölçüldü: kardeş depoların hiçbirinde geçmiyor → **bedava**; termal kamera sulama *verimliliğini* ölçemez — uygulanan su + bitki su tüketimi gerekir, ikisi de sistemde yok) ③ **`index_requirements`** matrise eklendi — ⚠️ **bant gereksinimleri uydurulmadı, worker'ın FİİLİ formüllerinden ölçüldü** (`feature_extraction.py:207-222`): SAVI **Blue GEREKTİRMEZ**, EVI **gerektirir** (kod: B yoksa EVI sıfırlanır) · `CHLOROPHYLL_A` **`null` bırakıldı** (formülü depoda tanımlı değil; worker'daki `LCI` **aynı ad değil**) → §14.5'e açık kalem ④ **14 testlik kapı**: her `layer_type`'ın sınıfı var · matris↔şema vocabulary'si bağlı · **listelenen her indeks üretilebilir** (mutasyon: 4 bantlı Mavic'e EVI eklenince kırmızı) · eski ad **değer olarak** geri gelemez (tarihsel not korunur) | ✅ | A8, A10, S10, S11, Y4 |
+| ✅ **D3-c** 🆕 | **KADEME 1'de doğan dedektör boşlukları (aynı sınıf, bu turda kapatıldı):** ① serbest bir alana **`enum` EKLEMEK** daraltmadır ama hiç görünmüyordu (`ENUM_CONSTRAINT_ADDED`) ② **`x-normalization` gibi normatif `x-` blokları** doğrulamayı değiştirmez ama tüketici KODUNU değiştirir — D8'in fail-open→FAIL-CLOSED çevirisi klasik şema diff'inde **görünmezdi** → `NORMATIVE_ANNOTATION_CHANGED` (*manual review required*; `x-updated` bilerek kapsam dışı) ③ yeni bağlam alt-kümesi eklemesi raporlanmıyordu. **Ayrıca `x-compat-accepted`:** biçimsel daraltmayı **beyanla** NON_BREAKING'e indirir (gerekçe raporda yankılanır) — kapsam DAR: alan silme · enum değeri silme · `required` genişletme · tip daraltma **asla** indirilemez (5 test) | ✅ | (denetimde yoktu) |
+| ⬜ **D4-c** 🆕 | **Kapı kapsamı boşluğu:** `drone_capability_matrix.yaml` **normatiftir** (KR-018/030 bant kapısı) ama ne checksum ağacında (`schemas/`+`enums/`+`api/`) ne de breaking dedektöründe (`schemas/`+`enums/`) — yani sürüm bump'ı olmadan sessizce değişebilir. C-SSOT-2 ile **aynı sınıf** (SSOT metni de kapsam dışı). D9'un testi matris↔şema vocabulary'sini bağladı, ama sürümleme boşluğu duruyor → checksum ağacına mı alınacak, salt-okunur drift dedektörüne mi? | ⬜ | (denetimde yoktu) |
+
+## 14.2 KADEME 2 — C8 sıralama kilitleri — ✅ **iş kalemleri TAMAM (2026-07-31)**
+
+| # | Kilit / iş | Durum |
+|---|---|---|
+| ✅ **D10-E2** | **C11 yapıldı: `sorties[]` + `mission_date` kanoniğe absorbe edildi.** ⚠️ **Ölçüm iddiayı doğruladı:** edge'in `intake_manifest_valid.json` fixture'ı kanoniğe karşı **2 hata** veriyordu ve ikisinin de tek sebebi bu ikisiydi (`oneOf` hiçbir dala uymuyor → `unevaluatedProperties: false` her alanı reddediyor). Yani edge'in **gerçek çıktısı** kanonik sözleşmeye göre geçersizdi. Absorpsiyondan sonra fixture (ürün adları kanonikleştirilerek) **hatasız geçiyor** — test bunu kardeş depo varken fiilen doğruluyor. Dizi opsiyonel (MINOR), sortie varsa `bbox` zorunlu (eski C4'ün cevabı) | ✅ |
+| ⬜ **E16** 🔴 | **Edge ürün sözlüğü hizalaması — KAPSAM GENİŞLEDİ (AK-7 ile).** Edge üç yerde küçük harf yazıyor: ① `sorties[].crop_type` (C11 absorpsiyonu kanonik biçimle yapıldı) ② vendored `worker_result.v1.crop_type` enum'u (`cotton…`, 5 değer) ③ fixture'lar (`worker_result_valid.json:6` → `"cotton"`). Kanonik taraf artık **beş alanda da** BÜYÜK harf zorluyor. **Ölçülen kalan fark tam olarak budur:** edge fixture'ı bugün tek ve net bir hata veriyor — `'cotton' is not one of ['COTTON', …]`. Edge C8'de: üretici eşlemesi + vendored yenileme + fixture güncellemesi. ⚠️ **SIRA KİLİDİ:** platform `worker_result_schema_enforce` (P1) **edge hizalanmadan AÇILMAZ** — açılırsa edge çıktısı runtime'da reddedilir | ⬜ |
+| ✅ **D10-E1** | **C2″ hükmü DÜZELTİLDİ** — §3.1'deki satır yeniden yazıldı: *edge regex DEĞİŞMEZ.* Eski hüküm (`priority_zone.py:31,55` regex'ini `object_key` için genişlet) uygulansaydı **`ManifestWriter` kendi ürettiği manifesti reddederdi** (edge göreli yol üretir, anahtarı platform üretir — KG-0.a-EK kural 1) | ✅ |
+| ⬜ **D10-E4** | **KİLİT (iş değil, SIRA): E11 C8'den ÖNCE merge EDİLMEZ.** Gerekçe: `additionalProperties:false` → edge CHECK 1 → `REJECTED_QUARANTINE` ve **geri dönüşü yok**. E11 (kare seçici) yazıldığında C8 tamamlanmış olmalı | ⬜ *(kilit aktif)* |
+| ✅ **D10-E3** | **`$ref` kararı YAZILDI** → §14.2.1. Ölçüm: kanonik `intake_manifest` **3 harici `$ref`** taşıyor (`drone_type`, `threat_type`, `dataset_status`), vendored kopyalarda **0** (satır içi) → air-gap M1'de `Unresolvable`. Karar taslağı + gerekçe aşağıda; **uygulama C8'de** | ✅ *(karar)* |
+| ✅ **D11-E5** | **`relative_path` deseni gerçek çıktıyı kabul ediyor.** Eski desen ölçümden ÖNCE dondurulmuştu ve M1'in **fiilen ürettiği** dosyaları reddediyordu: `odm_orthophoto.original.tif` (ODM'nin gerçek adı), `layers/ndvi.tif.aux.xml` (GDAL yan dosyası), boşluklu (`Tarla Verileri/…`) ve Türkçe (`kırmızı/…`) klasörler. Yeni desen bunları kabul ederken **traversal korumasını korur** (mutlak yol · `..`/`.` segmenti · boş segment · `\` · `:` · kontrol/glob karakterleri) — **13 vakayla** doğrulandı | ✅ |
+| ✅ **D11-E6** | `raw_frames.maxItems` **5000 → 8000** (25 m uçuş 5.229 kare + pay). **D7 commit'inde** yapıldı | ✅ |
+
+### 14.2.1 🔒 KARAR TASLAĞI — E3: harici `$ref`'ler C8'de ne olacak? *(onay bekliyor)*
+
+**Ölçüm.** Kanonik `schemas/edge/intake_manifest.v1.schema.json` üç harici referans taşıyor:
+`../../enums/drone_type.enum.v1.json` (satır 56) · `../../enums/threat_type.enum.v1.json` (183) ·
+`../../enums/dataset_status.enum.v1.json` (197). Edge/worker'ın **vendored kopyalarında bu
+referanslar YOK** — değerler satır içi. Yani sözleşme iki biçimde yaşıyor ve M1 (hava-boşluklu,
+internet yok) kanonik biçimi **çözemiyor** (`Unresolvable`).
+
+**Seçenekler.**
+| | Yaklaşım | Artı | Eksi |
+|---|---|---|---|
+| **A** | **Yayında `$ref`'leri INLINE et** (C8 çıktısı tek-dosya şema) | M1'de ek altyapı gerekmez · vendored kopyalarla **aynı biçim** (parite kapısı gerçek parite ölçer) · air-gap sorunu tamamen biter | Enum değişince şema da yeniden yayımlanmalı (C8 zaten tören) · dosya büyür |
+| **B** | **Yerel Registry** (tüketici enum dosyalarını yanında taşır, `$ref` korunur) | Tek kaynak korunur, kopya yok | Her tüketicide çözücü kurulumu · M1'de dosya yerleşimi kırılırsa **sessiz** `Unresolvable` · bugünkü sapmayı sürdürür |
+
+**ÖNERİ: (A) inline** — çünkü ① vendored kopyalar zaten inline, yani (A) sapmayı **kapatır**,
+(B) ise iki biçimi kalıcılaştırır ② air-gap M1'de en az hareketli parça ③ enum'ların kendisi
+`enums/` altında **kanonik kaynak olarak kalmaya devam eder** (inline yalnız YAYIN biçimidir).
+
+**Şartlar (uygulama C8'de):** ① inline üretim **araçla** yapılır (elle kopyala-yapıştır YASAK)
+② üretilen dosyada `x-inlined-from` izi bulunur ③ bir test inline değerlerin kanonik enum'la
+**birebir** olduğunu zorlar (C-PARİTE deseninin aynısı) ④ enum değişince yeniden üretim
+release checklist'ine (§3G) girer.
+
+**Onay:** ✅ **KOORDİNATÖR ONAYLADI ve UYGULANDI (2026-07-31).**
+⚠️ **Ölçüm E3'ü düzeltti:** sorun 3 referans değil, **38 harici `$ref` / 23 dosya / 13 enum** (E3 yalnız `intake_manifest`e bakmıştı). **Uygulama:** `tools/inline_refs.py` — kaynak DRY kalır (`$ref` korunur), `dist/schemas/` **kendi kendine yeten yayın biçimini** üretir (68 dosya, harici ref **0**, 38 düğümde `x-inlined-from` izi). Satır içi alınan anahtarlar bilerek DAR: yalnız doğrulama anahtarları (`$id`/`metadata` taşınmaz — `$id` kopyalamak aynı kimliği iki yerde tanımlardı). **Kapılar:** 7 test — harici ref kalmadı · her düğümde iz var · satır içi ≡ kanonik enum · bayat `dist/` kırmızı. Mutasyon: enum'dan değer silinince üretilen düğüm değişiyor; `dist/` elle bozulunca `--check` RC=1. `.gitignore`'a **bilinçli istisna** (`dist/schemas/` izlenir — izlenmezse C8'de gönderilecek artefakt olmaz).
+
+## 14.3 KADEME 3 — Denetim aletini onar — ✅ **TAMAM (2026-07-31)**
+
+> **Tema:** ölçüm aracı, ölçtüğü sistemi DEĞİŞTİRMEMELİ. Dördü de aynı şemada
+> (`schemas/worker/expert_review_queue.v1.schema.json`), tek `allOf` bloğunda ve
+> **28 davranış testiyle** (`tests/test_audit_measurement_integrity.py`) bağlandı.
+> Dedektör: 0 breaking (bileşim eklemesi **beyanlı**).
+
+| # | İş | Durum |
+|---|---|---|
+| ✅ **D12** | **M2:** yeni `consensus_participation` alanı — denetim satırında **`EXCLUDED` zorunlu** (kör uzmanın etiketi yayın kapısını bloke edemez; denetim etiketi denetlediği kararın parçası olamaz) · **M3:** `tile_id` denetim satırında **zorunlu ve null olamaz** — `analysis_result.detections` bir DİZİ olduğu için `job_id` JOIN'i hangi tile'ın denetlendiğini söylemiyordu, yani `propagation_precision` hesaplanamıyordu · **M4:** denetim satırında `tile_group_id: const null` + `tile_group_size: const 1` — toplu onay yayılımı, denetim etiketini kendi ölçtüğü yayılıma besliyor ve isabeti **yapısal olarak 1'e** çekiyordu | ✅ |
+| ✅ **D13** | **M1/Y1:** `audit_selection_rate` (π_h, `0 < x ≤ 1`) + `audit_rotation_key` + `audit_bucket` — üçü de denetim satırında **zorunlu**. Tabaka etiketi tek başına yansız kestirim vermez; Horvitz-Thompson her gözlemi `1/π_h` ile ağırlıklar. ⚠️ **BİLİNÇLİ SAPMA:** plan *"`audit_stratum` opak dize kalsın"* diyordu; **yapı KORUNDU** çünkü ölçüldü — `crop_type`/`analysis_type` eksenleri kanonik enum'larla birebir eşleşiyor, onları dizeye çevirmek bilgi kaybı olurdu. Tartışmalı olan tek eksen **fenoloji** (A5/A6: contract enum'u 8 ürünün 3'ünü kapsıyor, edge takvimi ayrı sözlük) → **opsiyonel kaldı ve zorunlu yapılması test ile YASAKLANDI** (`test_phenology_axis_is_not_required`) | ✅ |
+| ✅ **D14** | **Ç1:** öncelik kuralı sözleşmeye normatif olarak yazıldı — *"denetim çekilişi ÖNCE ve modelden bağımsız; çakışmada `audit_sample` kazanır"* + yeni `spot_check_suppressed` bayrağı + denetim satırında `required_reviewers: const 1` (inceleme yükü tabakalar arasında değişip ölçümü kirletmesin) | ✅ |
+| ✅ **D15** | **Ç4 adım 1:** denetim satırında `confidence_score: const 0` (anti-anchoring — model güveni tel üzerinde bilgi taşımaz) + **`x-deprecated-in-context`** beyanı (bağlam · tarih · politika · **2-MINOR penceresi** · gerekçe · M2/M3 bağımlılığı). Alan `required` olduğu için KALDIRILAMAZ (o MAJOR olurdu) → bağlam-bazlı sabitlendi | ✅ |
+| ✅ **D3-d** 🆕 | **KADEME 3'te doğan dedektör körlüğü:** *hiç yokken* bileşim kısıtı eklemek (`allOf`/`oneOf`/`anyOf`/`prefixItems`) **raporlanmıyordu** — iki tarafta da liste şartı arandığı için `expert_review_queue`'ya eklenen **5 blok** "0 değişiklik" görünüyordu. `ENUM_CONSTRAINT_ADDED` ile aynı sınıf. Kapatıldı + 5 test. Bu turun bloklarına beyan yazıldı: ölçüldü, **5 bloğun 5'i de** `audit_sample`/`AUDIT_SAMPLE` koşullu ve o alanlar aynı yayımlanmamış turda eklendi ⇒ eski belgelerde `if` hiç ateşlenmez | ✅ |
+| ⬜ **W8** 🔴 | **KADEME 3'ün worker yarısı:** `audit_set_sampler` π_h/bucket'ı **zaten hesaplıyor** ama emisyon kodu yazılmadı (M1/P4: *"kayıp değil, hiç bağlanmamış"*). Worker denetim satırını üretirken artık zorunlu olan altı alanı (`tile_id`, `consensus_participation`, π_h, rotation, bucket, `confidence_score: 0`) yazmalı; platform konsensüs yolu da `EXCLUDED` satırı saymamalı (**P16**) | ⬜ |
+
+## 14.4 KADEME 4 — Normatif kaynak tekilliği — ⚠️ **kısmen TAMAM (2026-07-31)**
+
+| # | İş | Durum | Kapatır |
+|---|---|---|---|
+| ⚠️ **D16** | **Ç8 paketi — üç parçası yapıldı, GÖÇ parçası koordinatör kararına bırakıldı.** ✅ **Tekil-gövde kapısı** kuruldu (`tests/test_single_normative_body.py`): ölçüldü — **50 KR'nin gövdesi İKİ kaynakta birden** (SSOT metni 51 · registry 54 · birleşim 55). "İkili gövde yasak" diyen bir test 50 yerde düşer ve ilk işi devre dışı bırakılmak olurdu; bu yüzden borç **donduruldu** — liste yalnız KÜÇÜLEBİLİR, yeni ikili gövde kırmızı verir. ✅ **`stress_ratio`** artık **beyanlı** (`analysis_type → metadata.indexDefinitions`): durum `UNDEFINED_PENDING_DECISION` + neden tahmin edilmediği + neyin beklendiği yazılı (A3: 3 atıf / 0 tanım doğrulandı). ✅ **CLAUDE.md "sayı değil üretici"**: sabit sayılar yerine **çalışan komut** kondu (aynı bölüm iki kez bayat sayı yüzünden yanlış teşhise yol açmıştı). ⬜ **KALAN:** KR-093'ün 10 satırlık (SSOT metni) ve 98 satırlık (registry) **iki gövdesinin birleştirilmesi** + `kr_registry.md`'nin türetilmiş dizine indirilmesi | ⚠️ kısmi | AR1, AR3, **A3**, Q5 |
+| ✅ **D16-b** | **KARAR VERİLDİ ve UYGULANDI (2026-07-31): normatif gövde = SSOT metni; registry işaretçi tutar.** ⚠️ **İlk gerekçem ÖLÇÜM HATASIYDI** — *"registry yalnız contract'ta yaşar"* demiştim; sığ bir `ls` yüzünden yanlış. Gerçek: registry'nin platform (`docs/kr/`, `contracts/ssot/`) ve worker (`docs/reference/`) kopyaları VAR. **Ama asıl ölçüm kararı yine aynı yöne çıkardı:** o üç kopyanın **hiçbirinde KR-093 başlığı yok** (1211/1242/936 satır), SSOT metninin platform kopyası da farklı (1906 ↔ 1895) — yani **her iki dosyanın da alt-akış kopyaları bayat**. Belirleyici fark **senkron MEKANİZMASI**: SSOT metni C-SSOT'ta bayt-özdeş hâle getirildi + kapısı var; `kr_registry.md` **hiçbir senkron aracının kapsamında değil** (C-SSOT-2). Tutulamayan kaynağı normatif ilan etmek çürümeyi kurala çevirir. **Uygulama:** KR-093'ün registry gövdesi (99 satır) → 24 satırlık işaretçi; registry'ye özgü iki MUST (*Aşama A tespit değildir* · *yeni faz eklenmez*) + Aşama A içerik listesi SSOT metnine **taşındı** (kayıpsızlık testle zorlanıyor). Borç **50 → 49** | ✅ | AR1, AR2 |
+| ⬜ **D16-b2** 🔴 | ~~KOORDİNATÖR KARARI — hangi kaynak normatif kalacak?~~ **Kalan 49 KR'nin göçü.** SSOT metni **çapraz-repo** artefakttır (platform kopyasıyla bayt-özdeş, C-SSOT); registry yalnız contract'ta yaşar ama **8 bölümlü tam gövdeleri** o taşıyor (KR-093: 98 satır vs 10 satır). Karar verilmeden gövde taşımak **normatif içerik kaybı** riski taşır — bu yüzden bu turda YAPILMADI. Karar sonrası: göç + `kr_registry.md` → türetilmiş dizin + üretici araç + `KNOWN_DUAL_BODY_COUNT` düşürülür | ⬜ | AR1, AR2 |
+| ⬜ **D16-c** | **K3/K5 — saklama ve rıza MUST'ları** KR-093 gövdesine eklenecek (üç yeni veri kategorisi KR-090 saklama politikasının dışında). **Bilerek ertelendi:** yeni normatif içeriği ŞİMDİ eklemek, birleştirilecek iki gövdeden hangisine yazılacağı belirsiz olduğu için göçü zorlaştırır → **D16-b'den SONRA** | ⬜ | K3, K5, Y6 |
+| ✅ **D17** | **A1 zinciri — üç kaynağın çeliştiği ölçülerek doğrulandı:** plan **KG-0.f** *"gerçek WATER_STRESS için CWSI (termal) veya NDWI/NDMI (SWIR) gerekir, **ikisi de yok**"* diyor ↔ `analysis_type` `availability: available` diyordu (yalnız 4 bantla) ↔ `report_phase.stage_b` katmanı **uzman kapısı ÖNCESİNDE** çiftçiye teslim ediyordu. **Yapılan:** `WATER_STRESS.availability` → **`proxy_only`** (yeni, additive değer + `proxy_basis`: doğrudan ölçüm LWIR/SWIR ister, 4 bantla hesaplanan "NDWI" McFeeters **su kütlesi** formudur, Gao bitki-suyu formu değil) · **`stage_b`'den çıkarıldı** · **A2:** changeNote KG-0.f'i artık **eksiksiz** alıntılıyor (eski not BENEFICIAL + THERMAL_STRESS'i sayıp WATER_STRESS'i atlıyordu — seçici alıntı). **Sınıf kapısı:** `proxy_only` işaretli HİÇBİR katman ön fazda sunulamaz (tek katman değil, kural). ⚠️ C9'un *"stage_b değişmez"* testi gerekçesiyle daraltıldı: §14'ün öncelik sırasında **① fiziksel/ölçüm geçerliliği**, ⑥ mimari tutarlılığı yener | ✅ | A1, A2 |
+| ✅ **D18** | **K4 — `api/` ağacı artık taranıyor.** Ölçüldü: `validate.py` yalnız `schemas/`+`enums/`, CI grep'i yalnız `schemas/` tarıyordu ⇒ **kimlik yüzeyini tanımlayan `api/` hiçbir PII kapısından geçmiyordu** — oysa `SDLC_GATES §1B` *"hiçbir şema/enum/**API alanında**"* diyordu (sözleşme kendi iddiasının gerisindeydi). **İlk taramada gerçek isabet:** `api/platform_public.v1.yaml → $.info.contact.email`. **Kapsam-duyarlılık:** `phone` yasak değil (kimlik modelinin kendisi) ama yeri belli — `user_pii.v1` + auth yüzeyi dışında **hata**; `phone_verified` gibi türev adlar etkilenmez (tam ad eşleşmesi). `pyproject.toml` yasak listesi **3 → 6** değere hizalandı (araçla ayrışmıştı) ve ayrışma testle yasaklandı | ✅ | K4 |
+| ✅ **D18-b** | **UYGULANDI: adres SİLİNDİ, kapı İSTİSNASIZ.** Gerekçe ölçümle: diğer iki spec'te künye bloğu **hiç yok** (0 eşleşme) · OpenAPI 3.1'de `info.contact` **opsiyonel** · adres depoda **başka hiçbir yerde** geçmiyordu · kimlik modeli telefon+PIN. `METADATA_EXCEPTIONS` **boşaldı** ve testi *"liste BOŞ olmalı"* biçiminde sertleştirildi + adresin geri gelmesini yasaklayan regresyon kapısı. Mutasyonla kanıtlandı: adres geri konunca hem `validate.py` hem testler düşüyor | ✅ | — |
+
+## 14.5 KADEME 5 — SONRAYA (karar bu tur, uygulama sonraki)
+
+> ### 📍 KADEME 5 ilerleme (2026-07-31)
+> **Bu depoda yapılabilir olan iki kalem YAPILDI** (aşağıda ✅); kalanların hepsi ya
+> **başka depoya** ya **E13/motor kararına** ya **agronomi kararına** bağlı — bilerek
+> açık bırakıldı, her biri için engelin NE olduğu yazıldı.
+
+| # | Kalem | Durum | Engel / gerekçe |
+|---|---|---|---|
+| ✅ **G3/G4** | **`priority_zones[].geom` koordinat sınırları.** Ölçüldü: şema UTM METRE (`[500000, 4000000]`), enlem 91 ve boylam −181'i **kabul ediyordu** → yanlış CRS'teki poligon sözleşmeden geçip `ST_SetSRID(…,4326)` ile **yanlış damgalanıyordu** (G4). Artık `prefixItems` ile `[boylam ±180, enlem ±90]` zorlanıyor — D7'deki WKT derece ayırıcısının GeoJSON karşılığı (aynı kural, iki gösterim). EdgeForm master'da var olduğu için daraltma **beyanlı** (`x-compat-accepted`). ⚠️ **Şemanın zorlayamadıkları AÇIKÇA yazıldı** (halka kapanışı · papyon · halka yönü — JSON Schema bunları ifade edemez) ve iki test bu sınırı **regresyon kaydı** olarak tutuyor: kapı gördüğünü iddia etmiyor | ✅ | — |
+| ✅ **K2** | **Veri yönetişimi kararı (yeni 0.h)** — taslak §9'a değil buraya, karar tablosuna yazıldı (aşağıda) | ✅ taslak | Onay bekliyor |
+| ⬜ **S5** | `scale_factor` — reflektans ölçeği taşınmıyor; **EVI/SAVI'yi sessizce bozar, NDVI gizler** (NDVI orandır → ölçekten bağımsız; EVI'nin `+1`/`6R−7.5B` ve SAVI'nin `+L` toplama sabitleri ölçeğe DUYARLIDIR). Ölçüldü: alan yalnız `schemas/platform/calibration_result.v1.schema.json:69`'da var, indeks üretim yoluna **bağlı değil** | ⬜ | **E13** (hangi motor → hangi ölçek) kararına bağlı; plan bunu "E13'ün hemen ardından ilk sırada" diye işaretlemiş |
+| ⬜ **C6b · S3/S4/S6/S7** | Kalibrasyon alt-küme bileşimi, satıcı adları, paket-düzeyi tek `reflectance_scale`, RGB kare ayrımı | ⬜ | **E13** kararı |
+| ⬜ **K1** | `{tenant}` opaklaştırma | ⬜ | **MAJOR** — bu tur MINOR; sürüm penceresi kararı |
+| ⬜ **K3** | Saklama politikası MUST'ları | ⬜ | **D16-c**'ye bağlandı (KR-093 gövdesi tek yerde toplandı, MUST'lar oraya yazılacak) |
+| ⬜ **P1** | Çalışma zamanı zorlaması (Pydantic + `enforce=True`) | ⬜ | **platform deposu** · ⚠️ **SIRA KİLİDİ:** edge ürün sözlüğü hizalanmadan (E16) açılırsa edge çıktısı runtime'da reddedilir |
+| ⬜ **A5/A6 · A7** | Fenoloji eşlemesi · kanopi maskesi | ⬜ | **Agronomi kararı** — kaynak Bakanlık/TAGEM/dergipark düzeyinde teyit ister |
+| ⬜ **Ç2 · Ç4 adım 2-3 · S12** | Yayın politikası `n≥5` · portal/v2 · `DTM`/`POINT_CLOUD` | ⬜ | Ç4 → v2 penceresi · S12 → §12 motor kararı |
+
+> ### 🔒 KARAR TASLAĞI — **0.h Veri Yönetişimi** (K2, onay bekliyor)
+> **Sorun (K2):** plan §0 *"kamu araştırma projesi → veri yönetim planı, çiftçi rızası,
+> yayın/veri paylaşım politikası"* yükümlülüğünü **tanıyor** ama bu, listedeki **tek
+> eyleme dönüşmemiş** satırdı. Bu turda üç yeni veri kategorisi (öncelik bölgesi
+> poligonları + NDVI görselleri · seçilmiş ham kareler · denetim örneklemi etiketleri)
+> sözleşmeye girdi ve **hiçbiri** KR-090 saklama politikasında tanımlı değil (K3).
+>
+> **Taslak karar:**
+> 1. **Veri kategorisi kaydı zorunlu:** contract'a giren her yeni kişisel/konumsal veri
+>    kategorisi, aynı turda KR-090 saklama tablosuna bir satır ekler (süre + silme yolu +
+>    hukuki sebep). Kayıt yoksa kalem C8'e giremez.
+> 2. **Rıza metni ürün kararıdır, ama KAPSAMI sözleşmeden türetilir:** çiftçiye
+>    gösterilen rıza metni, `x-preliminary-content` + `raw_frames` + denetim kanalının
+>    kapsadığı veri kategorilerini eksiksiz saymalıdır.
+> 3. **Yayın/paylaşım politikası:** toplulaştırılmış çıktılarda **n≥5** eşiği (Ç2
+>    kalıntısı) — tek çiftçinin tarlası toplulaştırma içinde tanınamamalı.
+> 4. **Üçüncü kişi verisi:** komşu parsele taşan görüntü/izdüşüm **taşınmaz** (Ç7/D7 ile
+>    kare izdüşümü zaten kaldırıldı; kural genel hâle getirilir).
+>
+> **Onay:** ⬜ koordinatör · **Uygulama:** D16-c ile aynı turda (KR-090 + KR-093 gövdesi).
+
+
+P1 çalışma zamanı zorlaması (platform: Pydantic + `enforce=True`) · K1 `{tenant}` opaklaştırma (**MAJOR**) ·
+K2 plan §0 veri yönetişimi kararı (**yeni 0.h**) · K3 saklama politikası · **C6b + S3/S4/S6/S7** (E13 sonrası) ·
+**S5 `scale_factor`** — E13'ün **hemen ardından ilk sırada** (EVI/SAVI'yi sessizce bozuyor, NDVI gizliyor) ·
+G3/G4/G5 geometri geçerliliği · Ç4 adım 2-3 (AL-P1 portal, v2 null) · Ç2 kalıntısı (yayın politikasına `n≥5`) ·
+A7 kanopi maskesi · A5/A6 fenoloji eşlemesi · §12 motor kararı sonrası `DTM`/`POINT_CLOUD` (S12)
+
+### 🧭 STANDART KURALI (kullanıcı direktifi, 2026-07-31 — DAİMA)
+
+> **contract · edge · worker · platform AYNI standardı kullanır.** Bir ad, bir sözlük, bir
+> sürüm, bir biçim. Bir depoda farklı yazılan şey "yerel tercih" değil **sapmadır** (I-5) ve
+> geçici olabilir; kalıcı divergence yasaktır. Bu tur bunun üç örneğini kapattı: ürün sözlüğü
+> (AK-7), indeks adı (AK-1), test aracı sürümü (AK-4). **Yeni bir ad/sözlük icat etmeden önce
+> diğer üç depoda karşılığı var mı diye ÖLÇ.**
+
+### 14.5.1 🆕 2026-07-31 (KADEME 0+1+2) turunda DOĞAN açık kalemler
+
+> Bu tabloyu turun içinde bulduğum her şey için tutuyorum; başka hiçbir dosyada ikinci bir
+> liste yok (handoff yalnız buraya işaret eder). ✅ = aynı turda kapatıldı.
+
+| # | Açık kalem | Neden şimdi kapatılmadı | Nerede duruyor |
+|---|---|---|---|
+| ✅ **AK-1** | ~~`CHLOROPHYLL_A` bant gereksinimi TANIMSIZ~~ → **KAPANDI: `CHLOROPHYLL_A` → `LCI`.** Ad, worker'da **gerçekten uygulanan** indeksle birleştirildi (`src/indices/lci.py`: `LCI = (NIR−RedEdge)/(NIR+RedEdge)`) → gereksinim tahmin değil **ölçüm**: `[RED_EDGE, NIR]`. ⚠️ **LCI ≡ NDRE formülü** (worker `LCICalculator(NDRECalculator)`, H9/MD-9 kararı); ikisi bilerek ayrı: NDRE genel canlılık, LCI klorofil bozulması (fıstık psillid tespitinde NDWI+Green ile). ⇒ 4 bantlı drone da üretebilir; matriste `extended` altında kalması **ürün kararıdır**. Artık `index_requirements`'ta `null` girdi YOK | — | matris `index_requirements.LCI` · `x-layer-classes.map` · 3 yeni test (`TestCrossRepoNamesAreUnified`) |
+| ⬜ **P15** 🔴 | **AK-1'in platform yarısı:** `tarlaanaliz-platform/src/core/domain/value_objects/spectral_tier.py:51` → `EXTENDED_INDICES = ("EVI","SAVI","CHLOROPHYLL_A")` sabiti **`LCI`** olmalı. Ad birleştirmesinin tek canlı tüketicisi budur (ölçüldü: worker/edge'de eşleşme yok) | Ayrı depo, ayrı PR | plan §14.5.1 (bu satır) |
+| **AK-2** | **Dedektör `$ref` hedeflerini ÇÖZMEZ.** Retarget `REF_CHANGED` (NON_BREAKING) olarak görünür kılınır ama sınıflandırılmaz — bir `$ref`'i tamamen farklı bir şemaya çevirmek sessizce MINOR görünür | Çözüm, çapraz-dosya referans grafiği + döngü koruması ister; KADEME 0'ın kapsamı "kapılar dürüst olsun"du, "kapılar tam olsun" değil. **E3 kararı (C8'de `$ref` inline)** bu riski zaten büyük ölçüde ortadan kaldırır | `tools/breaking_change_detector.py` docstring "BİLİNEN SINIRLAR" + `docs/checklists/SDLC_GATES.md` §3E (elle inceleme maddesi) |
+| **AK-3** | **`NORMATIVE_ANNOTATION_KEYS` elle tutulan bir listedir** (5 anahtar). Yeni bir normatif `x-` bloğu eklenirse otomatik kapsanmaz | Otomatik kapsama, "hangi `x-` normatiftir" sorusunu çözmeyi gerektirir; `x-updated` gibi gürültü alanlarını da içine alırdı | `tools/breaking_change_detector.py` sabiti — yeni normatif blok eklerken listeye yazılmalı |
+| ✅ **AK-4** | ~~pytest sürüm sapması (yerel 9.0.2 / CI 8.4.2)~~ → **KAPANDI: her yerde pytest 9.x.** `requirements-dev.txt` `>=9.0.0,<10` · `pyproject.toml` `^9.0.0`; `pytest-cov` da hizalandı (`^7.0.0` — yerelde koşan sürüm). Kapının yerelde geçip CI'da farklı davranması, kapıya olan güveni yok eder — **sürüm sapması da bir sapmadır** | — | `requirements-dev.txt` · `pyproject.toml` · yerel doğrulama: pytest 9.0.2 + pytest-cov 7.0.0 ile kapsamlı koşum yeşil |
+| **AK-5** | **`x-compat-accepted` beyanları BAYATLAYABİLİR.** Bugün gerekçe *"üretici yok"* (ölçüldü). Üretici yazıldığında beyan hâlâ orada durur ve daraltmayı indirmeye devam eder | Beyanın "ne zaman geçersizleşeceğini" makine-okunur yazmak yeni bir alan (`valid_until` / `revisit_when`) ister — tasarım kararı | `schemas/edge/calibrated_dataset_manifest.v1.schema.json` (2 beyan) · testler yalnız beyanın **eksiksizliğini** zorluyor, tazeliğini değil |
+| **AK-6** | **E15/P14/E16 kardeş depo işleri** — D7/D8'in kod yarıları (edge `qc_report_writer` fail-loud · platform `worker_job_publisher` fail-open adımı) + C11'in edge yarısı (**E16** ürün adı biçimi + vendored yenileme) | Ayrı depo, ayrı CI, ayrı PR; bu oturum contract deposunda çalıştı | §14.1 (**E15**, **P14**) ve §14.2 (**E16**) satırları |
+| ✅ **AK-7** | ~~İki ürün vocabulary'sinin kök nedeni~~ → **KAPANDI: beş serbest metin alanının HEPSİ kanonik sözlüğe bağlandı.** ⚠️ **Sınıf taraması tek örneği değil BEŞİNİ buldu:** `edge/worker_result.v1.crop_type` (*"e.g. cotton, wheat"* — küçük harf örneği, edge sözlüğünün kaynağı) + **dört olay şeması** (`analysis_completed`, `analysis_review_requested`, `field_created`, `field_health_changed`) — dördü de açıklamasında *"reference: crop_type.enum.v1"* diyordu ama şema **hiçbir şeyi zorlamıyordu** (C0'ın manifestlerde kapattığı "prose var, zorlanabilirlik yok" sınıfı). **Daraltma güvenli mi? ÖLÇÜLDÜ:** platform ürünleri zaten BÜYÜK harf üretiyor (`crop_type.py:113,130`) · `worker_result.v1`'in **kod üreticisi yok** · platform şema zorlaması varsayılan **KAPALI** (`settings.py:190`). Beş alan da `x-compat-accepted` ile beyanlı; yeni **sınıf kapısı** (`test_crop_vocabulary_single_standard.py`, 8 test) serbest metin ürün alanının geri gelmesini yasaklıyor | — | 5 şema + kanonik enum · dedektör: 5× `ENUM_CONSTRAINT_ADDED` **ACCEPTED** |
+| ✅ **AK-10** | **ÇÖZÜLDÜ (araç + kapı): `tools/sync_kr_corpus.py`.** Ölçüm doğrulandı ve artık ÖLÇÜLEBİLİR: `--check` bugün **4/4 hedefte sapma** raporluyor (platform SSOT metni STALE · worker SSOT metni **MISSING** · her iki registry kopyası STALE). Araç bilerek iki kipli: `--check` ölçer (kapı), `--apply` yalnız operatör çalıştırır ve sonucu **kardeş depoda AYRI PR** olur — sessiz kopyalama C8'in görünmez yan etkisi olurdu. CRLF farkı sapma sayılmaz (normalize hash). Kapı SDLC_GATES §3C'ye eklendi + 9 test (kardeş depo gerektirmeyen, geçici dizinli davranış testleri). **Kalan iş operatörde:** `--apply` + iki kardeş depoda commit/PR | ⬜→✅ | **eski metin:** `kr_registry.md`: platform `docs/kr/` **1211 satır**, platform `contracts/ssot/` **1242**, worker `docs/reference/` **936** — üçünde de **KR-093 başlığı YOK**; contract'ta 1267. SSOT metni: contract **1906** ↔ platform **1895**, worker'da **hiç yok**. Yani hem registry hem SSOT metni alt-akışta bayat ve worker KR korpusunun yeni yarısını hiç görmüyor | Senkron aracı yok (C-SSOT-2 kökü): `tools/sync_to_repos.sh` yalnız `schemas/`+`enums/`+`CONTRACTS_VERSION.md` taşıyor. Çözüm bir araç kararı: salt-okunur drift dedektörü mü, gerçek dağıtım mı? | plan §14.5.1 · ölçüm bu turda |
+| ⬜ **P17** 🔴 | **SSOT metni senkronu BOZULDU (bu turda, bilinçli):** D17'nin KR-093 gövde düzeltmesi `docs/TARLAANALIZ_SSOT_v1_2_0.txt`'i değiştirdi → contract kopyası artık platform kopyalarından FARKLI (ölçüldü: contract `41e152a3…` · platform/docs `78a4f557…` · platform/contracts/docs `d525671f…`). C-SSOT'un kurduğu bayt-özdeşlik yeniden kurulmalı | Platform deposunda yapılır (ayrı PR); C8'in parçası. ⚠️ Not: platform'un İKİ kopyası var (`docs/` ve submodule `contracts/docs/`) ve bunlar **birbirinden de farklı** — yani senkron zaten kırıktı, bu tur onu görünür kıldı | plan §14.5.1 |
+| ⬜ **AK-9** 🔴 | **`stress_ratio` TANIMSIZ** — KR-093'ün `WATER_STRESS` kaleminin kaynağı olarak **3 yerde** anılıyor, **0 yerde** tanımlı (A3 doğrulandı). Worker `channel_spec.py` adı `derived_indices` listesinde taşıyor ama `compute_indices_v2` çıktısında hesap YOK: ad var, üretim yok | Formülü tahminle yazmak doğrulanamaz kapı üretir (`CHLOROPHYLL_A` dersi). WATER_STRESS artık `proxy_only` ve ön fazdan çıktığı için bugün **zorunlu teslimat değil** → tanım, termal/SWIR donanım kararıyla birlikte verilir | `analysis_type → metadata.indexDefinitions.stress_ratio` (`UNDEFINED_PENDING_DECISION` + gerekçe) · kapı: `test_single_normative_body.py` |
+| ⬜ **AK-8** | **`expert_labeling_card.calendar_risk_by_crop` FARKLI EKSEN kullanıyor:** anahtarları `^[a-z_]+$` ve örnekleri *"cereals, fruit_trees, cotton"* — yani mahsul **GRUBU** ile mahsul **ADI** aynı sözlükte karışıyor. Ürün sözlüğü kapısı bunu bilerek kapsam dışı bıraktı (farklı eksen) | Grup ekseninin kanonik bir sözlüğü YOK; tanımlamak agronomi kararıdır (hangi gruplar, hangi mahsul hangi gruba?) | `schemas/worker/expert_labeling_card.v1.schema.json` → `calendar_risk_by_crop.patternProperties` |
+
+## 14.7 🔜 SONRAKİ OTURUM — SIRALI İŞ LİSTESİ (2026-07-31 kapanışında yazıldı)
+
+> Bu tablo, oturum kapanışındaki **tek yürürlükteki sıradır**. Üstündeki kademeler
+> (§14.0–§14.5) neyin NEDEN yapıldığını anlatır; burası **ne yapılacağını** söyler.
+> Kural: bir kalem burada yoksa yapılmaz; yapılacaksa önce buraya yazılır.
+
+### ⛔ ÖNCE — C8 release törenini AÇAN kalemler (sırayla)
+
+| # | İş | Neden önce | Nerede |
+|---|---|---|---|
+| ✅ **1a** | **SSOT metni senkronu YAPILDI** — platform [PR #348](https://github.com/physiscs-zana/tarlaanaliz-platform/pull/348) (KR-093 gövdesi, +12/−1) · worker [PR #183](https://github.com/physiscs-zana/tarlaanaliz_worker/pull/183) (korpus **ilk kez** eklendi). AK-10'un yarısı kapandı |
+| ✅ **1b** | **ÇÖZÜLDÜ — kopyalama değil SINIFLANDIRMA.** Ayrışan içerik incelendi: bunlar bayat kopya değil, aynı KR'leri **farklı biçimde** anlatan **yerel render**'lar (platform `**Başlık:**/**Gerekçe:**` biçimi, 23 KR'de 143 satır · worker `**Normatif özet:**` biçimi, 35 KR'de 313 satır + sürüm notları). Çözüm: **hiçbir satır silinmedi** — her iki dosyanın başına *"KANONİK KR METNİ BURADA DEĞİL"* işaretçisi kondu (+20/−0), kanonik metin `TARLAANALIZ_SSOT_v1_2_0.txt` ve **çelişkide o kazanır**. Araç da düzeltildi: `kr_registry.md` artık **kopya hedefi değil**, yalnız işaretçi varlığı denetleniyor (`POINTER_OK`/`POINTER_MISSING`). Kural: bir KR'nin kuralı **önce contract'ta** değişir, sonra yansıtılır (tersi kalıcı divergence — I-5) |
+| ~~🛑 eski 1b~~ | ~~`kr_registry.md` KOPYALANAMAZ — AYRIŞMIŞ ÇATAL.~~ `--apply` ilk kez gerçek depolarda koşturulunca görüldü: kör kopyalama **platformda 143, worker'da 313 anlamlı satırı** yok edecekti (ör. worker'ın *"Admin Export Endpoint: POST /admin/training/export"*, bulut örtüsü çift eşik semantiği; platformun *"Risk & Business Continuity"* bölümü). Yani o kopyalar bayat değil, **kendi içerikleri olan çatallar**. Araç artık yazmadan önce ölçüyor ve **DOKUNMUYOR** (`DIVERGENT` durumu + 5 test). **Yapılacak: ELLE BİRLEŞTİRME** — D16-b deseni: contract'ta tek gövde, kardeş depoda işaretçi |
+| **1c** | ~~`sync_kr_corpus.py --apply` + PR~~ (1a ile yapıldı; 1b elle birleştirme bekliyor) | KR korpusu 4/4 hedefte sapmış; **worker SSOT metnini hiç taşımıyor**. Kural metnini görmeyen depo kuralı uygulayamaz | bu depo (araç) + 2 kardeş depo (PR) |
+| **2** | **D16-b2 — kalan 49 ikili gövde** | AR1 sınıfı açık: aynı KR iki yerde tanımlıysa biri sessizce bayatlar. Yön ve mekanizma KR-093'te kanıtlandı; kalanlar mekanik | `ssot/kr_registry.md` → işaretçi · gövde SSOT metnine |
+| **3** | **D4-b kararı** — parite kapısı CI'da koşsun mu? | CI'da **47 beyanlı skip** var; çapraz-repo sapmayı hiçbir kapı CI'da görmüyor (Y3). Ya PAT ile kardeş checkout, ya "yalnız C8'de yerel" yazılı kabul | koordinatör → CI |
+| **4** | **SD8 kararı** — etiketsiz 16 sürüm: retro-tag mı, kayıt notu mu? | I-2 değişmezi bugün tarihsel olarak TUTMUYOR; C8 bunu yalan raporlayamaz | koordinatör |
+| **5** | **0.h onayı** (K2 veri yönetişimi taslağı §14.5) | Üç yeni veri kategorisi sözleşmeye girdi, KR-090 saklama tablosunda yok (K3) | koordinatör |
+| **6** | **C6 kararı** = **E13** (RELATIVE mi DLS2_RELATIVE mi) | C6 koşullu MINOR; E13 kararı C6'dan ÖNCE gelir | edge ölçümü |
+| **7** | **C8 TÖRENİ** — `pin_version` → annotated tag → 3 depo pin | `SDLC_GATES §3G`; ön koşul: 1-6 kapanmış olmalı | bu depo + 3 depo |
+
+### 🔴 KARDEŞ DEPO İŞLERİ (contract'tan yapılamaz — her biri ayrı PR)
+
+| # | Depo | İş | Kaynak bulgu |
+|---|---|---|---|
+| **E15** | edge | `qc_report_writer`: `min(...,1.0)` kırpması kaldırılsın · `except → 0.0` **fail-loud** · `footprint_crs` okunup uyuşmazlıkta `crs_mismatch` yazılsın | G1 (KR-065 ödeme) |
+| **E16** | edge | Ürün sözlüğü BÜYÜK harfe: `sorties[].crop_type` üreticisi + vendored `worker_result` enum'u + fixture'lar | AK-7 |
+| **P14** | platform | `worker_job_publisher.py:80-84` fail-open `PANEL_ABSOLUTE` adımı kaldırılsın, tip yoksa `NONE` | S1 |
+| **P15** | platform | `spectral_tier.py:51` `EXTENDED_INDICES` → `CHLOROPHYLL_A` yerine **`LCI`** | AK-1 |
+| **P16** | platform | Konsensüs yolu `consensus_participation: EXCLUDED` satırını **saymamalı** | M2 |
+| **W8** | worker | Denetim satırı emisyonu: `tile_id`, π_h, rotation, bucket, `confidence_score: 0` tel üzerine yazılsın (sampler bunları zaten hesaplıyor) | M1/M3 |
+| **P1** | platform | Şema zorlaması (`enforce=True`) — ⚠️ **E16'dan SONRA** açılmalı, yoksa edge çıktısı runtime'da reddedilir | P1 |
+
+### ⏳ BLOKE — engeli kalkınca (sıra değil, koşul)
+
+`S5 scale_factor` + `C6b`/`S3`/`S4`/`S6`/`S7` → **E13 kararı** · `K1 {tenant}` → **MAJOR penceresi** ·
+`K3` saklama MUST'ları → **D16-c** (KR-093 gövdesi tek yerde) · `A5/A6` fenoloji · `A7` kanopi maskesi →
+**agronomi kararı (TAGEM/Bakanlık kaynaklı)** · `S12 DTM/POINT_CLOUD` → **§12 motor kararı** ·
+`Ç4 adım 2-3` → v2 penceresi · `C7` (tekil kare şeması) → **Tur 2, demo sonrası** ·
+`E11` kare seçici → **C8'den ÖNCE MERGE EDİLMEZ** (D10-E4 kilidi).
+
+### 🧪 KAPI BORCU (bu turda açık kalan)
+
+| # | Borç | Ölçüm |
+|---|---|---|
+| **AK-2** | Dedektör `$ref` hedeflerini çözmez (`REF_CHANGED` görünür ama sınıflandırılmaz) | E3 inline'ı riski büyük ölçüde kaldırdı |
+| **AK-3** | `NORMATIVE_ANNOTATION_KEYS` elle tutulan 5 anahtar | yeni normatif blok eklenirse listeye yazılmalı |
+| **AK-5** | 8 dosyada `x-compat-accepted` beyanı — gerekçe *"üretici yok"*; üretici yazılınca **bayatlar** | beyanlara `revisit_when` alanı eklenmeli |
+| **AK-8** | `calendar_risk_by_crop` mahsul GRUBU ile mahsul ADINI karıştırıyor | grup sözlüğü tanımsız (agronomi) |
+| **AK-9** | `stress_ratio` tanımsız (`UNDEFINED_PENDING_DECISION`) | WATER_STRESS `proxy_only` olduğu için bugün zorunlu değil |
+
+---
+
+## 14.6 Şüpheli bulgular — kapatılmadan önce ölçülecek
+
+`M2` platform konsensüs yolu · `M4` worker bulk_approval yolu · `M1/P4` emisyon kodu yazılırken ·
+`Q21` `pytest -q` ×5 ardışık · `SD8` retro-tag koordinatör kararı · `A7` TAGEM/Bakanlık literatür teyidi
