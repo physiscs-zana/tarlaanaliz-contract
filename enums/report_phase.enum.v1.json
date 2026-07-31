@@ -2,26 +2,67 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/enums/report_phase.enum.v1.json",
   "title": "ReportPhase",
-  "description": "Çiftçiye teslim onay fazı — KR-093 (İki-Fazlı Teslimat) kanonik. mission.status'tan TÜRETİLİR (ayrı state DEĞİL). result_mode (sensör-bandı fail-closed modu) ve report_tier (bant kalite sınıfı) ile KARIŞTIRILMAZ — üç bağımsız eksen. SSOT Uyum: 1.2.0.",
+  "description": "Çiftçiye teslim onay fazı — KR-093 (İki-Fazlı Teslimat) kanonik. mission.status'tan TÜRETİLİR (ayrı state DEĞİL). result_mode (sensör-bandı fail-closed modu) ve report_tier (bant kalite sınıfı) ile KARIŞTIRILMAZ — üç bağımsız eksen. PRELIMINARY fazının sunulabilir içeriği x-preliminary-content'te KAPALI liste olarak tanımlıdır (KR-093 + KG-0.b-R). SSOT Uyum: 1.2.0.",
   "type": "string",
   "enum": [
     "PRELIMINARY",
     "FULL"
   ],
   "x-enum-descriptions": {
-    "PRELIMINARY": "Ön rapor — uzman doğrulaması BEKLEMEDE. Yalnız deterministik indeks katmanları (NDVI→HEALTH, NDRE→NITROGEN_STRESS, stress_ratio→WATER_STRESS) + overall_health_index sunulur. Tespitler (hastalık/zararlı/yabancı-ot) İÇERMEZ (fail-closed, KR-019 önü). mission PENDING_REVIEW/ANALYZING durumundan türetilir.",
-    "FULL": "Tam rapor — uzman konsensüs kapısı ONAY (KR-019 yayın). Uzman-doğrulanmış tüm bulgular açılır. mission DONE durumundan türetilir."
+    "PRELIMINARY": "Ön rapor — uzman doğrulaması BEKLEMEDE. İki aşamalı içerik (bkz. x-preliminary-content): (A) kalibrasyon sonrası, worker sonucu HENÜZ YOKKEN öncelik bölgeleri (poligon + ndvi_value + priority_level + ndvi_overlay görseli); (B) worker sonucu geldiğinde ek olarak deterministik indeks katmanları (NDVI→HEALTH, NDRE→NITROGEN_STRESS, stress_ratio→WATER_STRESS) + overall_health_index. Tespitler (hastalık/zararlı/yabancı-ot findings) HİÇBİR aşamada İÇERİLMEZ (fail-closed, KR-019 önü). Ödeme kapısı (KR-033) her iki aşamada geçerlidir. mission UPLOADED / IN_ANALYSIS / PENDING_REVIEW durumlarından türetilir.",
+    "FULL": "Tam rapor — uzman konsensüs kapısı ONAY (KR-019 yayın). Uzman-doğrulanmış tüm bulgular açılır. mission DELIVERED durumundan türetilir (platform-içi ad: DONE)."
+  },
+  "x-preliminary-content": {
+    "description": "KR-093 [ZORUNLU] + KG-0.b-R (Y-D, 2026-07-30 onaylı): PRELIMINARY fazında çiftçiye sunulabilecek içeriğin KAPALI (exhaustive) listesi. Listede olmayan hiçbir alan ön fazda sunulmaz.",
+    "stage_a_post_calibration": {
+      "available_when": "mission UPLOADED — kalibrasyon bitti, worker sonucu YOK",
+      "source": "analysis_priority_zones (edge NdviPrioritizer çıktısı, intake_manifest EdgeForm.priority_zones üzerinden taşınır)",
+      "fields": [
+        "geom",
+        "ndvi_value",
+        "priority_level",
+        "ndvi_overlay"
+      ]
+    },
+    "stage_b_post_analysis": {
+      "available_when": "mission IN_ANALYSIS / PENDING_REVIEW — worker sonucu geldi",
+      "source": "worker analysis_result (deterministik indeks katmanları)",
+      "fields": [
+        "ortho",
+        "HEALTH",
+        "NITROGEN_STRESS",
+        "WATER_STRESS",
+        "overall_health_index"
+      ]
+    },
+    "never": [
+      "findings",
+      "detections",
+      "expert_corrections",
+      "prescription",
+      "treatment_recommendation"
+    ],
+    "rationale": "Aşama A gözlemsel bir indeks türevidir (NDVI eşiği + poligon), TESPİT DEĞİLDİR — KR-019 uzman kapısı zayıflamaz, KR-025 (reçete yok) korunur. Aşama B, KR-093'ün özgün tanımıdır ve DEĞİŞMEMİŞTİR."
   },
   "x-derived-from": {
-    "description": "report_phase mission.status'tan türetilir; bağımsız set edilemez (KR-093).",
+    "description": "report_phase mission.status'tan türetilir; bağımsız set edilemez (KR-093). Anahtarlar mission_status.enum.v1 KANONİK değerleridir — platform-içi adlar kullanılmaz (bkz. platform_internal_aliases).",
     "mapping": {
-      "ANALYZING": "PRELIMINARY",
+      "UPLOADED": "PRELIMINARY",
+      "IN_ANALYSIS": "PRELIMINARY",
       "PENDING_REVIEW": "PRELIMINARY",
-      "DONE": "FULL",
+      "DELIVERED": "FULL",
       "EXPERT_REJECTED": "WITHDRAWN (results özet API 409; katman sunulmaz)"
+    },
+    "unlisted_status_behavior": "FAIL-CLOSED: haritada olmayan bir mission.status için report_phase TÜRETİLMEZ ve sonuç/katman SUNULMAZ. 'Listelenmeyen = PRELIMINARY' varsayımı YASAKTIR — DRAFT/PLANNED gibi uçuş öncesi durumlar ön rapor üretmez.",
+    "platform_internal_aliases": {
+      "description": "Platform kendi MissionStatus enum'unda 13'lük alias alt-kümesi kullanır ve API sınırında kanoniğe çevirir (platform src/core/domain/entities/mission.py :: _STATUS_TO_CONTRACT). Bu harita KANONİK adlarla yazılır; çeviri platformun sorumluluğudur.",
+      "ANALYZING": "IN_ANALYSIS",
+      "DONE": "DELIVERED",
+      "ACKED": "ACCEPTED",
+      "FLOWN": "IN_PROGRESS"
     }
   },
   "x-kr-ref": ["KR-093", "KR-019", "KR-025", "KR-033"],
   "x-ssot-version": "1.2.0",
-  "x-updated": "2026-07-06"
+  "x-updated": "2026-07-31"
 }

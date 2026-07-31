@@ -58,6 +58,80 @@ manifest'e eklensin" diye planlandı, oysa `patches` alanı **hiçbir** calibrat
   → **beklenen**, C8'de kapanır (yukarıdaki uyarıya bakın).
 - **Gerekçe arşivi:** `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (D-1, D-4).
 
+### C9 + C10 — ÖN RAPOR (`report_phase`) kanonik tanımı: içerik listesi + statü eşlemesi
+
+**Tip:** MINOR (yalnız eklemeli metadata + açıklama; `enum` dizisi `{PRELIMINARY, FULL}` DEĞİŞMEDİ,
+hiçbir alan/`required` değişmedi — `breaking_change_detector`: 2 değişiklik, **0 breaking**).
+
+**Sorun (2026-07-31 denetimi, D-6/D-7/D-15):** KG-0.b-R (Y-D) kararı *"yeni faz/şema gerekmiyor"*
+diyordu. **Faz kısmı doğruydu, şema kısmı değildi** — üç ayrı eksende:
+
+1. **İçerik:** `analysis_preliminary_ready.v1` (*"carries **ONLY** deterministic index layers…"*) ve
+   `report_phase.enum.v1` (*"**Yalnız** deterministik indeks katmanları… sunulur"*) PRELIMINARY
+   içeriğini dört kaleme **kapatıyordu**; Y-D'nin göstereceği öncelik bölgesi (poligon +
+   `ndvi_value` + `ndvi_overlay`) o listede **yoktu**.
+2. **Zamanlama:** `x-derived-from.mapping` yalnız analiz-ve-sonrası statüleri sayıyordu. Y-D raporu
+   **kalibrasyondan hemen sonra** (mission `UPLOADED`) gösterilir → haritada **karşılığı yoktu.**
+   "Çalışıyor" görünmesinin tek sebebi platformun catch-all'uydu
+   (`results_service_impl.py:227` → `"FULL" if DONE else "PRELIMINARY"`), yani platform **kanonik
+   haritadan geniş** davranıyordu — contract-first (KR-081) projede demo bunun üstüne kuruluyordu.
+3. **Kanonik olmayan adlar:** mapping `ANALYZING` ve `DONE` kullanıyordu; `mission_status.enum.v1`
+   bunları **tanımıyor** (kanonik karşılıkları `IN_ANALYSIS` ve `DELIVERED`). **Dört girişin ikisi.**
+
+**Ön koşul (D-7):** `ssot/kr_registry.md` **KR-092'de bitiyordu**, ama contract'ın kendi artefaktları
+KR-093'e **normatif atıf** yapıyordu → sarkan kanonik atıf. Ek olarak contract'ın
+`docs/TARLAANALIZ_SSOT_v1_2_0.txt` kopyası **KR-084'te bitiyor**, platform kopyası KR-093'e kadar
+gidiyor — aynı adlı iki SSOT metni **ayrışmış** (hizalama ayrı kalem).
+
+### Added
+
+- **`ssot/kr_registry.md` → KR-093** *(Çiftçi Ön Raporu — İki-Fazlı Teslimat)*: kanonik registry'ye
+  taşındı; 8 bölümlü contract formatında, platform normatif metni (`docs/TARLAANALIZ_SSOT_v1_2_0.txt`
+  [KR-093] + `docs/kr/kr_registry.md`) esas alınarak. **KG-0.b-R (Y-D) eklentisi** açıkça işaretli;
+  AK-4 çapraz-repo notu eklendi (platform kopyalarının aynalaması ayrı kalem, sapma **geçici**).
+- **`enums/report_phase.enum.v1.json` → `x-preliminary-content`:** sunulabilir içeriğin **KAPALI**
+  listesi — `stage_a_post_calibration` (öncelik bölgeleri: `geom`/`ndvi_value`/`priority_level`/
+  `ndvi_overlay`; kaynak `analysis_priority_zones`) · `stage_b_post_analysis` (ortho + `HEALTH`/
+  `NITROGEN_STRESS`/`WATER_STRESS` + `overall_health_index`; **KR-093'ün özgün tanımı, değişmedi**) ·
+  **`never`** (`findings`, `detections`, `expert_corrections`, `prescription`,
+  `treatment_recommendation`). Gerekçe alanı: Aşama A **gözlemsel indeks türevidir, tespit değildir**
+  → KR-019 zayıflamaz, KR-025 korunur.
+- **`x-derived-from.unlisted_status_behavior`:** **FAIL-CLOSED** — haritada olmayan statü için faz
+  türetilmez ve sonuç sunulmaz. *"Listelenmeyen = PRELIMINARY"* varsayımı **yasaklandı** (aksi hâlde
+  `DRAFT`/`PLANNED` ön rapor üretirdi).
+- **`x-derived-from.platform_internal_aliases`:** platform 13'lük alias alt-kümesinin kanoniğe
+  çevrimi belgelendi (`ANALYZING→IN_ANALYSIS`, `DONE→DELIVERED`, `ACKED→ACCEPTED`,
+  `FLOWN→IN_PROGRESS`; kaynak platform `mission.py::_STATUS_TO_CONTRACT`).
+- **`tests/test_report_phase_contract.py` (19 test):** mapping anahtarlarının **tamamı**
+  `mission_status.enum.v1` üyesi olmalı *(bu kapı eski `ANALYZING`/`DONE` ile **düşüyor** — kanıtlandı)* ·
+  `UPLOADED → PRELIMINARY` (Y-D anı) · `FULL` yalnız `DELIVERED`'dan · `EXPERT_REJECTED` → WITHDRAWN ·
+  uçuş öncesi statüler haritada olmamalı · fail-closed kuralı yazılı olmalı · Aşama A/B alan kapıları ·
+  **hiçbir aşamada tespit içeriği olmamalı** · olay açıklaması faz-düzeyi "ONLY" iddiasında
+  bulunmamalı · `x-kr-ref`'teki her KR registry'de **tanımlı** olmalı (genel sarkan-atıf kapısı).
+
+### Changed
+
+- **`enums/report_phase.enum.v1.json`:** `x-derived-from.mapping` **kanonik adlarla** yeniden yazıldı
+  ve Y-D anı eklendi → `UPLOADED`/`IN_ANALYSIS`/`PENDING_REVIEW` → `PRELIMINARY`; `DELIVERED` → `FULL`;
+  `EXPERT_REJECTED` → WITHDRAWN (409). `x-enum-descriptions.PRELIMINARY` iki aşamalı içeriği anlatacak
+  biçimde güncellendi. `x-updated` → 2026-07-31.
+- **`schemas/events/analysis_preliminary_ready.v1.schema.json`:** açıklamadaki *"the preliminary phase
+  carries ONLY…"* **faz-düzeyi** iddiası, **olayın kendi payload'ına** daraltıldı; faz içeriğinin
+  kanonik kaynağı olarak `report_phase.enum.v1 :: x-preliminary-content` gösterildi. Olayın **yalnız
+  Aşama B'yi** haber verdiği, Aşama A'nın okuma yoluyla sunulduğu ve **yeni wire olayı eklenmediği**
+  yazıldı. KR-019 ifadesi (*"NO expert-dependent detections"*) **korundu**.
+
+### Notes
+
+- **Y-D kararı değişmedi** — kanonik tanım onu **kapsayacak** biçimde genişletildi. ADR-007 §2
+  (yeni mission state yok) ve §5 (Aşama B bildirimi) korunur; `report_phase` kümesi `{PRELIMINARY, FULL}`.
+- **Platform tarafı borç:** `docs/kr/kr_registry.md` + `docs/TARLAANALIZ_SSOT_v1_2_0.txt` bu metni
+  aynalamalı; `results_service_impl.py:227` catch-all'u kanonik mapping'e daraltılmalı (P12 kabul
+  kriteri). AK-4: sapma **geçicidir**.
+- **Doğrulama:** `validate.py` 89 dosya / 0 hata · `pytest` **579 geçti (+19 yeni)** ·
+  `breaking_change_detector` **0 breaking**. Beklenen tek kırmızı: checksum (C8'de kapanır).
+- **Gerekçe arşivi:** `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (D-6, D-7, D-15).
+
 ---
 
 ## [7.2.0] - 2026-07-14
