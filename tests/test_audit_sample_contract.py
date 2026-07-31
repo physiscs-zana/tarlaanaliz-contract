@@ -64,13 +64,27 @@ def _base(**overrides: object) -> dict:
 
 
 def _audit(**overrides: object) -> dict:
+    """Geçerli bir DENETİM paketi.
+
+    ⚠️ 2026-07-31 (KADEME 3 / D12-D15) ile genişledi: denetim satırı artık ölçüm
+    bütünlüğü alanlarını da taşımak ZORUNDA — JOIN anahtarı (`tile_id`, M3), konsensüs
+    dışlaması (`consensus_participation`, M2) ve seçim kanıtı (π_h + rotation + bucket,
+    M1). Ayrıntılı davranış testleri `tests/test_audit_measurement_integrity.py`'de;
+    burada yalnız AL-C1/AL-C2 eksenleri (bayrak↔neden, i.i.d. bağımsızlık) ölçülüyor.
+    """
     payload = _base(
         escalation_reason="AUDIT_SAMPLE",
+        confidence_score=0,  # Ç4/M7: denetim satırında güven kanalı kapalı (const: 0)
         audit_sample=True,
         audit_stratum={"crop_type": "CORN", "analysis_type": "DISEASE"},
         predicted_class=None,
         detection_type=None,
         sub_specialty=None,
+        tile_id="tile_0f1e2d3c",
+        consensus_participation="EXCLUDED",
+        audit_selection_rate=0.05,
+        audit_rotation_key="2026-W31",
+        audit_bucket=42,
     )
     payload.update(overrides)
     return payload

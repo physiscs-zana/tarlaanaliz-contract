@@ -105,7 +105,20 @@ PENDING_PROPAGATION: dict[str, dict] = {
         "why": "C3′ (KG-0.c seçilmiş ham kareler) — edge vendored kopyaya C8'de yayılır",
     },
     "expert_review_queue.v1.schema.json": {
-        "properties": {"audit_sample", "audit_stratum"},
+        "properties": {
+            "audit_sample",
+            "audit_stratum",
+            # KADEME 3 (D12–D15, 2026-07-31) — denetim satırının ÖLÇÜM BÜTÜNLÜĞÜ alanları.
+            # Hepsi denetim satırında zorunlu, olağan incelemede opsiyonel; worker vendored
+            # kopyasına C8'de yayılır. Worker üreticisi (audit_set_sampler) π_h ve bucket'ı
+            # ZATEN hesaplıyor — yayılım, hesaplananı tele koymaktır.
+            "tile_id",
+            "consensus_participation",
+            "audit_selection_rate",
+            "audit_rotation_key",
+            "audit_bucket",
+            "spot_check_suppressed",
+        },
         "required": set(),
         "why": (
             "AL-C2 (i.i.d. denetim-modu alanları) — worker vendored kopyaya C8'de yayılır. "

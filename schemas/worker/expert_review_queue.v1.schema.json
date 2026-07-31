@@ -274,6 +274,45 @@
         "analysis_type"
       ],
       "additionalProperties": false
+    },
+    "tile_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128,
+      "description": "Bu incelemenin işaret ettiği TEKİL tile'ın kimliği — ölçüm JOIN anahtarı (M3).\n\n**Neden zorunlu (audit_sample=true altında):** denetim örnekleminin amacı, uzman etiketini modelin çıktısıyla KARŞILAŞTIRMAKTIR. `analysis_result.detections` bir DİZİDİR ve tile düzeyinde `tile_id` taşır; `job_id` ile JOIN etmek bir işin TÜM tespitlerini getirir, hangisinin denetlendiğini söylemez. Anahtar olmadan `propagation_precision` (yayılım isabeti) HESAPLANAMAZ — yani ölçüm hattı, ölçmesi gereken şeyi ölçemez."
+    },
+    "consensus_participation": {
+      "type": "string",
+      "enum": [
+        "PARTICIPATES",
+        "EXCLUDED"
+      ],
+      "default": "PARTICIPATES",
+      "description": "Bu inceleme satırı KR-019 uzman KONSENSÜSÜNE katılır mı? (M2)\n\n🔴 **Denetim satırı KATILMAZ (`EXCLUDED`) — sözleşme düzeyinde zorunludur.** Denetim satırı, modeli ÖLÇMEK için çekilir; konsensüse kardeş inceleme olarak girerse iki şey birden bozulur: ① kör uzmanın etiketi yayın kapısını bloke edebilir (ölçüm, ölçtüğü sistemi DEĞİŞTİRİR — gözlemci etkisi) ② denetim etiketi, denetlediği kararın parçası hâline gelir (dairesellik).\n\n`PARTICIPATES` olağan uzman incelemesidir; kapı yalnız denetim satırında `EXCLUDED` zorunlu kılar, tersi serbesttir."
+    },
+    "audit_selection_rate": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "description": "π_h — bu satırın ait olduğu TABAKADAN (stratum) seçilme OLASILIĞI (M1/Y1).\n\n**Neden zorunlu:** tabaka etiketi tek başına yansız kestirim vermez. Horvitz-Thompson kestiricisi her gözlemi 1/π_h ile ağırlıklar; π_h tel üzerinde taşınmıyorsa denetim örnekleminden POPÜLASYONA geçiş yapılamaz — elde 'seçilmiş birkaç tile'ın doğruluğu' kalır, sistemin doğruluğu değil. Üretici: worker `audit_set_sampler` (stratifiye Bernoulli çekiliş)."
+    },
+    "audit_rotation_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Çekilişin DÖNEM anahtarı (ör. hafta/parti kimliği) — seçim kanıtının bir parçası (M1).\nAynı tabakanın farklı dönemlerdeki çekilişlerini ayırır; olmadan 'aynı tile tekrar mı seçildi, yoksa yeni dönem mi' sorusu cevaplanamaz ve bağımsızlık varsayımı denetlenemez."
+    },
+    "audit_bucket": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Çekilişte kullanılan deterministik kova (hash bucket) — seçimin YENİDEN ÜRETİLEBİLİR kanıtı (M1). `audit_rotation_key` ile birlikte, bir tile'ın neden seçildiği sonradan denetlenebilir olur (çekiliş 'öyleydi' değil, 'şu kovaya düştü' diye gösterilir)."
+    },
+    "spot_check_suppressed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Bu satır spot_check olarak da seçilecekken denetim çekilişi KAZANDIĞI için spot_check bastırıldı mı? (Ç1)\n\n**Normatif öncelik kuralı:** denetim çekilişi ÖNCE ve modelden BAĞIMSIZ yapılır; çakışma hâlinde **`audit_sample` kazanır**, `spot_check` bastırılır ve bu alan `true` yazılır. Kural olmadan iki mekanizma birbirini sessizce dışlar ve `P(denetim | spot_check) = 0` koşullandırması i.i.d. varsayımını bozar.\n\n⚠️ **Sunumsal şart (A'nın nüansı):** aynı inceleme çiftçiye/uzmana hem 'modeli denetle' hem 'modelden bağımsız etiketle' olarak RENDER EDİLEMEZ; bastırma bu yüzden veri kaybı değil, sunum tekilliğidir."
     }
   },
   "unevaluatedProperties": false,
@@ -366,6 +405,55 @@
           }
         }
       }
+    },
+    {
+      "$comment": "D12+D13+D14+D15 (2026-07-31) — denetim satırının ÖLÇÜM BÜTÜNLÜĞÜ. Bu blok, 'ölçüm aracının ölçtüğü sistemi değiştirmemesi' şartını sözleşmeye yazar.",
+      "if": {
+        "properties": {
+          "audit_sample": {
+            "const": true
+          }
+        },
+        "required": [
+          "audit_sample"
+        ]
+      },
+      "then": {
+        "required": [
+          "tile_id",
+          "consensus_participation",
+          "audit_selection_rate",
+          "audit_rotation_key",
+          "audit_bucket"
+        ],
+        "properties": {
+          "consensus_participation": {
+            "const": "EXCLUDED",
+            "$comment": "M2: denetim satırı KR-019 konsensüsüne katılamaz."
+          },
+          "tile_id": {
+            "type": "string",
+            "minLength": 1,
+            "$comment": "M3: ölçüm JOIN anahtarı; audit satırında null olamaz."
+          },
+          "tile_group_id": {
+            "const": null,
+            "$comment": "M4: denetim satırı bir GRUBA bağlanamaz — toplu onay yayılımı denetim etiketini kendi ölçtüğü yayılıma besler ve propagation_precision YAPISAL olarak 1'e gider (ölçüm kendini doğrular)."
+          },
+          "tile_group_size": {
+            "const": 1,
+            "$comment": "M4: denetim satırı tek tile'dır."
+          },
+          "required_reviewers": {
+            "const": 1,
+            "$comment": "Ç1/M2: konsensüs dışı olduğu için çoklu-uzman kuralı uygulanmaz; sabit tutulur ki inceleme yükü tabakalar arasında değişmesin."
+          },
+          "confidence_score": {
+            "const": 0,
+            "$comment": "Ç4 adım 1 (M7): denetim satırında model GÜVENİ tel üzerinde bilgi taşımaz — anti-anchoring. `const: 0` bilgi kanalını kapatır; alan `required` olduğu için kaldırılamaz (o MAJOR olurdu), bu yüzden bağlam-bazlı sabitlenir. Bkz. x-deprecated-in-context."
+          }
+        }
+      }
     }
   ],
   "x-anti-anchoring": {
@@ -374,5 +462,21 @@
     "measurement_join": "Metrikler modelin tahminini job_id ile analysis_result'tan JOIN ederek elde eder; uzman-facing pakette taşınmasına gerek yoktur.",
     "source": "worker denetim/audit_escalation_reason_devir_spec_2026_07_19.md §3-B, §4"
   },
-  "x-updated": "2026-07-31"
+  "x-updated": "2026-07-31",
+  "x-deprecated-in-context": {
+    "confidence_score": {
+      "context": "audit_sample == true",
+      "since": "2026-07-31",
+      "policy": "const:0 (bilgi kanalı kapalı)",
+      "window": "2 MINOR sürüm: bu pencerede alan denetim satırında `0` sabitidir. Pencere sonunda v2'de denetim satırından TAMAMEN kaldırılması değerlendirilir (kaldırma MAJOR'dır — bu yüzden şimdi yapılmaz).",
+      "why": "M7/Ç4: `const:0` bilgi kanalını kapatır ama 'seviye kaymasını' (uzmanın, denetim satırı olduğunu anlayıp farklı davranması) kapatmaz — o SD11'in sunum/deprecation ekseninde çözülür. İki eksen DİK; sıralı uygulanır.",
+      "blocked_by": "M2/M3 kapanmadan bu kalem İKİNCİLDİR (ML/DS ajanının bağlayıcı uyarısı) — bu turda M2 (consensus_participation) ve M3 (tile_id) kapatıldığı için adım 1 uygulanabilir hâle geldi."
+    }
+  },
+  "x-compat-accepted": {
+    "change": "kök `allOf` bileşimi eklendi (yok → 5 koşullu blok)",
+    "date": "2026-07-31",
+    "rationale": "Bileşim kısıtı EKLEMEK biçimsel olarak daraltmadır, ama ÖLÇÜLDÜ: beş bloğun BEŞİ de `audit_sample: true` (ya da `escalation_reason: AUDIT_SAMPLE`) koşulludur ve bu iki alan aynı YAYIMLANMAMIŞ turda (AL-C1/AL-C2) eklendi. Denetim satırı üreten bir kod henüz YOK (worker `audit_set_sampler` emisyonu yazılmadı — denetim bulgusu M1/P4: 'kayıp değil, hiç bağlanmamış'). Dolayısıyla olağan bir inceleme belgesinde `if` HİÇ ateşlenmez; eski üreticiler etkilenmez. Blokların işi, denetim kanalının ölçüm bütünlüğünü (M2/M3/M4/Ç1/Ç4) sözleşme düzeyinde zorlamaktır.",
+    "ref": "eylem planı §14.3 (D12–D15) · denetim bulguları M1–M4, Ç1, Ç4"
+  }
 }

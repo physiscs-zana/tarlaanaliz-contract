@@ -147,6 +147,35 @@ class TestNestedStructuralChanges:
         new = _wrap({"allOf": [{"type": "object"}, {"required": ["x"]}]})
         assert _run(tmp_path, old, new)["has_breaking"], "allOf dalı eklemek kısıt ekler"
 
+    @pytest.mark.parametrize("key", ["allOf", "oneOf", "anyOf", "prefixItems"])
+    def test_first_composition_constraint_is_breaking(self, tmp_path: Path, key: str) -> None:
+        """HİÇ YOKKEN bileşim eklemek de daraltmadır — eski sürüm bunu HİÇ görmüyordu.
+
+        Ölçüldü (2026-07-31/KADEME 3): `expert_review_queue`'ya 5 koşullu `allOf` bloğu
+        eklendi; iki tarafta da liste şartı arandığı için dedektör **hiçbir şey**
+        raporlamadı. Kısıt eklemenin görünmez olması, kapının sessizce gevşemesidir.
+        """
+        old = _wrap({"type": "object"})
+        new = _wrap({key: [{"type": "object"}]})
+        result = _run(tmp_path, old, new)
+        assert result["has_breaking"], f"{key} hiç yokken eklenmesi görünmüyor"
+        assert any(c["type"] == "COMPOSITION_BRANCH_CHANGED" for c in result["breaking"])
+
+    def test_first_composition_can_be_declared(self, tmp_path: Path) -> None:
+        """Beyanla indirilebilir — ama beyan RAPORDA görünür (sessiz istisna değil)."""
+        old = _wrap({"type": "object"})
+        new = _wrap({
+            "allOf": [{"type": "object"}],
+            "x-compat-accepted": {
+                "change": "test", "date": "2026-07-31",
+                "rationale": "ölçüldü: koşullu bloklar yalnız yeni alanlarda ateşlenir",
+                "ref": "test",
+            },
+        })
+        result = _run(tmp_path, old, new)
+        assert not result["has_breaking"]
+        assert any("ACCEPTED TIGHTENING" in c["message"] for c in result["non_breaking"])
+
 
 class TestContextSubsets:
     """`x-context-subsets` — şema `enum`'u değişmeden bağlam sözlüğü daralabilir.

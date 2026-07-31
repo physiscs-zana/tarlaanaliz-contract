@@ -57,8 +57,14 @@ karşı kırardı) · **E3** `$ref` kararı yazıldı (§14.2.1, **onay bekliyor
 deseni ODM/GDAL/boşluk/Türkçe adlarını kabul ediyor, traversal korumasını koruyor (13 vaka) ·
 **E6** `maxItems` 8000. **Aktif kilit:** E11 **C8'den önce merge edilmez** (E4).
 
-### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **KADEME 3** (§14.3 denetim aletini onar: D12…D15)
-Sonra KADEME 4 (§14.4 normatif kaynak tekilliği: D16…D18).
+### ✅ KADEME 3 de bu oturumda yapıldı
+**D12** konsensüs dışlaması (`consensus_participation: EXCLUDED`) + JOIN anahtarı (`tile_id`) +
+grup yasağı · **D13** seçim kanıtı (π_h + rotation + bucket) · **D14** öncelik kuralı +
+`spot_check_suppressed` · **D15** `confidence_score: const 0` + 2-MINOR deprecation penceresi ·
+plan dışı **D3-d** (hiç yokken bileşim eklemek dedektöre görünmüyordu).
+⚠️ Worker/platform yarıları açık: **W8** (emisyon) · **P16** (konsensüs yolu EXCLUDED saymamalı).
+
+### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **KADEME 4** (§14.4 normatif kaynak tekilliği: D16…D18)
 
 **Karar bekleyenler:** **§14.2.1** `$ref` inline kararı (C8'in ön koşulu) · **D4-b** (parite
 kapısı CI'da koşsun mu) · **D4-c** (`drone_capability_matrix.yaml` normatif ama checksum/dedektör

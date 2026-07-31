@@ -157,6 +157,7 @@ ACCEPTABLE_TYPES = frozenset({
     ChangeType.MIN_MAX_TIGHTENED.value,
     ChangeType.PATTERN_TIGHTENED.value,
     ChangeType.ENUM_CONSTRAINT_ADDED.value,
+    ChangeType.COMPOSITION_BRANCH_CHANGED.value,
 })
 #: Beyan bu alanları taşımak ZORUNDA (boş kaşe olmasın diye; tests ile zorlanır).
 ACCEPTANCE_REQUIRED_FIELDS = ("change", "date", "rationale", "ref")
@@ -302,6 +303,23 @@ class BreakingChangeDetector:
         for key in SUBSCHEMA_LISTS:
             old_list, new_list = old_node.get(key), new_node.get(key)
             if not isinstance(old_list, list) or not isinstance(new_list, list):
+                # HİÇ YOKKEN bileşim kısıtı EKLEMEK de bir daraltmadır ve eski sürümde
+                # sessizdi: iki tarafta da liste şartı arandığı için `allOf` yokken
+                # eklenmesi HİÇ raporlanmıyordu (2026-07-31/KADEME 3'te ölçüldü —
+                # expert_review_queue'ya 5 blok eklendi, dedektör "0 değişiklik" dedi).
+                if isinstance(new_list, list) and old_list is None:
+                    self._record({
+                        'type': ChangeType.COMPOSITION_BRANCH_CHANGED.value,
+                        'severity': 'BREAKING',
+                        'file': schema_path,
+                        'field': self._loc(pointer, key),
+                        'old_count': 0,
+                        'new_count': len(new_list),
+                        'message': (
+                            f"Composition constraint added: {self._loc(pointer, key)} did not "
+                            f"exist, now has {len(new_list)} branch(es) in {schema_path}"
+                        ),
+                    }, new_node)
                 continue
             self._compare_composition_arity(key, old_list, new_list, schema_path, pointer)
             for index in range(min(len(old_list), len(new_list))):

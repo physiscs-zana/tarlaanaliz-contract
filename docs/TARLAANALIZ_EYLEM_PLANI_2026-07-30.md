@@ -1711,7 +1711,10 @@ ticarileşmeyecek bir hat için düşünün.
 > **KADEME 2 ✅ iş kalemleri TAMAM** — C11 absorpsiyonu (D10-E2) · C2″ hükmü düzeltildi (E1) ·
 > `$ref` kararı yazıldı (E3 → §14.2.1, **onay bekliyor**) · `relative_path` deseni gerçek çıktıyı
 > kabul ediyor (E5) · `maxItems` 8000 (E6). **Aktif kilit:** E11 **C8'den önce merge edilmez** (E4).
-> **Sıradaki: KADEME 3 (§14.3 denetim aletini onar)** → KADEME 4 (§14.4 normatif kaynak tekilliği).
+> **KADEME 3 ✅ TAMAM** — D12…D15 + plan dışı D3-d (bileşim körlüğü). Denetim satırı artık
+> ölçtüğü sistemi değiştiremiyor: konsensüs dışı · JOIN anahtarlı · gruba bağlanamaz ·
+> seçim kanıtı (π_h) taşır · model güveni kapalı.
+> **Sıradaki: KADEME 4 (§14.4 normatif kaynak tekilliği: D16…D18).**
 > **Açık kalan kararlar:** **§14.2.1 `$ref` onayı** · **D4-b** (parite kapısı CI'da) · **D4-c**
 > (matris sürümleme kapsamı) · **SD8** (etiketsiz 16 sürüm) · **C6b/E13** · **AK-1** CHLOROPHYLL_A.
 > **Başka depoya düşen iş:** **E15** (edge fail-loud) · **P14** (platform fail-open adımı) ·
@@ -1800,14 +1803,21 @@ release checklist'ine (§3G) girer.
 
 **Onay:** ⬜ koordinatör *(onaylanana kadar C8 başlatılmaz — D10 kilidi)*
 
-## 14.3 KADEME 3 — Denetim aletini onar
+## 14.3 KADEME 3 — Denetim aletini onar — ✅ **TAMAM (2026-07-31)**
 
-| # | İş | Not |
+> **Tema:** ölçüm aracı, ölçtüğü sistemi DEĞİŞTİRMEMELİ. Dördü de aynı şemada
+> (`schemas/worker/expert_review_queue.v1.schema.json`), tek `allOf` bloğunda ve
+> **28 davranış testiyle** (`tests/test_audit_measurement_integrity.py`) bağlandı.
+> Dedektör: 0 breaking (bileşim eklemesi **beyanlı**).
+
+| # | İş | Durum |
 |---|---|---|
-| **D12** | **M2+M3+M4 birlikte:** "denetim satırı KR-019 konsensüsüne **KATILMAZ**" · `tile_id` zorunlu · `tile_group_id:null` + `size:const 1` | M'nin uyarısı bağlayıcı: bunlar kapanmadan D15 ikincil |
-| **D13** | **M1/Y1:** `audit_selection_rate` (π_h) + `audit_rotation_key` + `audit_bucket` | ⚠️ `audit_stratum` **opak dize kalsın** — A6'nın bozuk eşlemesini tele çimentolama |
-| **D14** | **Ç1:** öncelik kuralı normatif metin + `spot_check_suppressed` + `required_reviewers` sabit | |
-| **D15** | **Ç4 adım 1:** `confidence_score: {"const": 0}` + `x-deprecated-in-context` + CHANGELOG `Deprecated` | 2-MINOR penceresi başlar |
+| ✅ **D12** | **M2:** yeni `consensus_participation` alanı — denetim satırında **`EXCLUDED` zorunlu** (kör uzmanın etiketi yayın kapısını bloke edemez; denetim etiketi denetlediği kararın parçası olamaz) · **M3:** `tile_id` denetim satırında **zorunlu ve null olamaz** — `analysis_result.detections` bir DİZİ olduğu için `job_id` JOIN'i hangi tile'ın denetlendiğini söylemiyordu, yani `propagation_precision` hesaplanamıyordu · **M4:** denetim satırında `tile_group_id: const null` + `tile_group_size: const 1` — toplu onay yayılımı, denetim etiketini kendi ölçtüğü yayılıma besliyor ve isabeti **yapısal olarak 1'e** çekiyordu | ✅ |
+| ✅ **D13** | **M1/Y1:** `audit_selection_rate` (π_h, `0 < x ≤ 1`) + `audit_rotation_key` + `audit_bucket` — üçü de denetim satırında **zorunlu**. Tabaka etiketi tek başına yansız kestirim vermez; Horvitz-Thompson her gözlemi `1/π_h` ile ağırlıklar. ⚠️ **BİLİNÇLİ SAPMA:** plan *"`audit_stratum` opak dize kalsın"* diyordu; **yapı KORUNDU** çünkü ölçüldü — `crop_type`/`analysis_type` eksenleri kanonik enum'larla birebir eşleşiyor, onları dizeye çevirmek bilgi kaybı olurdu. Tartışmalı olan tek eksen **fenoloji** (A5/A6: contract enum'u 8 ürünün 3'ünü kapsıyor, edge takvimi ayrı sözlük) → **opsiyonel kaldı ve zorunlu yapılması test ile YASAKLANDI** (`test_phenology_axis_is_not_required`) | ✅ |
+| ✅ **D14** | **Ç1:** öncelik kuralı sözleşmeye normatif olarak yazıldı — *"denetim çekilişi ÖNCE ve modelden bağımsız; çakışmada `audit_sample` kazanır"* + yeni `spot_check_suppressed` bayrağı + denetim satırında `required_reviewers: const 1` (inceleme yükü tabakalar arasında değişip ölçümü kirletmesin) | ✅ |
+| ✅ **D15** | **Ç4 adım 1:** denetim satırında `confidence_score: const 0` (anti-anchoring — model güveni tel üzerinde bilgi taşımaz) + **`x-deprecated-in-context`** beyanı (bağlam · tarih · politika · **2-MINOR penceresi** · gerekçe · M2/M3 bağımlılığı). Alan `required` olduğu için KALDIRILAMAZ (o MAJOR olurdu) → bağlam-bazlı sabitlendi | ✅ |
+| ✅ **D3-d** 🆕 | **KADEME 3'te doğan dedektör körlüğü:** *hiç yokken* bileşim kısıtı eklemek (`allOf`/`oneOf`/`anyOf`/`prefixItems`) **raporlanmıyordu** — iki tarafta da liste şartı arandığı için `expert_review_queue`'ya eklenen **5 blok** "0 değişiklik" görünüyordu. `ENUM_CONSTRAINT_ADDED` ile aynı sınıf. Kapatıldı + 5 test. Bu turun bloklarına beyan yazıldı: ölçüldü, **5 bloğun 5'i de** `audit_sample`/`AUDIT_SAMPLE` koşullu ve o alanlar aynı yayımlanmamış turda eklendi ⇒ eski belgelerde `if` hiç ateşlenmez | ✅ |
+| ⬜ **W8** 🔴 | **KADEME 3'ün worker yarısı:** `audit_set_sampler` π_h/bucket'ı **zaten hesaplıyor** ama emisyon kodu yazılmadı (M1/P4: *"kayıp değil, hiç bağlanmamış"*). Worker denetim satırını üretirken artık zorunlu olan altı alanı (`tile_id`, `consensus_participation`, π_h, rotation, bucket, `confidence_score: 0`) yazmalı; platform konsensüs yolu da `EXCLUDED` satırı saymamalı (**P16**) | ⬜ |
 
 ## 14.4 KADEME 4 — Normatif kaynak tekilliği
 
