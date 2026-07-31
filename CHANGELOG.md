@@ -132,6 +132,77 @@ gidiyor — aynı adlı iki SSOT metni **ayrışmış** (hizalama ayrı kalem).
   `breaking_change_detector` **0 breaking**. Beklenen tek kırmızı: checksum (C8'de kapanır).
 - **Gerekçe arşivi:** `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (D-6, D-7, D-15).
 
+### C1′ + C3′ — kalibre manifest alanları (kelime dağarcığı KANONİK kaynaktan türetildi)
+
+**Tip:** MINOR (yalnız **opsiyonel** alanlar; `required` ve mevcut `enum`'lar değişmedi —
+`breaking_change_detector`: **0 breaking**).
+
+**Tekrar eden hata sınıfı, üçüncü kez:** plan C1′ için `layer_type(ortho/ndvi/ndre/**ndwi**)`
+öneriyordu. Ölçüldü — kanonik indeks kümesi **`drone_capability_matrix.yaml → available_indices`**
+altında yaşıyor (`core: NDVI, NDRE, GNDVI, CIR` · `extended: EVI, SAVI, CHLOROPHYLL_A` ·
+`thermal: CWSI, CANOPY_TEMP, CANOPY_SOIL_DELTA` + `IRRIGATION_EFFICIENCY`) ve **NDWI orada YOK.**
+Aynı biçimde plan `calibration_tier` diyordu; contract'ta öyle bir ad **yok** — kanonik ad
+`calibration_type`, alt-kümeleri `calibration_type.enum.v1 → x-context-subsets`'te.
+⇒ İkisi de **uydurulmadı, türetildi.**
+
+### Added — C1′ (`schemas/platform/calibrated_dataset_manifest.v1`)
+
+- **`$defs.file_artifact.layer_type`** (opsiyonel): `ORTHO`, `DSM` + **11 kanonik indeks**
+  (matristen türetildi). `type` alanıyla karışmaz — `type` tüketici-tanımlı serbest etiket.
+- **`$defs.file_artifact.band`** (opsiyonel): vocabulary `intake_manifest.available_bands` ile
+  **aynı** (`BLUE/GREEN/RED/RED_EDGE/NIR/LWIR`); ayrı liste açılmadı.
+- **top-level `calibration_type`** (opsiyonel): alt-küme `[ABSOLUTE, PANEL_ABSOLUTE,
+  DLS2_RELATIVE, RELATIVE]`. **Paket başına tekil**. `NONE` **dışarıda** (KR-018 hard reject).
+- **`x-registry-sync`**: türetim kaynağı şemada yazılı.
+- **`enums/calibration_type.enum.v1` → `x-context-subsets['platform/calibrated_dataset_manifest']`**
+  kaydedildi. *(C6'da bu kaydın okunmaması "iş yok" yanılgısını doğurmuştu.)*
+- ⚠️ **Yeni `index_layers[]` dizisi AÇILMADI** — `outputs[]`/`reflectance_scale`/`producer_tool`
+  zaten vardı; alan tekrarı üretilmedi.
+
+### Added — C3′ (`schemas/edge/calibrated_dataset_manifest.v1`)
+
+- **`raw_frames[]`** (opsiyonel, `maxItems: 5000`): `{frame_id, relative_path, footprint_wkt?,
+  band?}`, `required: [frame_id, relative_path]`.
+- ⚠️ **`object_key` YOK** — plan istiyordu, ama bu form **kiosk-emitted**'dır ve KG-0.a-EK
+  kural 1 gereği anahtarı **platform üretir**. C2′ kararıyla tutarlı.
+- `relative_path` deseni **dizin düzenini dondurmaz** (E11 belirleyecek) ama traversal'ı
+  engeller: mutlak yol **RED** · `..` **RED**.
+
+### Changed
+
+- Her iki formun `x-form-role`'ü güncellendi (`owns` + `not_owned_here`).
+- ⚠️ **C0'da yazdığım `calibration_tier` ifadesi C1′ ile çelişiyordu** → kanonik ada çevrildi.
+
+### Changed — vendored parite kapısı ASİMETRİK hale getirildi
+
+C3′ kanoniği edge vendored kopyanın önüne geçirdi ve **kendi parite kapım bunu yakaladı.**
+
+| Durum | Anlamı | Davranış |
+|---|---|---|
+| **vendored ileri** | AK-4 sapması (I-5) | **SERT HATA** (`sorties`/C11 emsali) |
+| **kanonik ileri** | açık sürüm turu, C8'de yayılır | **BEYAN ZORUNLU** (`PENDING_PROPAGATION`) |
+| beyan bayat | C8 bitti, kayıt duruyor | **SERT HATA** — liste yalan söyleyemez |
+
+`required` her iki yönde eşit kalmalı ⇒ beyan edilen ekler **opsiyonel olmak zorunda**.
+Kanıtlandı: beyan silinince `test_canonical_ahead_is_declared` **düşüyor**.
+⚠️ Kapsam sınırı yazıldı: kapı yalnız **9 şemayı** izler; `intake_manifest.v1`
+(`oneOf` ↔ flat) **kapsam dışı** — `sorties` sapması orada, **C11** ile izlenir.
+
+### Added — test
+
+- **`tests/test_calibrated_manifest_fields.py` (18 test):** türetim kapısı · **NDWI regresyon
+  kapısı** · bant vocabulary paylaşımı · `calibration_tier`'ın hiçbir şemada tanımlanmaması ·
+  alt-küme kaydı/eşleşmesi · `NONE` dışarıda · `raw_frames` **`object_key` taşımaz** ·
+  traversal kapısı.
+
+### Notes
+
+- **Doğrulama:** `validate.py` 89 dosya / 0 hata · `pytest` **679 geçti (+36 yeni)** ·
+  `breaking_change_detector` **0 breaking**.
+- **Contract tarafı Tur 1 tamam** *(C6 hariç — E13 kararına bağlı)*. Sırada **AL-C1 + AL-C2**.
+
+---
+
 ### C2′ — `intake_manifest.v1`: `PlatformForm.priority_zones` + `object_key` sahipliği
 
 **Tip:** MINOR (yalnız **opsiyonel** alan eklendi; `required` listeleri ve `enum`'lar değişmedi —

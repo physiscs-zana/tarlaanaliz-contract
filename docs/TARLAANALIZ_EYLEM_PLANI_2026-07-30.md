@@ -201,7 +201,8 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > **TUR 2 = C7** (tekil görüntü, demo sonrası)
 >
 > **📍 Tur 1 ilerleme (dal: `feat/contract-tur1`)** — ✅ C0 · ✅ C9 · ✅ C10 · ✅ C-SSOT · ✅ C-PARITE ·
-> ✅ **C2′** · ⬜ C2″ · ⬜ C1′ · ⬜ C3′ · ⬜ AL-C1 · ⬜ AL-C2 · ⬜ C6 *(E13 bekliyor)* · ⬜ **C8 töreni**
+> ✅ C2′ · ✅ **C1′** · ✅ **C3′** · ⬜ AL-C1 · ⬜ AL-C2 · ⬜ C6 *(E13 bekliyor)* ·
+> ⬜ C2″ *(edge turu)* · ⬜ **C8 töreni**
 > *(demo kritik yolunun ⓪ adımı — P6/P12'nin ön koşulu — kapandı)*
 >
 > ⚠️ **Tur boyunca `pin_version.py --verify` KIRMIZIDIR** — agrega checksum bilerek re-pin

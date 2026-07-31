@@ -108,6 +108,50 @@
       "type": "string",
       "pattern": "^corr_[a-f0-9]{16,32}$",
       "description": "Request-scoped trace identifier."
+    },
+    "raw_frames": {
+      "type": "array",
+      "maxItems": 5000,
+      "description": "KG-0.c: ham kareler BÜTÜN OLARAK aktarılmaz — yalnız önceliklendirmenin işaretlediği yamaları GÖREN kareler seçilip listelenir. Seçimi kare seçici (E11) yapar. Opsiyonel, geriye uyumlu. ⚠️ Burada NESNE ANAHTARI (object_key) YOKTUR: anahtarı PLATFORM üretir (KG-0.a-EK kural 1) — bu form kiosk-emitted'dır ve M1'deki YEREL dosyaları bildirir.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Kareyi M1 içinde tekilleştiren kimlik (ör. EXIF dosya adı türevi)."
+          },
+          "relative_path": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(/[A-Za-z0-9_-]+)*\\.[A-Za-z0-9]{1,8}$",
+            "description": "M1 paketi içindeki göreli yol. Desen DİZİN DÜZENİNİ dondurmaz (onu E11 belirler) ama traversal'ı engeller: mutlak yol yok, segmentlerde '.' yok."
+          },
+          "footprint_wkt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Karenin yer izdüşümü (WKT). EXIF+GSD'den hesaplanır; opsiyonel."
+          },
+          "band": {
+            "type": "string",
+            "enum": [
+              "BLUE",
+              "GREEN",
+              "RED",
+              "RED_EDGE",
+              "NIR",
+              "LWIR"
+            ],
+            "description": "Tek-bant ham kare için spektral bant. RGB kompozit karede alan BULUNMAZ. Vocabulary intake_manifest.available_bands ile aynıdır."
+          }
+        },
+        "required": [
+          "frame_id",
+          "relative_path"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
@@ -133,11 +177,13 @@
       "tool_name",
       "tool_version",
       "calibrated_at",
-      "raw_manifest_ref"
+      "raw_manifest_ref",
+      "raw_frames"
     ],
     "not_owned_here": {
       "outputs / reports / reflectance_scale / producer_tool": "platform formu (paket agregası) — bkz. counterpart",
-      "priority_zones / patches[] görselleri": "schemas/edge/intake_manifest.v1 → EdgeForm.priority_zones[].visualizations. Bu formda patches alanı YOKTUR ve eklenmemelidir."
+      "priority_zones / patches[] görselleri": "schemas/edge/intake_manifest.v1 → EdgeForm.priority_zones[].visualizations. Bu formda patches alanı YOKTUR ve eklenmemelidir.",
+      "layer_type / band / calibration_type": "platform formu (paket agregası) — çıktı katman meta verisi orada; bkz. counterpart"
     },
     "field_placement_rule": "İki dosya AYNI ADI taşır ve yalnız dizinle ayrılır (edge/ vs platform/). Yeni alan eklemeden önce hangi formun sahibi olduğu YAZILI olarak belirlenir: kalibrasyon kanıtı ve tek-dataset düzeyindeki alanlar BU forma, paket/çıktı agregasyonu alanları counterpart'a girer. Ad benzerliğine bakarak hedef seçmek kusurdur (2026-07-31 denetimi)."
   },

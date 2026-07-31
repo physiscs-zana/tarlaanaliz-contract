@@ -21,6 +21,12 @@ Kapsam notu:
     Bu test **kardeş depoları** okur. CI'da kardeş depo yoksa test ATLANIR (skip) — worker
     drift dedektörüyle aynı desen. Atlanması "geçti" anlamına gelmez; yerel çalıştırmada
     ve çapraz-repo turlarında (C8) koşar.
+
+    ⚠️ **Kapsam SINIRI:** yalnız açıklamasında parite iddiası taşıyan **9 şema** izlenir.
+    `intake_manifest.v1` bu listede **DEĞİLDİR** — kanonik biçim `oneOf[PlatformForm, EdgeForm]`,
+    edge vendored kopyası ise **düz (flat)** bir şemadır; ikisi yapısal olarak farklıdır ve
+    parite iddiasında bulunmazlar. Bilinen AK-4 sapması (`sorties`, `mission_date` edge'de var
+    kanonikte yok) tam da orada yaşar ve **C11** kalemiyle izlenir — bu dosya onu görmez.
 """
 
 import json
@@ -85,20 +91,66 @@ def _pair(canonical_rel: str, vendored_rel: str) -> tuple[dict, dict]:
     )
 
 
+# Açık bir sürüm turunda kanonik, vendored kopyanın ÖNÜNE geçebilir; bu NORMALDİR ve
+# C8 release töreninde yayılır (I-1). Ama SESSİZ kalamaz — buraya yazılmak zorundadır.
+# Ters yön (vendored ileri) NORMAL DEĞİLDİR: o bir AK-4 sapmasıdır ve sert hata verir.
+#
+# Biçim: {şema dosya adı: {"properties": {...}, "required": {...}, "why": "..."}}
+PENDING_PROPAGATION: dict[str, dict] = {
+    "calibrated_dataset_manifest.v1.schema.json": {
+        "properties": {"raw_frames"},
+        "required": set(),
+        "why": "C3′ (KG-0.c seçilmiş ham kareler) — edge vendored kopyaya C8'de yayılır",
+    },
+}
+
+
+def _pending(canonical: str, axis: str) -> set[str]:
+    entry = PENDING_PROPAGATION.get(Path(canonical).name)
+    return set(entry[axis]) if entry else set()
+
+
 class TestVendoredParity:
+    """Asimetrik kapı: vendored ileri = HATA · kanonik ileri = BEYAN EDİLMİŞ olmalı."""
+
     @pytest.mark.parametrize(("canonical", "vendored"), PARITY_PAIRS, ids=IDS)
-    def test_properties_match(self, canonical: str, vendored: str) -> None:
+    def test_no_vendored_only_properties(self, canonical: str, vendored: str) -> None:
+        """Vendored'da olup kanonikte olmayan alan = AK-4 sapması (I-5: kalıcı olamaz)."""
         cj, vj = _pair(canonical, vendored)
-        cp, vp = set(cj.get("properties", {})), set(vj.get("properties", {}))
-        assert cp == vp, (
-            f"{Path(canonical).name}: properties ayrışmış — "
-            f"yalnız kanonikte {sorted(cp - vp)}, yalnız vendored'da {sorted(vp - cp)}"
+        vendored_only = set(vj.get("properties", {})) - set(cj.get("properties", {}))
+        assert not vendored_only, (
+            f"{Path(canonical).name}: vendored kopya kanonikten İLERİDE — {sorted(vendored_only)}. "
+            "Bu bir AK-4 sapmasıdır; kanonik absorbe etmeli (bkz. C11/sorties emsali)."
+        )
+
+    @pytest.mark.parametrize(("canonical", "vendored"), PARITY_PAIRS, ids=IDS)
+    def test_canonical_ahead_is_declared(self, canonical: str, vendored: str) -> None:
+        """Kanonik ileri olabilir ama SESSİZ olamaz — PENDING_PROPAGATION'da yazılı olmalı."""
+        cj, vj = _pair(canonical, vendored)
+        ahead = set(cj.get("properties", {})) - set(vj.get("properties", {}))
+        undeclared = ahead - _pending(canonical, "properties")
+        assert not undeclared, (
+            f"{Path(canonical).name}: kanonik ileri ama BEYAN EDİLMEMİŞ — {sorted(undeclared)}. "
+            "Ya vendored kopyayı senkronla ya PENDING_PROPAGATION'a gerekçesiyle ekle."
+        )
+
+    @pytest.mark.parametrize(("canonical", "vendored"), PARITY_PAIRS, ids=IDS)
+    def test_declared_propagation_is_not_stale(self, canonical: str, vendored: str) -> None:
+        """C8 yayılımı bittiğinde beyan SİLİNMELİ; liste yalan söylememeli."""
+        cj, vj = _pair(canonical, vendored)
+        ahead = set(cj.get("properties", {})) - set(vj.get("properties", {}))
+        stale = _pending(canonical, "properties") - ahead
+        assert not stale, (
+            f"{Path(canonical).name}: PENDING_PROPAGATION bayat — {sorted(stale)} artık "
+            "vendored kopyada mevcut. Beyanı kaldırın."
         )
 
     @pytest.mark.parametrize(("canonical", "vendored"), PARITY_PAIRS, ids=IDS)
     def test_required_match(self, canonical: str, vendored: str) -> None:
+        """`required` her iki yönde de eşit olmalı — beyan edilen ekler OPSİYONEL olmalıdır."""
         cj, vj = _pair(canonical, vendored)
         cr, vr = set(cj.get("required", [])), set(vj.get("required", []))
+        cr -= _pending(canonical, "required")
         assert cr == vr, (
             f"{Path(canonical).name}: required ayrışmış — "
             f"yalnız kanonikte {sorted(cr - vr)}, yalnız vendored'da {sorted(vr - cr)}"

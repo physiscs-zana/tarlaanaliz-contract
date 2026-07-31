@@ -24,19 +24,49 @@
     "description": "Cross-layer normalizasyon sözleşmesi (önceden şemalarda dağınık/örtük idi).",
     "ABSOLUTE -> PANEL_ABSOLUTE": "Platform, edge/worker ABSOLUTE değerini worker PANEL_ABSOLUTE'una normalize eder (ABSOLUTE ≡ Pix4D panel reflektans).",
     "missing -> PANEL_ABSOLUTE": "Edge CALIBRATED ama calibration_type yoksa platform PANEL_ABSOLUTE varsayar (güvenlik-ağı).",
-    "hard_reject": ["NONE"]
+    "hard_reject": [
+      "NONE"
+    ]
   },
   "x-context-subsets": {
     "description": "Her şema bağlam-bazlı katı bir alt-küme kullanır (strict validation korunur); bu enum yalnız kanonik vocabulary + eşlemenin SSOT'udur.",
-    "edge/intake_manifest": ["ABSOLUTE", "RELATIVE", "PANEL_ABSOLUTE", "DLS2_RELATIVE"],
-    "edge/calibrated_dataset_manifest": ["ABSOLUTE", "RELATIVE"],
-    "worker/analysis_job,worker/calibration_metadata,worker/calibrated_dataset": ["ABSOLUTE", "PANEL_ABSOLUTE", "DLS2_RELATIVE", "RELATIVE", "NONE"],
-    "worker/expert_labeling_card.calibration_assumed": ["PANEL_ABSOLUTE", "DLS2_RELATIVE", "RELATIVE", "AGNOSTIC"]
+    "edge/intake_manifest": [
+      "ABSOLUTE",
+      "RELATIVE",
+      "PANEL_ABSOLUTE",
+      "DLS2_RELATIVE"
+    ],
+    "edge/calibrated_dataset_manifest": [
+      "ABSOLUTE",
+      "RELATIVE"
+    ],
+    "worker/analysis_job,worker/calibration_metadata,worker/calibrated_dataset": [
+      "ABSOLUTE",
+      "PANEL_ABSOLUTE",
+      "DLS2_RELATIVE",
+      "RELATIVE",
+      "NONE"
+    ],
+    "worker/expert_labeling_card.calibration_assumed": [
+      "PANEL_ABSOLUTE",
+      "DLS2_RELATIVE",
+      "RELATIVE",
+      "AGNOSTIC"
+    ],
+    "platform/calibrated_dataset_manifest": [
+      "ABSOLUTE",
+      "PANEL_ABSOLUTE",
+      "DLS2_RELATIVE",
+      "RELATIVE"
+    ]
   },
   "x-separate-axis": {
     "calibration_method": "AYRI eksen — bu enum DEĞİL. Reflektans yöntemleri: REFLECTANCE_PANEL/DLS_IRRADIANCE/EMPIRICAL_LINE (datasets/calibration_certificate, edge/calibration_result reflektans). Termal fabrika yöntemleri: FACTORY_RADIOMETRIC/FACTORY_RADIOMETRIC_ILS (platform/calibration_result, edge/calibration_result termal). Bunlar sensör-tipine özgüdür ve calibration_type ile birleştirilmez."
   },
-  "x-kr-ref": ["KR-018", "KR-082"],
+  "x-kr-ref": [
+    "KR-018",
+    "KR-082"
+  ],
   "notes": {
     "breaking_change_policy": "Adding a new calibration_type value is non-breaking (MINOR). Removing or renaming is breaking (MAJOR) and requires a migration guide.",
     "usage": "Kalibrasyon tipi alanları (calibration_type, expert_labeling_card.calibration_assumed) bu kanonik vocabulary'ye atıf yapar. Şemalar bağlam-bazlı alt-kümeyi inline tutar; bu dosya değer anlamları + normalizasyon eşlemesinin SSOT'udur."

@@ -57,6 +57,16 @@
     },
     "created_at": {
       "$ref": "#/$defs/created_at"
+    },
+    "calibration_type": {
+      "type": "string",
+      "enum": [
+        "ABSOLUTE",
+        "PANEL_ABSOLUTE",
+        "DLS2_RELATIVE",
+        "RELATIVE"
+      ],
+      "description": "Paketin radyometrik kalibrasyon TİPİ (KR-018/082). enums/calibration_type.enum.v1.json bağlam alt-kümesi; bkz. x-context-subsets['platform/calibrated_dataset_manifest']. Paket başına TEK değerdir — producer_tool ve reflectance_scale de top-level tekildir. Opsiyonel (geriye uyumlu). ⚠️ Alan adı `calibration_tier` DEĞİLDİR (contract'ta öyle bir ad yoktur); kanonik ad calibration_type'tır."
     }
   },
   "unevaluatedProperties": false,
@@ -99,6 +109,37 @@
           "type": "string",
           "minLength": 1,
           "description": "Artifact type tag (consumer-defined)."
+        },
+        "layer_type": {
+          "type": "string",
+          "enum": [
+            "ORTHO",
+            "DSM",
+            "NDVI",
+            "NDRE",
+            "GNDVI",
+            "CIR",
+            "EVI",
+            "SAVI",
+            "CHLOROPHYLL_A",
+            "CWSI",
+            "CANOPY_TEMP",
+            "CANOPY_SOIL_DELTA",
+            "IRRIGATION_EFFICIENCY"
+          ],
+          "description": "Çıktı katmanının KANONİK türü. ORTHO/DSM raster ürünleridir; kalan değerler drone_capability_matrix.yaml → available_indices (core+extended+thermal) kümesinden TÜRETİLMİŞTİR, ayrı bir vocabulary DEĞİLDİR. Opsiyonel: eski üreticiler alanı atlar. `type` alanıyla karıştırılmaz — `type` tüketici-tanımlı serbest etikettir."
+        },
+        "band": {
+          "type": "string",
+          "enum": [
+            "BLUE",
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR",
+            "LWIR"
+          ],
+          "description": "Tek-bant raster çıktısı için spektral bant. Çok-bantlı/indeks çıktılarda alan BULUNMAZ. Vocabulary intake_manifest.available_bands ile aynıdır."
         }
       },
       "unevaluatedProperties": false
@@ -116,13 +157,20 @@
       "producer_tool",
       "batch_id",
       "mission_id",
-      "field_id"
+      "field_id",
+      "calibration_type"
     ],
     "not_owned_here": {
       "calibration_result / qc_report": "edge formu (kalibrasyon kanıtı) — bkz. counterpart",
-      "priority_zones / patches[] görselleri": "schemas/edge/intake_manifest.v1 → EdgeForm.priority_zones[].visualizations. Bu formda patches alanı YOKTUR ve eklenmemelidir."
+      "priority_zones / patches[] görselleri": "schemas/edge/intake_manifest.v1 → EdgeForm.priority_zones[].visualizations. Bu formda patches alanı YOKTUR ve eklenmemelidir.",
+      "raw_frames": "edge formu — seçilmiş ham kareler kalibrasyon çıktısıdır, paket agregası değildir (KG-0.c / C3′); bkz. counterpart"
     },
-    "field_placement_rule": "İki dosya AYNI ADI taşır ve yalnız dizinle ayrılır (edge/ vs platform/). Yeni alan eklemeden önce hangi formun sahibi olduğu YAZILI olarak belirlenir: paket/çıktı agregasyonu alanları BU forma, kalibrasyon kanıtı alanları counterpart'a girer. Katman meta verisi (layer_type, calibration_tier) mevcut outputs[].file_artifact üzerine eklenir — yeni bir index_layers[] dizisi AÇILMAZ (2026-07-31 denetimi)."
+    "field_placement_rule": "İki dosya AYNI ADI taşır ve yalnız dizinle ayrılır (edge/ vs platform/). Yeni alan eklemeden önce hangi formun sahibi olduğu YAZILI olarak belirlenir: paket/çıktı agregasyonu alanları BU forma, kalibrasyon kanıtı alanları counterpart'a girer. Katman meta verisi (`layer_type`, `band`) mevcut `outputs[].file_artifact` üzerine eklenir; paket başına tekil kalibrasyon bilgisi top-level `calibration_type`'tır. Yeni bir `index_layers[]` dizisi AÇILMAZ (2026-07-31 denetimi). ⚠️ `calibration_tier` diye bir alan YOKTUR — kanonik ad `calibration_type` (C1′)."
   },
-  "x-updated": "2026-07-31"
+  "x-updated": "2026-07-31",
+  "x-registry-sync": {
+    "description": "layer_type indeks değerleri drone_capability_matrix.yaml'dan türetilir.",
+    "capability_matrix": "drone_capability_matrix.yaml → capabilities[*].available_indices",
+    "rule": "Matrise yeni indeks eklenirse layer_type de MINOR ile genişletilir; ters yön yasak."
+  }
 }
