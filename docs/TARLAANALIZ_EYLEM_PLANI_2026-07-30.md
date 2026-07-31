@@ -201,8 +201,9 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > **TUR 2 = C7** (tekil görüntü, demo sonrası)
 >
 > **📍 Tur 1 ilerleme (dal: `feat/contract-tur1`)** — ✅ C0 · ✅ C9 · ✅ C10 · ✅ C-SSOT · ✅ C-PARITE ·
-> ✅ C2′ · ✅ **C1′** · ✅ **C3′** · ⬜ AL-C1 · ⬜ AL-C2 · ⬜ C6 *(E13 bekliyor)* ·
+> ✅ C2′ · ✅ C1′ · ✅ C3′ · ✅ **AL-C1** · ✅ **AL-C2** · ⬜ C6 *(E13 bekliyor)* ·
 > ⬜ C2″ *(edge turu)* · ⬜ **C8 töreni**
+> **⇒ Contract tarafı şema kalemleri TAMAM.** Kalan: C6 (E13'e bağlı) · edge turu · C8.
 > *(demo kritik yolunun ⓪ adımı — P6/P12'nin ön koşulu — kapandı)*
 >
 > ⚠️ **Tur boyunca `pin_version.py --verify` KIRMIZIDIR** — agrega checksum bilerek re-pin
@@ -1402,6 +1403,7 @@ Artık yapılacak işler için **bu bölüm otoriterdir**; o iki dosya gerekçe/
 |---|---|---|---|
 | **AL-C1** 🔴 | `expert_review_queue.v1` → `escalation_reason` enum'una **additive 7. değer `AUDIT_SAMPLE`**. Bugün i.i.d. denetim tile'ını taşıyacak bir neden **yok**; mevcut güven-temelli bir neden altında yollamak hem **yansızlığı bozar** hem `escalation_total{reason}` metriğini kirletir. Worker enum'a **tek taraflı ekleyemez** (§2.1 platform-otoriter) | ✅ Kanonik contract **ve** worker vendored kopya: tam **6 değer** (`LOW_CONFIDENCE, LOW_AGREEMENT, OOD_DETECTED, HIGH_EPISTEMIC, EXPERT_RE_TRIGGER, QUARANTINE_CAUTION`) — `AUDIT_SAMPLE` yok | 🔴 [0]'ın ön-koşulu |
 | **AL-C2** 🔴 | `expert_review_queue.v1` → **denetim-modu alanları**: `audit_sample: bool` + `audit_stratum: string`. ⚠️ `audit_stratum` platform-otoriter eksende ifade edilmeli (`crop_type` × `analysis_type` × fenoloji-penceresi); eksen karışımı **şema hatasıdır** | Devir spesi §3-B: **bilimsel olarak A'dan üstün**; A+B **birlikte** önerilir (A metrik temizliği, B körlük) | 🔴 [0]'ın ön-koşulu |
+| **AL-C3** 🟡 | **(YENİ, 2026-07-31)** `confidence_score`'u denetim satırında da tel üzerinden kaldır — tam anti-anchoring fail-closed. Bu turda YAPILMADI: alan `required` + `type: number`; nullable'a genişletmek `breaking_change_detector`'a göre **MAJOR** (ölçüldü) ve tur MINOR'du. Sınıf etiketleri (predicted_class/detection_type/sub_specialty) **zaten kaldırıldı**. Kalan risk yalnız skaler güvenin uzmana gösterilmesi → **AL-P1 portal yükümlülüğü** ile örtülüyor | Devir spesi §3-B; `x-anti-anchoring.residual_portal_obligation` | 🟡 v2/MAJOR |
 | — | ⚠️ AL-C1/C2 **C8 sürüm törenine** dahildir (annotated tag + SHA256 + 3 repo pin). **TUR 1'e dâhildir** (2026-07-31 kararı — eski *"C-Tur-2 ile birleştirilebilir"* ifadesi **yürürlükten kalktı**; Tur 2 demo sonrası olduğu için [0] ölçüm temelini bloke ediyordu). Bkz. §3.1 "TUR TANIMI" | — | — |
 
 **Kaynak devir spesi:** `tarlaanaliz-worker/denetim/audit_escalation_reason_devir_spec_2026_07_19.md`

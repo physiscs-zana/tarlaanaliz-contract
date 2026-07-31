@@ -29,9 +29,10 @@
         "OOD_DETECTED",
         "HIGH_EPISTEMIC",
         "EXPERT_RE_TRIGGER",
-        "QUARANTINE_CAUTION"
+        "QUARANTINE_CAUTION",
+        "AUDIT_SAMPLE"
       ],
-      "description": "Which KR-019 escalation trigger fired. KEY NAME (YÜKSEK-1 / v4.0.0): the wire key is ``escalation_reason``. MUST stay value-for-value in sync with worker src/core/domain/enums.py:EscalationReason (enforced by tests/contract/test_expert_review_queue_schema.py::TestReasonEnumParity)."
+      "description": "Which KR-019 escalation trigger fired. KEY NAME (YÜKSEK-1 / v4.0.0): the wire key is ``escalation_reason``. MUST stay value-for-value in sync with worker src/core/domain/enums.py:EscalationReason (enforced by tests/contract/test_expert_review_queue_schema.py::TestReasonEnumParity). AL-C1 (2026-07-31, additive 7. değer): ``AUDIT_SAMPLE`` = i.i.d. ölçüm-temeli denetim örneklemi. Diğer 6 neden MODEL DAVRANIŞINDAN türetilir (güven/uyum/OOD/epistemik/uzman döngüsü/karantina); AUDIT_SAMPLE ise model çıktısından BAĞIMSIZ, stratifiye Bernoulli seçimle üretilir. Denetim tile'ını güven-temelli bir neden altında yollamak hem yansızlığı bozar hem escalation_total{reason} metriğini kirletir — bu yüzden ayrı değer zorunludur (kaynak: worker denetim/audit_escalation_reason_devir_spec_2026_07_19.md §2)."
     },
     "confidence_score": {
       "type": "number",
@@ -206,7 +207,172 @@
       "type": "boolean",
       "default": false,
       "description": "K1 spot-check audit flag (T3.4 — Dalga-3). True iff this package is a QUALITY-AUDIT second review of a HIGH-confidence single-reviewer tile sampled at ~5% (keyed on job_id + UTC date). Default false = ordinary escalation. KR-071: carries no PII."
+    },
+    "audit_sample": {
+      "type": "boolean",
+      "default": false,
+      "description": "AL-C2 (2026-07-31): bu paket i.i.d. ÖLÇÜM-TEMELİ denetim örneklemi mi? True ise seçim model çıktısından BAĞIMSIZ yapılmıştır (stratifiye Bernoulli, deterministik per-tile SHA). ``spot_check`` ile KARIŞTIRILMAZ — o, YÜKSEK güvenli tile'ların ~%5'ini örnekleyen GÜVEN-KOŞULLU ikinci incelemedir; ikisi aynı anda true OLAMAZ (aşağıdaki allOf kuralı), çünkü güven-koşullu seçim i.i.d. bağımsızlığını bozar. Varsayılan false. KR-071: PII yok."
+    },
+    "audit_stratum": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "AL-C2: örneklemin alındığı tabaka (stratum). §2.1 gereği YAPISAL bir objedir, serbest metin DEĞİLDİR — eksen karışımı (ör. 'corn/disease/w12' gibi kaçış dizeleri) şema hatasıdır. Eksenler platform-otoriterdir ve buradaki değer kümeleri kanonik enum'lardan VENDOR'lanmıştır. propagation_precision(crop) bu tabakaya göre hesaplanır.",
+      "properties": {
+        "crop_type": {
+          "type": "string",
+          "enum": [
+            "COTTON",
+            "PISTACHIO",
+            "CORN",
+            "WHEAT",
+            "SUNFLOWER",
+            "GRAPE",
+            "OLIVE",
+            "RICE"
+          ],
+          "description": "enums/crop_type.enum.v1.json ile aynı küme (GAP 8)."
+        },
+        "analysis_type": {
+          "type": "string",
+          "enum": [
+            "DISEASE",
+            "PEST",
+            "WEED",
+            "GENERAL"
+          ],
+          "description": "Bu şemadaki analysis_type ekseniyle AYNI küme (iş-isteği ekseni)."
+        },
+        "phenology_stage": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "GRAPE_BUDBREAK_SHOOT",
+            "GRAPE_PREFLOWER_FLOWER",
+            "GRAPE_FRUITSET_CLOSURE",
+            "GRAPE_VERAISON_MATURITY",
+            "CORN_EMERGENCE_V5",
+            "CORN_V6_PRETASSEL",
+            "CORN_TASSEL_SILK",
+            "CORN_GRAINFILL",
+            "OLIVE_DORMANCY_BUD",
+            "OLIVE_LEAF_SHOOT",
+            "OLIVE_INFLOR_FLOWER",
+            "OLIVE_FRUITSET_PIT",
+            "OLIVE_VERAISON_MATURITY",
+            "OLIVE_HARVEST",
+            null
+          ],
+          "description": "enums/phenology_stage.enum.v1.json (14 evre). OPSİYONELDİR çünkü kanonik enum bugün 8 mahsulün yalnız 3'ünü kapsıyor (GRAPE/CORN/OLIVE); kapsanmayan mahsullerde tabaka crop×analysis ekseninde kalır. Enum genişlerse burası da MINOR ile genişletilir."
+        }
+      },
+      "required": [
+        "crop_type",
+        "analysis_type"
+      ],
+      "additionalProperties": false
     }
   },
-  "unevaluatedProperties": false
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$comment": "AL-C1 ⟺ AL-C2: bayrak ve neden birlikte hareket eder; biri olmadan diğeri olmaz.",
+      "if": {
+        "properties": {
+          "audit_sample": {
+            "const": true
+          }
+        },
+        "required": [
+          "audit_sample"
+        ]
+      },
+      "then": {
+        "properties": {
+          "escalation_reason": {
+            "const": "AUDIT_SAMPLE"
+          }
+        },
+        "required": [
+          "audit_stratum"
+        ]
+      }
+    },
+    {
+      "$comment": "Ters yön: AUDIT_SAMPLE nedeni yalnız denetim örnekleminde kullanılabilir.",
+      "if": {
+        "properties": {
+          "escalation_reason": {
+            "const": "AUDIT_SAMPLE"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "audit_sample": {
+            "const": true
+          }
+        },
+        "required": [
+          "audit_sample"
+        ]
+      }
+    },
+    {
+      "$comment": "i.i.d. bağımsızlık: güven-koşullu spot_check ile aynı anda olamaz.",
+      "if": {
+        "properties": {
+          "audit_sample": {
+            "const": true
+          }
+        },
+        "required": [
+          "audit_sample"
+        ]
+      },
+      "then": {
+        "properties": {
+          "spot_check": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "$comment": "ANTI-ANCHORING (sözleşme düzeyinde fail-closed): denetim tile'ında model SINIF ETİKETLERİ tel üzerinde HİÇ TAŞINMAZ — Portal'ın gizlemesine güvenilmez. Uzman modelin tahminini görürse 'bağımsız' etiket modele demirlenir ve TÜM ölçüm temeli geçersiz olur. Üçü de zaten nullable olduğu için bu kısıt geriye-uyumludur.",
+      "if": {
+        "properties": {
+          "audit_sample": {
+            "const": true
+          }
+        },
+        "required": [
+          "audit_sample"
+        ]
+      },
+      "then": {
+        "properties": {
+          "predicted_class": {
+            "const": null
+          },
+          "detection_type": {
+            "const": null
+          },
+          "sub_specialty": {
+            "const": null
+          }
+        }
+      }
+    }
+  ],
+  "x-anti-anchoring": {
+    "rule": "Denetim örnekleminde (audit_sample=true) uzmana model tahmini/güveni GÖSTERİLMEZ. Sınıf etiketleri (predicted_class/detection_type/sub_specialty) sözleşme düzeyinde null'a zorlanır — tel üzerinde hiç taşınmaz.",
+    "residual_portal_obligation": "confidence_score bu turda tel üzerinde KALIR ve Portal onu denetim satırında RENDER ETMEMELİDİR (AL-P1). Sözleşme düzeyinde null'lanmadı çünkü alan `required` + `type: number`; nullable'a genişletmek breaking_change_detector'a göre MAJOR olurdu ve bu tur MINOR'dur. Tam fail-closed için v2 kalemi açıldı (bkz. eylem planı AL-C3).",
+    "measurement_join": "Metrikler modelin tahminini job_id ile analysis_result'tan JOIN ederek elde eder; uzman-facing pakette taşınmasına gerek yoktur.",
+    "source": "worker denetim/audit_escalation_reason_devir_spec_2026_07_19.md §3-B, §4"
+  },
+  "x-updated": "2026-07-31"
 }

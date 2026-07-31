@@ -132,6 +132,72 @@ gidiyor — aynı adlı iki SSOT metni **ayrışmış** (hizalama ayrı kalem).
   `breaking_change_detector` **0 breaking**. Beklenen tek kırmızı: checksum (C8'de kapanır).
 - **Gerekçe arşivi:** `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (D-6, D-7, D-15).
 
+### AL-C1 + AL-C2 — i.i.d. denetim örneklemi kanalı (ölçüm temeli [0]'ın kontrat ayağı)
+
+**Tip:** MINOR (additive enum değeri + iki opsiyonel alan + koşullu kısıtlar;
+`breaking_change_detector`: **0 breaking**).
+
+**Kaynak:** worker `denetim/audit_escalation_reason_devir_spec_2026_07_19.md` — karar-hazır devir.
+Worker'ın `audit_set_sampler` + `propagation_metrics` kodu **landed ama uykuda**; canlıya bağlanması
+platform kararı bekliyordu (§2.1: worker enum'a değer **uyduramaz**).
+
+### Added
+
+- **AL-C1 — `escalation_reason` += `AUDIT_SAMPLE`** (additive 7. değer). Diğer 6 neden **model
+  davranışından** türetilir; `AUDIT_SAMPLE` model çıktısından **bağımsız** stratifiye Bernoulli
+  seçimle üretilir. Denetim tile'ını güven-temelli bir neden altında yollamak hem yansızlığı bozar
+  hem `escalation_total{reason}` metriğini kirletir.
+- **AL-C2 — `audit_sample: boolean` (default false) + `audit_stratum`**. `audit_stratum`
+  **yapısal objedir, serbest metin DEĞİLDİR** (§2.1 eksen karışımı = şema hatası):
+  `{crop_type, analysis_type, phenology_stage?}`, değer kümeleri kanonik enum'lardan vendor'landı.
+  `phenology_stage` **opsiyonel** — kanonik enum bugün **8 mahsulün yalnız 3'ünü** kapsıyor
+  (GRAPE/CORN/OLIVE); zorunlu olsa COTTON örneklenemezdi.
+
+### Added — bağlayıcı kurallar (`allOf` / if-then)
+
+| Kural | Neden |
+|---|---|
+| `audit_sample` ⟺ `escalation_reason == AUDIT_SAMPLE` | A tek başına anchoring'i çözmez, B tek başına metriği kirletir → **birlikte hareket ederler** |
+| `audit_sample` → `audit_stratum` **zorunlu** | Stratum'suz örneklem `propagation_precision(crop)`'u stratifiye edemez |
+| `audit_sample` → `spot_check == false` | ⚠️ **Devir spesinde YOKTU, bu turda bulundu:** `spot_check` zaten şemada var ve **GÜVEN-KOŞULLU** (HIGH tile'ların ~%5'i). İkisi aynı anda seçilirse seçim güvene koşullanır ve **i.i.d. bağımsızlık ölür** |
+| `audit_sample` → `predicted_class`/`detection_type`/`sub_specialty` **null** | **ANTI-ANCHORING sözleşme düzeyinde fail-closed** — Portal'ın gizlemesine güvenilmez. Üçü de zaten nullable → geriye uyumlu |
+
+### Notes — bilinçli sınır: `confidence_score`
+
+Devir spesi anti-anchoring'i **Portal davranış şartı** olarak tanımlıyordu. Sınıf etiketlerini
+**tel üzerinden tamamen kaldırarak** bundan daha ileri gidildi (fail-closed). Ancak
+`confidence_score` bu turda tel üzerinde **kaldı**: alan `required` + `type: number` ve nullable'a
+genişletmek `breaking_change_detector`'a göre **MAJOR** olurdu (ölçüldü) — bu tur MINOR.
+→ Yükümlülük `x-anti-anchoring.residual_portal_obligation`'da **yazılı** (AL-P1) ve tam
+fail-closed için **AL-C3** kalemi açıldı. Metrikler tahmini `job_id` ile `analysis_result`'tan
+JOIN eder; uzman-facing pakette taşınmasına gerek yoktur.
+
+### Added — test
+
+- **`tests/test_audit_sample_contract.py` (25 test):** additive'lik (6 pazarlık-dışı değer
+  korunur) · geriye uyumluluk · `audit_stratum`'un **serbest metin kabul etmemesi** · eksen
+  kümelerinin kanonik enum'ları **aynalaması** · fenoloji kapsam gerekçesi · bayrak↔neden
+  bağının **iki yönde** zorlanması · **spot_check karşılıklı dışlaması** · anti-anchoring'in
+  üç sınıf etiketinde de zorlanması (olağan eskalasyonda **serbest kalması**) · KR-071 (field_id
+  yok, stratum tanımlayıcı taşımaz, kök kapalı).
+
+### Notes — çapraz-repo sonucu (C8'e devredildi)
+
+- `PENDING_PROPAGATION`'a `expert_review_queue` beyanı eklendi.
+- ⚠️ Worker tarafında `tests/contract/test_expert_review_queue_schema.py::TestReasonEnumParity`
+  worker `EscalationReason` enum'unu kanonikle **birebir** bağlar → worker vendor edene kadar
+  **o test kırmızı kalır**. Beklenen; C8'de kapanır.
+- **AL-P1 / AL-P2 / AL-P3** platform kalemleridir (portal anti-anchoring · `escalation_total`
+  ayrımı · `test_pii_isolation` denetim kanalını kapsasın) — kontrat tarafı hazır.
+
+### Notes
+
+- **Doğrulama:** `validate.py` 89 dosya / 0 hata · `pytest` **704 geçti (+25 yeni)** ·
+  `breaking_change_detector` **0 breaking**.
+- **Contract Tur 1 şema kalemleri TAMAM** *(C6 hariç — E13 kararına bağlı)*.
+
+---
+
 ### C1′ + C3′ — kalibre manifest alanları (kelime dağarcığı KANONİK kaynaktan türetildi)
 
 **Tip:** MINOR (yalnız **opsiyonel** alanlar; `required` ve mevcut `enum`'lar değişmedi —

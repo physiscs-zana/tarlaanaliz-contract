@@ -102,6 +102,18 @@ PENDING_PROPAGATION: dict[str, dict] = {
         "required": set(),
         "why": "C3′ (KG-0.c seçilmiş ham kareler) — edge vendored kopyaya C8'de yayılır",
     },
+    "expert_review_queue.v1.schema.json": {
+        "properties": {"audit_sample", "audit_stratum"},
+        "required": set(),
+        "why": (
+            "AL-C2 (i.i.d. denetim-modu alanları) — worker vendored kopyaya C8'de yayılır. "
+            "⚠️ AYRICA: AL-C1 `escalation_reason`'a additive `AUDIT_SAMPLE` ekledi. Bu kapı "
+            "enum DEĞERLERİNİ karşılaştırmaz, ama worker tarafında "
+            "tests/contract/test_expert_review_queue_schema.py::TestReasonEnumParity "
+            "worker `EscalationReason` enum'unu kanonikle birebir bağlar → worker vendor "
+            "edene kadar O TEST KIRMIZI kalır. Bu beklenen ve C8'de kapanır."
+        ),
+    },
 }
 
 
