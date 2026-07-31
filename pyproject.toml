@@ -156,6 +156,11 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
+    # release_gate: C8 release töreninin kapıları (checksum/pin bütünlüğü).
+    # ⚠️ DESELECT EDİLEMEZ — `-m \"not release_gate\"` tests/conftest.py tarafından
+    # reddedilir. Tur içi beklenen kırmızı, CONTRACTS_VERSION.md'deki
+    # `**Checksum State:** PENDING_REPIN` beyanıyla xfail(strict) olarak yönetilir.
+    "release_gate: release-time integrity gates (NEVER deselect; see tests/conftest.py)",
 ]
 filterwarnings = [
     "error",

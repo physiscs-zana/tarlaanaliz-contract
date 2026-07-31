@@ -1,3 +1,11 @@
 # SEC-FIX: pinned versions to prevent uncontrolled updates
+#
+# ⚠️ Bu dosya CI'ın TEK bağımlılık kaynağıdır (D4, 2026-07-31).
+# Eskiden workflow içinde elle yazılmış bir liste vardı (`jsonschema pytest pytest-cov`)
+# ve pyproject.toml ile ayrışmıştı: `pyyaml` yalnız pyproject'te olduğu için
+# tests/test_calibrated_manifest_fields.py'nin 18 testi CI'da SESSİZCE atlanıyordu (Q2).
+# Buraya yeni bir test bağımlılığı eklerken pyproject.toml [tool.poetry] ile hizalı tutun.
 jsonschema>=4.20.0,<5
 pytest>=7.4.0,<9
+pytest-cov>=4.1.0,<7
+pyyaml>=6.0.1,<7

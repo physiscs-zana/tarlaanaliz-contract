@@ -20,7 +20,44 @@
 
 ---
 
-## 0.A EN GÜNCEL OTURUM (2026-07-31) — Contract Tur 1 + 10-disiplin bağımsız denetim
+## 0.B EN GÜNCEL OTURUM (2026-07-31, ikinci oturum) — **KADEME 0 kapandı**
+
+**Yapılan:** Eylem planı **§14.0 (D1…D6)** — *"kapılar dürüst hale gelsin"*. Altısı da bitti,
+üstüne denetimde görülmemiş **dördüncü bir CI yalanı** bulunup kapatıldı (D3-b).
+
+### Depo durumu
+- Dal `feat/contract-tur1` · süit **735 passed / 2 xfailed (beyanlı) / 0 skipped** · RC=0
+- `validate.py` 89 dosya / 0 hata · dedektör (master…HEAD): **breaking 0** — artık *ölçülmüş* sıfır
+- ⚠️ Tur içi beklenen kırmızılar artık **beyanlı**: `CONTRACTS_VERSION.md` →
+  `**Checksum State:** PENDING_REPIN`. Bu satırı **üç kapı** okuyor ve `pin_version.py`
+  C8'de dosyayı baştan ürettiği için **beyan kendini siler** → üç kapı aynı anda sertleşir.
+
+### Neyin yalan olduğu ölçüldü (özet — kanıt arşivde)
+| Kapı | Eski davranış | Şimdi |
+|---|---|---|
+| `breaking_change_detector` | iç içe enum/`$defs`/`items`/`oneOf` **kör**; Windows'ta hiç koşmuyor; bozuk şemayı sessizce yutuyor | özyinelemeli + `x-context-subsets` + UTF-8 + okunamayan şema = **exit 2** |
+| CI breaking adımı | `continue-on-error: true` **ve** banner stdout'a basıldığı için JSON bozuluyor → `has_breaking=false` (iki bağımsız yalan) | beyan kapısı: **beyan edilmemiş breaking build'i düşürür**; bozuk JSON = FAIL |
+| `verify-checksums` | `summary.needs`'te yok | özet + fail koşulunda; uyuşmazlık **beyansızsa** düşürür |
+| Sessiz atlama | 18 test `pyyaml` yok diye sessizce atlanıyordu | `conftest.py`: **beyan edilmemiş skip = oturum kırmızı** |
+| KR çıkarıcısı | registry'nin **54 tanımından 6'sını** görüyordu; Q5 kapısı boştu | her başlık düzeyi + 4 biçim; "anılmak ≠ tanımlı" |
+| Release checklist | annotated tag adımı **yok**; `PENDING_PROPAGATION` kontrolü yok | §3G tag töreni + propagation **testi** |
+
+### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **KADEME 1 (D7 · D8 · D9)**
+Eylem planı **§14.1**: `raw_frames[].footprint_wkt` → `sees_patch_ids[]` (Ç7 tek hamle) ·
+C6a `calibration_type` fail-closed · Ç5 `layer_type` zinciri.
+⏳ **Maliyet penceresi:** D9② (`IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY`) ve D7
+(`footprint_wkt` kaldırma) **bu tur bedava**, sonra MAJOR olur.
+
+**Ayrıca karar bekleyen tek KADEME 0 kalemi: D4-b** — parite kapısı CI'da hâlâ ölçüm
+yapmıyor (kardeş depolar Actions'ta yok). Ya CI'a çapraz-repo erişimi verilir ya
+"parite yalnız C8'de yerel ölçülür" **yazılı** kabul edilir.
+
+**Kanıt:** `denetim/denetim_raporu_2026-07-31_kademe0_kapi_mutasyonlari.md` (her kapının
+mutasyon kaydı). **İş listesi:** yalnız eylem planı §14.
+
+---
+
+## 0.A ÖNCEKİ OTURUM (2026-07-31) — Contract Tur 1 + 10-disiplin bağımsız denetim
 
 **Yapılan:** Contract Tur 1'in şema kalemleri tamamlandı (dal `feat/contract-tur1`, 7 commit):
 **C0** (iki-form ayrımı zorlanabilir) · **C9+C10** (KR-093 içerik + statü eşlemesi) · **C-SSOT**
@@ -40,11 +77,11 @@ tartışma (4 çatışma çözüldü) → senkronizasyon çatışma matrisi → 
 - Yeni 156 testin **%40'ı CI'da hiç koşmuyor** (45 parite skip + 18 `pyyaml` skip).
 - Breaking kapısı `continue-on-error: true`; `verify-checksums` `summary.needs`'te **yok**.
 
-### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **KADEME 0**
+### ✅ O OTURUMUN DEVRETTİĞİ İŞ — **KADEME 0** → **2026-07-31 ikinci oturumda YAPILDI** (bkz. §0.B)
 
 Eylem planı **§14.0** (D1…D6): CI teli · KR başlık çıkarıcısı · dedektör özyineleme · parite
 kapısı canlandırma · `xfail(strict)` · release checklist tag adımı.
-**Gerekçe:** bu altısı kapanmadan Kademe 1-4'ün hiçbirinin doğrulaması güvenilir değil.
+**Gerekçe:** bu altısı kapanmadan Kademe 1-4'ün hiçbirinin doğrulaması güvenilir değildi.
 
 **Tam sıra:** `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` **§14** (18 kalem, ⛔ işaretliler C8 öncesi).
 **Kanıt:** `denetim/denetim_raporu_2026-07-31_10disiplin.md`.

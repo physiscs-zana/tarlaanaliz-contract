@@ -1702,22 +1702,41 @@ ticarileşmeyecek bir hat için düşünün.
 > matrisi → ana ajanın kanıta karşı kendi ölçümü. **146 bulgu** (14 KRİTİK / 45 YÜKSEK).
 > **Kanıt arşivi:** `denetim/denetim_raporu_2026-07-31_10disiplin.md` — o dosya iş listesi DEĞİLDİR.
 > ⛔ = **C8 release töreninden ÖNCE zorunlu.**
+>
+> ### 📍 İlerleme
+> **KADEME 0 ✅ TAMAM (2026-07-31)** — D1…D6 + plan dışı D3-b · her kapı mutasyonla kanıtlandı ·
+> kanıt: `denetim/denetim_raporu_2026-07-31_kademe0_kapi_mutasyonlari.md`.
+> **Sıradaki: KADEME 1 (D7 · D8 · D9)** — geri alınamaz kalemler + kapanan maliyet pencereleri.
+> Tek açık KADEME 0 kalemi: **D4-b** (parite kapısının CI'da koşması — koordinatör kararı).
 
 **Öncelik hiyerarşisi (çatışma çözerken kullanılan ölçüt sırası):**
 ① fiziksel/ölçüm geçerliliği → ② geri alınamazlık → ③ güvenlik değişmezi → ④ istatistiksel
 geçerlilik → ⑤ kanıt/kapı bütünlüğü → ⑥ mimari tutarlılık → ⑦ süreç kolaylığı.
 Anahtar ilke: **"Yeşil ama yalan bir kapı, kırmızı bir kapıdan tehlikelidir."**
 
-## 14.0 KADEME 0 — Kapılar dürüst hale gelsin (her şeyden ÖNCE)
+## 14.0 KADEME 0 — Kapılar dürüst hale gelsin (her şeyden ÖNCE) — ✅ **TAMAMLANDI (2026-07-31)**
 
-| # | İş | Kapatır | Dosya |
-|---|---|---|---|
-| **D1** ⛔ | `verify-checksums` → `summary.needs`; breaking kapısından `continue-on-error: true` kaldır | SD3, SD5 | `.github/workflows/contract_validation.yml` |
-| **D2** ⛔ | KR başlık çıkarıcısını normalize et (4 biçim: `## [KR-019]` · birleşik `## [KR-018 / KR-082]` · yazım hatası `## # [KR-033]` · `### KR-093`) | Q6, Q5 ön koşulu | `tests/test_kr_reference_integrity.py` |
-| **D3** ⛔ | `breaking_change_detector` **özyinelemeli** olsun (`properties`/`$defs`/`items`/`oneOf`/`allOf`/`if-then`) + regresyon testi | SD1, SD2, Y5 | `tools/breaking_change_detector.py` |
-| **D4** ⛔ | Parite kapısını canlandır: CI'ya `pyyaml`; `paths:` filtresine `ssot/**`, `docs/examples/**`, `docs/TARLAANALIZ_SSOT_v1_2_0.txt`, `drone_capability_matrix.yaml` | AR4, SD6, Q2, Q3, Q7, E14, Y3 | CI + `requirements-dev.txt` |
-| **D5** ⛔ | `test_pin_version` → `@pytest.mark.xfail(strict=True)` + `release_gate` marker (**deselect YASAK**) | Q1, Ç6 | `tests/test_pin_version.py`, `pyproject.toml` |
-| **D6** ⛔ | Release checklist'e **annotated tag** adımı + `PENDING_PROPAGATION` boş mu kontrolü | SD7, SD8 | `docs/checklists/SDLC_GATES.md` |
+> **Durum:** D1…D6 **altısı da yapıldı** · süit **735 geçti / 2 beyanlı xfail / 0 skip** ·
+> her kapı **mutasyonla** doğrulandı (kanıt: `denetim/denetim_raporu_2026-07-31_kademe0_kapi_mutasyonlari.md`).
+> Turda **beyan edilmemiş breaking yok** — ve bu artık *ölçülmüş* bir sıfır, kör bir sıfır değil.
+
+| # | İş | Durum | Kapatır | Dosya |
+|---|---|---|---|---|
+| ✅ **D1** | `verify-checksums` → `summary.needs` **ve** fail koşuluna girdi · breaking adımından `continue-on-error: true` kaldırıldı · *"Don't fail - just warn"* yerine **beyan kapısı**: breaking **yasak değil, BEYAN EDİLMEMİŞ olması yasak** (`CONTRACTS_VERSION.md` → `**Breaking Change:** YES`) · dedektör çıkış kodu sözleşmesi **0/1/≥2** ve `≥2 = kapı KÖR` ayrı hata · `detect-breaking-changes` da `summary` fail koşuluna eklendi (push'ta `skipped` kabul) | ✅ | SD3, SD5 | `.github/workflows/contract_validation.yml` |
+| ✅ **D2** | Çıkarıcı **her başlık düzeyinde 4 biçimi** tanıyor. ⚠️ **Ölçüm plandan büyük çıktı:** registry `^## ` regex'iyle **54 tanımın 6'sını** görüyordu (%89 kör, Q6 doğrulandı) ve SSOT metnindeki 3 köşeli-parantezsiz başlık da kaçıyordu. **Q5 de kapatıldı:** `test_data_layer_kr_present_in_ssot_text` alt-dize kontrolüydü → KR-088/091 için **tamamen boştu** (o ikisi metinde yalnız çapraz-atıf satırında geçiyor, gövdeleri registry'de); artık **tanım başlığı** şartı var. `CLAUDE.md`'nin KR tablosu ölçülen sayılarla düzeltildi (birleşim 55 · kesişim 50 → AR3 doğrulandı, iki kaynak **iç içe**) | ✅ | Q6, **Q5**, AR3 | `tests/test_kr_reference_integrity.py`, `CLAUDE.md` |
+| ✅ **D3** | `compare_schemas` **özyinelemeli** (`properties`/`patternProperties`/`$defs`/`items`/`contains`/`if-then-else`/`not`/`propertyNames`/`allOf`/`anyOf`/`oneOf`/`prefixItems`) + **25 testlik regresyon süiti**. **Plan dışı 3 ek bulgu bu turda kapatıldı:** ① `x-context-subsets` (bağlam-bazlı KABUL listeleri, `calibration_type.enum`) enum ekseni gibi karşılaştırılıyor — değer düşmesi MAJOR ② okunamayan şema artık **exit 2** (eskiden sessizce `{}` dönüyordu = kapı kör) ③ **Windows'ta araç HİÇ koşmuyordu** (cp1254 emoji çökmesi) → `validate.py`'deki kalıcı UTF-8 düzeltmesi buraya da alındı, yani SDLC_GATES §1C maddesi ilk kez uygulanabilir | ✅ | SD1, SD2, Y5 | `tools/breaking_change_detector.py`, `tests/test_breaking_detector_recursion.py` |
+| ✅ **D3-b** 🆕 | **BU OTURUMDA BULUNAN DÖRDÜNCÜ YALAN:** dedektör ilerleme başlığını **stdout**'a basıyordu; CI `--json > breaking_changes.json` yönlendirmesi geçersiz JSON üretiyor, `json.load` patlıyor ve CI'ın `if` bloğu **else** dalına düşerek `has_breaking=false` yazıyordu. ⇒ `continue-on-error` hiç olmasaydı bile kapı **daima "breaking yok"** derdi. Banner `stderr`'e alındı + CI'ya *"bozuk JSON asla breaking-yok diye okunamaz"* adımı + `test_cli_json_output_is_parseable` regresyonu | ✅ | (denetimde yoktu) | aynı |
+| ✅ **D4** | CI bağımlılıkları **tek kaynağa** indi (`requirements-dev.txt`; `pyyaml` + `pytest-cov` eklendi → Q2'nin 18 sessiz atlaması bitti) · `paths:` filtresi testlerin **ölçülen** okuma yollarından türetildi (`ssot/**`, `docs/**`, `drone_capability_matrix.yaml`, `pyproject.toml`, `requirements-dev.txt`) · `pytest -rs` + **`tests/conftest.py` atlama kapısı**: beyan edilmemiş her skip gerekçesi oturumu düşürür, CI özetine skip bütçesi yazılır | ✅ | SD6, Q2, Q3, Q7 | CI, `requirements-dev.txt`, `tests/conftest.py` |
+| ⬜ **D4-b** 🔴 | **AÇIK KALAN — koordinatör kararı:** parite kapısı CI'da **hâlâ ölçüm yapmıyor** (kardeş depolar Actions'ta checkout edilmiyor → 45 test *beyanlı* atlanıyor). Bu tur atlamayı **görünür** kıldı ve C8'de **yerel koşum**u zorunlu yaptı, ama Y3/AR4'ün kökü (çapraz-repo sapmayı CI'da gören kapı yok) duruyor. **Karar:** ya CI'a kardeş depo erişimi (PAT/secret) verilir, ya "parite yalnız C8'de yerel ölçülür" **yazılı** kabul edilir | ⬜ | AR4, Y3, E14 | CI |
+| ✅ **D5** | `test_real_repo_checksum_verifies` → `release_gate` + `xfail(strict=True)`; koşul **makine-okunur beyandan** okunuyor: `CONTRACTS_VERSION.md` → `**Checksum State:** PENDING_REPIN`. Aynı beyanı **üç kapı** okuyor (CI checksum işi · pin testi · `PENDING_PROPAGATION` testi) ve `pin_version.py` dosyayı baştan ürettiği için **C8'de kendini siler** → üç kapı aynı anda sertleşir. `-m "not release_gate"` `tests/conftest.py` tarafından **reddediliyor** (exit 4) | ✅ | Q1, Ç6, SD4 | `tests/release_state.py`, `tests/test_pin_version.py`, `pyproject.toml`, `CONTRACTS_VERSION.md` |
+| ✅ **D6** | SDLC_GATES §3A'ya *"PENDING_REPIN kalkmış olmalı"* · §3C'ye **`PENDING_PROPAGATION` boş** kapısı (checklist maddesi değil **test**: `test_pending_propagation_is_empty`, tur içi xfail → release'de gerçek kırmızı) + *"parite CI'da koşmaz, C8'de yerel koş"* · §3E'ye `-rs`/skip-0/xfail-0/deselect-yok + dedektör çıkış kodu sözleşmesi · **yeni §3G: annotated tag töreni** (`git tag -a` + `%(objecttype)`=`tag` doğrulaması + `git describe` + push) | ✅ | SD7, SD8 | `docs/checklists/SDLC_GATES.md`, `tests/test_vendored_parity.py` |
+
+**Kapıların mutasyon kanıtı (hepsi bu oturumda koşuldu):** ① `escalation_reason`'dan `QUARANTINE_CAUTION`
+silindi → dedektör **BREAKING** dedi, CI kapısı *"beyan edilmemiş breaking"* ile düşürdü (eskiden 0 breaking)
+② eski dedektörle yeni süit **21/25 düşüyor** ③ `PENDING_REPIN` beyanı silindi → pin + propagation testleri
+**gerçek kırmızı** ④ beyansız `pytest.skip("pyyaml yok")` → oturum **RC=1** ⑤ `-m "not release_gate"` → **RC=4**
+⑥ KR-093 tanımı iki kaynaktan silindi → **3 test kırmızı**; `## KR-093`→`### KR-093` biçim değişimi ise
+**yanlış alarm üretmedi**.
 
 ## 14.1 KADEME 1 — Geri alınamaz + maliyet penceresi kapanıyor
 

@@ -34,6 +34,8 @@ from pathlib import Path
 
 import pytest
 
+from release_state import REPIN_PENDING
+
 ROOT = Path(__file__).parent.parent
 WORKSPACE = ROOT.parent
 
@@ -120,6 +122,31 @@ PENDING_PROPAGATION: dict[str, dict] = {
 def _pending(canonical: str, axis: str) -> set[str]:
     entry = PENDING_PROPAGATION.get(Path(canonical).name)
     return set(entry[axis]) if entry else set()
+
+
+@pytest.mark.release_gate
+@pytest.mark.xfail(
+    REPIN_PENDING and bool(PENDING_PROPAGATION),
+    strict=True,
+    reason=(
+        "Tur sürüyor (CONTRACTS_VERSION.md 'Checksum State: PENDING_REPIN') ve yayılım "
+        "beyanları henüz açık — C8 töreninde vendored kopyalar senkronlanınca bu liste "
+        "boşalır ve test normal GEÇER (strict: erken boşalırsa XPASS = hata)"
+    ),
+)
+def test_pending_propagation_is_empty() -> None:
+    """SD7 kapısı: C8 release töreni `PENDING_PROPAGATION`'ı BOŞALTMAK zorundadır.
+
+    Bu liste *"kanonik ileri gitti, vendored kopya henüz almadı"* beyanıdır. Release
+    checklist'inde hiç kontrol edilmediği için beyanlar bayatlayabiliyordu (SD7).
+    Artık kapı tur durumuna bağlı: tur içinde beklenen kırmızı, **release'de gerçek
+    kırmızı** (beyan satırı `pin_version.py` ile silindiği an sertleşir).
+    """
+    assert not PENDING_PROPAGATION, (
+        "C8 release töreninde vendored yayılım tamamlanmadan sürüm yayımlanamaz — "
+        f"açık beyanlar: {sorted(PENDING_PROPAGATION)}. "
+        "Yayılımı yapın (tools/sync_to_repos.sh + vendored kopyalar) ve beyanları silin."
+    )
 
 
 class TestVendoredParity:

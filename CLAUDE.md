@@ -108,19 +108,33 @@ The validator (`tools/validate.py`) and CI workflow check for these automaticall
 
 Business rules are referenced as `KR-NNN` throughout the codebase.
 
-**Canonical KR sources — there are TWO and they are COMPLEMENTARY, not nested** (measured 2026-07-31):
+**Canonical KR sources — there are TWO and they OVERLAP** (re-measured 2026-07-31, KADEME 0/D2):
 
-| File | Holds | Note |
+| File | Definition headings it carries | Heading forms present |
 |---|---|---|
-| `docs/TARLAANALIZ_SSOT_v1_2_0.txt` | **Full KR corpus** (~49 definitions) | Heading format is NOT uniform: `## [KR-019]`, combined `## [KR-018 / KR-082]`, and one typo `## # [KR-033]`. Byte-identical with the platform copy (aligned 2026-07-31). |
-| `ssot/kr_registry.md` | **Supplementary registry** — only KR-088…KR-093 (data-layer expansion) | Do NOT assume a KR is undefined just because it is missing here. |
+| `docs/TARLAANALIZ_SSOT_v1_2_0.txt` | **51** distinct KR ids | 49 × `## [KR-019]`, 1 × combined `## [KR-018 / KR-082]`, 1 × typo `## # [KR-033]`, 3 × bracket-less `### KR-017`. Byte-identical with the platform copy (aligned 2026-07-31). |
+| `ssot/kr_registry.md` | **54** distinct KR ids | 48 × `### KR-070` (8-section normative bodies), 6 × `## KR-088` (data-layer expansion) |
+
+Overlap (measured, not estimated): **union 55 · intersection 50** — i.e. 50 KRs have a
+normative body in **both** files. Only `KR-034` is SSOT-text-only; only `KR-088…KR-091`
+are registry-only. Schemas currently reference **24** distinct KRs via `x-kr-ref`.
 
 A KR referenced via `x-kr-ref` must be defined in **at least one** of the two;
-`tests/test_kr_reference_integrity.py` enforces this (dangling-reference gate).
+`tests/test_kr_reference_integrity.py` enforces this (dangling-reference gate), and the
+extractor there recognises **all four heading forms** at any heading level.
 
-> ⚠️ This section previously claimed `ssot/kr_registry.md` was *the* canonical source. That was
-> **imprecise** — it holds 6 of ~49 KRs — and it caused a real misdiagnosis during the 2026-07-31
-> audit. Corrected here.
+Where the data-layer KR bodies actually live (measured, do not guess):
+`KR-092`/`KR-093` → SSOT text **and** registry · `KR-088`/`KR-091` → registry only
+(the SSOT text mentions them in a single cross-reference line, which is **not** a definition).
+
+> ⚠️ Two earlier versions of this section were wrong and both caused real misdiagnoses:
+> it first claimed `ssot/kr_registry.md` was *the* canonical source, then that the registry
+> holds "only 6 of ~49, complementary". Measurement says otherwise: the registry holds **54**
+> definitions and the two sources are **largely nested**, not complementary.
+> ⏳ **Open item:** "the same KR must not have a normative body in two places" is a real
+> problem (audit finding AR1/AR3) but it is a **decision**, not a rename — tracked as **D16**
+> in `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §14.4. Until that decision lands, treat the
+> union as canonical and cite the registry body when the two disagree.
 
 Key KRs for this repo:
 - **KR-050**: PII minimization (no email/TCKN/OTP)

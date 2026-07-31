@@ -16,7 +16,25 @@ import importlib.util
 import re
 from pathlib import Path
 
+import pytest
+
+from release_state import REPIN_PENDING
+
 _TOOL = Path(__file__).resolve().parents[1] / "tools" / "pin_version.py"
+
+# --- Tur içi "beklenen kırmızı" beyanı (KADEME 0 / D5 · Ç6) --------------------
+# Bir contract turu boyunca şema ağacı değişir ama agrega checksum BİLEREK yeniden
+# pinlenmez (ara re-pin, yayımlanmış etiketin checksum anlamını bozar; tek re-pin
+# noktası C8 release törenidir). Bu, `test_real_repo_checksum_verifies`'i tur boyunca
+# kırmızı yapar. Eskiden bu kırmızı "beklenen" diye AĞIZDAN söyleniyordu; artık
+# CONTRACTS_VERSION.md'deki `**Checksum State:** PENDING_REPIN` satırı ile BEYAN
+# ediliyor (tek kaynak: tests/release_state.py) ve aynı satırı CI'daki verify-checksums
+# işi de okuyor.
+#
+# `strict=True` neden önemli: C8'de re-pin yapılınca test GEÇMEYE başlar; strict xfail
+# bunu XPASS = HATA sayar → beyan satırının kaldırılması zorunlu hâle gelir. Yani
+# beyan kendi kendini temizler, bayat "beklenen kırmızı" mazereti yaşayamaz.
+
 _spec = importlib.util.spec_from_file_location("pin_version", _TOOL)
 assert _spec and _spec.loader
 _mod = importlib.util.module_from_spec(_spec)
@@ -137,11 +155,24 @@ def test_verify_detects_mismatch(tmp_path: Path) -> None:
     assert p.verify_checksums() is False
 
 
+@pytest.mark.release_gate
+@pytest.mark.xfail(
+    REPIN_PENDING,
+    strict=True,
+    reason=(
+        "CONTRACTS_VERSION.md 'Checksum State: PENDING_REPIN' beyan ediyor — tur içi "
+        "beklenen kırmızı; C8 re-pin'inde beyan kalkar ve bu test normal GEÇER "
+        "(strict: geçerse XPASS = hata → beyanı silmeyi zorlar)"
+    ),
+)
 def test_real_repo_checksum_verifies() -> None:
     """Live regression: the committed CONTRACTS_VERSION.md self-verifies.
 
     Recomputes directly (rather than calling verify_checksums, which prints
     non-ASCII status glyphs) so the assertion is portable under capture.
+
+    ⚠️ `release_gate` işaretlidir: C8 öncesi bu test **deselect EDİLEMEZ**
+    (`-m "not release_gate"` çalıştırmak tests/conftest.py tarafından reddedilir).
     """
     repo = _TOOL.parents[1]
     p = VersionPinner(repo)
