@@ -240,17 +240,43 @@ class TestRawFramesOwnership:
         )
 
     def test_relative_path_blocks_traversal_and_absolute(self) -> None:
+        """E5 (2026-07-31): desen GERÇEK çıktıyı kabul etmeli, traversal'ı hâlâ reddetmeli.
+
+        Eski desen ölçümden ÖNCE dondurulmuştu ve M1'in fiilen ürettiği dosyaları
+        reddediyordu: `odm_orthophoto.original.tif` (ODM'nin gerçek adı — iki nokta),
+        `*.tif.aux.xml` (GDAL yan dosyası), boşluklu ve Türkçe klasör adları. Yani
+        manifest, paketin içindeki dosyayı GÖSTEREMİYORDU.
+        """
         import re
 
         pattern = _load(EDGE_FORM)["properties"]["raw_frames"]["items"]["properties"][
             "relative_path"
         ]["pattern"]
         rx = re.compile(pattern)
-        assert rx.match("frames/DJI_0001_MS_G.tif")
-        assert rx.match("a/b/c/x.tif")
-        assert not rx.match("/frames/x.tif"), "mutlak yol kabul edildi"
-        assert not rx.match("../frames/x.tif"), "traversal kabul edildi"
-        assert not rx.match("a/../b/x.tif"), "iç traversal kabul edildi"
+
+        # Kabul edilmesi ZORUNLU olanlar (hepsi gerçek dünyadan)
+        for accepted in (
+            "frames/DJI_0001_MS_G.tif",
+            "a/b/c/x.tif",
+            "odm_orthophoto.original.tif",
+            "layers/ndvi.tif.aux.xml",
+            "Tarla Verileri/ndvi.tif",
+            "kırmızı/ndvi.tif",
+        ):
+            assert rx.match(accepted), f"gerçek çıktı reddedildi: {accepted}"
+
+        # Güvenlik sınırları — gevşetme bunları KAYBETMEMELİ
+        for rejected, why in (
+            ("/frames/x.tif", "mutlak yol"),
+            ("../frames/x.tif", "traversal"),
+            ("a/../b/x.tif", "iç traversal"),
+            ("a/./b.tif", "nokta segmenti"),
+            ("a//b.tif", "boş segment"),
+            ("C:/x.tif", "Windows sürücü / ADS"),
+            ("a\\b.tif", "ters bölü"),
+            ("noextension", "uzantısız"),
+        ):
+            assert not rx.match(rejected), f"{why} kabul edildi: {rejected}"
 
     def test_raw_frames_optional_and_bounded(self) -> None:
         doc = _load(EDGE_FORM)

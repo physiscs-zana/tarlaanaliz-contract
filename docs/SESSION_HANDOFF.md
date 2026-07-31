@@ -49,16 +49,28 @@
 `index_requirements` (worker formüllerinden ölçüldü) · plan dışı **D3-c** (dedektörde 3 boşluk).
 ⏳ **İki maliyet penceresi kapatıldı** — ikisi de sonraki turda MAJOR olurdu.
 
-### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **KADEME 2** (§14.2: D10 sıralama kilitleri · D11 kalanı)
-Sonra KADEME 3 (§14.3 denetim aleti) ve KADEME 4 (§14.4 normatif kaynak tekilliği).
+### ✅ KADEME 2 de bu oturumda yapıldı (iş kalemleri)
+**C11** `sorties[]` + `mission_date` kanoniğe absorbe edildi — ölçüm: edge'in gerçek fixture'ı
+kanoniğe karşı 2 hata veriyordu, absorpsiyondan sonra (ürün adları kanonikleştirilerek) **geçiyor** ·
+**C2″** hükmü düzeltildi (edge regex DEĞİŞMEZ; eski hüküm `ManifestWriter`'ı kendi manifestine
+karşı kırardı) · **E3** `$ref` kararı yazıldı (§14.2.1, **onay bekliyor**) · **E5** `relative_path`
+deseni ODM/GDAL/boşluk/Türkçe adlarını kabul ediyor, traversal korumasını koruyor (13 vaka) ·
+**E6** `maxItems` 8000. **Aktif kilit:** E11 **C8'den önce merge edilmez** (E4).
 
-**Karar bekleyenler:** **D4-b** (parite kapısı CI'da koşsun mu — çapraz-repo erişimi) ·
-**D4-c** (`drone_capability_matrix.yaml` normatif ama checksum/dedektör kapsamı DIŞINDA) ·
-**SD8** (etiketsiz 16 sürüm) · **C6b/E13** · `CHLOROPHYLL_A` formülü.
+### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **KADEME 3** (§14.3 denetim aletini onar: D12…D15)
+Sonra KADEME 4 (§14.4 normatif kaynak tekilliği: D16…D18).
+
+**Karar bekleyenler:** **§14.2.1** `$ref` inline kararı (C8'in ön koşulu) · **D4-b** (parite
+kapısı CI'da koşsun mu) · **D4-c** (`drone_capability_matrix.yaml` normatif ama checksum/dedektör
+kapsamı DIŞINDA) · **SD8** (etiketsiz 16 sürüm) · **C6b/E13** · **AK-1** `CHLOROPHYLL_A` formülü.
 
 **Başka depoya düşen iş (bu depodan yapılamaz):** **E15** edge `qc_report_writer` —
 `min(...,1.0)` kırpması + `except → 0.0` sessiz yolu fail-loud olmalı · **P14** platform
-`worker_job_publisher.py:80-84` — fail-open `PANEL_ABSOLUTE` adımı kaldırılmalı.
+`worker_job_publisher.py:80-84` fail-open `PANEL_ABSOLUTE` adımı · **E16** edge `sorties[].crop_type`
+küçük→BÜYÜK harf eşlemesi + vendored yenileme.
+
+> 📌 **Bu turda doğan açık kalemlerin TAMAMI tek yerde:** eylem planı **§14.5.1** (AK-1…AK-7).
+> Bu dosya iş listesi tutmaz; yalnız oraya işaret eder.
 
 **Kanıt:** `denetim/denetim_raporu_2026-07-31_kademe0_kapi_mutasyonlari.md` (her kapının
 mutasyon kaydı). **İş listesi:** yalnız eylem planı §14.

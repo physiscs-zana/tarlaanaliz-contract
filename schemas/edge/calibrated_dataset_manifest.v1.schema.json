@@ -150,8 +150,8 @@
           "relative_path": {
             "type": "string",
             "maxLength": 256,
-            "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(/[A-Za-z0-9_-]+)*\\.[A-Za-z0-9]{1,8}$",
-            "description": "M1 paketi içindeki göreli yol. Desen DİZİN DÜZENİNİ dondurmaz (onu E11 belirler) ama traversal'ı engeller: mutlak yol yok, segmentlerde '.' yok."
+            "pattern": "^(?![/.])(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)[^\\x00-\\x1F\\\\:*?\"<>|]+\\.[A-Za-z0-9]{1,8}$",
+            "description": "M1 paketi içindeki göreli yol. Desen DİZİN DÜZENİNİ dondurmaz (onu E11 belirler); GÜVENLİK sınırlarını zorlar.\n\n**REDDEDER:** mutlak yol (`/…`) · `..` veya `.` segmenti (traversal) · boş segment (`//`) · ters bölü (`\\`) · iki nokta (`:` — Windows sürücü/ADS) · kontrol karakterleri · `* ? \" < > |` (glob/Windows geçersiz).\n**KABUL EDER:** uzantısı olan her göreli yol; **çok noktalı adlar**, boşluk ve Türkçe/Unicode klasör adları dahil.\n\n⚠️ **E5 (2026-07-31) — desen ölçümden ÖNCE dondurulmuştu ve GERÇEK çıktıyı reddediyordu.** Eski desen (`^[A-Za-z0-9][A-Za-z0-9_-]*(/[A-Za-z0-9_-]+)*\\.[A-Za-z0-9]{1,8}$`) şunları RED ediyordu: `odm_orthophoto.original.tif` (ODM'nin gerçek çıktı adı — iki nokta), `layers/ndvi.tif.aux.xml` (GDAL yan dosyası), `Tarla Verileri/ndvi.tif` (boşluk), `kırmızı/ndvi.tif` (Türkçe). Yani M1'in fiilen ürettiği dosyalar manifeste yazılamıyordu. Gevşetme **traversal korumasını kaybetmez** — 8 vakayla doğrulandı."
           },
           "sees_patch_ids": {
             "type": "array",

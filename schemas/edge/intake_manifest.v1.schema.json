@@ -544,6 +544,106 @@
           "format": "uuid",
           "description": "Optional field identifier from spatial matching."
         },
+        "mission_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "description": "Uçuş tarihi (ISO YYYY-MM-DD). `sorties[].crop_type` ile birlikte fenolojik evreyi çözer (`phenology_calendar.yaml`) → NDVI eşikleri buna göre seçilir. Opsiyonel, geriye uyumlu.\n\n**C11 (2026-07-31):** Bu alan edge'in vendored sözleşmesinde ZATEN CANLIYDI, kanonikte yoktu — bir **AK-4 edge-ileri sapması**. I-5 gereği sapma yalnız GEÇİCİ olabilir; burada kanoniğe absorbe edildi."
+        },
+        "sorties": {
+          "type": "array",
+          "maxItems": 100,
+          "description": "Bu partide uçulan her tarla için sortie kaydı: hangi tarla, hangi ürün, hangi ayak izi. Sortie-başına NDVI önceliklendirmesini sürer. Opsiyonel, geriye uyumlu.\n\n**C11 (2026-07-31) — AK-4 absorpsiyonu.** Edge'in vendored sözleşmesinde canlıydı, kanonikte yoktu. ÖLÇÜLDÜ: edge'in `intake_manifest_valid.json` fixture'ı kanoniğe karşı **2 hata** veriyordu ve ikisinin de tek sebebi buydu (`sorties` + `mission_date` bilinmiyor → `oneOf` hiçbir dala uymuyor → `unevaluatedProperties: false`). D10/E2 gereği C8'den ÖNCE absorbe edilmesi zorunluydu.\n\n⚠️ **Dizi opsiyoneldir**, ama bir sortie yazıldıysa `bbox` ZORUNLUDUR — hiç sortie yoksa bbox de yoktur (E9'un mixed-crop yolu bu boşlukta yaşar).",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sortie_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Sortie'yi parti içinde tekilleştiren kimlik."
+              },
+              "field_id": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Uçulan tarlanın kimliği."
+              },
+              "field_name": {
+                "type": "string",
+                "description": "İnsan-okunur tarla adı (opsiyonel). KR-071: kişisel veri taşımamalıdır."
+              },
+              "crop_type": {
+                "type": "string",
+                "enum": [
+                  "COTTON",
+                  "PISTACHIO",
+                  "CORN",
+                  "WHEAT",
+                  "SUNFLOWER",
+                  "GRAPE",
+                  "OLIVE",
+                  "RICE"
+                ],
+                "x-vocabulary-source": "enums/crop_type.enum.v1.json",
+                "description": "Ürün — KANONİK vocabulary (BÜYÜK harf, 8 değer), `enums/crop_type.enum.v1.json` ile birebir (drift testle bağlandı).\n\n🔴 **BİLİNÇLİ SAPMA — edge bugün KÜÇÜK harf yazıyor (→ E16).** Edge'in vendored kopyası `[\"cotton\",\"corn\",\"pistachio\",\"grape\",\"rice\"]` diyor. Ölçüldü: kanonik şemaların **10'unda 10'u** BÜYÜK harf (8'i enum'a `$ref`, 2'si satır içi). Küçük harfin kökeni `edge/worker_result.v1.crop_type`'ın SERBEST METİN olması ve açıklamasındaki *\"e.g. cotton, wheat\"* örneği (kök neden ayrı kalem: AK-7). İki vocabulary kanoniğe TAŞINMAZ — absorpsiyon kanonik biçimle yapıldı; eşlemeyi edge C8'de yapar.\n\n⚠️ Küme de genişledi (5 → 8; WHEAT/SUNFLOWER/OLIVE): genişleme edge üreticisini KIRMAZ.",
+                "x-kr-ref": [
+                  "KR-030"
+                ]
+              },
+              "area_ha": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Sortie alanı (hektar)."
+              },
+              "planned_altitude_m": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Planlanan uçuş irtifası (m AGL). KR-092 fenolojik irtifa/hız parametreleriyle karşılaştırılır."
+              },
+              "bbox": {
+                "type": "object",
+                "description": "Sortie ayak izinin WGS84 sınırlayıcı kutusu. HC-02/HC-08: bu bir tarla KAPSAMIDIR (dikdörtgen), atomik GPS noktası DEĞİLDİR — `priority_zones.geom` / `observed_footprint_wkt` ile aynı izinli sınıf.",
+                "properties": {
+                  "lat_min": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "lat_max": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "lon_min": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "lon_max": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  }
+                },
+                "required": [
+                  "lat_min",
+                  "lat_max",
+                  "lon_min",
+                  "lon_max"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "sortie_id",
+              "field_id",
+              "crop_type",
+              "bbox"
+            ],
+            "additionalProperties": false
+          }
+        },
         "priority_zones": {
           "type": "array",
           "maxItems": 500,
