@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/events/analysis_review_requested.v1.schema.json",
+  "title": "AnalysisReviewRequestedEvent",
+  "description": "Domain event: AI analysis finished and an expert review has been opened for it. Under the FULL EXPERT GATE policy (KR-019) EVERY analysis result must be approved by an expert before the farmer can see it, so this event is emitted for every successful analysis result — not only low-confidence ones. The platform emits this from the worker→platform bridge after creating the ExpertReview record. Identifiers are runtime UUIDs (see notes.id_format).",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "$ref": "#/$defs/Uuid",
+      "description": "Unique event identifier (platform DomainEvent base — uuid4)"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "analysis.review_requested",
+      "description": "Event type (constant)"
+    },
+    "event_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version"
+    },
+    "occurred_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "When the review was requested (ISO 8601 UTC)"
+    },
+    "data": {
+      "$ref": "#/$defs/AnalysisReviewRequestedData",
+      "description": "Event-specific data"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EventMetadata",
+      "description": "Event correlation/tracing metadata"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "occurred_at",
+    "data"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "Uuid": {
+      "type": "string",
+      "format": "uuid",
+      "description": "RFC 4122 UUID (runtime identifier format across platform/worker)"
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
+    },
+    "AnalysisReviewRequestedData": {
+      "type": "object",
+      "title": "Analysis Review Requested Data",
+      "description": "Identifiers binding the analysis result to the opened expert review.",
+      "properties": {
+        "review_id": {
+          "$ref": "#/$defs/Uuid",
+          "description": "Expert review record created for this result (expert_reviews.review_id)"
+        },
+        "analysis_result_id": {
+          "$ref": "#/$defs/Uuid",
+          "description": "Analysis result under review"
+        },
+        "mission_id": {
+          "$ref": "#/$defs/Uuid",
+          "description": "Mission that produced the result"
+        },
+        "field_id": {
+          "$ref": "#/$defs/Uuid",
+          "description": "Field the mission belongs to"
+        },
+        "job_id": {
+          "$ref": "#/$defs/Uuid",
+          "description": "Worker analysis job identifier"
+        },
+        "dataset_id": {
+          "$ref": "#/$defs/Uuid",
+          "description": "Dataset (chain of custody, KR-072) the result derives from"
+        },
+        "analysis_type": {
+          "type": "string",
+          "description": "Analysis type (reference: enums/analysis_type.enum.v1.json)"
+        },
+        "crop_type": {
+          "type": "string",
+          "description": "Crop type (reference: enums/crop_type.enum.v1.json).\n\nÜrün — KANONİK vocabulary (BÜYÜK harf, 8 değer; `enums/crop_type.enum.v1.json` ile birebir, drift testle bağlandı).\n\n⚠️ **2026-07-31 — ZORLANABİLİR HÂLE GETİRİLDİ.** Bu alan `{\"type\": \"string\"}` idi: açıklaması kanonik enum'a *atıf yapıyordu* ama şema hiçbir şeyi zorlamıyordu (C0'ın manifest formlarında kapattığı 'prose var, zorlanabilirlik yok' sınıfının aynısı). Sonuç ölçüldü: contract içinde İKİ ürün vocabulary'si yaşıyordu — kanonik BÜYÜK harf 8 değer ve edge'in vendored kopyasındaki küçük harf 5 değer. **Kural: contract/edge/worker/platform AYNI standardı kullanır.**",
+          "enum": [
+            "COTTON",
+            "PISTACHIO",
+            "CORN",
+            "WHEAT",
+            "SUNFLOWER",
+            "GRAPE",
+            "OLIVE",
+            "RICE"
+          ],
+          "x-vocabulary-source": "enums/crop_type.enum.v1.json",
+          "x-compat-accepted": {
+            "change": "serbest dize → kanonik ürün vocabulary'si (enum, 8 değer)",
+            "date": "2026-07-31",
+            "rationale": "Biçimsel daraltma, ama ölçüldü: platform ürün adlarını ZATEN kanonik BÜYÜK harfle üretiyor (tarlaanaliz-platform/src/core/domain/value_objects/crop_type.py:113,130 — CropType sabitleri COTTON/CORN/... biçiminde), yani olay şemalarının üreticisi kırılmaz. `worker_result.v1` için ise kod düzeyinde ÜRETİCİ YOK (edge/src ve worker/src'de tek eşleşme yok) ve platformun şema zorlaması varsayılan KAPALI (settings.py:190 worker_result_schema_enforce=False). Küçük harf yalnız edge'in vendored kopyasında + fixture'larında yaşıyor → E16 ile hizalanır.",
+            "ref": "eylem planı §14.5.1/AK-7 · kullanıcı direktifi: dört depo aynı standardı kullanır"
+          }
+        },
+        "confidence_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Model confidence for the result (0-1). Used for review prioritisation/expert matching."
+        }
+      },
+      "required": [
+        "review_id",
+        "analysis_result_id",
+        "mission_id",
+        "field_id"
+      ],
+      "unevaluatedProperties": false
+    },
+    "EventMetadata": {
+      "type": "object",
+      "title": "Event Metadata",
+      "description": "Event correlation and tracing metadata",
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "description": "Correlation ID for tracing related events"
+        },
+        "causation_id": {
+          "type": "string",
+          "description": "ID of event/command that caused this event"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing ID"
+        },
+        "source_service": {
+          "type": "string",
+          "description": "Service that emitted the event"
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "examples": [
+    {
+      "event_id": "9b2e6f7a-3c41-4d58-8a7b-1f2e3d4c5b6a",
+      "event_type": "analysis.review_requested",
+      "event_version": "1.0",
+      "occurred_at": "2026-06-15T09:46:00Z",
+      "data": {
+        "review_id": "a1b2c3d4-e5f6-4071-8293-a4b5c6d7e8f9",
+        "analysis_result_id": "b2c3d4e5-f6a7-4182-93a4-b5c6d7e8f9a0",
+        "mission_id": "c3d4e5f6-a7b8-4293-a4b5-c6d7e8f9a0b1",
+        "field_id": "d4e5f6a7-b8c9-43a4-b5c6-d7e8f9a0b1c2",
+        "job_id": "e5f6a7b8-c9d0-44b5-c6d7-e8f9a0b1c2d3",
+        "dataset_id": "f6a7b8c9-d0e1-45c6-d7e8-f9a0b1c2d3e4",
+        "analysis_type": "HEALTH",
+        "crop_type": "COTTON",
+        "confidence_score": 0.82
+      },
+      "metadata": {
+        "correlation_id": "corr_mission_123",
+        "causation_id": "7a8b9c0d-1e2f-4031-8243-5a6b7c8d9e0f",
+        "source_service": "platform-worker-bridge"
+      }
+    }
+  ],
+  "notes": {
+    "lifecycle": "ACTIVE — uyumlu platform üreticisi mevcut. Platform worker→platform bridge (worker_bridge_consumer.py) HER ExpertReview satırı için bu wire olayını yayınlar (AnalysisReviewRequestedV1, expert_gate_events.py → domain.events exchange, routing event.analysis.review_requested); sonuç işleyici + escalation yolu. In-process ExpertReviewRequested ayrıca WORM audit için korunur. (SYNC-1 hizalandı 2026-06-23 / Faz 3)",
+    "full_gate": "KR-019 full expert gate: emitted for EVERY analysis result, replacing the prior low-confidence-only escalation. The mission stays in expert-review state and the farmer is NOT notified until expert_review_decided.v1 with an approving outcome.",
+    "id_format": "Identifiers are RFC 4122 UUID strings to match the running platform/worker wire format (platform DomainEvent base emits str(uuid4); worker emits raw UUID mission_id). The legacy prefixed-ID event schemas (analysis_completed.v1) describe an aspirational scheme not produced at runtime; reconciling them is a separate MAJOR effort.",
+    "pii_free": "No PII. All references are opaque identifiers (KR-050/KR-071)."
+  }
+}

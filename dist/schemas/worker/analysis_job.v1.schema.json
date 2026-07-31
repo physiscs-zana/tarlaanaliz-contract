@@ -1,0 +1,590 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/worker/analysis_job.v1.schema.json",
+  "title": "AnalysisJob",
+  "description": "AI analysis job — SUPERSET contract (contracts v3.0.0). Validates BOTH the orchestration form (job_<24hex> ids, inputs[]/parameters/progress) AND the worker runtime form (UUID job_id, image_urls[], calibration_metadata). Platform sends this via RabbitMQ analysis_jobs queue. PII-free.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "$ref": "#/$defs/JobId",
+      "description": "Unique job identifier (orchestration form). Optional — worker runtime uses job_id (UUID)."
+    },
+    "job_id": {
+      "type": "string",
+      "anyOf": [
+        {
+          "pattern": "^job_[a-z0-9]{24}$"
+        },
+        {
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+        }
+      ],
+      "description": "Job identifier (worker runtime form, UUID). Accepts orchestration job_<24hex> too."
+    },
+    "field_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Associated field identifier. Plain string (worker) or field_<24hex> (orchestration). Worker does NOT forward this to the expert queue (KR-071)."
+    },
+    "mission_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Flight mission identifier. Plain string (worker) or mission_<24hex> (orchestration)."
+    },
+    "batch_id": {
+      "type": "string",
+      "pattern": "^batch_[a-z0-9]{24}$",
+      "description": "Associated batch identifier (orchestration form)"
+    },
+    "manifest_id": {
+      "type": "string",
+      "pattern": "^manifest_[a-z0-9]{24}$",
+      "description": "Associated manifest identifier (orchestration form)"
+    },
+    "analysis_types": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "HEALTH",
+          "DISEASE",
+          "PEST",
+          "FUNGUS",
+          "WEED",
+          "WATER_STRESS",
+          "NITROGEN_STRESS",
+          "THERMAL_STRESS",
+          "SALT_STRESS",
+          "BENEFICIAL",
+          "GENERAL"
+        ],
+        "x-inlined-from": {
+          "ref": "../../enums/analysis_type.enum.v1.json",
+          "source_id": "https://api.tarlaanaliz.com/enums/analysis_type.enum.v1.json",
+          "keys": [
+            "enum",
+            "type"
+          ],
+          "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+        }
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Requested analysis types (KR-002 harita katmanları). Worker subset DISEASE/PEST/WEED/GENERAL is contained in this enum."
+    },
+    "crop_type": {
+      "type": "string",
+      "enum": [
+        "COTTON",
+        "PISTACHIO",
+        "CORN",
+        "WHEAT",
+        "SUNFLOWER",
+        "GRAPE",
+        "OLIVE",
+        "RICE"
+      ],
+      "description": "Crop type — bitki türü (KR-016 routing; GAP crop_type enum, see enums/crop_type.enum.v1.json). CORN kanoniktir (MAIZE legacy alias).",
+      "x-inlined-from": {
+        "ref": "../../enums/crop_type.enum.v1.json",
+        "source_id": "https://api.tarlaanaliz.com/enums/crop_type.enum.v1.json",
+        "keys": [
+          "enum",
+          "type"
+        ],
+        "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+      }
+    },
+    "image_urls": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "minItems": 1,
+      "maxItems": 64,
+      "description": "S3 URLs to GeoTIFF images (worker runtime form). KS6-5 / Pentest H-4: maxItems=64 caps DoS amplification."
+    },
+    "calibration_metadata": {
+      "$ref": "#/$defs/CalibrationMetadata",
+      "description": "Calibration metadata embedded by Platform (worker runtime form). KR-018/082 hard gate."
+    },
+    "drone_metadata": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Drone metadata embedded by Platform (ADR-002: Worker never reads drone_registry.yaml directly)",
+      "properties": {
+        "sensor_model": {
+          "type": "string"
+        },
+        "available_bands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "red_edge_center_nm": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Red Edge center wavelength in nm for NDRE offset correction"
+        },
+        "has_lwir": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "phenology_week": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "description": "Current phenology week for drift detection and adapter routing"
+    },
+    "previous_expert_verdict": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "confirmed",
+        "corrected",
+        "rejected",
+        "needs_more_expert",
+        null
+      ],
+      "description": "Previous expert verdict for escalation re-trigger (KR-019 trigger #5)"
+    },
+    "requires_calibrated": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this job requires calibrated (reflectance-corrected) input data (orchestration form)"
+    },
+    "calibration_result_ref": {
+      "type": "string",
+      "description": "Reference to calibration result (platform/calibration_result.v1). Required if requires_calibrated=true"
+    },
+    "qc_report_ref": {
+      "type": "string",
+      "description": "Reference to QC report (platform/qc_report.v1). Used for pre-analysis quality validation"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/InputRef"
+      },
+      "minItems": 1,
+      "description": "Input data references (MUST include hash) — orchestration form"
+    },
+    "parameters": {
+      "$ref": "#/$defs/AnalysisParameters",
+      "description": "Analysis parameters and constraints (orchestration form)"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "LOW",
+        "NORMAL",
+        "HIGH",
+        "URGENT"
+      ],
+      "default": "NORMAL",
+      "description": "Job priority (orchestration form)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PENDING",
+        "QUEUED",
+        "RUNNING",
+        "COMPLETED",
+        "FAILED",
+        "CANCELLED"
+      ],
+      "default": "PENDING",
+      "description": "Job status (orchestration form)"
+    },
+    "progress": {
+      "$ref": "#/$defs/JobProgress",
+      "description": "Job progress information (orchestration form)"
+    },
+    "worker_id": {
+      "type": "string",
+      "description": "Worker instance ID processing this job"
+    },
+    "requested_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "Job request timestamp"
+    },
+    "started_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "Job start timestamp"
+    },
+    "completed_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "Job completion timestamp"
+    },
+    "timeout_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "Job timeout timestamp"
+    },
+    "result_id": {
+      "type": "string",
+      "pattern": "^result_[a-z0-9]{24}$",
+      "description": "Associated result identifier (when completed)"
+    },
+    "error": {
+      "$ref": "#/$defs/JobError",
+      "description": "Error information (if failed)"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Additional metadata"
+    },
+    "priority_zones": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "$ref": "#/$defs/PriorityZone"
+      },
+      "description": "Zone-scoping HINT (A2/G-4). Edge NdviPrioritizer output forwarded by Platform. Worker processes ALL tiles regardless; these zones only REORDER processing (EXPRESS first, then NORMAL, then the rest). Coverage is unchanged — no tile is skipped. Absent/empty → full-scan order (backward compatible). Mirrors edge/intake_manifest.v1 priority_zones but OMITS visualizations (expert-portal concern, not needed by the worker)."
+    }
+  },
+  "required": [
+    "crop_type",
+    "analysis_types",
+    "mission_id",
+    "field_id"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "JobId": {
+      "type": "string",
+      "pattern": "^job_[a-z0-9]{24}$",
+      "description": "Job identifier format: job_{24-char-hex}"
+    },
+    "CalibrationMetadata": {
+      "type": "object",
+      "title": "Calibration Metadata",
+      "description": "Worker runtime calibration metadata embedded by Platform. calibration_type kanonik vocabulary: enums/calibration_type.enum.v1.json. Worker alt-kümesi (ABSOLUTE/PANEL_ABSOLUTE/DLS2_RELATIVE/RELATIVE/NONE) analysis_job, calibration_metadata ve calibrated_dataset arasında tutarlıdır (G-3, 2026-06-01).",
+      "properties": {
+        "calibration_type": {
+          "type": "string",
+          "enum": [
+            "ABSOLUTE",
+            "PANEL_ABSOLUTE",
+            "DLS2_RELATIVE",
+            "RELATIVE",
+            "NONE"
+          ],
+          "description": "KR-018: NONE = HARD REJECT. Kanonik vocabulary + normalizasyon: enums/calibration_type.enum.v1.json."
+        },
+        "calibration_panel_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "irradiance_sensor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "calibration_timestamp": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "calibration_type"
+      ],
+      "unevaluatedProperties": false
+    },
+    "PriorityZone": {
+      "type": "object",
+      "title": "Priority Zone",
+      "description": "A single edge-prioritized patch (FAZ 8.5 NdviPrioritizer). Used by the worker only as a processing-order hint (EXPRESS before NORMAL). Geometry is a patch boundary polygon — HC-02: never an atomic GPS point.",
+      "properties": {
+        "patch_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$",
+          "description": "UUID4 hex (32 chars, no dashes)."
+        },
+        "geom": {
+          "type": "object",
+          "title": "GeoJSON Polygon",
+          "description": "GeoJSON Polygon (WGS84). HC-02 compliant: patch boundary only.",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Polygon"
+            },
+            "coordinates": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "array",
+                "minItems": 4,
+                "items": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 3,
+                  "items": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "type",
+            "coordinates"
+          ],
+          "additionalProperties": false
+        },
+        "priority_level": {
+          "type": "string",
+          "enum": [
+            "EXPRESS",
+            "NORMAL"
+          ],
+          "description": "EXPRESS zones are reordered ahead of NORMAL zones."
+        },
+        "ndvi_value": {
+          "type": "number",
+          "minimum": -1.0,
+          "maximum": 1.0,
+          "description": "Patch mean NDVI value (observational; does not affect ordering)."
+        },
+        "sampling_reason": {
+          "type": "string",
+          "enum": [
+            "NDVI_THRESHOLD",
+            "RANDOM_SAMPLE"
+          ],
+          "description": "Why this patch was sampled (observational)."
+        }
+      },
+      "required": [
+        "patch_id",
+        "geom",
+        "priority_level"
+      ],
+      "unevaluatedProperties": false
+    },
+    "InputRef": {
+      "type": "object",
+      "title": "Input Reference",
+      "description": "Reference to input data file (hash REQUIRED for chain-of-evidence)",
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "uri",
+          "description": "URI to input file (s3://, file://, etc.)"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "SHA-256 hash (REQUIRED)"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "IMAGE",
+            "MULTISPECTRAL",
+            "THERMAL",
+            "FLIGHT_LOG",
+            "METADATA",
+            "OTHER"
+          ],
+          "description": "Input file type"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "File size in bytes"
+        },
+        "mime_type": {
+          "type": "string",
+          "description": "MIME type"
+        }
+      },
+      "required": [
+        "uri",
+        "sha256",
+        "type"
+      ],
+      "unevaluatedProperties": false
+    },
+    "AnalysisParameters": {
+      "type": "object",
+      "title": "Analysis Parameters",
+      "description": "Parameters and constraints for analysis",
+      "properties": {
+        "model_version": {
+          "type": "string",
+          "description": "Specific model version to use (optional)"
+        },
+        "resolution": {
+          "type": "string",
+          "enum": [
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "NATIVE"
+          ],
+          "default": "HIGH",
+          "description": "Output resolution"
+        },
+        "confidence_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.7,
+          "description": "Minimum confidence threshold for detections"
+        },
+        "max_processing_time_minutes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 240,
+          "default": 60,
+          "description": "Maximum processing time before timeout"
+        },
+        "output_formats": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "GEOTIFF",
+              "PNG",
+              "GEOJSON",
+              "SHAPEFILE",
+              "CSV"
+            ]
+          },
+          "uniqueItems": true,
+          "default": [
+            "GEOTIFF",
+            "GEOJSON"
+          ],
+          "description": "Desired output formats"
+        },
+        "enable_visualization": {
+          "type": "boolean",
+          "default": true,
+          "description": "Generate visualization overlays"
+        },
+        "custom_parameters": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Analysis-specific custom parameters"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "JobProgress": {
+      "type": "object",
+      "title": "Job Progress",
+      "properties": {
+        "percent_complete": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Progress percentage"
+        },
+        "current_stage": {
+          "type": "string",
+          "enum": [
+            "INITIALIZATION",
+            "DATA_LOADING",
+            "PREPROCESSING",
+            "INFERENCE",
+            "POSTPROCESSING",
+            "GENERATING_OUTPUTS",
+            "FINALIZING"
+          ],
+          "description": "Current processing stage"
+        },
+        "stages_completed": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of stages completed"
+        },
+        "total_stages": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of stages"
+        },
+        "estimated_completion_at": {
+          "$ref": "#/$defs/Timestamp",
+          "description": "Estimated completion timestamp"
+        },
+        "last_update_at": {
+          "$ref": "#/$defs/Timestamp",
+          "description": "Last progress update timestamp"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "JobError": {
+      "type": "object",
+      "title": "Job Error",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Error code"
+        },
+        "message": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Error message"
+        },
+        "stage": {
+          "type": "string",
+          "description": "Stage where error occurred"
+        },
+        "retryable": {
+          "type": "boolean",
+          "description": "Whether error is retryable"
+        },
+        "retry_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of retry attempts"
+        },
+        "stack_trace": {
+          "type": "string",
+          "description": "Stack trace (for debugging)"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "retryable"
+      ],
+      "unevaluatedProperties": false
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
+    }
+  },
+  "notes": {
+    "superset": "contracts v3.0.0: merged the orchestration analysis_job with the worker runtime analysis_job (interface/contracts/analysis_job.v1). required reduced to the common intersection (crop_type, analysis_types, mission_id, field_id); all producer-specific fields are optional.",
+    "hash_requirement": "When inputs[] is used (orchestration form), input hash is REQUIRED. Worker runtime form uses image_urls[] (chain-of-evidence is enforced upstream).",
+    "pii_free": "This schema contains NO PII. All references are to IDs, not user information.",
+    "one_way_flow": "YZ analysis is ONE-WAY: job → worker → result. No feedback loop to prevent data leakage.",
+    "kr_reference": "Analysis flow in KR-017 (Analysis), KR-070 (YZ Isolation), KR-071 (One-way flow)."
+  }
+}

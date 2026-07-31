@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/events/dataset_quarantined.v1.schema.json",
+  "title": "DatasetQuarantinedEvent",
+  "description": "Domain event: Dataset karantinaya alındı (AV/hash/QC başarısız) — KR-072 + KR-073. Platform tarafından yayınlanır (dataset.quarantined).",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "$ref": "#/$defs/EventId",
+      "description": "Olay benzersiz kimliği."
+    },
+    "event_type": {
+      "type": "string",
+      "const": "dataset.quarantined",
+      "description": "Olay tipi sabiti."
+    },
+    "event_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version"
+    },
+    "aggregate_type": {
+      "type": "string",
+      "const": "dataset",
+      "description": "Aggregate type"
+    },
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^dataset_[a-z0-9]{24}$",
+      "description": "Dataset identifier (aggregate root)"
+    },
+    "occurred_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "When the event occurred (ISO 8601 UTC)"
+    },
+    "actor": {
+      "$ref": "#/$defs/Actor",
+      "description": "System/service that quarantined the dataset"
+    },
+    "data": {
+      "$ref": "#/$defs/DatasetQuarantinedData",
+      "description": "Event-specific data"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EventMetadata",
+      "description": "Event metadata (correlation, causation, etc.)"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "occurred_at",
+    "actor",
+    "data"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "EventId": {
+      "type": "string",
+      "pattern": "^event_[a-z0-9]{24}$",
+      "description": "Event identifier format: event_{24-char-hex}"
+    },
+    "Actor": {
+      "type": "object",
+      "title": "Actor",
+      "description": "System/service that triggered the event",
+      "properties": {
+        "actor_type": {
+          "type": "string",
+          "enum": [
+            "SYSTEM",
+            "SERVICE"
+          ],
+          "description": "Actor type"
+        },
+        "actor_service": {
+          "type": "string",
+          "description": "Service name (e.g., 'ingest-service')"
+        },
+        "worker_id": {
+          "type": "string",
+          "description": "Worker/instance ID"
+        }
+      },
+      "required": [
+        "actor_type",
+        "actor_service"
+      ],
+      "unevaluatedProperties": false
+    },
+    "DatasetQuarantinedData": {
+      "type": "object",
+      "title": "Dataset Quarantined Data",
+      "description": "Data specific to dataset quarantine event",
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^dataset_[a-z0-9]{24}$",
+          "description": "Dataset identifier"
+        },
+        "status_from": {
+          "type": "string",
+          "description": "Status before quarantine"
+        },
+        "status_to": {
+          "type": "string",
+          "const": "REJECTED_QUARANTINE",
+          "description": "Status after quarantine"
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "AV_FAIL",
+            "HASH_MISMATCH",
+            "QC_FAIL",
+            "CALIBRATION_FAIL",
+            "SIGNATURE_FAIL",
+            "MANUAL"
+          ],
+          "description": "Quarantine trigger reason"
+        },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "QUARANTINED",
+            "RELEASED",
+            "DELETED",
+            "MANUAL_REVIEW_REQUIRED",
+            "PENDING_SCAN",
+            "SCAN_IN_PROGRESS",
+            "REJECTED",
+            "CONDITIONALLY_RELEASED",
+            "ESCALATED"
+          ],
+          "description": "Quarantine decision (canonical enum)",
+          "x-inlined-from": {
+            "ref": "../../enums/quarantine_decision.enum.v1.json",
+            "source_id": "https://api.tarlaanaliz.com/enums/quarantine_decision.enum.v1.json",
+            "keys": [
+              "enum",
+              "type"
+            ],
+            "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+          }
+        },
+        "scan_report_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Reference to the failing scan/verification report"
+        },
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500,
+          "description": "Human-readable detail (PII-free)"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "status_to",
+        "reason"
+      ],
+      "unevaluatedProperties": false
+    },
+    "EventMetadata": {
+      "type": "object",
+      "title": "Event Metadata",
+      "description": "Event correlation and tracing metadata",
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "description": "Correlation ID for tracing related events"
+        },
+        "causation_id": {
+          "type": "string",
+          "description": "ID of event/command that caused this event"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing ID"
+        },
+        "partition_key": {
+          "type": "string",
+          "description": "Event stream partition key (typically aggregate_id)"
+        },
+        "sequence_number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Sequence number within aggregate"
+        },
+        "source_service": {
+          "type": "string",
+          "description": "Service that emitted the event"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
+    }
+  },
+  "x-kr-ref": [
+    "KR-072",
+    "KR-073"
+  ],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-05-30"
+}

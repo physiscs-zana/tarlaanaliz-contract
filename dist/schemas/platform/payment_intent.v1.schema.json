@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/platform/payment_intent.v1.schema.json",
+  "title": "PaymentIntentV1",
+  "description": "PaymentIntent v1 — DEPRECATED: v2 kullanın (payment_intent.v2.schema.json). SSOT Uyum: 1.2.0 (2026-02-24).\nBu versiyon geriye dönük uyumluluk için tutulmaktadır. Yeni geliştirme v2 ile yapılmalıdır.\nKRİTİK: Bu şemada status alanı v2'deki PAID kanonik enum'u kullanmaz. Migration: payment_intent_v1_to_v2.md",
+  "deprecated": true,
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": [
+    "intent_id",
+    "payer_user_id",
+    "target_type",
+    "target_id",
+    "amount_kurus",
+    "currency",
+    "method",
+    "status",
+    "price_snapshot_id",
+    "created_at"
+  ],
+  "properties": {
+    "intent_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "payer_user_id": {
+      "type": "string"
+    },
+    "target_type": {
+      "type": "string",
+      "enum": [
+        "MISSION",
+        "SUBSCRIPTION"
+      ]
+    },
+    "target_id": {
+      "type": "string"
+    },
+    "amount_kurus": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "currency": {
+      "type": "string",
+      "const": "TRY"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "CREDIT_CARD",
+        "IBAN_TRANSFER"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "PAYMENT_PENDING",
+        "PAID",
+        "REJECTED",
+        "CANCELLED"
+      ],
+      "description": "v1 status — APPROVED ve EXPIRED bu versiyonda da YOKTUR (SSOT 1.2.0 uyumu). REFUNDED için v2 kullanın."
+    },
+    "price_snapshot_id": {
+      "type": "string"
+    },
+    "receipt_blob_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "payment_provider_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rejection_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "admin_note": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "paid_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "cancelled_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  },
+  "x-deprecated-reason": "REFUNDED durum eksik; field_id ve admin_user_id yok. v2'ye geçin.",
+  "x-migration-guide": "docs/migration_guides/payment_intent_v1_to_v2.md",
+  "x-kr-ref": "KR-033",
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-02-24"
+}

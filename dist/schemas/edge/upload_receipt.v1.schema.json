@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/edge/upload_receipt.v1.schema.json",
+  "title": "UploadReceipt",
+  "description": "Receipt issued after a successful upload to the platform. Triggers DISPATCHED_TO_WORKER state transition. platform_ref is mandatory. Edge interface/contracts/schemas/edge/upload_receipt.v1 vendored kopyasıyla `properties` + `required` düzeyinde EŞDEĞERDİR; bayt-özdeşlik BEKLENMEZ — vendored kopya `additionalProperties: false`, kanonik `unevaluatedProperties: false` idiomunu kullanır (bilinçli ve 9/9 şemada tutarlı; 2026-07-31'de ölçüldü). Doğrulama: tests/test_vendored_parity.py.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.2"
+    },
+    "receipt_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique receipt identifier (UUID)."
+    },
+    "batch_id": {
+      "type": "string",
+      "pattern": "^BATCH_[0-9]{8}_[0-9]{6}_[A-Z0-9]{4}$",
+      "description": "Batch that was uploaded. Format: BATCH_YYYYMMDD_HHMMSS_XXXX."
+    },
+    "dataset_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Dataset identifier (UUID)."
+    },
+    "station_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Kiosk station identifier."
+    },
+    "uploaded_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of upload completion."
+    },
+    "chunk_count": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Total number of chunks successfully uploaded."
+    },
+    "platform_ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Platform-assigned reference for the uploaded batch. Must not be null or empty."
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^corr_[a-f0-9]{16,32}$",
+      "description": "Request-scoped trace identifier."
+    }
+  },
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "batch_id",
+    "dataset_id",
+    "station_id",
+    "uploaded_at",
+    "chunk_count",
+    "platform_ref",
+    "correlation_id"
+  ],
+  "unevaluatedProperties": false
+}

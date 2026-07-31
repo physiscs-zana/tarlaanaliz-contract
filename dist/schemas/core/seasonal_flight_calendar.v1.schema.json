@@ -1,0 +1,294 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/core/seasonal_flight_calendar.v1.schema.json",
+  "title": "SeasonalFlightCalendar",
+  "description": "Bitki bazında, sezon haftasına göre önerilen drone uçuş yüksekliği (Y) ve hızı (v) tablosu. 5 aktif GAP ürünü (COTTON/CORN/RICE/GRAPE/PISTACHIO; CORN kanoniktir, MAIZE legacy alias) için tek yetkili kaynaktır; bu ürünlerde evre-bazlı fenoloji fallback'inden (phenology_flight_profile) önceliklidir (KR-092). Çözüm: crop_type + mission_date → bölgesel haftalık pencere (MM-DD) → (bbch, altitude_m, speed_ms, critical); sezon dışı tarih en yakın sınır haftasına snap edilir. Değerler karar-destektir; sistem ilaçlama kararı vermez (KR-025). Fiziksel/mevzuat sınırları: RGB GSD=H/37,2 · ÇS GSD=H/21,7, H/v≥3,9, ≤120 m AGL (SHGM), güneş açısı>30°. Kaynak: tarama_protokolu_v1.6 §10.",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": [
+    "version",
+    "source",
+    "region",
+    "platform",
+    "global_flight",
+    "resolution",
+    "disclaimer",
+    "crops"
+  ],
+  "properties": {
+    "_bound": {
+      "type": "string",
+      "description": "BOUND başlık meta — kanonik kurallar referanslanır, çoğaltılmaz."
+    },
+    "_kr": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^KR-[0-9]{3}$"
+      },
+      "description": "İlgili KR kodları (izlenebilirlik)."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Veri dosyası semver sürümü."
+    },
+    "source": {
+      "type": "string",
+      "description": "Değerlerin türetildiği kanonik referans doküman ve bölüm."
+    },
+    "region": {
+      "type": "string",
+      "description": "Haftalık tarih pencerelerinin geçerli olduğu bölge (ör. GAP / Diyarbakır)."
+    },
+    "platform": {
+      "type": "string",
+      "description": "GSD/uçuş değerlerinin baz alındığı drone/sensör platformu (ör. DJI Mavic 3M)."
+    },
+    "global_flight": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "min_sun_angle_deg",
+        "overlap_forward_pct",
+        "overlap_side_pct",
+        "max_legal_altitude_m_agl"
+      ],
+      "description": "Tüm haftalar için ortak operasyonel uçuş ayarları (protokol §2/§11).",
+      "properties": {
+        "flight_window_local_summer": {
+          "type": "string",
+          "description": "Yaz aylarında önerilen yerel uçuş saati penceresi."
+        },
+        "flight_window_local_shoulder": {
+          "type": "string",
+          "description": "Geçiş (ilkbahar/sonbahar) yerel uçuş saati penceresi."
+        },
+        "min_sun_angle_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 90,
+          "description": "Asgari güneş açısı (derece)."
+        },
+        "overlap_forward_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "İleri (frontal) örtüşme (%)."
+        },
+        "overlap_side_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Yan (side) örtüşme (%)."
+        },
+        "field_efficiency_pct": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Tarla verimi (efektif kapsama) yüzdesi."
+        },
+        "max_legal_altitude_m_agl": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Azami yasal uçuş yüksekliği (m AGL); üzeri SHGM izni gerektirir."
+        },
+        "vlos_max_horizontal_m": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Azami yatay VLOS mesafesi (m)."
+        },
+        "sensor_speed_constraint": {
+          "type": "string",
+          "description": "Sensör hız kısıtı (H/v ≥ 3,9)."
+        },
+        "crp_calibration_tr": {
+          "type": "string",
+          "description": "CRP (kalibrasyon paneli) zorunluluğu notu (KR-018/082)."
+        }
+      }
+    },
+    "resolution": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "method",
+        "key_tr",
+        "out_of_season_tr"
+      ],
+      "description": "crop_type + tarih → hafta çözüm yöntemi ve sezon-dışı davranışı.",
+      "properties": {
+        "method": {
+          "type": "string",
+          "description": "Çözüm yöntemi kodu (ör. REGIONAL_WEEKLY)."
+        },
+        "key_tr": {
+          "type": "string",
+          "description": "Anahtar çözüm açıklaması."
+        },
+        "out_of_season_tr": {
+          "type": "string",
+          "description": "Sezon dışı tarih davranışı (en yakın sınır haftasına snap)."
+        },
+        "note_tr": {
+          "type": "string",
+          "description": "Ek not (yeni DB alanı gerektirmez vb.)."
+        }
+      }
+    },
+    "disclaimer": {
+      "type": "string",
+      "description": "Karar-destek ve sınırlama notu (KR-025: sistem ilaçlama kararı vermez)."
+    },
+    "crops": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/CropSeasonCalendar"
+      },
+      "description": "Kapsanan her bitki için haftalık sezon takvimi."
+    }
+  },
+  "$defs": {
+    "MonthDay": {
+      "type": "string",
+      "pattern": "^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$",
+      "description": "Yıldan bağımsız MM-DD; bölgesel haftalık pencere sınırı için."
+    },
+    "CropSeasonCalendar": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "crop_type",
+        "label_tr",
+        "scientific_name",
+        "planting_reference_tr",
+        "season_weeks",
+        "critical_note_tr",
+        "weeks"
+      ],
+      "properties": {
+        "crop_type": {
+          "type": "string",
+          "enum": [
+            "COTTON",
+            "PISTACHIO",
+            "CORN",
+            "WHEAT",
+            "SUNFLOWER",
+            "GRAPE",
+            "OLIVE",
+            "RICE"
+          ],
+          "description": "Kanonik bitki tipi (KR-092 kapsamı: COTTON/CORN/RICE/GRAPE/PISTACHIO; CORN kanonik, MAIZE legacy alias).",
+          "x-inlined-from": {
+            "ref": "../../enums/crop_type.enum.v1.json",
+            "source_id": "https://api.tarlaanaliz.com/enums/crop_type.enum.v1.json",
+            "keys": [
+              "enum",
+              "type"
+            ],
+            "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+          }
+        },
+        "label_tr": {
+          "type": "string",
+          "description": "Türkçe görünen ad."
+        },
+        "scientific_name": {
+          "type": "string",
+          "description": "Bilimsel ad."
+        },
+        "planting_reference_tr": {
+          "type": "string",
+          "description": "Ekim/dikim referansı ve döngü uzunluğu (bilgilendirici)."
+        },
+        "season_weeks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Sezon haftası sayısı (weeks dizisi uzunluğu ile tutarlı)."
+        },
+        "critical_note_tr": {
+          "type": "string",
+          "description": "Sezonun en kritik penceresine dair açıklama."
+        },
+        "weeks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/WeeklyFlightEntry"
+          },
+          "description": "Sıra ile haftalık uçuş parametreleri."
+        }
+      }
+    },
+    "WeeklyFlightEntry": {
+      "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "week",
+        "date_start",
+        "date_end",
+        "bbch",
+        "stage_label_tr",
+        "priority_target_tr",
+        "altitude_m",
+        "speed_ms",
+        "critical"
+      ],
+      "description": "Tek haftalık satır: bölgesel tarih penceresi + skalar Y/v. altitude_m ≤ 120 (SHGM) ve altitude_m/speed_ms ≥ 3,9 (sensör kısıtı) domain katmanında fail-closed doğrulanır.",
+      "properties": {
+        "week": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Sezon haftası sırası (1..season_weeks)."
+        },
+        "date_start": {
+          "$ref": "#/$defs/MonthDay",
+          "description": "Hafta başlangıç tarihi (MM-DD, dahil)."
+        },
+        "date_end": {
+          "$ref": "#/$defs/MonthDay",
+          "description": "Hafta bitiş tarihi (MM-DD, dahil)."
+        },
+        "bbch": {
+          "type": "string",
+          "description": "BBCH ölçek aralığı."
+        },
+        "stage_label_tr": {
+          "type": "string",
+          "description": "Türkçe fenolojik evre adı."
+        },
+        "priority_target_tr": {
+          "type": "string",
+          "description": "Bu haftada öncelikli tarama hedefleri (H/Z/Y)."
+        },
+        "altitude_m": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 120,
+          "description": "Skalar önerilen uçuş yüksekliği (m AGL); ≤120 SHGM sınırı."
+        },
+        "speed_ms": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Skalar önerilen uçuş hızı (m/s)."
+        },
+        "critical": {
+          "type": "boolean",
+          "description": "Yüksek risk (kritik) haftası mı."
+        }
+      }
+    }
+  },
+  "x-bound": "TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.",
+  "x-kr-ref": [
+    "KR-092",
+    "KR-024",
+    "KR-016",
+    "KR-018",
+    "KR-025"
+  ],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-07-05"
+}

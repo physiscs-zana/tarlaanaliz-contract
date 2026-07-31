@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/events/field_health_changed.v1.schema.json",
+  "title": "FieldHealthChangedEvent",
+  "description": "KR-088/KR-089: Domain event — tarla sağlık skoru önemli ölçüde değiştiğinde tetiklenir. Dashboard uyarıları ve bildirimler için kullanılır.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "$ref": "#/$defs/EventId",
+      "description": "Unique event identifier"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "field.health_changed",
+      "description": "Event type (constant)"
+    },
+    "event_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version"
+    },
+    "aggregate_type": {
+      "type": "string",
+      "const": "field",
+      "description": "Aggregate type"
+    },
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^field_[a-z0-9]{24}$",
+      "description": "Field identifier"
+    },
+    "occurred_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "Event timestamp"
+    },
+    "data": {
+      "type": "object",
+      "properties": {
+        "field_id": {
+          "type": "string",
+          "pattern": "^field_[a-z0-9]{24}$",
+          "description": "Field identifier"
+        },
+        "mission_id": {
+          "type": "string",
+          "pattern": "^mission_[a-z0-9]{24}$",
+          "description": "Mission that triggered the change"
+        },
+        "previous_health_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Previous measurement health score (0-100)"
+        },
+        "current_health_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Current measurement health score (0-100)"
+        },
+        "delta": {
+          "type": "integer",
+          "minimum": -100,
+          "maximum": 100,
+          "description": "Score change (current - previous)"
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "IMPROVING",
+            "DECLINING",
+            "STABLE"
+          ],
+          "description": "Trend direction"
+        },
+        "crop_type": {
+          "type": "string",
+          "description": "Crop type at time of measurement (from crop_type.enum.v1).\n\nÜrün — KANONİK vocabulary (BÜYÜK harf, 8 değer; `enums/crop_type.enum.v1.json` ile birebir, drift testle bağlandı).\n\n⚠️ **2026-07-31 — ZORLANABİLİR HÂLE GETİRİLDİ.** Bu alan `{\"type\": \"string\"}` idi: açıklaması kanonik enum'a *atıf yapıyordu* ama şema hiçbir şeyi zorlamıyordu (C0'ın manifest formlarında kapattığı 'prose var, zorlanabilirlik yok' sınıfının aynısı). Sonuç ölçüldü: contract içinde İKİ ürün vocabulary'si yaşıyordu — kanonik BÜYÜK harf 8 değer ve edge'in vendored kopyasındaki küçük harf 5 değer. **Kural: contract/edge/worker/platform AYNI standardı kullanır.**",
+          "enum": [
+            "COTTON",
+            "PISTACHIO",
+            "CORN",
+            "WHEAT",
+            "SUNFLOWER",
+            "GRAPE",
+            "OLIVE",
+            "RICE"
+          ],
+          "x-vocabulary-source": "enums/crop_type.enum.v1.json",
+          "x-compat-accepted": {
+            "change": "serbest dize → kanonik ürün vocabulary'si (enum, 8 değer)",
+            "date": "2026-07-31",
+            "rationale": "Biçimsel daraltma, ama ölçüldü: platform ürün adlarını ZATEN kanonik BÜYÜK harfle üretiyor (tarlaanaliz-platform/src/core/domain/value_objects/crop_type.py:113,130 — CropType sabitleri COTTON/CORN/... biçiminde), yani olay şemalarının üreticisi kırılmaz. `worker_result.v1` için ise kod düzeyinde ÜRETİCİ YOK (edge/src ve worker/src'de tek eşleşme yok) ve platformun şema zorlaması varsayılan KAPALI (settings.py:190 worker_result_schema_enforce=False). Küçük harf yalnız edge'in vendored kopyasında + fixture'larında yaşıyor → E16 ile hizalanır.",
+            "ref": "eylem planı §14.5.1/AK-7 · kullanıcı direktifi: dört depo aynı standardı kullanır"
+          }
+        },
+        "measurement_date": {
+          "$ref": "#/$defs/Date",
+          "description": "Date of drone flight / measurement"
+        }
+      },
+      "required": [
+        "field_id",
+        "mission_id",
+        "previous_health_score",
+        "current_health_score",
+        "delta",
+        "direction",
+        "crop_type",
+        "measurement_date"
+      ],
+      "unevaluatedProperties": false
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "correlation_id": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "occurred_at",
+    "data"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "EventId": {
+      "type": "string",
+      "pattern": "^event_[a-z0-9]{24}$",
+      "description": "Event identifier format: event_{24-char-hex}"
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
+    },
+    "Date": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO 8601 date (YYYY-MM-DD)"
+    }
+  }
+}

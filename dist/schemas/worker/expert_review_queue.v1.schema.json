@@ -1,0 +1,482 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/worker/expert_review_queue.v1.schema.json",
+  "title": "ExpertReviewQueuePackage",
+  "description": "Worker → Expert Portal escalation package. Published by Worker on the ``expert_review_queue`` RabbitMQ queue when ANY of the 6 KR-019 escalation triggers fires. KR-071 invariant: this package MUST NOT carry field_id, owner_name, ciftci_adi, GPS coordinates, or any other PII identifier — those are scrubbed at the wire boundary by ``publisher.publish_escalation``. Sprint 3 M (2026-05-17) extends the scrub to all ~25 canonical PII keys at any nesting depth. Worker interface/contracts/expert_review_queue.v1 vendored kopyasıyla `properties` + `required` düzeyinde EŞDEĞERDİR; bayt-özdeşlik BEKLENMEZ — vendored kopya `additionalProperties: false`, kanonik `unevaluatedProperties: false` idiomunu kullanır (bilinçli ve 9/9 şemada tutarlı; 2026-07-31'de ölçüldü). Doğrulama: tests/test_vendored_parity.py.",
+  "type": "object",
+  "required": [
+    "job_id",
+    "mission_id",
+    "escalation_reason",
+    "confidence_score",
+    "crop_type",
+    "analysis_type"
+  ],
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "description": "Job identifier (same UUID as the original AnalysisJob). The Expert Portal correlates the review back to the analysis result via this id."
+    },
+    "mission_id": {
+      "type": "string",
+      "description": "Mission / flight identifier. Multiple jobs can share one mission; Portal uses this for batch surfacing."
+    },
+    "escalation_reason": {
+      "type": "string",
+      "enum": [
+        "LOW_CONFIDENCE",
+        "LOW_AGREEMENT",
+        "OOD_DETECTED",
+        "HIGH_EPISTEMIC",
+        "EXPERT_RE_TRIGGER",
+        "QUARANTINE_CAUTION",
+        "AUDIT_SAMPLE"
+      ],
+      "description": "Which KR-019 escalation trigger fired. KEY NAME (YÜKSEK-1 / v4.0.0): the wire key is ``escalation_reason``. MUST stay value-for-value in sync with worker src/core/domain/enums.py:EscalationReason (enforced by tests/contract/test_expert_review_queue_schema.py::TestReasonEnumParity). AL-C1 (2026-07-31, additive 7. değer): ``AUDIT_SAMPLE`` = i.i.d. ölçüm-temeli denetim örneklemi. Diğer 6 neden MODEL DAVRANIŞINDAN türetilir (güven/uyum/OOD/epistemik/uzman döngüsü/karantina); AUDIT_SAMPLE ise model çıktısından BAĞIMSIZ, stratifiye Bernoulli seçimle üretilir. Denetim tile'ını güven-temelli bir neden altında yollamak hem yansızlığı bozar hem escalation_total{reason} metriğini kirletir — bu yüzden ayrı değer zorunludur (kaynak: worker denetim/audit_escalation_reason_devir_spec_2026_07_19.md §2)."
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Layer-1 final_confidence at the moment of escalation. Below the dynamic_threshold for this crop x analysis_type combination."
+    },
+    "crop_type": {
+      "type": "string",
+      "enum": [
+        "COTTON",
+        "PISTACHIO",
+        "CORN",
+        "WHEAT",
+        "SUNFLOWER",
+        "GRAPE",
+        "OLIVE",
+        "RICE"
+      ],
+      "description": "Same enum as enums/crop_type.enum.v1.json (GAP 8-crop set)."
+    },
+    "analysis_type": {
+      "type": "string",
+      "enum": [
+        "DISEASE",
+        "PEST",
+        "WEED",
+        "GENERAL"
+      ],
+      "description": "Worker analysis_type subset (the job-request axis): DISEASE/PEST/WEED/GENERAL. Map-layer superset lives in enums/analysis_type.enum.v1.json."
+    },
+    "predicted_class": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Worker's best-guess class label that the expert is asked to confirm/correct. Null when no class made it past the threshold (e.g. NO_RESULT mode)."
+    },
+    "detection_type": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "disease",
+        "pest",
+        "weed",
+        "abiotic",
+        null
+      ],
+      "description": "C-1 (2026-07-06): the Worker's PREDICTED sub-specialty for the escalated tile — the expert_labeling_card 'category' of predicted_class. RAW lowercase card category (disease/pest/weed/abiotic), emitted losslessly; the canonical/Platform side owns the single authoritative mapping to its richer sub_specialty enum (DISEASE/PEST/WEED/FUNGUS/WATER_STRESS/...). DISTINCT from analysis_type: analysis_type is the REQUESTED analysis type (uppercase, from the job), detection_type is the PREDICTED sub-specialty (raw card category). Lets Platform stratify CONFIRMED records by sub-specialty — the gap C-3 (training.feedback.sub_specialty) cannot close, because a confirmation feedback carries no class identity. Null when no detection made the threshold or predicted_class is not in any card. Enum values MUST stay in sync with worker src/core/services/feedback/sub_specialty_resolver.py:VALID_SUB_SPECIALTIES (enforced by worker tests/contract/test_expert_review_queue_schema.py::TestDetectionTypeField). MINOR / backwards-compatible optional field — pre-C-1 producers omit it (default null). KR-071: raw classification label, carries no PII."
+    },
+    "sub_specialty": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "HEALTH",
+        "DISEASE",
+        "PEST",
+        "FUNGUS",
+        "WEED",
+        "WATER_STRESS",
+        "NITROGEN_STRESS",
+        "THERMAL_STRESS",
+        "SALT_STRESS",
+        "BENEFICIAL",
+        "GENERAL",
+        null
+      ],
+      "description": "C-1 RICH axis (2026-07-07, additive): the Worker's PREDICTED rich sub-specialty token for the escalated tile — the expert_labeling_card 'sub_specialty' of predicted_class. Runs ALONGSIDE detection_type (the RAW coarse card category), which is preserved unchanged for routing + allOf card conditions + confirmed-record stratification. The rich VALUE SET is VENDORED verbatim (AK-4) from enums/analysis_type.enum.v1.json (platform-authoritative KR-002 map-layer taxonomy: 11 codes incl. BENEFICIAL v1.3.0); worker never invents values, it only ASSIGNS them per-card (platform delegates the fine class_id->rich split to the worker — platform maps only coarse abiotic->GENERAL). Distinction from detection_type: detection_type is the coarse 4-value machine token (disease/pest/weed/abiotic); sub_specialty is the rich professional token (FUNGUS=fungal+oomycete, DISEASE=bacterial/viral/phytoplasma, WATER_STRESS/NITROGEN_STRESS/SALT_STRESS/THERMAL_STRESS abiotic families, GENERAL=residual abiotic). HEALTH is enum-valid for parity but a worker C-1/C-3 escalation can NEVER emit it (healthy = no detection, no corrected class). BENEFICIAL is likewise enum-valid for parity but not yet emittable (no model currently produces beneficial/natural-enemy detections). Null when no detection made the threshold, predicted_class is not in any card, or the card carries no sub_specialty (non-detection QA-note cards). Enum values MUST stay in sync with the canonical enums/analysis_type.enum.v1.json AND worker src/core/services/feedback/sub_specialty_resolver.py rich-allowlist (enforced by worker tests/contract/test_expert_review_queue_schema.py::TestSubSpecialtyField + tests/contract/test_sub_specialty_enum_lock.py). MINOR / backwards-compatible optional field — pre-rich producers omit it (default null). KR-071: enum-constrained classification label, carries no PII."
+    },
+    "tile_coordinates": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "description": "Pixel-space tile bbox inside the parent image. NOT geo-referenced — GPS / lat / lon are forbidden under KR-071."
+    },
+    "thumbnail_url": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "uri",
+      "description": "S3 / CDN URL of a low-res tile thumbnail for the expert UI. Image content only; no overlay text that could expose PII."
+    },
+    "ndvi_value": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": -1.0,
+      "maximum": 1.0,
+      "description": "Mean NDVI over the escalated tile. Surface stat for the expert; no per-pixel raster on this queue (use index_maps URL for that)."
+    },
+    "ndre_value": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": -1.0,
+      "maximum": 1.0,
+      "description": "Mean NDRE over the escalated tile."
+    },
+    "senior_panel_redirect": {
+      "type": "boolean",
+      "default": false,
+      "description": "KM-01: when an escalation has cycled past MAX_ESCALATION_ROUNDS, the Portal routes to a senior expert panel instead of the regular reviewer queue."
+    },
+    "escalation_round": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Which round of escalation this is. Starts at 0 for the first escalation; incremented when the previous expert verdict was ``needs_more_expert``."
+    },
+    "tile_group_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "F-10 / KARAR-15: when this tile is the representative of a SimilarTileDeduplicator group, the group id rides on this field so the Portal can show the expert the group context."
+    },
+    "tile_group_size": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Number of tiles in the group (1 = no grouping). The expert's verdict cascades to all members via Worker's bulk-approval pipeline (KARAR-15)."
+    },
+    "tile_group_similarity_min": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Lowest pairwise cosine similarity inside the group — gives the expert a sense of how tight the group is."
+    },
+    "required_reviewers": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "default": 1,
+      "description": "K1 hibrit (KARAR-14 dual-review). Number of independent expert reviewers Platform routing MUST assign to this analysis_result_id. HIGH (>=0.65) → 1 reviewer; MEDIUM (0.50-0.65) and LOW (<0.50) → 2 reviewers. Default 1 preserves the legacy single-review path."
+    },
+    "spot_check": {
+      "type": "boolean",
+      "default": false,
+      "description": "K1 spot-check audit flag (T3.4 — Dalga-3). True iff this package is a QUALITY-AUDIT second review of a HIGH-confidence single-reviewer tile sampled at ~5% (keyed on job_id + UTC date). Default false = ordinary escalation. KR-071: carries no PII."
+    },
+    "audit_sample": {
+      "type": "boolean",
+      "default": false,
+      "description": "AL-C2 (2026-07-31): bu paket i.i.d. ÖLÇÜM-TEMELİ denetim örneklemi mi? True ise seçim model çıktısından BAĞIMSIZ yapılmıştır (stratifiye Bernoulli, deterministik per-tile SHA). ``spot_check`` ile KARIŞTIRILMAZ — o, YÜKSEK güvenli tile'ların ~%5'ini örnekleyen GÜVEN-KOŞULLU ikinci incelemedir; ikisi aynı anda true OLAMAZ (aşağıdaki allOf kuralı), çünkü güven-koşullu seçim i.i.d. bağımsızlığını bozar. Varsayılan false. KR-071: PII yok."
+    },
+    "audit_stratum": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "AL-C2: örneklemin alındığı tabaka (stratum). §2.1 gereği YAPISAL bir objedir, serbest metin DEĞİLDİR — eksen karışımı (ör. 'corn/disease/w12' gibi kaçış dizeleri) şema hatasıdır. Eksenler platform-otoriterdir ve buradaki değer kümeleri kanonik enum'lardan VENDOR'lanmıştır. propagation_precision(crop) bu tabakaya göre hesaplanır.",
+      "properties": {
+        "crop_type": {
+          "type": "string",
+          "enum": [
+            "COTTON",
+            "PISTACHIO",
+            "CORN",
+            "WHEAT",
+            "SUNFLOWER",
+            "GRAPE",
+            "OLIVE",
+            "RICE"
+          ],
+          "description": "enums/crop_type.enum.v1.json ile aynı küme (GAP 8)."
+        },
+        "analysis_type": {
+          "type": "string",
+          "enum": [
+            "DISEASE",
+            "PEST",
+            "WEED",
+            "GENERAL"
+          ],
+          "description": "Bu şemadaki analysis_type ekseniyle AYNI küme (iş-isteği ekseni)."
+        },
+        "phenology_stage": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "GRAPE_BUDBREAK_SHOOT",
+            "GRAPE_PREFLOWER_FLOWER",
+            "GRAPE_FRUITSET_CLOSURE",
+            "GRAPE_VERAISON_MATURITY",
+            "CORN_EMERGENCE_V5",
+            "CORN_V6_PRETASSEL",
+            "CORN_TASSEL_SILK",
+            "CORN_GRAINFILL",
+            "OLIVE_DORMANCY_BUD",
+            "OLIVE_LEAF_SHOOT",
+            "OLIVE_INFLOR_FLOWER",
+            "OLIVE_FRUITSET_PIT",
+            "OLIVE_VERAISON_MATURITY",
+            "OLIVE_HARVEST",
+            null
+          ],
+          "description": "enums/phenology_stage.enum.v1.json (14 evre). OPSİYONELDİR çünkü kanonik enum bugün 8 mahsulün yalnız 3'ünü kapsıyor (GRAPE/CORN/OLIVE); kapsanmayan mahsullerde tabaka crop×analysis ekseninde kalır. Enum genişlerse burası da MINOR ile genişletilir."
+        }
+      },
+      "required": [
+        "crop_type",
+        "analysis_type"
+      ],
+      "additionalProperties": false
+    },
+    "tile_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128,
+      "description": "Bu incelemenin işaret ettiği TEKİL tile'ın kimliği — ölçüm JOIN anahtarı (M3).\n\n**Neden zorunlu (audit_sample=true altında):** denetim örnekleminin amacı, uzman etiketini modelin çıktısıyla KARŞILAŞTIRMAKTIR. `analysis_result.detections` bir DİZİDİR ve tile düzeyinde `tile_id` taşır; `job_id` ile JOIN etmek bir işin TÜM tespitlerini getirir, hangisinin denetlendiğini söylemez. Anahtar olmadan `propagation_precision` (yayılım isabeti) HESAPLANAMAZ — yani ölçüm hattı, ölçmesi gereken şeyi ölçemez."
+    },
+    "consensus_participation": {
+      "type": "string",
+      "enum": [
+        "PARTICIPATES",
+        "EXCLUDED"
+      ],
+      "default": "PARTICIPATES",
+      "description": "Bu inceleme satırı KR-019 uzman KONSENSÜSÜNE katılır mı? (M2)\n\n🔴 **Denetim satırı KATILMAZ (`EXCLUDED`) — sözleşme düzeyinde zorunludur.** Denetim satırı, modeli ÖLÇMEK için çekilir; konsensüse kardeş inceleme olarak girerse iki şey birden bozulur: ① kör uzmanın etiketi yayın kapısını bloke edebilir (ölçüm, ölçtüğü sistemi DEĞİŞTİRİR — gözlemci etkisi) ② denetim etiketi, denetlediği kararın parçası hâline gelir (dairesellik).\n\n`PARTICIPATES` olağan uzman incelemesidir; kapı yalnız denetim satırında `EXCLUDED` zorunlu kılar, tersi serbesttir."
+    },
+    "audit_selection_rate": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "description": "π_h — bu satırın ait olduğu TABAKADAN (stratum) seçilme OLASILIĞI (M1/Y1).\n\n**Neden zorunlu:** tabaka etiketi tek başına yansız kestirim vermez. Horvitz-Thompson kestiricisi her gözlemi 1/π_h ile ağırlıklar; π_h tel üzerinde taşınmıyorsa denetim örnekleminden POPÜLASYONA geçiş yapılamaz — elde 'seçilmiş birkaç tile'ın doğruluğu' kalır, sistemin doğruluğu değil. Üretici: worker `audit_set_sampler` (stratifiye Bernoulli çekiliş)."
+    },
+    "audit_rotation_key": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Çekilişin DÖNEM anahtarı (ör. hafta/parti kimliği) — seçim kanıtının bir parçası (M1).\nAynı tabakanın farklı dönemlerdeki çekilişlerini ayırır; olmadan 'aynı tile tekrar mı seçildi, yoksa yeni dönem mi' sorusu cevaplanamaz ve bağımsızlık varsayımı denetlenemez."
+    },
+    "audit_bucket": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Çekilişte kullanılan deterministik kova (hash bucket) — seçimin YENİDEN ÜRETİLEBİLİR kanıtı (M1). `audit_rotation_key` ile birlikte, bir tile'ın neden seçildiği sonradan denetlenebilir olur (çekiliş 'öyleydi' değil, 'şu kovaya düştü' diye gösterilir)."
+    },
+    "spot_check_suppressed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Bu satır spot_check olarak da seçilecekken denetim çekilişi KAZANDIĞI için spot_check bastırıldı mı? (Ç1)\n\n**Normatif öncelik kuralı:** denetim çekilişi ÖNCE ve modelden BAĞIMSIZ yapılır; çakışma hâlinde **`audit_sample` kazanır**, `spot_check` bastırılır ve bu alan `true` yazılır. Kural olmadan iki mekanizma birbirini sessizce dışlar ve `P(denetim | spot_check) = 0` koşullandırması i.i.d. varsayımını bozar.\n\n⚠️ **Sunumsal şart (A'nın nüansı):** aynı inceleme çiftçiye/uzmana hem 'modeli denetle' hem 'modelden bağımsız etiketle' olarak RENDER EDİLEMEZ; bastırma bu yüzden veri kaybı değil, sunum tekilliğidir."
+    }
+  },
+  "unevaluatedProperties": false,
+  "allOf": [
+    {
+      "$comment": "AL-C1 ⟺ AL-C2: bayrak ve neden birlikte hareket eder; biri olmadan diğeri olmaz.",
+      "if": {
+        "properties": {
+          "audit_sample": {
+            "const": true
+          }
+        },
+        "required": [
+          "audit_sample"
+        ]
+      },
+      "then": {
+        "properties": {
+          "escalation_reason": {
+            "const": "AUDIT_SAMPLE"
+          }
+        },
+        "required": [
+          "audit_stratum"
+        ]
+      }
+    },
+    {
+      "$comment": "Ters yön: AUDIT_SAMPLE nedeni yalnız denetim örnekleminde kullanılabilir.",
+      "if": {
+        "properties": {
+          "escalation_reason": {
+            "const": "AUDIT_SAMPLE"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "audit_sample": {
+            "const": true
+          }
+        },
+        "required": [
+          "audit_sample"
+        ]
+      }
+    },
+    {
+      "$comment": "i.i.d. bağımsızlık: güven-koşullu spot_check ile aynı anda olamaz.",
+      "if": {
+        "properties": {
+          "audit_sample": {
+            "const": true
+          }
+        },
+        "required": [
+          "audit_sample"
+        ]
+      },
+      "then": {
+        "properties": {
+          "spot_check": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "$comment": "ANTI-ANCHORING (sözleşme düzeyinde fail-closed): denetim tile'ında model SINIF ETİKETLERİ tel üzerinde HİÇ TAŞINMAZ — Portal'ın gizlemesine güvenilmez. Uzman modelin tahminini görürse 'bağımsız' etiket modele demirlenir ve TÜM ölçüm temeli geçersiz olur. Üçü de zaten nullable olduğu için bu kısıt geriye-uyumludur.",
+      "if": {
+        "properties": {
+          "audit_sample": {
+            "const": true
+          }
+        },
+        "required": [
+          "audit_sample"
+        ]
+      },
+      "then": {
+        "properties": {
+          "predicted_class": {
+            "const": null
+          },
+          "detection_type": {
+            "const": null
+          },
+          "sub_specialty": {
+            "const": null
+          }
+        }
+      }
+    },
+    {
+      "$comment": "D12+D13+D14+D15 (2026-07-31) — denetim satırının ÖLÇÜM BÜTÜNLÜĞÜ. Bu blok, 'ölçüm aracının ölçtüğü sistemi değiştirmemesi' şartını sözleşmeye yazar.",
+      "if": {
+        "properties": {
+          "audit_sample": {
+            "const": true
+          }
+        },
+        "required": [
+          "audit_sample"
+        ]
+      },
+      "then": {
+        "required": [
+          "tile_id",
+          "consensus_participation",
+          "audit_selection_rate",
+          "audit_rotation_key",
+          "audit_bucket"
+        ],
+        "properties": {
+          "consensus_participation": {
+            "const": "EXCLUDED",
+            "$comment": "M2: denetim satırı KR-019 konsensüsüne katılamaz."
+          },
+          "tile_id": {
+            "type": "string",
+            "minLength": 1,
+            "$comment": "M3: ölçüm JOIN anahtarı; audit satırında null olamaz."
+          },
+          "tile_group_id": {
+            "const": null,
+            "$comment": "M4: denetim satırı bir GRUBA bağlanamaz — toplu onay yayılımı denetim etiketini kendi ölçtüğü yayılıma besler ve propagation_precision YAPISAL olarak 1'e gider (ölçüm kendini doğrular)."
+          },
+          "tile_group_size": {
+            "const": 1,
+            "$comment": "M4: denetim satırı tek tile'dır."
+          },
+          "required_reviewers": {
+            "const": 1,
+            "$comment": "Ç1/M2: konsensüs dışı olduğu için çoklu-uzman kuralı uygulanmaz; sabit tutulur ki inceleme yükü tabakalar arasında değişmesin."
+          },
+          "confidence_score": {
+            "const": 0,
+            "$comment": "Ç4 adım 1 (M7): denetim satırında model GÜVENİ tel üzerinde bilgi taşımaz — anti-anchoring. `const: 0` bilgi kanalını kapatır; alan `required` olduğu için kaldırılamaz (o MAJOR olurdu), bu yüzden bağlam-bazlı sabitlenir. Bkz. x-deprecated-in-context."
+          }
+        }
+      }
+    }
+  ],
+  "x-anti-anchoring": {
+    "rule": "Denetim örnekleminde (audit_sample=true) uzmana model tahmini/güveni GÖSTERİLMEZ. Sınıf etiketleri (predicted_class/detection_type/sub_specialty) sözleşme düzeyinde null'a zorlanır — tel üzerinde hiç taşınmaz.",
+    "residual_portal_obligation": "confidence_score bu turda tel üzerinde KALIR ve Portal onu denetim satırında RENDER ETMEMELİDİR (AL-P1). Sözleşme düzeyinde null'lanmadı çünkü alan `required` + `type: number`; nullable'a genişletmek breaking_change_detector'a göre MAJOR olurdu ve bu tur MINOR'dur. Tam fail-closed için v2 kalemi açıldı (bkz. eylem planı AL-C3).",
+    "measurement_join": "Metrikler modelin tahminini job_id ile analysis_result'tan JOIN ederek elde eder; uzman-facing pakette taşınmasına gerek yoktur.",
+    "source": "worker denetim/audit_escalation_reason_devir_spec_2026_07_19.md §3-B, §4"
+  },
+  "x-updated": "2026-07-31",
+  "x-deprecated-in-context": {
+    "confidence_score": {
+      "context": "audit_sample == true",
+      "since": "2026-07-31",
+      "policy": "const:0 (bilgi kanalı kapalı)",
+      "window": "2 MINOR sürüm: bu pencerede alan denetim satırında `0` sabitidir. Pencere sonunda v2'de denetim satırından TAMAMEN kaldırılması değerlendirilir (kaldırma MAJOR'dır — bu yüzden şimdi yapılmaz).",
+      "why": "M7/Ç4: `const:0` bilgi kanalını kapatır ama 'seviye kaymasını' (uzmanın, denetim satırı olduğunu anlayıp farklı davranması) kapatmaz — o SD11'in sunum/deprecation ekseninde çözülür. İki eksen DİK; sıralı uygulanır.",
+      "blocked_by": "M2/M3 kapanmadan bu kalem İKİNCİLDİR (ML/DS ajanının bağlayıcı uyarısı) — bu turda M2 (consensus_participation) ve M3 (tile_id) kapatıldığı için adım 1 uygulanabilir hâle geldi."
+    }
+  },
+  "x-compat-accepted": {
+    "change": "kök `allOf` bileşimi eklendi (yok → 5 koşullu blok)",
+    "date": "2026-07-31",
+    "rationale": "Bileşim kısıtı EKLEMEK biçimsel olarak daraltmadır, ama ÖLÇÜLDÜ: beş bloğun BEŞİ de `audit_sample: true` (ya da `escalation_reason: AUDIT_SAMPLE`) koşulludur ve bu iki alan aynı YAYIMLANMAMIŞ turda (AL-C1/AL-C2) eklendi. Denetim satırı üreten bir kod henüz YOK (worker `audit_set_sampler` emisyonu yazılmadı — denetim bulgusu M1/P4: 'kayıp değil, hiç bağlanmamış'). Dolayısıyla olağan bir inceleme belgesinde `if` HİÇ ateşlenmez; eski üreticiler etkilenmez. Blokların işi, denetim kanalının ölçüm bütünlüğünü (M2/M3/M4/Ç1/Ç4) sözleşme düzeyinde zorlamaktır.",
+    "ref": "eylem planı §14.3 (D12–D15) · denetim bulguları M1–M4, Ç1, Ç4"
+  }
+}

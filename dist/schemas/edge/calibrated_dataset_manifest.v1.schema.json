@@ -1,0 +1,222 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/edge/calibrated_dataset_manifest.v1.schema.json",
+  "title": "EdgeCalibratedDatasetManifest",
+  "description": "Edge tarafı kalibre veri manifesti — Pix4Dfields kalibrasyonunu tamamlamış dataset için (kiosk-emitted). calibration_result + qc_report + tool metadata içerir. Platform/dataset-katmanı paket manifesti için bkz. schemas/platform/calibrated_dataset_manifest.v1 (outputs[]/reports[] aggregation formu). Edge interface/contracts/schemas/edge/calibrated_dataset_manifest.v1 vendored kopyasıyla `properties` + `required` düzeyinde EŞDEĞERDİR; bayt-özdeşlik BEKLENMEZ — vendored kopya `additionalProperties: false`, kanonik `unevaluatedProperties: false` idiomunu kullanır (bilinçli ve 9/9 şemada tutarlı; 2026-07-31'de ölçüldü). Doğrulama: tests/test_vendored_parity.py.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.2"
+    },
+    "dataset_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique dataset identifier."
+    },
+    "raw_manifest_ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Reference to the original intake_manifest that produced this calibrated dataset."
+    },
+    "calibration_result": {
+      "type": "object",
+      "properties": {
+        "tool_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Calibration tool name, e.g. Pix4Dfields."
+        },
+        "tool_version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Version of the calibration tool."
+        },
+        "observed_footprint_wkt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^(?!SRID=)(?!.*(?<![\\d.])\\d{4,})\\s*(POLYGON|MULTIPOLYGON)\\s*\\(.*\\)\\s*$",
+          "description": "Gözlenen kapsama alanının WKT poligonu (KR-065 — pilot hakedişinin girdisi).\n\nDESEN ÜÇ ŞEYİ ZORLAR:\n① **EWKT YASAK** (`SRID=4326;POLYGON(...)`): ölçüldü — `shapely.wkt.loads` EWKT'yi ayrıştıramıyor, yani tüketici (edge `qc_report_writer._geometric_coverage`) sessizce `except`e düşerdi.\n② **DERECE AYIRICISI**: tam kısmı 4+ basamaklı koordinat REDDEDİLİR. |boylam| ≤ 180 ve |enlem| ≤ 90 olduğundan derece koordinatları en fazla 3 basamaklıdır; UTM metre (ör. 500000, 4000000) 4+ basamaklıdır. Ondalık HASSASİYET kısıtlanmaz (nokta sonrası basamaklar serbest). Bu, G1'in sessiz hata zincirini şemadan keser: UTM izdüşümü × derece sınırı → kesişim ~0 → `coverage_ratio=0.0` → 'TEKRAR UÇUŞ' → **pilot ödenmez**; ya da ters yönde oran ≫1 → `min(...,1.0)` kırpması → 'kusursuz kapsama' yalanı.\n③ **Tip kısıtı**: yalnız POLYGON/MULTIPOLYGON (POINT bir kapsama alanı değildir).\n\n⚠️ Desen bir CRS DOĞRULAMASI DEĞİL, bir **ayırıcıdır** (discriminator): derece-dışı koordinatı reddeder ama hangi datum olduğunu bilemez — CRS beyanı için `footprint_crs` alanına bakın.",
+          "x-compat-accepted": {
+            "change": "maxLength (sınırsız → 4096) + pattern (yok → EWKT/derece-dışı reddi) eklendi",
+            "date": "2026-07-31",
+            "rationale": "Biçimsel olarak daraltmadır, ama ÖLÇÜLDÜ: bu alanın hiçbir ÜRETİCİSİ yok. tarlaanaliz-edge/src içinde yalnız TÜKETİCİ var (calibrated_validator.py:120 zorunlu alan kontrolü · qc_report_writer.py:245,246,256,341 okuma · sync.py:233,253,255 HC-05 kapısı) — tek bir yazma yok (E14: '5 tüketici / 0 üretici'). Üretici (E14 calibration_result_writer) henüz YAZILMADI ve bu sınırlara göre yazılacak. 4096 ≈ 170 köşe: gözlenen kapsama zarfı için fazlasıyla yeterli, DoS yüzeyi ise kapalı (K7/P3).",
+            "ref": "eylem planı §14.1/D7 · denetim bulguları G1, K7, P3, Y2"
+          }
+        },
+        "footprint_crs": {
+          "const": "EPSG:4326",
+          "description": "`observed_footprint_wkt` koordinatlarının CRS'i (koordinat referans sistemi). Tek geçerli değer **EPSG:4326** (WGS84, derece) — WKT'nin kendisi CRS taşımaz ve EWKT (`SRID=...;`) yasaktır (shapely'yi kırıyor), bu yüzden beyan AYRI bir alanda yapılır. Opsiyonel: bulunmadığında EPSG:4326 varsayılır (bugünkü fiili durum), ama üretici (E14) bunu AÇIKÇA yazmalıdır — G1'in kök nedeni CRS kanalının hiç olmamasıydı. İleride başka bir CRS gerekirse bu alan enum'a genişletilir (MINOR)."
+        },
+        "calibration_type": {
+          "type": "string",
+          "enum": [
+            "ABSOLUTE",
+            "RELATIVE"
+          ],
+          "description": "Calibration type. DJI Mavic 3M produces RELATIVE only. Subset of enums/calibration_type.enum.v1.json (post-calibration manifest: only ABSOLUTE/RELATIVE)."
+        }
+      },
+      "required": [
+        "tool_name",
+        "tool_version",
+        "observed_footprint_wkt",
+        "calibration_type"
+      ],
+      "additionalProperties": false,
+      "description": "Calibration processing result object."
+    },
+    "qc_report": {
+      "type": "object",
+      "properties": {
+        "pass_warn_fail": {
+          "type": "string",
+          "enum": [
+            "PASS",
+            "WARN",
+            "FAIL"
+          ],
+          "description": "Overall QC verdict."
+        },
+        "coverage_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Ratio of observed footprint to expected area (KR-065)."
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "blur_detected",
+              "overexposure_detected",
+              "crs_mismatch",
+              "bands_incomplete",
+              "low_coverage"
+            ],
+            "x-compat-accepted": {
+              "change": "serbest dize → kapalı vocabulary (5 değer)",
+              "date": "2026-07-31",
+              "rationale": "Ölçüldü: tek üretici tam olarak bu 5 dizeyi yazıyor (tarlaanaliz-edge/src/core/services/calibration_gate/qc_report_writer.py:157,159,161,163,165 — `flags.append(` repo genelinde başka yerde yok). Serbest dize listesi, `crs_mismatch` bayrağını MAKİNE-OKUNMAZ yapıyordu: platform tarafı bir yazım hatasını sessizce yok sayardı ve KR-065 ödeme kararını etkileyen CRS uyuşmazlığı görünmezdi.",
+              "ref": "eylem planı §14.1/D7 (`crs_mismatch` bayrağı bağlanır) · denetim bulgusu G1"
+            }
+          },
+          "description": "QC bayrakları — KAPALI vocabulary (2026-07-31/D7'de bağlandı; öncesinde serbest dizeydi ve `crs_mismatch` yalnız açıklamada 'e.g.' olarak geçiyordu).\n\n| bayrak | anlamı | tüketici için sonucu |\n|---|---|---|\n| `blur_detected` | bulanıklık | WARN |\n| `overexposure_detected` | aşırı pozlama | WARN |\n| **`crs_mismatch`** | gözlenen izdüşüm ile tarla sınırı **aynı CRS'te değil** | `coverage_ratio` GÜVENİLMEZ → KR-065 hakediş kararı bu değere DAYANDIRILAMAZ |\n| `bands_incomplete` | beklenen bantların hepsi yok | analiz kısıtlı |\n| `low_coverage` | kapsama eşiğin altında | tekrar uçuş adayı |\n\nYeni bayrak eklemek MINOR'dır (enum genişletme); değer silmek/yeniden adlandırmak MAJOR."
+        }
+      },
+      "required": [
+        "pass_warn_fail",
+        "coverage_ratio",
+        "flags"
+      ],
+      "additionalProperties": false,
+      "description": "Quality control report for the calibrated dataset."
+    },
+    "calibrated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 timestamp of calibration completion."
+    },
+    "tool_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Top-level calibration tool name."
+    },
+    "tool_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Top-level calibration tool version."
+    },
+    "correlation_id": {
+      "type": "string",
+      "pattern": "^corr_[a-f0-9]{16,32}$",
+      "description": "Request-scoped trace identifier."
+    },
+    "raw_frames": {
+      "type": "array",
+      "maxItems": 8000,
+      "description": "KG-0.c: ham kareler BÜTÜN OLARAK aktarılmaz — yalnız önceliklendirmenin işaretlediği yamaları GÖREN kareler seçilip listelenir. Seçimi kare seçici (E11) yapar. Opsiyonel, geriye uyumlu. ⚠️ Burada NESNE ANAHTARI (object_key) YOKTUR: anahtarı PLATFORM üretir (KG-0.a-EK kural 1) — bu form kiosk-emitted'dır ve M1'deki YEREL dosyaları bildirir.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "frame_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "description": "Kareyi M1 içinde tekilleştiren kimlik (ör. EXIF dosya adı türevi)."
+          },
+          "relative_path": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^(?![/.])(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)[^\\x00-\\x1F\\\\:*?\"<>|]+\\.[A-Za-z0-9]{1,8}$",
+            "description": "M1 paketi içindeki göreli yol. Desen DİZİN DÜZENİNİ dondurmaz (onu E11 belirler); GÜVENLİK sınırlarını zorlar.\n\n**REDDEDER:** mutlak yol (`/…`) · `..` veya `.` segmenti (traversal) · boş segment (`//`) · ters bölü (`\\`) · iki nokta (`:` — Windows sürücü/ADS) · kontrol karakterleri · `* ? \" < > |` (glob/Windows geçersiz).\n**KABUL EDER:** uzantısı olan her göreli yol; **çok noktalı adlar**, boşluk ve Türkçe/Unicode klasör adları dahil.\n\n⚠️ **E5 (2026-07-31) — desen ölçümden ÖNCE dondurulmuştu ve GERÇEK çıktıyı reddediyordu.** Eski desen (`^[A-Za-z0-9][A-Za-z0-9_-]*(/[A-Za-z0-9_-]+)*\\.[A-Za-z0-9]{1,8}$`) şunları RED ediyordu: `odm_orthophoto.original.tif` (ODM'nin gerçek çıktı adı — iki nokta), `layers/ndvi.tif.aux.xml` (GDAL yan dosyası), `Tarla Verileri/ndvi.tif` (boşluk), `kırmızı/ndvi.tif` (Türkçe). Yani M1'in fiilen ürettiği dosyalar manifeste yazılamıyordu. Gevşetme **traversal korumasını kaybetmez** — 8 vakayla doğrulandı."
+          },
+          "sees_patch_ids": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{32}$"
+            },
+            "description": "Bu karenin GÖRDÜĞÜ işaretli yamaların kimlikleri (intake_manifest priority_zones[].patch_id ile aynı vocabulary; UUID4 hex). KG-0.c gereği kare seçicinin (E11) bir kareyi listeye koymasının TEK gerekçesi budur — boş liste anlamsızdır (minItems:1). maxItems:500, priority_zones üst sınırıyla aynıdır: bir kare tarladaki yama sayısından fazlasını göremez.\n\n⚠️ BURADA `footprint_wkt` YOKTUR (2026-07-31, Ç7/D7'de KALDIRILDI). Gerekçe üç eksende ölçüldü: ① GİZLİLİK/KVKK — kare izdüşümü pratikte atomik GPS'tir; 5.000 kare = tam uçuş rotası ve 35 m'de kare ~42×31 m olduğu için uçuş dönüşleri KOMŞU PARSELE taşar (üçüncü kişi verisi, hukuki sebep yok — KVKK md.5); priority_zones.geom'da bulunan HC-02 uyarısı burada YOKTU. ② DOĞRULANABİLİRLİK — izdüşümü üretmek için gereken GPS/irtifa/yaw/GSD şemada YOK, yani değer hiçbir tüketici tarafından denetlenemezdi (kanıt değil, iddia). ③ AMAÇ — tüketicinin gerçekten ihtiyacı 'bu kare hangi yamayı görüyor' sorusudur; sees_patch_ids bunu doğrudan, denetlenebilir ve konum ifşa etmeden verir. Bu alan hiç ÜRETİLMEMİŞTİ (E11 yazılmadı) → kaldırma breaking değildir."
+          },
+          "band": {
+            "type": "string",
+            "enum": [
+              "BLUE",
+              "GREEN",
+              "RED",
+              "RED_EDGE",
+              "NIR",
+              "LWIR"
+            ],
+            "description": "Tek-bant ham kare için spektral bant. RGB kompozit karede alan BULUNMAZ. Vocabulary intake_manifest.available_bands ile aynıdır."
+          }
+        },
+        "required": [
+          "frame_id",
+          "relative_path",
+          "sees_patch_ids"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "raw_manifest_ref",
+    "calibration_result",
+    "qc_report",
+    "calibrated_at",
+    "tool_name",
+    "tool_version",
+    "correlation_id"
+  ],
+  "unevaluatedProperties": false,
+  "x-form-role": {
+    "role": "edge_proof_manifest",
+    "emitter": "edge kiosk (M1)",
+    "purpose": "Kalibrasyon KANITI: calibration_result (KR-018/065/082) + qc_report + tool metadata. HC-05 upload kapısının girdisidir.",
+    "counterpart": "https://api.tarlaanaliz.com/schemas/platform/calibrated_dataset_manifest.v1.schema.json",
+    "owns": [
+      "calibration_result",
+      "qc_report",
+      "tool_name",
+      "tool_version",
+      "calibrated_at",
+      "raw_manifest_ref",
+      "raw_frames"
+    ],
+    "not_owned_here": {
+      "outputs / reports / reflectance_scale / producer_tool": "platform formu (paket agregası) — bkz. counterpart",
+      "priority_zones / patches[] görselleri": "schemas/edge/intake_manifest.v1 → EdgeForm.priority_zones[].visualizations. Bu formda patches alanı YOKTUR ve eklenmemelidir.",
+      "layer_type / band / calibration_type": "platform formu (paket agregası) — çıktı katman meta verisi orada; bkz. counterpart"
+    },
+    "field_placement_rule": "İki dosya AYNI ADI taşır ve yalnız dizinle ayrılır (edge/ vs platform/). Yeni alan eklemeden önce hangi formun sahibi olduğu YAZILI olarak belirlenir: kalibrasyon kanıtı ve tek-dataset düzeyindeki alanlar BU forma, paket/çıktı agregasyonu alanları counterpart'a girer. Ad benzerliğine bakarak hedef seçmek kusurdur (2026-07-31 denetimi)."
+  },
+  "x-updated": "2026-07-31"
+}

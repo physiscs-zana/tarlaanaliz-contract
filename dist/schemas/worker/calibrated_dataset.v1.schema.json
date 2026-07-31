@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/worker/calibrated_dataset.v1.schema.json",
+  "title": "CalibratedDataset",
+  "description": "Type-safe contract for calibrated preprocessing output [KR-082]. Without this type, model pipeline does NOT accept input. Worker interface/contracts/calibrated_dataset.v1 vendored kopyasıyla `properties` + `required` düzeyinde EŞDEĞERDİR; bayt-özdeşlik BEKLENMEZ — vendored kopya `additionalProperties: false`, kanonik `unevaluatedProperties: false` idiomunu kullanır (bilinçli ve 9/9 şemada tutarlı; 2026-07-31'de ölçüldü). Doğrulama: tests/test_vendored_parity.py.",
+  "type": "object",
+  "required": [
+    "qc_flag",
+    "calibration_type",
+    "capability_mode",
+    "available_bands",
+    "sensor_model"
+  ],
+  "properties": {
+    "qc_flag": {
+      "type": "string",
+      "enum": [
+        "PASS",
+        "WARN",
+        "FAIL"
+      ],
+      "description": "Quality control result. FAIL = ValueError + REJECT"
+    },
+    "calibration_type": {
+      "type": "string",
+      "enum": [
+        "ABSOLUTE",
+        "PANEL_ABSOLUTE",
+        "DLS2_RELATIVE",
+        "RELATIVE",
+        "NONE"
+      ],
+      "description": "KR-018: NONE = HARD REJECT. G-3 (2026-06-01): ABSOLUTE eklendi (calibration_metadata + CalibrationLevel ile birleştirildi). Kanonik vocabulary + normalizasyon: enums/calibration_type.enum.v1.json."
+    },
+    "capability_mode": {
+      "type": "string",
+      "enum": [
+        "BASIC_4BAND",
+        "EXTENDED_5BAND"
+      ],
+      "description": "Determined by capability_detector.py from available bands"
+    },
+    "available_bands": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 4,
+      "description": "Available spectral bands (minimum 4 MS bands required)"
+    },
+    "sensor_model": {
+      "type": "string"
+    },
+    "has_thermal": {
+      "type": "boolean",
+      "default": false,
+      "description": "KR-084: Whether LWIR band is available"
+    },
+    "indices_computed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of computed vegetation indices"
+    },
+    "input_channels": {
+      "type": "integer",
+      "description": "Total channels in model input tensor (7 for BASIC, 10 for EXTENDED)"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "unevaluatedProperties": false
+}

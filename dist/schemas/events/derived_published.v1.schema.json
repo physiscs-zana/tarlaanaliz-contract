@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/events/derived_published.v1.schema.json",
+  "title": "DerivedPublishedEvent",
+  "description": "Domain event: Turetilmis urunler yayinlandi — KR-072. NDVI haritalari, hastalik tespiti raporlari vb. ciftciye sunuldu.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "$ref": "#/$defs/EventId",
+      "description": "Olay benzersiz kimligi."
+    },
+    "event_type": {
+      "type": "string",
+      "const": "derived.published",
+      "description": "Olay tipi sabiti."
+    },
+    "event_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version"
+    },
+    "aggregate_type": {
+      "type": "string",
+      "const": "dataset",
+      "description": "Aggregate type"
+    },
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^dataset_[a-z0-9]{24}$",
+      "description": "Dataset identifier (aggregate root)"
+    },
+    "occurred_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "When the event occurred (ISO 8601 UTC)"
+    },
+    "actor": {
+      "$ref": "#/$defs/Actor",
+      "description": "System/service that published the derived products"
+    },
+    "data": {
+      "$ref": "#/$defs/DerivedPublishedData",
+      "description": "Event-specific data"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EventMetadata",
+      "description": "Event metadata (correlation, causation, etc.)"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "occurred_at",
+    "actor",
+    "data"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "EventId": {
+      "type": "string",
+      "pattern": "^event_[a-z0-9]{24}$",
+      "description": "Event identifier format: event_{24-char-hex}"
+    },
+    "Actor": {
+      "type": "object",
+      "title": "Actor",
+      "description": "System/service that triggered the event",
+      "properties": {
+        "actor_type": {
+          "type": "string",
+          "enum": [
+            "SYSTEM",
+            "SERVICE"
+          ],
+          "description": "Actor type"
+        },
+        "actor_service": {
+          "type": "string",
+          "description": "Service name (e.g., 'publishing-service')"
+        },
+        "worker_id": {
+          "type": "string",
+          "description": "Worker instance ID"
+        }
+      },
+      "required": [
+        "actor_type",
+        "actor_service"
+      ],
+      "unevaluatedProperties": false
+    },
+    "DerivedPublishedData": {
+      "type": "object",
+      "title": "Derived Published Data",
+      "description": "Data specific to derived product publication event",
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^dataset_[a-z0-9]{24}$",
+          "description": "Dataset identifier"
+        },
+        "mission_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^mission_[a-z0-9]{24}$",
+          "description": "Associated mission identifier"
+        },
+        "status_from": {
+          "type": "string",
+          "const": "ANALYZED",
+          "description": "Status before publishing"
+        },
+        "status_to": {
+          "type": "string",
+          "const": "DERIVED_PUBLISHED",
+          "description": "Status after publishing"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "product_types": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Published product types (NDVI_MAP, DISEASE_REPORT, YIELD_ESTIMATE, etc.)."
+            },
+            "delivery_method": {
+              "type": "string",
+              "enum": [
+                "PLATFORM_UI",
+                "API_WEBHOOK"
+              ],
+              "description": "Delivery method for the published products"
+            }
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "required": [
+        "dataset_id",
+        "status_from",
+        "status_to"
+      ],
+      "unevaluatedProperties": false
+    },
+    "EventMetadata": {
+      "type": "object",
+      "title": "Event Metadata",
+      "description": "Event correlation and tracing metadata",
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "description": "Correlation ID for tracing related events"
+        },
+        "causation_id": {
+          "type": "string",
+          "description": "ID of event/command that caused this event"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing ID"
+        },
+        "partition_key": {
+          "type": "string",
+          "description": "Event stream partition key (typically aggregate_id)"
+        },
+        "sequence_number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Sequence number within aggregate"
+        },
+        "source_service": {
+          "type": "string",
+          "description": "Service that emitted the event"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
+    }
+  },
+  "x-kr-ref": [
+    "KR-072"
+  ],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-03-03"
+}

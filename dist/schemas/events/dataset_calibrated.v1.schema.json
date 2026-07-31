@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/events/dataset_calibrated.v1.schema.json",
+  "title": "DatasetCalibratedEvent",
+  "description": "Domain event: Dataset radyometrik kalibrasyonu tamamlandi — KR-018.",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "$ref": "#/$defs/EventId",
+      "description": "Olay benzersiz kimligi."
+    },
+    "event_type": {
+      "type": "string",
+      "const": "dataset.calibrated",
+      "description": "Olay tipi sabiti."
+    },
+    "event_version": {
+      "type": "string",
+      "const": "1.0",
+      "description": "Event schema version"
+    },
+    "aggregate_type": {
+      "type": "string",
+      "const": "dataset",
+      "description": "Aggregate type"
+    },
+    "aggregate_id": {
+      "type": "string",
+      "pattern": "^dataset_[a-z0-9]{24}$",
+      "description": "Dataset identifier (aggregate root)"
+    },
+    "occurred_at": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "When the event occurred (ISO 8601 UTC)"
+    },
+    "actor": {
+      "$ref": "#/$defs/Actor",
+      "description": "System/service that performed the calibration"
+    },
+    "data": {
+      "$ref": "#/$defs/DatasetCalibratedData",
+      "description": "Event-specific data"
+    },
+    "metadata": {
+      "$ref": "#/$defs/EventMetadata",
+      "description": "Event metadata (correlation, causation, etc.)"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "aggregate_type",
+    "aggregate_id",
+    "occurred_at",
+    "actor",
+    "data"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "EventId": {
+      "type": "string",
+      "pattern": "^event_[a-z0-9]{24}$",
+      "description": "Event identifier format: event_{24-char-hex}"
+    },
+    "Actor": {
+      "type": "object",
+      "title": "Actor",
+      "description": "System/service that triggered the event",
+      "properties": {
+        "actor_type": {
+          "type": "string",
+          "enum": [
+            "SYSTEM",
+            "SERVICE"
+          ],
+          "description": "Actor type"
+        },
+        "actor_service": {
+          "type": "string",
+          "description": "Service name (e.g., 'calibration-service')"
+        },
+        "worker_id": {
+          "type": "string",
+          "description": "Worker instance ID"
+        }
+      },
+      "required": [
+        "actor_type",
+        "actor_service"
+      ],
+      "unevaluatedProperties": false
+    },
+    "DatasetCalibratedData": {
+      "type": "object",
+      "title": "Dataset Calibrated Data",
+      "description": "Data specific to dataset calibration event",
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^dataset_[a-z0-9]{24}$",
+          "description": "Dataset identifier"
+        },
+        "mission_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^mission_[a-z0-9]{24}$",
+          "description": "Associated mission identifier"
+        },
+        "status_from": {
+          "type": "string",
+          "const": "RAW_HASH_SEALED",
+          "description": "Status before calibration"
+        },
+        "status_to": {
+          "type": "string",
+          "const": "CALIBRATED",
+          "description": "Status after calibration"
+        },
+        "payload": {
+          "type": "object",
+          "properties": {
+            "calibration_method": {
+              "type": "string",
+              "description": "Calibration method used"
+            },
+            "calibration_certificate_id": {
+              "type": "string",
+              "pattern": "^cert_[a-z0-9]{24}$",
+              "description": "Calibration certificate identifier"
+            },
+            "bands_calibrated": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "List of calibrated bands"
+            }
+          },
+          "unevaluatedProperties": false
+        }
+      },
+      "required": [
+        "dataset_id",
+        "status_from",
+        "status_to"
+      ],
+      "unevaluatedProperties": false
+    },
+    "EventMetadata": {
+      "type": "object",
+      "title": "Event Metadata",
+      "description": "Event correlation and tracing metadata",
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "description": "Correlation ID for tracing related events"
+        },
+        "causation_id": {
+          "type": "string",
+          "description": "ID of event/command that caused this event"
+        },
+        "trace_id": {
+          "type": "string",
+          "description": "Distributed tracing ID"
+        },
+        "partition_key": {
+          "type": "string",
+          "description": "Event stream partition key (typically aggregate_id)"
+        },
+        "sequence_number": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Sequence number within aggregate"
+        },
+        "source_service": {
+          "type": "string",
+          "description": "Service that emitted the event"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "Timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC)"
+    }
+  },
+  "x-kr-ref": [
+    "KR-018",
+    "KR-072"
+  ],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-03-03"
+}

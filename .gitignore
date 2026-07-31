@@ -15,7 +15,15 @@ yarn-debug.log*
 yarn-error.log*
 
 # Build artifacts
-dist/
+dist/*
+# ⚠️ İSTİSNA (2026-07-31, E3/§14.2.1): `dist/schemas/` GEÇİCİ bir çıktı DEĞİL, YAYIN
+# BİÇİMİDİR — harici `$ref`'leri satır içi alınmış, kendi kendine yeten şemalar.
+# Hava-boşluklu M1 kanonik biçimi çözemediği için tüketiciler (edge/worker vendored)
+# BUNU alır; izlenmezse C8 töreninde gönderilecek artefakt olmaz ve `--check` kapısı
+# CI'da daima kırmızı görünür. Üretici: `python tools/inline_refs.py --write`.
+# `dist/openapi/` (redocly bundle) geçici kalır — o bir derleme çıktısıdır, sözleşme değil.
+!dist/schemas/
+!dist/schemas/**
 build/
 .generated/
 generated/

@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/edge/transfer_batch.v1.schema.json",
+  "title": "EdgeTransferBatch",
+  "description": "Edge tarafı transfer partisi — KR-071 + KR-072 kanonik. SUPERSET (contracts v3.0.0): oneOf ile iki ayrık formu valide eder — (1) batch-seviyesi abstract form (dataset_ids[], kiosk_id, transfer_protocol); (2) edge operasyonel chunked form (per-chunk index/sha256/status, resumable upload). Bir payload tam olarak BİR formla eşleşir.",
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/BatchLevelForm"
+    },
+    {
+      "$ref": "#/$defs/ChunkedForm"
+    }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "BatchLevelForm": {
+      "type": "object",
+      "title": "Batch-level transfer record",
+      "description": "Abstract batch-level form (KR-071/KR-072). batch_id = UUID.",
+      "required": [
+        "batch_id",
+        "kiosk_id",
+        "dataset_ids",
+        "initiated_at",
+        "status"
+      ],
+      "properties": {
+        "batch_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "kiosk_id": {
+          "type": "string"
+        },
+        "dataset_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "initiated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "IN_PROGRESS",
+            "COMPLETED",
+            "FAILED"
+          ]
+        },
+        "transfer_protocol": {
+          "type": "string",
+          "enum": [
+            "SFTP",
+            "HTTPS_UPLOAD",
+            "PHYSICAL_MEDIA"
+          ]
+        },
+        "total_size_bytes": {
+          "type": "integer"
+        },
+        "checksum": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Batch-level SHA-256 checksum."
+        },
+        "error_message": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "ChunkedForm": {
+      "type": "object",
+      "title": "Chunked transfer manifest",
+      "description": "Edge operational form — chunked/resumable M2→Platform upload. batch_id = BATCH_YYYYMMDD_HHMMSS_XXXX.",
+      "required": [
+        "schema_version",
+        "batch_id",
+        "dataset_id",
+        "total_chunks",
+        "chunk_size_bytes",
+        "chunks",
+        "created_at",
+        "last_updated_at",
+        "correlation_id"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "const": "1.2"
+        },
+        "batch_id": {
+          "type": "string",
+          "pattern": "^BATCH_[0-9]{8}_[0-9]{6}_[A-Z0-9]{4}$",
+          "description": "Unique batch identifier. Format: BATCH_YYYYMMDD_HHMMSS_XXXX."
+        },
+        "dataset_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Dataset being transferred."
+        },
+        "total_chunks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total number of chunks in the batch."
+        },
+        "chunk_size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Size of each chunk in bytes (last chunk may be smaller)."
+        },
+        "chunks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "PENDING",
+                  "SENT",
+                  "ACK",
+                  "FAILED"
+                ],
+                "description": "Chunk transfer status. FAILED added v3.0.0 to match edge ChunkStatus (sync_state.py)."
+              }
+            },
+            "required": [
+              "index",
+              "sha256",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Per-chunk tracking array."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp of batch creation."
+        },
+        "last_updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO-8601 timestamp of last status update."
+        },
+        "correlation_id": {
+          "type": "string",
+          "pattern": "^corr_[a-f0-9]{16,32}$",
+          "description": "Request-scoped trace identifier."
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "x-kr-ref": [
+    "KR-071",
+    "KR-072"
+  ],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-05-30"
+}

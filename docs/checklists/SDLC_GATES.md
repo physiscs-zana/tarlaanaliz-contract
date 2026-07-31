@@ -202,6 +202,21 @@ Yayın (release) öncesi yapılacak son kontroller.
       ```
       Tur içinde bu test `xfail`'dir (beyan açık); `pin_version.py` re-pin'i beyanı silince
       **gerçek kırmızıya** döner ve yayılım yapılmadan release'i durdurur.
+- [ ] **KR korpusu tüketicilere HİZALI** (AK-10). Ölçüldü (2026-07-31): platform kopyaları
+      bayat, **worker SSOT metnini hiç taşımıyordu** — yani KR-093'ü uygulayacak taraf kuralı
+      göremiyordu. Kapı artık ölçüyor:
+      ```bash
+      python tools/sync_kr_corpus.py --check     # bu depoda; sapma varsa RC=1
+      python tools/sync_kr_corpus.py --apply     # kopyalar; sonra HER kardeş depoda AYRI commit+PR
+      ```
+- [ ] **Yayın biçimi (`dist/schemas/`) GÜNCEL** (E3 / §14.2.1 kararı). Kanonik şemalar
+      `enums/`'a **38 harici `$ref`** veriyor; hava-boşluklu M1 bunları çözemez. Tüketiciye
+      giden biçim satır içi alınmış olandır:
+      ```bash
+      python tools/inline_refs.py --check        # bayatsa RC=1
+      python tools/inline_refs.py --write        # yeniden üret (enum değiştiyse ZORUNLU)
+      ```
+      ⚠️ `dist/schemas/` **git'te izlenir** — `.gitignore`'da bilinçli istisnası vardır.
 - [ ] **Vendored parite kapısı YEREL koşuldu.** ⚠️ Bu kapı **CI'da KOŞMAZ**: kardeş depolar
       (`tarlaanaliz-edge`, `tarlaanaliz-worker`) GitHub Actions'ta checkout edilmiyor, testler
       `kardeş depo yok` gerekçesiyle atlanıyor (atlama artık CI özetinde görünür ama yine de

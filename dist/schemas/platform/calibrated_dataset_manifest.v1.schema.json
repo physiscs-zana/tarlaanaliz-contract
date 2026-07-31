@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/platform/calibrated_dataset_manifest.v1.schema.json",
+  "title": "CalibratedDatasetManifest v1",
+  "description": "Producer sonrası oluşturulan kalibre veri paketinin manifesti: çıktı dosyaları, raporlar ve hash'ler. (Platform/dataset-katmanı aggregation formu. Edge-emitted per-dataset kalibrasyon manifesti için bkz. schemas/edge/calibrated_dataset_manifest.v1 — calibration_result/qc_report objeleri.)",
+  "type": "object",
+  "required": [
+    "batch_id",
+    "mission_id",
+    "field_id",
+    "producer_tool",
+    "reflectance_scale",
+    "outputs",
+    "reports",
+    "created_at"
+  ],
+  "properties": {
+    "batch_id": {
+      "$ref": "#/$defs/id"
+    },
+    "mission_id": {
+      "$ref": "#/$defs/id"
+    },
+    "field_id": {
+      "$ref": "#/$defs/id"
+    },
+    "producer_tool": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Kalibrasyon/üretim aracı (ör. DJI Terra, Pix4Dfields)."
+    },
+    "reflectance_scale": {
+      "type": "string",
+      "enum": [
+        "reflectance_0_1",
+        "reflectance_0_100",
+        "scaled_int",
+        "unknown"
+      ],
+      "description": "Yansıma ölçeği (reflectance scale): çıktının sayısal ölçeği."
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/file_artifact"
+      },
+      "description": "Kalibre edilmiş çıktı dosyaları (örn. bantlar, ortomozaik, indeksler)."
+    },
+    "reports": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/file_artifact"
+      },
+      "description": "Kalibrasyon/QC raporları ve üretim logları."
+    },
+    "created_at": {
+      "$ref": "#/$defs/created_at"
+    },
+    "calibration_type": {
+      "type": "string",
+      "enum": [
+        "ABSOLUTE",
+        "PANEL_ABSOLUTE",
+        "DLS2_RELATIVE",
+        "RELATIVE",
+        "NONE"
+      ],
+      "description": "Paketin radyometrik kalibrasyon TİPİ (KR-018/082). enums/calibration_type.enum.v1.json bağlam alt-kümesi; bkz. x-context-subsets['platform/calibrated_dataset_manifest']. Paket başına TEK değerdir — producer_tool ve reflectance_scale de top-level tekildir. Opsiyonel (geriye uyumlu). ⚠️ Alan adı `calibration_tier` DEĞİLDİR (contract'ta öyle bir ad yoktur); kanonik ad calibration_type'tır.\n\n🔴 **FAIL-CLOSED (2026-07-31/D8, denetim bulgusu S1):** Bu form NORMALİZASYON SINIRIDIR (edge → worker). Tip bilinmiyorsa **`NONE` yazılır** ve paket KR-018/082 ile HARD REJECT edilir; **hiçbir koşulda PANEL_ABSOLUTE varsayılmaz.** `NONE` bu alt-kümeye tam da bunun için eklendi: kalibre edilmemiş (ham DN — sensör sayımı, reflektans değil) bir paketin DÜRÜST değeri yazılabilsin diye. Önceki durumda dürüst değer yazılamıyordu, alan opsiyoneldi ve enum'un global kuralı eksik tipi en güçlü sınıfa (PANEL_ABSOLUTE — worker spektral eşiklerinin referansı) yükseltiyordu; ham DN'yi kalibre reflektans sanan eşik, tarlada yanlış agronomik karar üretir.\n\n⚠️ `NONE` yazmak paketi 'analiz edilebilir' yapmaz — tam tersine, analiz kapısında reddedilmesini SAĞLAR. Alanın hiç yazılmaması ise artık bir varsayım DEĞİL, eksik beyandır."
+    }
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Entity-prefix identifier (e.g., batch_{24-char-hex}, mission_{24-char-hex}, field_{24-char-hex})."
+    },
+    "uri": {
+      "type": "string",
+      "minLength": 1,
+      "description": "URI or path reference (e.g., s3://..., file://..., https://...)."
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$",
+      "description": "SHA-256 hex digest of the referenced content."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "RFC3339 timestamp."
+    },
+    "file_artifact": {
+      "type": "object",
+      "required": [
+        "uri",
+        "sha256",
+        "type"
+      ],
+      "properties": {
+        "uri": {
+          "$ref": "#/$defs/uri"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Artifact type tag (consumer-defined)."
+        },
+        "layer_type": {
+          "type": "string",
+          "enum": [
+            "ORTHO",
+            "DSM",
+            "NDVI",
+            "NDRE",
+            "GNDVI",
+            "CIR",
+            "EVI",
+            "SAVI",
+            "LCI",
+            "CWSI",
+            "CANOPY_TEMP",
+            "CANOPY_SOIL_DELTA",
+            "CANOPY_TEMP_UNIFORMITY"
+          ],
+          "description": "Çıktı katmanının KANONİK türü. ORTHO/DSM raster ürünleridir; kalan değerler drone_capability_matrix.yaml → available_indices (core+extended+thermal) kümesinden TÜRETİLMİŞTİR, ayrı bir vocabulary DEĞİLDİR. Opsiyonel: eski üreticiler alanı atlar. `type` alanıyla karıştırılmaz — `type` tüketici-tanımlı serbest etikettir.\n\n📐 **Sınıflandırma (2026-07-31/D9):** Bu enum tek bir düz liste değildir; her değerin bir SINIFI vardır (`x-layer-classes`) ve üretilebilirlik sınıfa göre farklı çalışır — bkz. aşağıdaki `x-layer-classes` ile drone_capability_matrix.yaml → `index_requirements`.\n\n🔄 **`IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY` (2026-07-31/D9②):** Termal kamera 'sulama verimliliği' ÖLÇMEZ — verimlilik, uygulanan su miktarı ve bitki su tüketimi bilinmeden hesaplanamaz (ikisi de bu sistemde YOK). LWIR'den doğrudan türetilebilen büyüklük **kanopi sıcaklığının tarla içi tekdüzeliğidir** ve sulama sorunlarının bir VEKİL göstergesidir (proxy). Ad, ölçülen şeyi söylemeliydi. Yeniden adlandırma bu turda **bedava**: `layer_type` bu turda eklendi (üretici yok) ve eski ad kardeş depoların hiçbirinde geçmiyor (ölçüldü). Bir sonraki turda MAJOR olurdu.\n\n🔄 **`CHLOROPHYLL_A` → `LCI` (2026-07-31, AK-1):** ad, WORKER'DA GERÇEKTEN UYGULANAN indeksle aynı hâle getirildi — `tarlaanaliz-worker/src/indices/lci.py`: `LCI = (NIR − RedEdge) / (NIR + RedEdge)`. `CHLOROPHYLL_A` contract'a özgü, formülü hiçbir yerde tanımlı olmayan bir addı; bant gereksinimi bu yüzden `null` bırakılmıştı (uydurmamak için). Artık ad tek → gereksinim ÖLÇÜLEBİLİR: `[RED_EDGE, NIR]`.\n\n⚠️ **LCI ile NDRE aynı FORMÜLÜ paylaşır** (worker: `LCICalculator(NDRECalculator)`, H9/MD-9 denetim kararı) — ikisi bilerek ayrı tutulur: NDRE genel canlılık, LCI klorofil bozulmasına özgü okuma (fıstık psillid balözü tespitinde NDWI+Green ile birlikte kullanılıyor). Biri diğerinin yerine 'sadeleştirilemez'.\n\n**Tüketici borcu:** platform `src/core/domain/value_objects/spectral_tier.py:51` `EXTENDED_INDICES` sabiti `CHLOROPHYLL_A` yazıyor → `LCI` olmalı (P15)."
+        },
+        "band": {
+          "type": "string",
+          "enum": [
+            "BLUE",
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR",
+            "LWIR"
+          ],
+          "description": "Tek-bant raster çıktısı için spektral bant. Çok-bantlı/indeks çıktılarda alan BULUNMAZ. Vocabulary intake_manifest.available_bands ile aynıdır."
+        }
+      },
+      "unevaluatedProperties": false
+    }
+  },
+  "x-layer-classes": {
+    "description": "`$defs.file_artifact.layer_type` değerlerinin SINIF haritası (2026-07-31/D9 · denetim yakınsaması Y4: A8/A10 + S10/S11). Sorun: enum düz bir listeydi ve içinde ÜÇ FARKLI türden şey vardı; bu yüzden 'bu katman bu drone ile üretilebilir mi?' sorusunun makine-okunur bir cevabı YOKTU — 4 bantlı bir drone için `CWSI` (LWIR ister) iddia eden bir manifest hiçbir kapıya takılmazdı.",
+    "classes": {
+      "raster_product": "Spektral indeks DEĞİL, doğrudan fotogrametri ürünü. Bant gereksinimi TANIMSIZDIR (her bant kümesiyle üretilir) — bu yüzden `index_requirements`'ta YER ALMAZ.",
+      "index": "Reflektans bantlarından hesaplanan normalize oran. Üretilebilirliği TAM OLARAK bant kümesine bağlıdır → `drone_capability_matrix.yaml` → `index_requirements` zorunludur.",
+      "composite": "Görselleştirme amaçlı bant kompoziti (sayısal indeks değil, RENDER). Bant gereksinimi vardır ama çıktısı bir ölçüm değildir; eşik/karar girdisi olarak KULLANILMAZ.",
+      "derived_metric": "Termal/model varsayımı içeren türetilmiş büyüklük (yalnız bant oranı değil). LWIR ve ek varsayım gerektirir; `band_classes.THERMAL.requires` ile kapılanır."
+    },
+    "map": {
+      "ORTHO": "raster_product",
+      "DSM": "raster_product",
+      "NDVI": "index",
+      "NDRE": "index",
+      "GNDVI": "index",
+      "EVI": "index",
+      "SAVI": "index",
+      "CIR": "composite",
+      "CWSI": "derived_metric",
+      "CANOPY_TEMP": "derived_metric",
+      "CANOPY_SOIL_DELTA": "derived_metric",
+      "CANOPY_TEMP_UNIFORMITY": "derived_metric",
+      "LCI": "index"
+    },
+    "x-open-item": "AK-1 KAPANDI (2026-07-31): `CHLOROPHYLL_A` → `LCI` yeniden adlandırıldı ve bant gereksinimi worker'ın uygulamasından ölçüldü (`src/indices/lci.py`: (NIR−RedEdge)/(NIR+RedEdge) → [RED_EDGE, NIR]). Artık `index_requirements`'ta `null` girdi YOKTUR.",
+    "x-kr-ref": [
+      "KR-018",
+      "KR-082"
+    ]
+  },
+  "x-form-role": {
+    "role": "platform_package_aggregate",
+    "emitter": "platform (dataset katmanı)",
+    "purpose": "Kalibre veri PAKETİNİN agregası: outputs[]/reports[] dosya listesi + SHA-256 + reflectance_scale + producer_tool.",
+    "counterpart": "https://api.tarlaanaliz.com/schemas/edge/calibrated_dataset_manifest.v1.schema.json",
+    "owns": [
+      "outputs",
+      "reports",
+      "reflectance_scale",
+      "producer_tool",
+      "batch_id",
+      "mission_id",
+      "field_id",
+      "calibration_type"
+    ],
+    "not_owned_here": {
+      "calibration_result / qc_report": "edge formu (kalibrasyon kanıtı) — bkz. counterpart",
+      "priority_zones / patches[] görselleri": "schemas/edge/intake_manifest.v1 → EdgeForm.priority_zones[].visualizations. Bu formda patches alanı YOKTUR ve eklenmemelidir.",
+      "raw_frames": "edge formu — seçilmiş ham kareler kalibrasyon çıktısıdır, paket agregası değildir (KG-0.c / C3′); bkz. counterpart"
+    },
+    "field_placement_rule": "İki dosya AYNI ADI taşır ve yalnız dizinle ayrılır (edge/ vs platform/). Yeni alan eklemeden önce hangi formun sahibi olduğu YAZILI olarak belirlenir: paket/çıktı agregasyonu alanları BU forma, kalibrasyon kanıtı alanları counterpart'a girer. Katman meta verisi (`layer_type`, `band`) mevcut `outputs[].file_artifact` üzerine eklenir; paket başına tekil kalibrasyon bilgisi top-level `calibration_type`'tır. Yeni bir `index_layers[]` dizisi AÇILMAZ (2026-07-31 denetimi). ⚠️ `calibration_tier` diye bir alan YOKTUR — kanonik ad `calibration_type` (C1′)."
+  },
+  "x-updated": "2026-07-31",
+  "x-registry-sync": {
+    "description": "layer_type indeks değerleri drone_capability_matrix.yaml'dan türetilir.",
+    "capability_matrix": "drone_capability_matrix.yaml → capabilities[*].available_indices",
+    "rule": "Matrise yeni indeks eklenirse layer_type de MINOR ile genişletilir; ters yön yasak."
+  }
+}

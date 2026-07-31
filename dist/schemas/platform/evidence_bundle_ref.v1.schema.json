@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/platform/evidence_bundle_ref.v1.schema.json",
+  "title": "PlatformEvidenceBundleRef",
+  "description": "Platform tarafı kanıt paketi referansı — KR-072 kanonik. Merkezi sistemde saklanan, dataset'e ait tüm kanıt dökümanlarının toplu referansı. Audit ve compliance sorgularında kullanılır.",
+  "type": "object",
+  "unevaluatedProperties": false,
+  "required": [
+    "bundle_id",
+    "dataset_id",
+    "mission_id",
+    "evidence_chain",
+    "chain_complete",
+    "created_at"
+  ],
+  "properties": {
+    "bundle_id": {
+      "type": "string",
+      "pattern": "^bundle_[a-z0-9]{24}$",
+      "description": "Kanıt paketi benzersiz kimliği."
+    },
+    "dataset_id": {
+      "type": "string",
+      "pattern": "^dataset_[a-z0-9]{24}$",
+      "description": "İlişkili dataset kimliği."
+    },
+    "mission_id": {
+      "type": "string",
+      "pattern": "^mission_[a-z0-9]{24}$",
+      "description": "İlişkili görev kimliği."
+    },
+    "field_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^field_[a-z0-9]{24}$",
+      "description": "İlişkili tarla kimliği."
+    },
+    "evidence_chain": {
+      "type": "object",
+      "properties": {
+        "intake_manifest_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "edge_scan_report_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "edge_verification_report_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "calibration_certificate_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "calibration_result_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "platform_scan_report_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "platform_verification_report_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "qc_report_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "attestation_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Kanıt zincirindeki her aşamaya ait döküman referansları."
+    },
+    "chain_complete": {
+      "type": "boolean",
+      "description": "Tüm zorunlu kanıt dökümanları mevcut mu?"
+    },
+    "current_status": {
+      "type": "string",
+      "enum": [
+        "RAW_INGESTED",
+        "RAW_SCANNED_EDGE_OK",
+        "RAW_HASH_SEALED",
+        "CALIBRATED",
+        "CALIBRATED_SCANNED_CENTER_OK",
+        "DISPATCHED_TO_WORKER",
+        "ANALYZED",
+        "DERIVED_PUBLISHED",
+        "ARCHIVED",
+        "REJECTED_QUARANTINE"
+      ],
+      "x-inlined-from": {
+        "ref": "../../enums/dataset_status.enum.v1.json",
+        "source_id": "https://api.tarlaanaliz.com/enums/dataset_status.enum.v1.json",
+        "keys": [
+          "enum",
+          "type"
+        ],
+        "note": "OTOMATİK ÜRETİLDİ — elle düzenlemeyin. Kaynak: yukarıdaki `ref`. Yeniden üretim: python tools/inline_refs.py --write (SDLC_GATES §3G)."
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  },
+  "x-kr-ref": [
+    "KR-072"
+  ],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-03-03"
+}
