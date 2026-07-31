@@ -741,7 +741,7 @@ Takvim değerleri **karar desteğidir**; parsel gözlemi, yerel fenoloji (sıcak
 
 ### Zorunluluklar (MUST)
 
-[ZORUNLU] PRELIMINARY fazında çiftçiye sunulan içerik **YALNIZCA**: ortomozaik / deterministik indeks katmanları (`HEALTH`←ndvi, `NITROGEN_STRESS`←ndre, `WATER_STRESS`←stress_ratio) + `overall_health_index`. Tespitler (findings: hastalık/zararlı/yabancı-ot), uzman düzeltmeleri ve uzman-bağımlı katmanlar PRELIMINARY yanıtında **YER ALMAZ** (fail-closed; sunum katmanı DTO'su bu bulguları hiç döndürmez).
+[ZORUNLU] PRELIMINARY fazında çiftçiye sunulan içerik **YALNIZCA**: ortomozaik / deterministik indeks katmanları (`HEALTH`←ndvi, `NITROGEN_STRESS`←ndre) + `overall_health_index`. ⚠️ **2026-07-31/D17 DÜZELTMESİ:** `WATER_STRESS` bu listeden ÇIKARILDI — katman VEKİLDİR (`analysis_type.enum` → `availability: proxy_only`): doğrudan ölçümü CWSI (LWIR) veya NDMI (SWIR) ister, ikisi de referans donanımda (DJI Mavic 3M) YOKTUR (karar kaydı KG-0.f). Kaynağı `stress_ratio` ise hiçbir kanonik kaynakta TANIMLI DEĞİLDİR. Vekil bir gösterge, uzman kapısı öncesinde doğrulanmış bulgu gibi teslim edilemez. Katman hesaplanmaya devam edebilir; yalnız ÖN FAZDA sunulmaz. Termal/SWIR donanım gelirse yeniden değerlendirilir. Tespitler (findings: hastalık/zararlı/yabancı-ot), uzman düzeltmeleri ve uzman-bağımlı katmanlar PRELIMINARY yanıtında **YER ALMAZ** (fail-closed; sunum katmanı DTO'su bu bulguları hiç döndürmez).
 
 [ZORUNLU] PRELIMINARY yanıtı görsel olarak **"ÖN RAPOR — uzman doğrulaması beklemede"** ibaresini taşır: bulguların kesin olmadığı ve nihai raporun uzman onayı sonrası yayınlanacağı çiftçiye açıkça belirtilir. Bu disclaimer FULL fazında **"TAM RAPOR (uzman onaylı)"** ibaresiyle değiştirilir.
 

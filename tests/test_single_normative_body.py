@@ -115,5 +115,55 @@ class TestUndefinedQuantitiesAreDeclared:
         )
 
 
+class TestMachineAndProseAgree:
+    """🔴 MAKİNE ile METİN aynı şeyi söylemeli — bu kapı BENİM HATAMDAN doğdu.
+
+    2026-07-31/D17'de `WATER_STRESS` **enum'dan** (makine-okunur `x-preliminary-content`)
+    çıkarıldı ama KR-093'ün **iki prose gövdesi** (SSOT metni + registry) onu hâlâ
+    *"[ZORUNLU] PRELIMINARY içeriği"* olarak sayıyordu. Yani sözleşme iki farklı şey
+    söyler hâle geldi — AR1'in (ikili gövde çürümesi) tam olarak yaşandığı senaryonun
+    **yenisini ben ürettim**. Düzeltildi; bu kapı tekrarını engelliyor.
+
+    Ders: makine-okunur bir listeyi değiştirirken, aynı listeyi **prose olarak** tekrar
+    eden her normatif metin de aynı commit'te güncellenmelidir.
+    """
+
+    SOURCES = (
+        ("docs/TARLAANALIZ_SSOT_v1_2_0.txt", "SSOT metni (çapraz-repo)"),
+        ("ssot/kr_registry.md", "KR registry (contract-only)"),
+    )
+
+    def _proxy_only_layers(self) -> set[str]:
+        analysis_type = json.loads(
+            (ROOT / "enums" / "analysis_type.enum.v1.json").read_text(encoding="utf-8")
+        )
+        by_layer = analysis_type["metadata"]["bandRequirements"]["byLayer"]
+        return {
+            name for name, spec in by_layer.items()
+            if isinstance(spec, dict) and spec.get("availability") == "proxy_only"
+        }
+
+    @pytest.mark.parametrize(("relative", "label"), SOURCES)
+    def test_prose_does_not_mandate_a_proxy_layer(self, relative: str, label: str) -> None:
+        text = (ROOT / relative).read_text(encoding="utf-8")
+        for layer in self._proxy_only_layers():
+            # "zorunlu içerik" bağlamı: katman adının indeks-eşlemesi olarak anılması.
+            mandated = f"`{layer}`←" in text
+            assert not mandated, (
+                f"{label}: `{layer}` hâlâ ön fazın ZORUNLU içerik eşlemesinde görünüyor, "
+                "oysa katman `proxy_only` (analysis_type). Makine-okunur liste ile normatif "
+                "metin ayrışmış — ikisi aynı commit'te güncellenmelidir."
+            )
+
+    def test_undefined_quantity_is_not_mandated_in_prose(self) -> None:
+        """`stress_ratio` tanımsız olduğu sürece hiçbir gövde onu ZORUNLU sayamaz."""
+        for relative, label in self.SOURCES:
+            text = (ROOT / relative).read_text(encoding="utf-8")
+            assert "←stress_ratio" not in text, (
+                f"{label}: tanımsız `stress_ratio` bir teslimat kaleminin kaynağı olarak "
+                "zorunlu tutuluyor (A3). Tanım gelene kadar eşleme askıdadır."
+            )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

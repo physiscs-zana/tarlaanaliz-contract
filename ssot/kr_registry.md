@@ -1268,8 +1268,9 @@ sonra tarlasının genel durumunu görür; kesin bulgular yine uzman kapısında
      Kaynak: `analysis_priority_zones` (edge NdviPrioritizer çıktısı; `intake_manifest.v1`
      `EdgeForm.priority_zones` üzerinden taşınır). ⟵ **KG-0.b-R (Y-D) eklentisi, 2026-07-30 onaylı**
    - **Aşama B (worker sonucu geldi — mission `IN_ANALYSIS`/`PENDING_REVIEW`):** ortomozaik +
-     deterministik indeks katmanları (`HEALTH`←ndvi, `NITROGEN_STRESS`←ndre, `WATER_STRESS`←stress_ratio)
-     + `overall_health_index`. ⟵ **KR-093'ün özgün tanımı, DEĞİŞMEDİ**
+     deterministik indeks katmanları (`HEALTH`←ndvi, `NITROGEN_STRESS`←ndre)
+     + `overall_health_index`. ⟵ KR-093'ün özgün tanımı, **2026-07-31/D17 ile WATER_STRESS ÇIKARILARAK daraltıldı**
+     ⚠️ **2026-07-31/D17 DÜZELTMESİ:** `WATER_STRESS` bu listeden ÇIKARILDI — katman VEKİLDİR (`analysis_type.enum` → `availability: proxy_only`): doğrudan ölçümü CWSI (LWIR) veya NDMI (SWIR) ister, ikisi de referans donanımda (DJI Mavic 3M) YOKTUR (karar kaydı KG-0.f). Kaynağı `stress_ratio` ise hiçbir kanonik kaynakta TANIMLI DEĞİLDİR. Vekil bir gösterge, uzman kapısı öncesinde doğrulanmış bulgu gibi teslim edilemez. Katman hesaplanmaya devam edebilir; yalnız ÖN FAZDA sunulmaz. Termal/SWIR donanım gelirse yeniden değerlendirilir.
 2) **Tespit sızmaz (fail-closed).** Tespitler (`findings`: hastalık/zararlı/yabancı-ot), uzman
    düzeltmeleri ve uzman-bağımlı katmanlar **hiçbir aşamada** `PRELIMINARY` yanıtında yer almaz;
    sunum katmanı DTO'su bu bulguları hiç döndürmez. **KR-019 yayın kapısı DEĞİŞMEZ.**

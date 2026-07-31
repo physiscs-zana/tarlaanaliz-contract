@@ -354,6 +354,5 @@
     "kr_reference": "Analysis types defined in KR-002 (Harita katmanı anlamları). These are the ONLY supported analysis types.",
     "map_layers": "All analysis types are map layers (harita katmanı) with specific colors and patterns as defined in KR-002.",
     "one_way_flow": "AI analysis produces ONLY map layers. No prescription/recommendation generation. Per KR-071 (one-way data flow)."
-  },
-  "version": "1.4.3"
+  }
 }
