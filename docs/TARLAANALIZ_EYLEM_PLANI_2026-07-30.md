@@ -1704,10 +1704,15 @@ ticarileşmeyecek bir hat için düşünün.
 > ⛔ = **C8 release töreninden ÖNCE zorunlu.**
 >
 > ### 📍 İlerleme
-> **KADEME 0 ✅ TAMAM (2026-07-31)** — D1…D6 + plan dışı D3-b · her kapı mutasyonla kanıtlandı ·
-> kanıt: `denetim/denetim_raporu_2026-07-31_kademe0_kapi_mutasyonlari.md`.
-> **Sıradaki: KADEME 1 (D7 · D8 · D9)** — geri alınamaz kalemler + kapanan maliyet pencereleri.
-> Tek açık KADEME 0 kalemi: **D4-b** (parite kapısının CI'da koşması — koordinatör kararı).
+> **KADEME 0 ✅ TAMAM (2026-07-31)** — D1…D6 + plan dışı D3-b · CI'da **9/9 yeşil** (PR #21,
+> `headRefOid` doğrulandı) · kanıt: `denetim/denetim_raporu_2026-07-31_kademe0_kapi_mutasyonlari.md`.
+> **KADEME 1 ✅ contract yarısı TAMAM** — D7 · D8 · D9 + plan dışı D3-c. Maliyet pencereleri
+> **kapatıldı** (D7 `footprint_wkt` kaldırma · D9② yeniden adlandırma — ikisi de bu turda bedavaydı).
+> **Sıradaki: KADEME 2 (D10 sıralama kilitleri · D11 kalanı)** → sonra KADEME 3/4.
+> **Açık kalan kararlar:** **D4-b** (parite kapısı CI'da) · **D4-c** (matris sürümleme kapsamı) ·
+> **SD8** (etiketsiz 16 sürüm) · **C6b/E13** · **CHLOROPHYLL_A** formülü.
+> **Başka depoya düşen iş:** **E15** (edge `qc_report_writer` fail-loud) · **P14** (platform
+> `worker_job_publisher` fail-open adımı).
 
 **Öncelik hiyerarşisi (çatışma çözerken kullanılan ölçüt sırası):**
 ① fiziksel/ölçüm geçerliliği → ② geri alınamazlık → ③ güvenlik değişmezi → ④ istatistiksel
@@ -1738,13 +1743,21 @@ silindi → dedektör **BREAKING** dedi, CI kapısı *"beyan edilmemiş breaking
 ⑥ KR-093 tanımı iki kaynaktan silindi → **3 test kırmızı**; `## KR-093`→`### KR-093` biçim değişimi ise
 **yanlış alarm üretmedi**.
 
-## 14.1 KADEME 1 — Geri alınamaz + maliyet penceresi kapanıyor
+## 14.1 KADEME 1 — Geri alınamaz + maliyet penceresi kapanıyor — ✅ **contract yarısı TAMAM (2026-07-31)**
 
-| # | İş | Kapatır |
-|---|---|---|
-| **D7** ⛔ | **Ç7 tek hamle (turdaki en yüksek kaldıraç):** `raw_frames[].footprint_wkt` **KALDIR** → `sees_patch_ids[]` (`maxItems:500`, `^[a-f0-9]{32}$`) · `observed_footprint_wkt` **KALIR** + `maxLength:4096` · `footprint_crs` const opsiyonel · **`\|koordinat\|>180 ⇒ derece değil`** ayırıcısı · `crs_mismatch` bayrağı bağlanır · `min(...,1.0)` kırpması kaldırılır · `except → 0.0` **fail-loud**. ⚠️ EWKT **kullanılmaz** — `shapely.wkt.loads`'u kırıyor (ölçüldü) | E7, G2, K7, P3, **G1**, Y2 |
-| **D8** ⛔ | **C6a:** `calibration_type` missing ⇒ **FAIL-CLOSED** (bağlam-bazlı) + alt-kümeye `NONE`. *(C6b = alt-küme bileşimi/satıcı adları → E13 sonrası)* | S1, S2 |
-| **D9** | **Ç5 zinciri:** ① `x-layer-classes` (raster_product/index/composite/derived_metric) → ② `IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY` **matriste** → ③ `index_requirements` yalnız `class:index` → ④ regresyon testi. ⏳ **② penceresi BU TUR** (üretici yok = bedava; sonra MAJOR) | A8, A9, A11, S10, S11, Y4 |
+> **Durum:** D7/D8/D9'un **contract** kalemleri yapıldı · süit **790 geçti / 2 beyanlı xfail / 0 skip** ·
+> dedektör **0 breaking** · her kapı mutasyonla doğrulandı (kanıt aynı denetim dosyasına eklendi).
+> ⚠️ **D7'nin EDGE KODU yarısı açık** (aşağıda **E15**) — ayrı depo, ayrı PR.
+
+| # | İş | Durum | Kapatır |
+|---|---|---|---|
+| ✅ **D7** | **Ç7 tek hamle — contract yarısı.** `raw_frames[].footprint_wkt` **KALDIRILDI** → **`sees_patch_ids[]`** (`minItems:1`, `maxItems:500`, `^[a-f0-9]{32}$` — desen `priority_zones.patch_id` ile **test tarafından bağlandı**) ve **`required`'a girdi**: KG-0.c gereği bir karenin listede olmasının tek meşru gerekçesi budur · `observed_footprint_wkt` **KALDI** + `maxLength:4096` + **desen** (EWKT RED · `POLYGON/MULTIPOLYGON` şart · tam kısmı 4+ basamaklı koordinat RED = *"\|koordinat\|>180 ⇒ derece değil"* ayırıcısı; ondalık hassasiyet serbest — 8 vakayla doğrulandı) · **`footprint_crs`** (`const: EPSG:4326`) eklendi · **`crs_mismatch` bağlandı:** `qc_report.flags[]` serbest dizeden **kapalı vocabulary'ye** çevrildi (5 değer; kaynak: üreticinin fiilen yazdığı bayraklar, `qc_report_writer.py:157-165`) · `raw_frames.maxItems` 5000→**8000** (D11/E6 buraya alındı: 25 m uçuş 5.229 kare) | ✅ | E7, G2, K7, P3, **G1**, Y2, (E6) |
+| ⬜ **E15** 🔴 | **D7'nin EDGE KODU yarısı (bu depoda YAPILAMAZ):** `qc_report_writer._geometric_coverage` → `min(...,1.0)` kırpması **kaldırılır** (oran ≫1 = CRS uyuşmazlığı; kırpma onu *"kusursuz kapsama"* yalanına çeviriyor) · iki `except → 0.0`/`pass` yolu **fail-loud** olur · `footprint_crs` okunur, uyuşmazlıkta `crs_mismatch` bayrağı yazılır. **Kanıt:** `qc_report_writer.py:245-289` · **KR-065 ödeme** kararı bu değere bağlı | ⬜ | G1 (kod yarısı) |
+| ✅ **D8** | **C6a — fail-open kapatıldı.** Enum'un global *"eksikse PANEL_ABSOLUTE varsay"* güvenlik-ağı **kaldırıldı**, yerine **bağlam-bazlı `missing: {policy: FAIL-CLOSED}`** kondu (5 bağlam ayrı ayrı yazılı) · `platform/calibrated_dataset_manifest` alt-kümesine **`NONE`** eklendi (dürüst değer yazılabilsin diye) · `hard_reject: [NONE]` korundu. ⚠️ **Ölçümle çözülen çelişki:** C1′ turunda yazılan `test_none_is_excluded` **tam tersini** iddia ediyordu; ölçüm kuralın **canlı kodda** olduğunu gösterdi (`worker_job_publisher.py:80-84` → *"status CALIBRATED → PANEL_ABSOLUTE (güvenlik-ağı)"*) ve aynı fonksiyonun 4. adımının **zaten NONE ürettiğini** — yani NONE sistemde akıyordu, yalnız kalibre manifestte yazılamıyordu. Test gerekçesiyle **tersine çevrildi**. **Edge alt-kümesi bilerek DAR bırakıldı** (edge kalibrasyon başarısızsa manifest üretmez — `calibrated_validator` CHECK 2) → bileşim kararı **C6b/E13**'te | ✅ | S1 |
+| ⬜ **P14** 🔴 | **D8'in PLATFORM yarısı:** `worker_job_publisher.py:80-84` üçüncü adım (`status CALIBRATED → PANEL_ABSOLUTE`) **kaldırılmalı**, tip yoksa **`NONE`** yazılmalı. Contract artık bunu normatif olarak söylüyor (`x-normalization.missing.policy = FAIL-CLOSED` + `x-superseded-2026-07-31.consumer_obligation`) | ⬜ | S1 (kod yarısı) |
+| ✅ **D9** | **Ç5 zinciri tamam.** ① **`x-layer-classes`** eklendi (`raster_product` / `index` / `composite` / `derived_metric` + 13 değerin haritası) ② **`IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY`** (şema enum'u **ve** matris; ölçüldü: kardeş depoların hiçbirinde geçmiyor → **bedava**; termal kamera sulama *verimliliğini* ölçemez — uygulanan su + bitki su tüketimi gerekir, ikisi de sistemde yok) ③ **`index_requirements`** matrise eklendi — ⚠️ **bant gereksinimleri uydurulmadı, worker'ın FİİLİ formüllerinden ölçüldü** (`feature_extraction.py:207-222`): SAVI **Blue GEREKTİRMEZ**, EVI **gerektirir** (kod: B yoksa EVI sıfırlanır) · `CHLOROPHYLL_A` **`null` bırakıldı** (formülü depoda tanımlı değil; worker'daki `LCI` **aynı ad değil**) → §14.5'e açık kalem ④ **14 testlik kapı**: her `layer_type`'ın sınıfı var · matris↔şema vocabulary'si bağlı · **listelenen her indeks üretilebilir** (mutasyon: 4 bantlı Mavic'e EVI eklenince kırmızı) · eski ad **değer olarak** geri gelemez (tarihsel not korunur) | ✅ | A8, A10, S10, S11, Y4 |
+| ✅ **D3-c** 🆕 | **KADEME 1'de doğan dedektör boşlukları (aynı sınıf, bu turda kapatıldı):** ① serbest bir alana **`enum` EKLEMEK** daraltmadır ama hiç görünmüyordu (`ENUM_CONSTRAINT_ADDED`) ② **`x-normalization` gibi normatif `x-` blokları** doğrulamayı değiştirmez ama tüketici KODUNU değiştirir — D8'in fail-open→FAIL-CLOSED çevirisi klasik şema diff'inde **görünmezdi** → `NORMATIVE_ANNOTATION_CHANGED` (*manual review required*; `x-updated` bilerek kapsam dışı) ③ yeni bağlam alt-kümesi eklemesi raporlanmıyordu. **Ayrıca `x-compat-accepted`:** biçimsel daraltmayı **beyanla** NON_BREAKING'e indirir (gerekçe raporda yankılanır) — kapsam DAR: alan silme · enum değeri silme · `required` genişletme · tip daraltma **asla** indirilemez (5 test) | ✅ | (denetimde yoktu) |
+| ⬜ **D4-c** 🆕 | **Kapı kapsamı boşluğu:** `drone_capability_matrix.yaml` **normatiftir** (KR-018/030 bant kapısı) ama ne checksum ağacında (`schemas/`+`enums/`+`api/`) ne de breaking dedektöründe (`schemas/`+`enums/`) — yani sürüm bump'ı olmadan sessizce değişebilir. C-SSOT-2 ile **aynı sınıf** (SSOT metni de kapsam dışı). D9'un testi matris↔şema vocabulary'sini bağladı, ama sürümleme boşluğu duruyor → checksum ağacına mı alınacak, salt-okunur drift dedektörüne mi? | ⬜ | (denetimde yoktu) |
 
 ## 14.2 KADEME 2 — C8 sıralama kilitleri (iş değil, SIRA)
 

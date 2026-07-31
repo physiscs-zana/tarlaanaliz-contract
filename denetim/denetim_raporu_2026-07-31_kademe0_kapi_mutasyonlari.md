@@ -195,6 +195,31 @@ Artık **tanım başlığı** şartı var ve gövdenin hangi kaynakta olduğu ö
 
 ---
 
+## 5.1 KADEME 1 mutasyonları (aynı oturum, D7/D8/D9)
+
+| # | Mutasyon | Beklenen | Sonuç |
+|---|---|---|---|
+| K1-1 | `observed_footprint_wkt`'e UTM metre WKT (`POLYGON((500000 4000000, …))`) | RED | ✅ şema reddetti (G1 zincirinin şema tarafı kesildi) |
+| K1-2 | EWKT (`SRID=4326;POLYGON(…)`) | RED | ✅ reddedildi (`shapely.wkt.loads`'u kıran biçim) |
+| K1-3 | Mevcut edge fixture'ı (`POLYGON((32.0 37.0, …))`) + yüksek ondalık hassasiyet | KABUL | ✅ geçti — daraltma gerçek üretimi kırmıyor |
+| K1-4 | `x-compat-accepted` beyanları silindi | 3 BREAKING | ✅ `PATTERN_TIGHTENED` + `MIN_MAX_TIGHTENED` + `ENUM_CONSTRAINT_ADDED`; beyan geri konunca 0 |
+| K1-5 | Beyanla **alan silme / enum değeri silme / required genişletme / tip daraltma** indirilmeye çalışıldı | indirilmemeli | ✅ dördü de BREAKING kaldı (kaçış deliği yok) |
+| K1-6 | Enum'a fail-open kuralı (`missing -> PANEL_ABSOLUTE`) geri kondu | RED | ✅ `test_missing_type_is_fail_closed_not_promoted` düştü |
+| K1-7 | 4 bantlı `DJI_MAVIC_3M`'e `EVI` (BLUE ister) eklendi | RED | ✅ `test_listed_indices_are_producible` düştü |
+| K1-8 | `IRRIGATION_EFFICIENCY` **değer olarak** enum'a geri kondu | RED | ✅ 3 test düştü; **açıklamadaki tarihsel not** ise yanlış alarm üretmedi |
+
+**Ölçüm — bant gereksinimleri uydurulmadı.** `index_requirements` doğrudan worker'ın
+çalışan kodundan türetildi (`tarlaanaliz-worker/src/core/services/inference/feature_extraction.py:207-222`):
+`SAVI = ((NIR−R)/(NIR+R+L))(1+L)` → **Blue gerekmez** · `EVI = 2.5(NIR−R)/(NIR+6R−7.5B+1)`
+→ kod `B` yoksa EVI'yi **sıfırlıyor** ⇒ Blue zorunlu. `CHLOROPHYLL_A` formülü depoda
+**tanımsız** (worker'daki `LCI` aynı ad değil) → `null` bırakıldı, açık kalem yazıldı.
+
+**Ölçüm — yeniden adlandırma bedava mı?** `IRRIGATION_EFFICIENCY` üç kardeş depoda
+(`platform/src`, `worker/src`, `edge/src`) **hiç geçmiyor**; `layer_type` bu turda eklendi
+⇒ üretici yok ⇒ MAJOR değil. Sonraki turda MAJOR olurdu.
+
+---
+
 ## 6. Bu turda kapanmayanlar (plana işlendi, burada tekrar edilmez)
 
 * **D4-b** — parite kapısının CI'da fiilen koşması (koordinatör kararı) → plan §14.0

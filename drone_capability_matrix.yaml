@@ -73,12 +73,48 @@ capabilities:
     available_indices:
       core: [NDVI, NDRE, GNDVI, CIR]
       extended: [EVI, SAVI, CHLOROPHYLL_A]
-      thermal: [CWSI, CANOPY_TEMP, CANOPY_SOIL_DELTA, IRRIGATION_EFFICIENCY]
+      thermal: [CWSI, CANOPY_TEMP, CANOPY_SOIL_DELTA, CANOPY_TEMP_UNIFORMITY]
     calibration_class: absolute
     thermal_sensor: FLIR_BOSON_320
     notes: >
       Fabrika radyometrik kalibrasyon + termal (FLIR Boson 320x256).
       Fixed-wing — geniş alan verimliliği + multispektral + termal.
+
+# ---------------------------------------------------------------------------
+# Index band requirements  [D9 / 2026-07-31]
+# ---------------------------------------------------------------------------
+# NEDEN: `available_indices` bir drone'un neyi ÜRETEBİLDİĞİNİ elle yazıyordu; hangi
+# indeksin hangi bandı GEREKTİRDİĞİ hiçbir yerde makine-okunur değildi (denetim
+# yakınsaması Y4: A8/A10 + S10/S11). Bu yüzden "4 bantlı drone + EVI" gibi imkânsız
+# bir liste hiçbir kapıya takılmazdı ve `layer_type` iddiası doğrulanamıyordu.
+#
+# KAYNAK — UYDURULMADI, worker'ın FİİLİ formüllerinden ölçüldü:
+#   tarlaanaliz-worker/src/core/services/inference/feature_extraction.py:207-222
+#     NDVI  = (NIR - R) / (NIR + R)                     -> RED, NIR
+#     NDRE  = (NIR - RE) / (NIR + RE)                   -> RED_EDGE, NIR
+#     GNDVI = (NIR - G) / (NIR + G)                     -> GREEN, NIR
+#     EVI   = 2.5(NIR - R)/(NIR + 6R - 7.5B + 1)        -> BLUE, RED, NIR
+#             (kod: B yoksa EVI sıfırlanır -> Blue ZORUNLU)
+#     SAVI  = ((NIR - R)/(NIR + R + L))(1 + L), L=0.5   -> RED, NIR   (Blue GEREKMEZ)
+#
+# ⚠️ SAVI ölçümü, "SAVI'yi core'a al" önerisinin (A10) neden bir ÜRÜN kararı olduğunu
+# gösterir: SAVI 4 bantla ÜRETİLEBİLİR, ama bir drone'un onu SUNMASI ayrı bir karardır.
+# Bu tablo yalnız İMKÂNSIZ iddiaları yasaklar; eksik listelemeyi hata saymaz.
+#
+# Kapsam: yalnız `class: index` ve `class: composite` (bkz. platform/calibrated_dataset_manifest
+# → x-layer-classes). `raster_product` (ORTHO/DSM) bant gerektirmez; `derived_metric`
+# (termal) band_classes.THERMAL.requires ile kapılanır.
+index_requirements:
+  NDVI:          [RED, NIR]
+  NDRE:          [RED_EDGE, NIR]
+  GNDVI:         [GREEN, NIR]
+  SAVI:          [RED, NIR]
+  EVI:           [BLUE, RED, NIR]
+  CIR:           [GREEN, RED, NIR]     # class: composite — yalancı-renk render (NIR-R-G)
+  CHLOROPHYLL_A: null                  # AÇIK KALEM: formülü bu depoda tanımlı değil
+  # ^ worker'da `LCI` var ((NIR-RE)/(NIR+RED)) ama AYNI AD DEĞİL. Tahminle bant yazmak,
+  #   doğrulanamaz bir kapı üretirdi; `null` = "gereksinim henüz beyan edilmedi" ve testler
+  #   bunu bilerek atlamak yerine AÇIKÇA açık kalem sayar (eylem planı §14.5).
 
 # Band class definitions
 band_classes:

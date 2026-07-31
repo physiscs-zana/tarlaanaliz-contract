@@ -174,6 +174,42 @@ class TestContextSubsets:
         new = _wrap({"enum": ["A"], "x-context-subsets": {"edge/x": ["A"]}})
         assert _run(tmp_path, old, new)["has_breaking"]
 
+    def test_new_context_is_reported_as_non_breaking(self, tmp_path: Path) -> None:
+        """Yeni bağlam kırıcı değildir ama GÖRÜNMEZ de olmamalı."""
+        old = _wrap({"enum": ["A"], "x-context-subsets": {"edge/x": ["A"]}})
+        new = _wrap({"enum": ["A"], "x-context-subsets": {"edge/x": ["A"], "platform/y": ["A"]}})
+        result = _run(tmp_path, old, new)
+        assert not result["has_breaking"]
+        assert any(c["type"] == "CONTEXT_SUBSET_VALUE_ADDED" for c in result["non_breaking"])
+
+
+class TestNormativeAnnotations:
+    """Doğrulamayı değil DAVRANIŞI değiştiren `x-` blokları sessiz kalamaz.
+
+    Somut vaka (D8): `calibration_type.enum` → `x-normalization` içindeki
+    *"eksikse PANEL_ABSOLUTE varsay"* kuralı platform kodunda birebir uygulanıyordu
+    (`worker_job_publisher.py:80-84`). Kuralı FAIL-CLOSED'a çevirmek hiçbir belgeyi
+    geçersiz kılmaz — klasik şema diff'i bunu HİÇ görmez — ama tüketicinin kodunu
+    değiştirmesi ZORUNLUDUR.
+    """
+
+    def test_normalization_rule_change_is_reported(self, tmp_path: Path) -> None:
+        old = _wrap({"x-normalization": {"missing -> PANEL_ABSOLUTE": "güvenlik-ağı"}})
+        new = _wrap({"x-normalization": {"missing": {"policy": "FAIL-CLOSED"}}})
+        result = _run(tmp_path, old, new)
+        reported = [c for c in result["non_breaking"]
+                    if c["type"] == "NORMATIVE_ANNOTATION_CHANGED"]
+        assert reported, "normatif kural değişimi raporlanmadı — tüketici davranışı sessizce kayar"
+        assert "manual review" in reported[0]["message"].lower()
+
+    def test_x_updated_is_not_noise(self, tmp_path: Path) -> None:
+        """Her turda değişen tarih alanı rapora girmemeli (sinyal/gürültü)."""
+        old = _wrap({"x-updated": "2026-07-30"})
+        new = _wrap({"x-updated": "2026-07-31"})
+        result = _run(tmp_path, old, new)
+        assert not any(c["type"] == "NORMATIVE_ANNOTATION_CHANGED"
+                       for c in result["non_breaking"]), "x-updated gürültü üretiyor"
+
 
 class TestNoFalsePositives:
     """Kapı gürültü üretirse kimse ona bakmaz — yanlış alarm da bir arızadır."""
@@ -207,6 +243,75 @@ class TestNoFalsePositives:
                       "properties": {"f": {"$ref": "#/$defs/F"}}})
         result = _run(tmp_path, json.loads(json.dumps(same)), json.loads(json.dumps(same)))
         assert result["total"] == 0, f"aynı şema fark üretti: {result}"
+
+
+class TestAcceptedTightening:
+    """`x-compat-accepted` — beyanlı istisna DAR olmalı, kaçış deliği değil (D7)."""
+
+    ACCEPT = {
+        "change": "test",
+        "date": "2026-07-31",
+        "rationale": "ölçüldü: üretici yok",
+        "ref": "test",
+    }
+
+    def test_enum_added_where_none_existed_is_breaking(self, tmp_path: Path) -> None:
+        """Serbest alanı kapalı vocabulary'ye çevirmek daraltmadır (yeni sınıf)."""
+        old = _wrap({"properties": {"flags": {"type": "string"}}})
+        new = _wrap({"properties": {"flags": {"type": "string", "enum": ["A", "B"]}}})
+        result = _run(tmp_path, old, new)
+        assert result["has_breaking"], "enum kısıtı EKLEMEK görünmüyor"
+        assert any(c["type"] == "ENUM_CONSTRAINT_ADDED" for c in result["breaking"])
+
+    @pytest.mark.parametrize(
+        "tightening",
+        [
+            {"maxLength": 10},
+            {"pattern": "^x$"},
+            {"enum": ["A"]},
+        ],
+        ids=["maxLength", "pattern", "enum-constraint"],
+    )
+    def test_declaration_downgrades_tightenings(self, tmp_path: Path, tightening: dict) -> None:
+        old = _wrap({"properties": {"f": {"type": "string"}}})
+        new_prop = {"type": "string", "x-compat-accepted": self.ACCEPT, **tightening}
+        result = _run(tmp_path, old, _wrap({"properties": {"f": new_prop}}))
+        assert not result["has_breaking"], f"beyanlı daraltma indirilmedi: {result['breaking']}"
+        accepted = [c for c in result["non_breaking"] if c.get("accepted")]
+        assert accepted, "indirilen değişiklik 'accepted' damgası taşımalı"
+        assert "ACCEPTED TIGHTENING" in accepted[0]["message"], (
+            "indirme SESSİZ olamaz — gerekçe raporda görünmeli"
+        )
+
+    def test_declaration_cannot_downgrade_field_removal(self, tmp_path: Path) -> None:
+        old = _wrap({"properties": {"a": {}, "b": {}}})
+        new = _wrap({"properties": {"a": {}}, "x-compat-accepted": self.ACCEPT})
+        assert _run(tmp_path, old, new)["has_breaking"], (
+            "alan SİLME beyanla indirilemez — kaçış deliği açılmış"
+        )
+
+    def test_declaration_cannot_downgrade_enum_value_removal(self, tmp_path: Path) -> None:
+        old = _wrap({"properties": {"k": {"enum": ["A", "B"]}}})
+        new = _wrap({"properties": {"k": {"enum": ["A"], "x-compat-accepted": self.ACCEPT}}})
+        assert _run(tmp_path, old, new)["has_breaking"], (
+            "enum DEĞERİ silme beyanla indirilemez"
+        )
+
+    def test_declaration_cannot_downgrade_new_required_field(self, tmp_path: Path) -> None:
+        old = _wrap({"properties": {"a": {}}, "required": []})
+        new = _wrap({
+            "properties": {"a": {}, "b": {}},
+            "required": ["b"],
+            "x-compat-accepted": self.ACCEPT,
+        })
+        assert _run(tmp_path, old, new)["has_breaking"], (
+            "`required` genişletme beyanla indirilemez"
+        )
+
+    def test_declaration_cannot_downgrade_type_narrowing(self, tmp_path: Path) -> None:
+        old = _wrap({"properties": {"d": {"type": ["string", "null"]}}})
+        new = _wrap({"properties": {"d": {"type": "string", "x-compat-accepted": self.ACCEPT}}})
+        assert _run(tmp_path, old, new)["has_breaking"], "tip DARALTMA beyanla indirilemez"
 
 
 class TestGateCannotLieSilently:

@@ -42,15 +42,23 @@
 | KR çıkarıcısı | registry'nin **54 tanımından 6'sını** görüyordu; Q5 kapısı boştu | her başlık düzeyi + 4 biçim; "anılmak ≠ tanımlı" |
 | Release checklist | annotated tag adımı **yok**; `PENDING_PROPAGATION` kontrolü yok | §3G tag töreni + propagation **testi** |
 
-### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **KADEME 1 (D7 · D8 · D9)**
-Eylem planı **§14.1**: `raw_frames[].footprint_wkt` → `sees_patch_ids[]` (Ç7 tek hamle) ·
-C6a `calibration_type` fail-closed · Ç5 `layer_type` zinciri.
-⏳ **Maliyet penceresi:** D9② (`IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY`) ve D7
-(`footprint_wkt` kaldırma) **bu tur bedava**, sonra MAJOR olur.
+### ✅ KADEME 1 de bu oturumda yapıldı (contract yarısı)
+**D7** `footprint_wkt` → `sees_patch_ids[]` + WKT derece-ayırıcısı + `footprint_crs` +
+`crs_mismatch` vocabulary'si · **D8** kalibrasyon fail-open → **FAIL-CLOSED** + `NONE` ·
+**D9** `x-layer-classes` + `IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY` +
+`index_requirements` (worker formüllerinden ölçüldü) · plan dışı **D3-c** (dedektörde 3 boşluk).
+⏳ **İki maliyet penceresi kapatıldı** — ikisi de sonraki turda MAJOR olurdu.
 
-**Ayrıca karar bekleyen tek KADEME 0 kalemi: D4-b** — parite kapısı CI'da hâlâ ölçüm
-yapmıyor (kardeş depolar Actions'ta yok). Ya CI'a çapraz-repo erişimi verilir ya
-"parite yalnız C8'de yerel ölçülür" **yazılı** kabul edilir.
+### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **KADEME 2** (§14.2: D10 sıralama kilitleri · D11 kalanı)
+Sonra KADEME 3 (§14.3 denetim aleti) ve KADEME 4 (§14.4 normatif kaynak tekilliği).
+
+**Karar bekleyenler:** **D4-b** (parite kapısı CI'da koşsun mu — çapraz-repo erişimi) ·
+**D4-c** (`drone_capability_matrix.yaml` normatif ama checksum/dedektör kapsamı DIŞINDA) ·
+**SD8** (etiketsiz 16 sürüm) · **C6b/E13** · `CHLOROPHYLL_A` formülü.
+
+**Başka depoya düşen iş (bu depodan yapılamaz):** **E15** edge `qc_report_writer` —
+`min(...,1.0)` kırpması + `except → 0.0` sessiz yolu fail-loud olmalı · **P14** platform
+`worker_job_publisher.py:80-84` — fail-open `PANEL_ABSOLUTE` adımı kaldırılmalı.
 
 **Kanıt:** `denetim/denetim_raporu_2026-07-31_kademe0_kapi_mutasyonlari.md` (her kapının
 mutasyon kaydı). **İş listesi:** yalnız eylem planı §14.

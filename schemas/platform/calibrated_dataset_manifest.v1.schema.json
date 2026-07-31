@@ -64,9 +64,10 @@
         "ABSOLUTE",
         "PANEL_ABSOLUTE",
         "DLS2_RELATIVE",
-        "RELATIVE"
+        "RELATIVE",
+        "NONE"
       ],
-      "description": "Paketin radyometrik kalibrasyon TİPİ (KR-018/082). enums/calibration_type.enum.v1.json bağlam alt-kümesi; bkz. x-context-subsets['platform/calibrated_dataset_manifest']. Paket başına TEK değerdir — producer_tool ve reflectance_scale de top-level tekildir. Opsiyonel (geriye uyumlu). ⚠️ Alan adı `calibration_tier` DEĞİLDİR (contract'ta öyle bir ad yoktur); kanonik ad calibration_type'tır."
+      "description": "Paketin radyometrik kalibrasyon TİPİ (KR-018/082). enums/calibration_type.enum.v1.json bağlam alt-kümesi; bkz. x-context-subsets['platform/calibrated_dataset_manifest']. Paket başına TEK değerdir — producer_tool ve reflectance_scale de top-level tekildir. Opsiyonel (geriye uyumlu). ⚠️ Alan adı `calibration_tier` DEĞİLDİR (contract'ta öyle bir ad yoktur); kanonik ad calibration_type'tır.\n\n🔴 **FAIL-CLOSED (2026-07-31/D8, denetim bulgusu S1):** Bu form NORMALİZASYON SINIRIDIR (edge → worker). Tip bilinmiyorsa **`NONE` yazılır** ve paket KR-018/082 ile HARD REJECT edilir; **hiçbir koşulda PANEL_ABSOLUTE varsayılmaz.** `NONE` bu alt-kümeye tam da bunun için eklendi: kalibre edilmemiş (ham DN — sensör sayımı, reflektans değil) bir paketin DÜRÜST değeri yazılabilsin diye. Önceki durumda dürüst değer yazılamıyordu, alan opsiyoneldi ve enum'un global kuralı eksik tipi en güçlü sınıfa (PANEL_ABSOLUTE — worker spektral eşiklerinin referansı) yükseltiyordu; ham DN'yi kalibre reflektans sanan eşik, tarlada yanlış agronomik karar üretir.\n\n⚠️ `NONE` yazmak paketi 'analiz edilebilir' yapmaz — tam tersine, analiz kapısında reddedilmesini SAĞLAR. Alanın hiç yazılmaması ise artık bir varsayım DEĞİL, eksik beyandır."
     }
   },
   "unevaluatedProperties": false,
@@ -125,9 +126,9 @@
             "CWSI",
             "CANOPY_TEMP",
             "CANOPY_SOIL_DELTA",
-            "IRRIGATION_EFFICIENCY"
+            "CANOPY_TEMP_UNIFORMITY"
           ],
-          "description": "Çıktı katmanının KANONİK türü. ORTHO/DSM raster ürünleridir; kalan değerler drone_capability_matrix.yaml → available_indices (core+extended+thermal) kümesinden TÜRETİLMİŞTİR, ayrı bir vocabulary DEĞİLDİR. Opsiyonel: eski üreticiler alanı atlar. `type` alanıyla karıştırılmaz — `type` tüketici-tanımlı serbest etikettir."
+          "description": "Çıktı katmanının KANONİK türü. ORTHO/DSM raster ürünleridir; kalan değerler drone_capability_matrix.yaml → available_indices (core+extended+thermal) kümesinden TÜRETİLMİŞTİR, ayrı bir vocabulary DEĞİLDİR. Opsiyonel: eski üreticiler alanı atlar. `type` alanıyla karıştırılmaz — `type` tüketici-tanımlı serbest etikettir.\n\n📐 **Sınıflandırma (2026-07-31/D9):** Bu enum tek bir düz liste değildir; her değerin bir SINIFI vardır (`x-layer-classes`) ve üretilebilirlik sınıfa göre farklı çalışır — bkz. aşağıdaki `x-layer-classes` ile drone_capability_matrix.yaml → `index_requirements`.\n\n🔄 **`IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY` (2026-07-31/D9②):** Termal kamera 'sulama verimliliği' ÖLÇMEZ — verimlilik, uygulanan su miktarı ve bitki su tüketimi bilinmeden hesaplanamaz (ikisi de bu sistemde YOK). LWIR'den doğrudan türetilebilen büyüklük **kanopi sıcaklığının tarla içi tekdüzeliğidir** ve sulama sorunlarının bir VEKİL göstergesidir (proxy). Ad, ölçülen şeyi söylemeliydi. Yeniden adlandırma bu turda **bedava**: `layer_type` bu turda eklendi (üretici yok) ve eski ad kardeş depoların hiçbirinde geçmiyor (ölçüldü). Bir sonraki turda MAJOR olurdu."
         },
         "band": {
           "type": "string",
@@ -144,6 +145,32 @@
       },
       "unevaluatedProperties": false
     }
+  },
+  "x-layer-classes": {
+    "description": "`$defs.file_artifact.layer_type` değerlerinin SINIF haritası (2026-07-31/D9 · denetim yakınsaması Y4: A8/A10 + S10/S11). Sorun: enum düz bir listeydi ve içinde ÜÇ FARKLI türden şey vardı; bu yüzden 'bu katman bu drone ile üretilebilir mi?' sorusunun makine-okunur bir cevabı YOKTU — 4 bantlı bir drone için `CWSI` (LWIR ister) iddia eden bir manifest hiçbir kapıya takılmazdı.",
+    "classes": {
+      "raster_product": "Spektral indeks DEĞİL, doğrudan fotogrametri ürünü. Bant gereksinimi TANIMSIZDIR (her bant kümesiyle üretilir) — bu yüzden `index_requirements`'ta YER ALMAZ.",
+      "index": "Reflektans bantlarından hesaplanan normalize oran. Üretilebilirliği TAM OLARAK bant kümesine bağlıdır → `drone_capability_matrix.yaml` → `index_requirements` zorunludur.",
+      "composite": "Görselleştirme amaçlı bant kompoziti (sayısal indeks değil, RENDER). Bant gereksinimi vardır ama çıktısı bir ölçüm değildir; eşik/karar girdisi olarak KULLANILMAZ.",
+      "derived_metric": "Termal/model varsayımı içeren türetilmiş büyüklük (yalnız bant oranı değil). LWIR ve ek varsayım gerektirir; `band_classes.THERMAL.requires` ile kapılanır."
+    },
+    "map": {
+      "ORTHO": "raster_product",
+      "DSM": "raster_product",
+      "NDVI": "index",
+      "NDRE": "index",
+      "GNDVI": "index",
+      "EVI": "index",
+      "SAVI": "index",
+      "CHLOROPHYLL_A": "index",
+      "CIR": "composite",
+      "CWSI": "derived_metric",
+      "CANOPY_TEMP": "derived_metric",
+      "CANOPY_SOIL_DELTA": "derived_metric",
+      "CANOPY_TEMP_UNIFORMITY": "derived_metric"
+    },
+    "x-open-item": "CHLOROPHYLL_A'nın FORMÜLÜ bu depoda tanımlı değildir; worker'da `LCI` var ama aynı ad değil. Bant gereksinimi bu yüzden `null` bırakıldı (uydurulmadı) — bkz. drone_capability_matrix.yaml → index_requirements.CHLOROPHYLL_A. Kapatılması bir agronomi/uzaktan-algılama kararıdır (eylem planı §14.5).",
+    "x-kr-ref": ["KR-018", "KR-082"]
   },
   "x-form-role": {
     "role": "platform_package_aggregate",

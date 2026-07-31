@@ -33,6 +33,23 @@ NEDEN (ölçüm, 2026-07-31 10-disiplin denetimi — SD1/SD2/Y5):
     altındaki her şey görünmezdi. O turun 17 semantik değişikliğinin yalnız 4'ü görülmüştü.
     Kural: "Yeşil ama yalan bir kapı, kırmızı bir kapıdan tehlikelidir."
 
+BEYANLI DARALTMA — `x-compat-accepted` (2026-07-31, D7 ile eklendi)
+--------------------------------------------------------------------
+Kısıt/desen/enum EKLEMEK biçimsel olarak breaking'dir, ama bazen gerçek dünyada
+kimseyi kırmaz (tipik: alanın ÖLÇÜLMÜŞ biçimde hiç üreticisi yoktur). Böyle bir
+değişiklik ya sürümü gereksiz MAJOR'a çeker ya da ekip kapıyı görmezden gelmeye
+başlar — ikisi de kapıyı öldürür. Bu yüzden istisna **sessiz değil beyanlıdır**:
+
+    "observed_footprint_wkt": {
+      "maxLength": 4096,
+      "x-compat-accepted": {"change": "...", "date": "...", "rationale": "...", "ref": "..."}
+    }
+
+Dedektör o düğümdeki daraltmayı NON_BREAKING'e indirir ama **gerekçeyi raporda
+yankılar** (PR yorumunda görünür kalır). Kapsam bilerek dar: yalnız
+`MIN_MAX_TIGHTENED`, `PATTERN_TIGHTENED`, `ENUM_CONSTRAINT_ADDED` indirilebilir.
+**Alan silme · enum DEĞERİ silme · `required` genişletme · tip daraltma ASLA indirilemez.**
+
 BİLİNEN SINIRLAR (bilerek — kapı bunları GÖRDÜĞÜNÜ iddia etmez):
     * `$ref` **çözülmez**. `$ref` hedefi değişirse `REF_CHANGED` olarak raporlanır
       (NON_BREAKING) ama sınıflandırılmaz — insan incelemesi gerekir (SDLC_GATES §3E).
@@ -62,6 +79,7 @@ class ChangeType(Enum):
     FIELD_TYPE_CHANGED = "FIELD_TYPE_CHANGED"
     FIELD_MADE_REQUIRED = "FIELD_MADE_REQUIRED"
     ENUM_VALUE_REMOVED = "ENUM_VALUE_REMOVED"
+    ENUM_CONSTRAINT_ADDED = "ENUM_CONSTRAINT_ADDED"
     CONST_CHANGED = "CONST_CHANGED"
     CONTEXT_SUBSET_VALUE_REMOVED = "CONTEXT_SUBSET_VALUE_REMOVED"
     COMPOSITION_BRANCH_CHANGED = "COMPOSITION_BRANCH_CHANGED"
@@ -76,6 +94,7 @@ class ChangeType(Enum):
     CONTEXT_SUBSET_VALUE_ADDED = "CONTEXT_SUBSET_VALUE_ADDED"
     TYPE_WIDENED = "TYPE_WIDENED"
     REF_CHANGED = "REF_CHANGED"
+    NORMATIVE_ANNOTATION_CHANGED = "NORMATIVE_ANNOTATION_CHANGED"
     SCHEMA_ADDED = "SCHEMA_ADDED"
     DESCRIPTION_CHANGED = "DESCRIPTION_CHANGED"
     MIN_MAX_RELAXED = "MIN_MAX_RELAXED"
@@ -109,6 +128,38 @@ COMPOSITION_BREAKING_ON: Dict[str, str] = {
     "anyOf": "removed",
     "oneOf": "removed",
 }
+
+# --- Beyanlı daraltma (accepted tightening) ---------------------------------
+# Bir DARALTMA (kısıt/desen/enum EKLEME) biçimsel olarak breaking'dir; ama bazen
+# gerçek dünyada kimseyi kırmaz — tipik örnek: alanın HİÇ ÜRETİCİSİ yoktur
+# (ölçülmüş), yalnız tüketicileri vardır. Böyle bir değişiklik ya sürümü gereksiz
+# MAJOR'a çeker ya da ekip kapıyı görmezden gelmeye başlar; ikisi de kapıyı öldürür.
+#
+# Çözüm: SESSİZ istisna değil, BEYANLI istisna. İlgili düğüme `x-compat-accepted`
+# konur; dedektör o düğümdeki daraltmayı NON_BREAKING'e indirir ama gerekçeyi
+# RAPORDA yankılar (PR yorumunda görünür, incelenebilir kalır).
+#
+# ⚠️ Kapsam bilerek DAR: yalnız aşağıdaki sınıflar indirilebilir. Alan silme,
+# enum DEĞERİ silme, `required` genişletme ve tip daraltma ASLA indirilemez.
+# Tüketicinin KOD olarak uyguladığı `x-` blokları. Şema doğrulamasını değiştirmezler,
+# davranışı değiştirirler → sessiz kalamazlar (bkz. _compare_normative_annotations).
+# `x-updated` bilerek YOK: her turda değişir, sinyal değil gürültü üretir.
+NORMATIVE_ANNOTATION_KEYS: Tuple[str, ...] = (
+    "x-normalization",
+    "x-layer-classes",
+    "x-form-role",
+    "x-derived-from",
+    "x-preliminary-content",
+)
+
+ACCEPTANCE_KEY = "x-compat-accepted"
+ACCEPTABLE_TYPES = frozenset({
+    ChangeType.MIN_MAX_TIGHTENED.value,
+    ChangeType.PATTERN_TIGHTENED.value,
+    ChangeType.ENUM_CONSTRAINT_ADDED.value,
+})
+#: Beyan bu alanları taşımak ZORUNDA (boş kaşe olmasın diye; tests ile zorlanır).
+ACCEPTANCE_REQUIRED_FIELDS = ("change", "date", "rationale", "ref")
 
 
 class BreakingChangeDetector:
@@ -216,7 +267,9 @@ class BreakingChangeDetector:
             old_node.get('enum'), new_node.get('enum'), schema_path, loc,
             ChangeType.ENUM_VALUE_REMOVED, ChangeType.ENUM_VALUE_ADDED, "Enum value",
         )
+        self._compare_enum_constraint_added(old_node, new_node, schema_path, loc)
         self._compare_context_subsets(old_node, new_node, schema_path, loc)
+        self._compare_normative_annotations(old_node, new_node, schema_path, loc)
         self._compare_const(old_node, new_node, schema_path, loc)
         self._compare_type(old_node, new_node, schema_path, loc)
         self._compare_pattern(old_node, new_node, schema_path, loc)
@@ -306,6 +359,58 @@ class BreakingChangeDetector:
                 'message': f"{label} added: {new_map[key]} at {loc} in {schema_path}",
             })
 
+    # -- beyanlı daraltma ------------------------------------------------- #
+
+    @staticmethod
+    def _acceptance(node: Dict) -> Optional[Dict]:
+        """Düğümdeki `x-compat-accepted` beyanı (varsa)."""
+        declaration = node.get(ACCEPTANCE_KEY)
+        return declaration if isinstance(declaration, dict) else None
+
+    def _record(self, change: Dict[str, Any], new_node: Dict) -> None:
+        """Değişikliği kaydet; beyanlı DARALTMA ise NON_BREAKING'e indir.
+
+        İndirme SESSİZ DEĞİLDİR: gerekçe mesaja yazılır ve raporda görünür.
+        """
+        declaration = self._acceptance(new_node)
+        if (
+            declaration is not None
+            and change['severity'] == 'BREAKING'
+            and change['type'] in ACCEPTABLE_TYPES
+        ):
+            change = dict(change)
+            change['severity'] = 'NON_BREAKING'
+            change['accepted'] = declaration
+            change['message'] = (
+                f"ACCEPTED TIGHTENING (declared): {change['message']} "
+                f"| gerekçe: {declaration.get('rationale', '<gerekçe yok>')} "
+                f"| ref: {declaration.get('ref', '<ref yok>')}"
+            )
+        self.changes.append(change)
+
+    def _compare_enum_constraint_added(self, old_node: Dict, new_node: Dict,
+                                       schema_path: str, loc: str) -> None:
+        """Serbest bir alana SONRADAN `enum` koymak daraltmadır.
+
+        Eski değer listesi karşılaştırması iki tarafta da `enum` şartı koştuğu için
+        bu sınıfı HİÇ görmüyordu: `{"type":"string"}` → `{"type":"string","enum":[...]}`
+        değişikliği sessizce geçiyordu (ör. `qc_report.flags[]` kapalı vocabulary'ye
+        çevrilirken).
+        """
+        if 'enum' in old_node or not isinstance(new_node.get('enum'), list):
+            return
+        self._record({
+            'type': ChangeType.ENUM_CONSTRAINT_ADDED.value,
+            'severity': 'BREAKING',
+            'file': schema_path,
+            'field': loc,
+            'new_values': new_node['enum'],
+            'message': (
+                f"Enum constraint added: {loc} was unconstrained, now limited to "
+                f"{new_node['enum']} in {schema_path}"
+            ),
+        }, new_node)
+
     def _compare_context_subsets(self, old_node: Dict, new_node: Dict,
                                  schema_path: str, loc: str) -> None:
         """`x-context-subsets` — bağlam-bazlı KABUL listeleri (enum ile aynı ağırlık).
@@ -338,6 +443,47 @@ class BreakingChangeDetector:
                         "(that context loses its declared vocabulary)"
                     ),
                 })
+        for context in set(new_subsets) - set(old_subsets):
+            if isinstance(new_subsets[context], list):
+                self.changes.append({
+                    'type': ChangeType.CONTEXT_SUBSET_VALUE_ADDED.value,
+                    'severity': 'NON_BREAKING',
+                    'file': schema_path,
+                    'field': f"x-context-subsets.{context}",
+                    'message': (
+                        f"Context subset added: {context} = {new_subsets[context]} "
+                        f"in {schema_path}"
+                    ),
+                })
+
+    def _compare_normative_annotations(self, old_node: Dict, new_node: Dict,
+                                       schema_path: str, loc: str) -> None:
+        """Doğrulamayı değiştirmeyen ama DAVRANIŞI belirleyen `x-` bloklarını görünür kıl.
+
+        Bu depoda bazı `x-` blokları normatiftir: tüketiciler onları KOD olarak uygular.
+        Örnek (2026-07-31/D8): `calibration_type.enum` → `x-normalization` bloğundaki
+        *"eksikse PANEL_ABSOLUTE varsay"* kuralı platform kodunda birebir uygulanıyordu
+        (`worker_job_publisher.py:80-84`). Bu kuralın fail-open'dan FAIL-CLOSED'a çevrilmesi
+        hiçbir belgeyi/şemayı 'geçersiz' yapmaz — yani klasik şema diff'i onu HİÇ GÖRMEZ,
+        ama tüketicinin davranışını değiştirmesi ZORUNLUDUR.
+
+        Bu yüzden bu bloklar NON_BREAKING olarak ama **"manual review required"** damgasıyla
+        raporlanır. `x-updated` gibi tarih alanları bilerek KAPSAM DIŞIDIR (gürültü).
+        """
+        for key in NORMATIVE_ANNOTATION_KEYS:
+            old_value, new_value = old_node.get(key), new_node.get(key)
+            if old_value == new_value or (old_value is None and new_value is None):
+                continue
+            self.changes.append({
+                'type': ChangeType.NORMATIVE_ANNOTATION_CHANGED.value,
+                'severity': 'NON_BREAKING',
+                'file': schema_path,
+                'field': self._loc(loc if loc != "<root>" else "", key),
+                'message': (
+                    f"Normative annotation changed: {key} at {loc} in {schema_path} "
+                    "— validation is unaffected but CONSUMER BEHAVIOUR may be; manual review required"
+                ),
+            })
 
     def _compare_const(self, old_node: Dict, new_node: Dict, schema_path: str, loc: str) -> None:
         if 'const' not in old_node and 'const' not in new_node:
@@ -394,7 +540,7 @@ class BreakingChangeDetector:
         old_pattern, new_pattern = old_node.get('pattern'), new_node.get('pattern')
         if new_pattern is None or old_pattern == new_pattern:
             return
-        self.changes.append({
+        self._record({
             'type': ChangeType.PATTERN_TIGHTENED.value,
             'severity': 'BREAKING',
             'file': schema_path,
@@ -405,7 +551,7 @@ class BreakingChangeDetector:
                 f"Pattern {'added' if old_pattern is None else 'changed'}: {loc} in "
                 f"{schema_path} (potentially breaking)"
             ),
-        })
+        }, new_node)
 
     def _compare_ref(self, old_node: Dict, new_node: Dict, schema_path: str, loc: str) -> None:
         """`$ref` hedefi değişimi — ÇÖZÜLMEZ, yalnız görünür kılınır (bilinen sınır)."""
@@ -502,7 +648,7 @@ class BreakingChangeDetector:
                 continue
 
             if old_val is None:
-                self.changes.append({
+                self._record({
                     'type': ChangeType.MIN_MAX_TIGHTENED.value,
                     'severity': 'BREAKING',
                     'file': schema_path,
@@ -513,7 +659,7 @@ class BreakingChangeDetector:
                     'message': (
                         f"Constraint added: {field}.{constraint} = {new_val} in {schema_path}"
                     ),
-                })
+                }, new_prop)
                 continue
 
             if not isinstance(old_val, (int, float)):
@@ -522,7 +668,7 @@ class BreakingChangeDetector:
             tightened = (direction == 'increased' and new_val > old_val) or \
                         (direction == 'decreased' and new_val < old_val)
             if tightened:
-                self.changes.append({
+                self._record({
                     'type': ChangeType.MIN_MAX_TIGHTENED.value,
                     'severity': 'BREAKING',
                     'file': schema_path,
@@ -534,7 +680,7 @@ class BreakingChangeDetector:
                         f"Constraint tightened: {field}.{constraint} {direction} from "
                         f"{old_val} to {new_val} in {schema_path}"
                     ),
-                })
+                }, new_prop)
             elif new_val != old_val:
                 self.changes.append({
                     'type': ChangeType.MIN_MAX_RELAXED.value,

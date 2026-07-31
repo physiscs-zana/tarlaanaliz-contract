@@ -145,10 +145,83 @@ class TestCalibrationTypeUsesCanonicalName:
             _load(PLATFORM_FORM)["properties"]["calibration_type"]["enum"]
         ), "şemadaki enum ile kayıtlı alt-küme ayrışmış"
 
-    def test_none_is_excluded(self) -> None:
-        """NONE = KR-018 hard reject; kalibre paket manifesti onu ilan edemez."""
+    def test_none_is_representable_so_the_gate_can_fail_closed(self) -> None:
+        """🔄 2026-07-31/D8 — bu testin İDDİASI TERSİNE ÇEVRİLDİ (denetim bulgusu S1).
+
+        Eski hâli `assert "NONE" not in used` idi ve gerekçesi *"NONE = KR-018 hard
+        reject; kalibre paket manifesti onu ilan edemez"* diye yazılmıştı. Gerekçe
+        edge'in bakış açısıyla doğruydu (edge kalibrasyon başarısızsa manifest
+        üretmez — `calibrated_validator` CHECK 2), ama bu form **platformun
+        normalizasyon sınırıdır** ve orada yanlış sonuç veriyordu:
+
+          * alan opsiyonel + alt-kümede NONE yok ⇒ kalibre EDİLMEMİŞ paketin dürüst
+            değeri yazılamıyordu,
+          * enum'un global kuralı eksik tipi **PANEL_ABSOLUTE**'a yükseltiyordu
+            (worker spektral eşiklerinin REFERANS sınıfı),
+          * kural canlı kodda birebir vardı: platform
+            `worker_job_publisher.py:80-84` → *"status CALIBRATED → PANEL_ABSOLUTE
+            (güvenlik-ağı)"*.
+
+        Yani "NONE'u dışarıda tutmak" korumuyordu, tam tersine **fail-open**'ı zorunlu
+        kılıyordu. Aynı fonksiyonun 4. adımı zaten NONE üretiyor — değer sistemde
+        akıyor, yalnız bu manifestte yazılamıyordu.
+        """
         used = set(_load(PLATFORM_FORM)["properties"]["calibration_type"]["enum"])
-        assert "NONE" not in used
+        assert "NONE" in used, (
+            "Platform kalibre manifesti NONE yazamıyorsa, tipi bilinmeyen paket için "
+            "dürüst değer yoktur ve sistem varsayıma (fail-open) mecbur kalır."
+        )
+
+    def test_hard_reject_semantics_are_still_declared(self) -> None:
+        """NONE'un yazılabilir olması onu 'kabul edilebilir' yapmaz."""
+        enum_doc = _load(CALIBRATION_ENUM)
+        assert "NONE" in enum_doc["x-normalization"]["hard_reject"], (
+            "NONE hâlâ KR-018/082 hard reject listesinde olmalı — yazılabilir olması "
+            "analiz edilebilir olduğu anlamına GELMEZ"
+        )
+
+    def test_missing_type_is_fail_closed_not_promoted(self) -> None:
+        """Fail-open 'güvenlik-ağı' kuralı geri gelmesin (S1 regresyon kapısı)."""
+        norm = _load(CALIBRATION_ENUM)["x-normalization"]
+
+        promoting_keys = [
+            key for key in norm
+            if key.lower().startswith("missing") and isinstance(norm[key], str)
+        ]
+        assert not promoting_keys, (
+            f"'missing' için DÜZ METİN bir normalizasyon kuralı var: {promoting_keys}. "
+            "Eksik tip bir eşleme kuralıyla çözülemez; bağlam-bazlı FAIL-CLOSED politikası "
+            "gerekir (nesne biçimi)."
+        )
+
+        missing = norm.get("missing")
+        assert isinstance(missing, dict), "`missing` bağlam-bazlı bir politika nesnesi olmalı"
+        assert missing.get("policy") == "FAIL-CLOSED", (
+            "eksik kalibrasyon tipi için politika FAIL-CLOSED olmalı"
+        )
+        text = json.dumps(missing, ensure_ascii=False)
+        assert "PANEL_ABSOLUTE" not in text or "YASAK" in text or "YÜKSELT" in text, (
+            "eksik tipi PANEL_ABSOLUTE'a yükselten bir ifade geri gelmiş olabilir"
+        )
+
+    def test_platform_subset_and_schema_agree_after_none(self) -> None:
+        subsets = _load(CALIBRATION_ENUM)["x-context-subsets"]
+        assert "NONE" in subsets["platform/calibrated_dataset_manifest"], (
+            "alt-küme kaydı ile şema enum'u ayrışmış — biri NONE taşıyor diğeri taşımıyor"
+        )
+
+    def test_edge_calibrated_subset_stays_narrow_for_now(self) -> None:
+        """Edge tarafı bilinçli olarak DAR kalıyor (C6b/E13'e bırakıldı).
+
+        Edge, kalibrasyon başarısızsa `calibrated_dataset_manifest` ÜRETMEZ
+        (`calibrated_validator` CHECK 2 dört alt alanı zorunlu tutar), yani orada
+        NONE'a ihtiyaç yoktur. Alt-küme BİLEŞİMİ (DLS2_RELATIVE vb.) E13 kararına
+        bağlıdır — bu test o kapsamın sessizce genişlemesini engeller.
+        """
+        subsets = _load(CALIBRATION_ENUM)["x-context-subsets"]
+        assert set(subsets["edge/calibrated_dataset_manifest"]) == {"ABSOLUTE", "RELATIVE"}, (
+            "edge alt-kümesi değişmiş — bu C6b/E13 kararıdır, sessizce yapılamaz"
+        )
 
 
 class TestRawFramesOwnership:
@@ -185,8 +258,15 @@ class TestRawFramesOwnership:
         assert doc["properties"]["raw_frames"]["maxItems"] > 0, "DoS sınırı yok"
 
     def test_minimum_provenance_is_required(self) -> None:
+        """Asgari köken (provenance) + SEÇİM GEREKÇESİ zorunludur.
+
+        ⚠️ 2026-07-31/D7 ile genişletildi: `sees_patch_ids` eklendi. C3′ turunda küme
+        `{frame_id, relative_path}` idi; Ç7 kararından sonra bir karenin listede
+        bulunmasının TEK meşru gerekçesi "işaretli bir yamayı görüyor olması"dır
+        (KG-0.c). Gerekçesiz kare = gereksiz veri = HC-02/KVKK yüzeyi.
+        """
         item = _load(EDGE_FORM)["properties"]["raw_frames"]["items"]
-        assert set(item["required"]) == {"frame_id", "relative_path"}
+        assert set(item["required"]) == {"frame_id", "relative_path", "sees_patch_ids"}
 
     def test_form_role_owns_raw_frames(self) -> None:
         assert "raw_frames" in _load(EDGE_FORM)["x-form-role"]["owns"]
