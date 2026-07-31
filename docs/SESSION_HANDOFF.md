@@ -64,7 +64,20 @@ grup yasağı · **D13** seçim kanıtı (π_h + rotation + bucket) · **D14** �
 plan dışı **D3-d** (hiç yokken bileşim eklemek dedektöre görünmüyordu).
 ⚠️ Worker/platform yarıları açık: **W8** (emisyon) · **P16** (konsensüs yolu EXCLUDED saymamalı).
 
-### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **KADEME 4** (§14.4 normatif kaynak tekilliği: D16…D18)
+### ⚠️ KADEME 4 kısmen yapıldı
+**D17** `WATER_STRESS` → `proxy_only` + ön fazdan çıkarıldı (üç kaynak çelişiyordu: KG-0.f
+*"CWSI/SWIR gerekir, ikisi de yok"* ↔ enum `available` ↔ stage_b uzman kapısı ÖNCESİ teslim) +
+A2 changeNote eksiksiz alıntı · **D18** `api/` ağacı artık PII taranıyor (ilk taramada gerçek
+isabet: `$.info.contact.email`) + `phone` kapsam-duyarlı + `pyproject` yasak listesi 3→6 hizalandı ·
+**D16** kapı/tanım/doküman parçaları: tekil-gövde borcu donduruldu (**50 KR iki gövdeli**),
+`stress_ratio` beyanlı tanımsız, CLAUDE.md artık **sayı değil üretici komut** yayımlıyor.
+
+### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **D16-b (koordinatör kararı)** + KADEME 5
+**D16-b:** KR-093'ün iki gövdesi (SSOT metni 10 satır ↔ registry 98 satır) hangi kaynakta
+birleşecek? SSOT metni çapraz-repo (platform ile bayt-özdeş), registry tam gövdeleri taşıyor.
+Karar verilmeden gövde taşımak **normatif içerik kaybı** riski taşıdığı için bu turda yapılmadı.
+Karar sonrası: göç + registry → türetilmiş dizin + `KNOWN_DUAL_BODY_COUNT` düşürülür + **D16-c**
+(K3/K5 saklama/rıza MUST'ları) yazılır.
 
 **Karar bekleyenler:** **§14.2.1** `$ref` inline kararı (C8'in ön koşulu) · **D4-b** (parite
 kapısı CI'da koşsun mu) · **D4-c** (`drone_capability_matrix.yaml` normatif ama checksum/dedektör

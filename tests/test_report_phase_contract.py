@@ -136,11 +136,50 @@ class TestPreliminaryContentIsAClosedList:
             f"Aşama A öncelik bölgesi alanlarını taşımalı; bulunan: {sorted(fields)}"
         )
 
-    def test_stage_b_keeps_original_kr093_layers(self) -> None:
-        """KR-093'ün özgün tanımı daraltılmamalı."""
+    def test_stage_b_keeps_the_measurable_kr093_layers(self) -> None:
+        """KR-093'ün ÖLÇÜLEBİLİR katmanları daraltılmamalı.
+
+        🔄 **2026-07-31/D17 — bu testin kümesi DARALTILDI (denetim bulgusu A1, KRİTİK).**
+        Eski hâli `WATER_STRESS`'i de şart koşuyordu ve gerekçesi *"KR-093'ün özgün tanımı
+        daraltılmamalı"* idi. Ölçüm üç kaynağın çeliştiğini gösterdi:
+
+          * plan **KG-0.f**: *"gerçek WATER_STRESS için CWSI (termal) veya NDWI/NDMI (SWIR)
+            gerekir, **ikisi de yok**"* → katman optik sınırın (−) tarafında,
+          * `analysis_type.enum`: `availability: available` (yalnız GREEN/RED/RED_EDGE/NIR ile),
+          * bu liste: katmanı **uzman kapısı ÖNCESİNDE** çiftçiye teslim ediyordu.
+
+        Yani sözleşme, sensörün ölçemediği bir katmanı "mevcut" ilan edip doğrulanmamış
+        hâlde teslim ediyordu. §14'ün öncelik sırasında **① fiziksel/ölçüm geçerliliği**
+        en üsttedir; "özgün tanımı koru" (⑥ mimari tutarlılık) ona yenilir.
+
+        `WATER_STRESS` hesaplanmaya devam edebilir; yalnız **ön fazda sunulmaz**
+        (`availability: proxy_only`). Termal/SWIR donanım gelirse karar yeniden değerlendirilir.
+        """
         stage_b = _load(REPORT_PHASE)["x-preliminary-content"]["stage_b_post_analysis"]
         fields = set(stage_b["fields"])
-        assert {"HEALTH", "NITROGEN_STRESS", "WATER_STRESS", "overall_health_index"} <= fields
+        assert {"HEALTH", "NITROGEN_STRESS", "overall_health_index"} <= fields
+
+    def test_proxy_only_layers_never_appear_in_preliminary(self) -> None:
+        """Sınıf kapısı: `proxy_only` işaretli HİÇBİR katman ön fazda sunulamaz (A1).
+
+        Tek bir katmanı listeden çıkarmak semptomu çözer; kural, sınıfı çözer — yarın
+        başka bir katman `proxy_only` olursa buraya kendiliğinden takılır.
+        """
+        analysis_type = _load(ROOT / "enums" / "analysis_type.enum.v1.json")
+        by_layer = analysis_type["metadata"]["bandRequirements"]["byLayer"]
+        proxy_only = {
+            name for name, spec in by_layer.items()
+            if isinstance(spec, dict) and spec.get("availability") == "proxy_only"
+        }
+        assert proxy_only, "ön koşul: en az bir proxy_only katman olmalı (WATER_STRESS)"
+
+        content = _load(REPORT_PHASE)["x-preliminary-content"]
+        for stage in ("stage_a_post_calibration", "stage_b_post_analysis"):
+            leak = proxy_only & set(content[stage]["fields"])
+            assert not leak, (
+                f"{stage} VEKİL katman sunuyor: {sorted(leak)}. Vekil gösterge, uzman "
+                "kapısı öncesinde doğrulanmış bulgu gibi teslim edilemez."
+            )
 
     @pytest.mark.parametrize("stage", ["stage_a_post_calibration", "stage_b_post_analysis"])
     def test_no_detection_content_in_any_stage(self, stage: str) -> None:

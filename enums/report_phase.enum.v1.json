@@ -9,7 +9,7 @@
     "FULL"
   ],
   "x-enum-descriptions": {
-    "PRELIMINARY": "Ön rapor — uzman doğrulaması BEKLEMEDE. İki aşamalı içerik (bkz. x-preliminary-content): (A) kalibrasyon sonrası, worker sonucu HENÜZ YOKKEN öncelik bölgeleri (poligon + ndvi_value + priority_level + ndvi_overlay görseli); (B) worker sonucu geldiğinde ek olarak deterministik indeks katmanları (NDVI→HEALTH, NDRE→NITROGEN_STRESS, stress_ratio→WATER_STRESS) + overall_health_index. Tespitler (hastalık/zararlı/yabancı-ot findings) HİÇBİR aşamada İÇERİLMEZ (fail-closed, KR-019 önü). Ödeme kapısı (KR-033) her iki aşamada geçerlidir. mission UPLOADED / IN_ANALYSIS / PENDING_REVIEW durumlarından türetilir.",
+    "PRELIMINARY": "Ön rapor — uzman doğrulaması BEKLEMEDE. İki aşamalı içerik (bkz. x-preliminary-content): (A) kalibrasyon sonrası, worker sonucu HENÜZ YOKKEN öncelik bölgeleri (poligon + ndvi_value + priority_level + ndvi_overlay görseli); (B) worker sonucu geldiğinde ek olarak deterministik indeks katmanları (NDVI→HEALTH, NDRE→NITROGEN_STRESS) + overall_health_index ⚠️ WATER_STRESS 2026-07-31/D17 ile ÖN FAZDAN ÇIKARILDI (vekil katman: doğrudan ölçümü CWSI/LWIR veya NDMI/SWIR ister, ikisi de referans donanımda yok) ve kaynağı `stress_ratio` TANIMSIZDIR (bkz. analysis_type.enum → metadata.indexDefinitions). Tespitler (hastalık/zararlı/yabancı-ot findings) HİÇBİR aşamada İÇERİLMEZ (fail-closed, KR-019 önü). Ödeme kapısı (KR-033) her iki aşamada geçerlidir. mission UPLOADED / IN_ANALYSIS / PENDING_REVIEW durumlarından türetilir.",
     "FULL": "Tam rapor — uzman konsensüs kapısı ONAY (KR-019 yayın). Uzman-doğrulanmış tüm bulgular açılır. mission DELIVERED durumundan türetilir (platform-içi ad: DONE)."
   },
   "x-preliminary-content": {
@@ -31,9 +31,14 @@
         "ortho",
         "HEALTH",
         "NITROGEN_STRESS",
-        "WATER_STRESS",
         "overall_health_index"
-      ]
+      ],
+      "x-removed-2026-07-31": {
+        "field": "WATER_STRESS",
+        "why": "D17/A1: katman VEKİLDİR (analysis_type.availability = proxy_only) — doğrudan ölçümü CWSI (LWIR) veya NDMI (SWIR) ister, ikisi de referans donanımda YOK. Vekil bir gösterge, uzman kapısı ÖNCESİNDE 'ön rapor' olarak teslim edilemez: çiftçi bunu doğrulanmış bir teşhis sanır. KR-019 zayıflamasın diye stage_b kapalı listesinden çıkarıldı.",
+        "still_computable": "Katman worker tarafından hesaplanmaya devam edebilir; yalnız ÖN FAZDA sunulmaz. Uzman doğrulamasından sonra (FULL) sunumu bu kararın kapsamı dışındadır.",
+        "reversible_when": "Termal yük (LWIR) veya SWIR sensörü referans donanıma girerse yeniden değerlendirilir."
+      }
     },
     "never": [
       "findings",
@@ -62,7 +67,12 @@
       "FLOWN": "IN_PROGRESS"
     }
   },
-  "x-kr-ref": ["KR-093", "KR-019", "KR-025", "KR-033"],
+  "x-kr-ref": [
+    "KR-093",
+    "KR-019",
+    "KR-025",
+    "KR-033"
+  ],
   "x-ssot-version": "1.2.0",
   "x-updated": "2026-07-31"
 }

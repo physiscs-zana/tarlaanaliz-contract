@@ -203,12 +203,23 @@ directory = "coverage_html"
 # Enforce JSON Schema Draft 2020-12
 schema_standard = "https://json-schema.org/draft/2020-12/schema"
 
-# Forbidden field names (PII minimization)
+# Forbidden field names (PII minimization) — KR-050
+# ⚠️ Bu liste `tools/validate.py → FORBIDDEN_FIELDS` ile BİREBİR olmalıdır;
+# `tests/test_pii_scope_gate.py` ayrışmayı yasaklar. 2026-07-31'de ölçüldü: burada 3,
+# araçta 6 değer vardı — politika iki farklı şey söylüyordu (D18/K4).
 forbidden_fields = [
     "email",
+    "e_mail",
     "tckn",
+    "tc_kimlik_no",
     "otp",
+    "one_time_password",
 ]
+
+# Kapsam-duyarlı alanlar: yasak DEĞİL ama yeri belli (validate.py → SCOPED_FIELDS).
+# `phone` = kimlik modelinin kendisi (telefon + 6 haneli PIN); numara yalnız
+# user_pii.v1 ve kimlik doğrulama yüzeyinde taşınır.
+scoped_fields = ["phone"]
 
 # Required schema properties
 required_properties = [
