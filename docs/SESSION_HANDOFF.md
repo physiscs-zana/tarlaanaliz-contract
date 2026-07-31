@@ -20,7 +20,7 @@
 
 ---
 
-## 0.B EN GÜNCEL OTURUM (2026-07-31, ikinci oturum) — **KADEME 0 kapandı**
+## 0.B EN GÜNCEL OTURUM (2026-07-31, ikinci oturum) — **KADEME 0 · 1 · 2 · 3 kapandı**
 
 **Yapılan:** Eylem planı **§14.0 (D1…D6)** — *"kapılar dürüst hale gelsin"*. Altısı da bitti,
 üstüne denetimde görülmemiş **dördüncü bir CI yalanı** bulunup kapatıldı (D3-b).
@@ -68,14 +68,19 @@ plan dışı **D3-d** (hiç yokken bileşim eklemek dedektöre görünmüyordu).
 
 **Karar bekleyenler:** **§14.2.1** `$ref` inline kararı (C8'in ön koşulu) · **D4-b** (parite
 kapısı CI'da koşsun mu) · **D4-c** (`drone_capability_matrix.yaml` normatif ama checksum/dedektör
-kapsamı DIŞINDA) · **SD8** (etiketsiz 16 sürüm) · **C6b/E13** · **AK-1** `CHLOROPHYLL_A` formülü.
+kapsamı DIŞINDA) · **SD8** (etiketsiz 16 sürüm) · **C6b/E13** · **AK-8** (mahsul GRUBU ekseni).
+*(AK-1 `CHLOROPHYLL_A` → `LCI` ile KAPANDI · AK-4 pytest sabitlemesiyle KAPANDI · AK-7 beş
+crop alanı kanonik sözlüğe bağlanarak KAPANDI.)*
 
 **Başka depoya düşen iş (bu depodan yapılamaz):** **E15** edge `qc_report_writer` —
 `min(...,1.0)` kırpması + `except → 0.0` sessiz yolu fail-loud olmalı · **P14** platform
-`worker_job_publisher.py:80-84` fail-open `PANEL_ABSOLUTE` adımı · **E16** edge `sorties[].crop_type`
-küçük→BÜYÜK harf eşlemesi + vendored yenileme.
+`worker_job_publisher.py:80-84` fail-open `PANEL_ABSOLUTE` adımı · **E16** edge ürün sözlüğü
+(küçük→BÜYÜK harf + vendored + fixture) · **P15** platform `spectral_tier.py:51` → `LCI` ·
+**W8** worker denetim satırı emisyonu (π_h/bucket zaten hesaplanıyor) · **P16** platform
+konsensüs yolu `EXCLUDED` satırı saymamalı.
 
-> 📌 **Bu turda doğan açık kalemlerin TAMAMI tek yerde:** eylem planı **§14.5.1** (AK-1…AK-7).
+> 📌 **Bu turda doğan açık kalemlerin TAMAMI tek yerde:** eylem planı **§14.5.1** (AK-1…AK-8;
+> ✅ işaretliler aynı turda kapatıldı). Ayrıca kardeş depo işleri: E15 · E16 · P14 · P15 · P16 · W8.
 > Bu dosya iş listesi tutmaz; yalnız oraya işaret eder.
 
 **Kanıt:** `denetim/denetim_raporu_2026-07-31_kademe0_kapi_mutasyonlari.md` (her kapının
