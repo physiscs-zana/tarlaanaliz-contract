@@ -1262,3 +1262,162 @@ dürüstlük disiplinini bozar (kaynak dokümanın EK-C ilkesi):
 - SupCon geçiş eşiği (linear-probe acc / silhouette) — **yeterli etiket yokken** kalibre edilemez
 - `escalation_reason`'a worker tarafından 7. değer eklemek — **§2.1 ihlali**
 - `embedding_dim=1024` (K-4) — **sabit, değiştirilemez**
+
+---
+
+# 12. MOTOR KARARI — DEMO ve 1 AYLIK PİLOT İÇİN AYRI ÖNERİ (2026-07-30, derin tarama)
+
+**Soru:** Metashape / DJI Terra / PIX4Dfields arasında hangisi?
+**Yöntem:** Üreticilerin **resmi fiyat + lisans + destek** sayfaları ve **ölçülmüş vaka çalışması**.
+**Bağlam değişkeni:** proje **kamu araştırma projesi** → eğitim/araştırma lisansları gündeme geldi.
+
+## 12.1 Üç yeni belirleyici bulgu
+
+### B-1 🔴 DJI Terra **Education sürümü 500 fotoğrafla sınırlı** — gerçek tarla için kullanılamaz
+
+DJI resmi destek dokümanı, sürüm-işlev tablosunda net: Education sürümü için
+**"The reconstruction of 500+ photos is not supported."** Bu sınır **yalnız Education
+sürümünde** var (Agriculture/Pro/Electricity/Cluster'da yok).
+
+**Neden öldürücü:** Aşağıdaki ölçülmüş vakada **50 hektarlık tek bir tarla 3.635 dosya**
+üretti (727 RGB + 2.908 ÇS). 500 fotoğraf sınırı, **tek bir gerçek uçuşun bile** çok altında.
+→ **Terra EDU (~€2.976, 10 cihaz, kalıcı) parası boşa gider.** Almayın.
+
+**Buna karşılık Terra Agriculture:** 3 cihaz · 1 yıl · online yetkilendirme ·
+**2D Multispectral Reconstruction dahil** · **fotoğraf sınırı YOK** · **$300/yıl.**
+
+### B-2 🟢 Eğitim lisansları çok ucuz — **ama iki farklı uygunluk tanımı var**
+
+| Ürün | Ticari fiyat | **Eğitim fiyatı** | Uygunluk tanımı (resmi) |
+|---|---|---|---|
+| **Metashape Professional** | $3.499 kalıcı | **$549 kalıcı** (node-locked, rehostable) | *"exclusively to **accredited educational institutions**, their employees and students"* — sayılanlar: üniversite, kolej, **bilimsel ve teknik okullar**, meslek okulları. ⚠️ **"araştırma enstitüsü" listede YOK**; "research staff" ancak *akredite eğitim kurumunun* personeli olarak geçiyor |
+| **PIX4Dfields** | $1.990/yıl | **$650/yıl** · **$1.300 / 3 yıl** | *"universities, schools, **research institutes** and the like for educational research and teaching purposes"* — ⚠️ **araştırma enstitüsü AÇIKÇA sayılıyor.** Şart: **tanınmış eğitim alanlı e-posta** |
+| DJI Terra EDU | — | ~€2.976 kalıcı (10 cihaz) | okul/üniversite/araştırma merkezi — **ama 500 foto sınırı (B-1)** |
+
+→ **Kurumunuz için PIX4Dfields eğitim lisansı, Metashape'inkinden daha yüksek ihtimalle uygundur.**
+Metashape "akredite **eğitim kurumu**" diyor; bakanlık/araştırma enstitüsü bu tanıma girmeyebilir.
+**İkisinde de yazılı teyit alın** (Agisoft "written proof of eligibility" isteme hakkını saklı tutuyor).
+
+### B-3 🔴 **Eğitim lisansı = ticari kullanım YASAK** — ve sizin faz planınızda gelir kapısı var
+
+Agisoft EULA: *"the program, executed under educational license, including any materials created
+with the help of it **shall not be used for commercial purposes**"* + *"does not allow to provide
+access to the software to third parties... **service bureau**, or similar service."*
+Pix4D: *"Educational licenses **will not be used for any commercial purposes** and will only be
+used for scientific research and/or educational use."*
+
+⚠️ **Tuzak:** Proje bugün kamu araştırması; ama faz planında **gelir kapısı** var. Eğitim lisansıyla
+kurulan hattı ileride paraya dönüştürürseniz **lisans ihlaline** düşersiniz — ve bu, o güne kadar
+üretilmiş çıktıları da kapsar ("materials created with the help of it").
+→ **Eğitim lisansı yalnız gerçekten ticarileşmeyecek iş için.** Gelir kapısı açılacaksa ticari
+lisans planlayın; ya da hattı **ODM** üstüne kurun (AGPL, ticari kullanım serbest).
+
+## 12.2 Tek ölçülmüş gerçek veri noktası (Pix4D resmi vaka çalışması)
+
+**PIX4Dfields + DJI Mavic 3M · 50 ha buğday · 90 m irtifa · Almanya, 26 Mart 2024:**
+
+| Ölçüm | Değer |
+|---|---|
+| Girdi | **727 RGB (6,5 GB)** + **2.908 ÇS (27,6 GB)** = **34,1 GB** |
+| Uçuş süresi | 32 dk |
+| **İşleme** | **RGB 4 dk 30 sn · ÇS 6 dk 54 sn** |
+| Uçtan uca | 51 dk 30 sn |
+| GSD | 2,24 cm (RGB) · 3,73 cm (ÇS) |
+| Çıktı | tarla sınırı, NDVI, değişken oranlı reçete haritası |
+
+**Bu veri iki şeyi doğruluyor:**
+1. **Depolama tahminim tutuyor.** Ölçülen: 34,1 GB / 727 tetik = **46,9 MB/tetik**.
+   §2.2'deki üst sınır tahminim **51 MB/tetik** idi → **%9 sapma**. Tablolar güvenilir.
+2. **Fields'in "fast" hattı gerçekten hızlı** — 50 ha multispektral **7 dakikanın altında**.
+
+⚠️ Karşılaştırılabilir bir Terra veya Metashape ölçümü **hiçbir resmi kaynakta yayınlanmamış**.
+Bu yüzden hız karşılaştırmasını **pilotta kendiniz ölçmelisiniz** (§12.5).
+
+## 12.3 Karar çerçevesi — sizin durumunuzda gerçekten neyi ayırıyor
+
+DJI-only olduğunuz için üç yazılımın **çoğu farkı bugün geçersiz.** Kalan gerçek eksenler:
+
+| Eksen | Terra Agriculture | PIX4Dfields | Metashape Pro | ODM |
+|---|---|---|---|---|
+| M3M multispektral | ✅ yerli | ✅ (göreli kalib.) | ✅ (göreli) | ✅ v3.5.3+ |
+| **Otomasyon (FAZ 8)** | ❌ CLI yok | ❌ CLI yok | ✅ Python API | ✅ CLI/Docker |
+| Fotoğraf sınırı | yok | yok | yok (RAM) | yok (RAM) |
+| GeoTIFF çıktı (rasterio uyumlu) | ✅ | ✅ | ✅ | ✅ |
+| Zonasyon/VRA/ISOXML | reçete haritası | ✅ **tam** | ❌ | ❌ |
+| **Yıllık maliyet (kamu araştırma)** | **$300** | $650 (EDU) / $1.990 | $549 (EDU, kalıcı) / $3.499 | **$0** |
+| Ticarileşme riski | yok | ⚠️ EDU'da var | ⚠️ EDU'da var | yok (AGPL) |
+
+**Kritik gözlem:** Demo ve pilotta **kırmızı NDVI bölgelerini üreten şey motor değil, sizin
+`ndvi_prioritizer.py`'niz.** Motordan tek beklenen: **M3M'i işleyip georeferanslı çok-bantlı
+GeoTIFF vermesi.** Dördü de bunu yapıyor. → **Bu aşamada agronomik UX (Fields) ve Python API
+(Metashape) için para ödemenin karşılığı yok.**
+
+## 12.4 ÖNERİ — DEMO (maliyet: **0 TL**)
+
+| Rol | Araç | İspat |
+|---|---|---|
+| **Birincil motor** | **DJI Terra**, M3M ile gelen **Full-Featured 3 ay / 1 cihaz** hediyesi | Kutuyla geliyor; DJI FAQ: ücretsiz lisanslar **unbind edilemez** → RTX 3090'lı masaüstüne aktive edin. Fotoğraf sınırı **yok** (sınır yalnız EDU ve trial'da) |
+| **İkinci görüş** | **ODM** (ücretsiz, AGPL) | Aynı veriyi ikinci motorla işleyip demoda **"tek yazılıma bağımlı değiliz"**i kanıtlar |
+| **Görselleştirme** | QGIS + Precision Zones (ücretsiz) | Slayt görselleri |
+| **Satın alınacak** | **HİÇBİR ŞEY** | — |
+
+**Neden Fields veya Metashape değil:** Demo hikâyesi kalibrasyon → NDVI → **sizin ön rapor
+ekranınız**. Fields'in zonasyon/PDF'i sizin platformunuzun ürettiğinin **kopyası** olurdu;
+Metashape'in Python API'si demo için gereksiz (Terra'yı elle çalıştırıp klasörü izleyeceksiniz).
+⚠️ **PIX4Dfields deneme sürümü çıktı export etmiyor** (Pix4D resmi) — demo için zaten kullanılamaz.
+
+## 12.5 ÖNERİ — 1 AYLIK PİLOT (maliyet: **0 TL**, opsiyonel **$300**)
+
+| Rol | Araç | Gerekçe |
+|---|---|---|
+| **Birincil motor** | **DJI Terra** (hediye 3 ay kapsıyor; bitince **Agriculture $300/yıl, 3 cihaz**) | 1 ay tamamen hediyenin içinde. Sonrasında $300/yıl, DJI-only bir operasyon için rakipsiz |
+| **Otomasyon motoru** | **ODM** (ücretsiz) | FAZ 8'in gerçek headless kanıtı. Terra'nın CLI'si **yok** — otomasyon hikâyesi ODM ile kurulur |
+| **Karşılaştırma** | Terra ↔ ODM her uçuşta | §4'teki 4. metrik: **motorlar arası NDVI farkı**. Üretim motoru kararı **bu ölçüme** dayanacak |
+| **Satın alınabilir (opsiyonel)** | Terra Agriculture $300/yıl | Hediyeniz 3 ay; pilot 1 ay. **Şimdi gerekmiyor** |
+
+### Pilotun **ölçmesi gereken** dört şey — üretim motoru kararı bunlara bağlı
+
+| # | Ölçüm | Kararı nasıl belirler |
+|---|---|---|
+| 1 | **ODM M3M bant hizalaması** çalışıyor mu (topluluk kayması sizde de var mı) | ❌ ise otomasyon motoru olarak ODM düşer → **Metashape gerekli hale gelir** ($549 EDU / $3.499) |
+| 2 | **Terra-NDVI ↔ ODM-NDVI farkı** (aynı tarla, aynı gün) | Büyükse motor değişimi eğitim verisini geçersiz kılar → tek motora sabitlenme + W8 (`encoder_version` tetikleyicisi) zorunlu |
+| 3 | **dk/ha ve tepe RAM** (32 GB masaüstünde) | ODM ~1000 görüntüde 64 GB'da 3,5-5,5 saat; **32 GB'da batch bölmek gerekebilir** |
+| 4 | **GB/dönüm gerçek değeri** | Ölçülen referans: 46,9 MB/tetik (Pix4D vakası). Sizinki sapıyorsa depolama planı revize |
+
+### Ne zaman para ödemeye başlarsınız
+
+```
+PİLOT SONU
+   │
+   ├─ ODM M3M'de çalıştı + NDVI farkı kabul edilebilir
+   │     → ÜCRETSİZ KAL. Terra $300/yıl (manuel/QC) + ODM (otomasyon). Yıllık ~$300
+   │
+   ├─ ODM M3M'de çalışmadı
+   │     → Metashape gerekli. Kurum akredite eğitim kurumuysa $549 EDU (kalıcı),
+   │       değilse $3.499 ticari. ⚠️ gelir kapısı açılacaksa EDU alma
+   │
+   └─ Zonasyon/VRA/ISOXML'i ÜRÜN olarak satacaksanız
+         → PIX4Dfields. EDU $650/yıl (araştırma enstitüsü açıkça uygun),
+           ticari $1.990/yıl. ⚠️ CLI yok — insan-döngüsünde kalır
+```
+
+## 12.6 Tek cümlelik cevap
+
+**Demo ve 1 aylık pilot için üçünden hiçbirini satın almayın.** Elinizdeki **Terra hediyesi
+(3 ay, sınırsız fotoğraf)** + **ODM (ücretsiz, CLI'li)** ikilisi her ikisini de tam karşılıyor
+ve üretim motoru kararını **tahminle değil pilotun ölçümüyle** vermenizi sağlıyor.
+Terra EDU'yu **almayın** (500 foto sınırı). Eğitim lisanslarını ancak gerçekten
+ticarileşmeyecek bir hat için düşünün.
+
+## 12.7 Kaynaklar (§12 için)
+
+- [DJI Terra sürüm-işlev tablosu (resmi)](https://support.dji.com/help/content?customId=01700004862&spaceId=17&re=US&lang=en&documentType=&paperDocType=ARTICLE) — **"The reconstruction of 500+ photos is not supported"** (Education) · Agriculture = 3 cihaz, 2D Multispectral dahil
+- [DJI Terra FAQ](https://enterprise.dji.com/dji-terra/faq) — ücretsiz lisanslar unbind edilemez
+- [DJI Terra EDU fiyatı (Airclip)](https://www.airclip.de/DJI-Terra-EDU-perpetual-license-10-devices) — €2.975,63 + KDV, 10 cihaz, kalıcı
+- [Agisoft eğitim lisansı (resmi)](https://www.agisoft.com/buy/online-store/educational-license/) — **Professional $549**, Standard $59, node-locked rehostable
+- [Agisoft Metashape Pro EULA (PDF)](https://www.agisoft.com/pdf/metashape-pro_eula.pdf) — eğitim lisansında ticari kullanım + service bureau yasağı
+- [PIX4Dfields eğitim fiyatı (resmi)](https://www.pix4d.com/pricing/pix4dfields-educational/) — **$650/yıl · $1.300/3 yıl**, floating (tek cihaz)
+- [Pix4D eğitim çözümleri](https://www.pix4d.com/education) · [Pix4D lisans tipleri (PDF)](https://assets.ctfassets.net/go54bjdzbrgi/4dDSuOgf3K8HpcR8xOc7WK/470587180a30fb041af2aa2c5c45489e/Pix4D_-_Types_of_Licenses.pdf) — *"universities, schools, research institutes and the like"*
+- [PIX4Dfields + M3M ölçülmüş vaka (Pix4D resmi blog)](https://www.pix4d.com/blog/input-savings-mavic-3-m) — 50 ha, 727 RGB + 2.908 ÇS, 34,1 GB, RGB 4:30 / ÇS 6:54, GSD 2,24/3,73 cm
+- [PIX4Dfields deneme kısıtı](https://support.pix4d.com/hc/en-us/articles/360000831403) — deneme sürümünde **export yok**
+- [ODM multispektral (M3M v3.5.3+)](https://docs.opendronemap.org/multispectral/) · [`--radiometric-calibration`](https://docs.opendronemap.org/arguments/radiometric-calibration/)
