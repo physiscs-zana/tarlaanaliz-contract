@@ -80,5 +80,25 @@
     "tool_version",
     "correlation_id"
   ],
-  "unevaluatedProperties": false
+  "unevaluatedProperties": false,
+  "x-form-role": {
+    "role": "edge_proof_manifest",
+    "emitter": "edge kiosk (M1)",
+    "purpose": "Kalibrasyon KANITI: calibration_result (KR-018/065/082) + qc_report + tool metadata. HC-05 upload kapısının girdisidir.",
+    "counterpart": "https://api.tarlaanaliz.com/schemas/platform/calibrated_dataset_manifest.v1.schema.json",
+    "owns": [
+      "calibration_result",
+      "qc_report",
+      "tool_name",
+      "tool_version",
+      "calibrated_at",
+      "raw_manifest_ref"
+    ],
+    "not_owned_here": {
+      "outputs / reports / reflectance_scale / producer_tool": "platform formu (paket agregası) — bkz. counterpart",
+      "priority_zones / patches[] görselleri": "schemas/edge/intake_manifest.v1 → EdgeForm.priority_zones[].visualizations. Bu formda patches alanı YOKTUR ve eklenmemelidir."
+    },
+    "field_placement_rule": "İki dosya AYNI ADI taşır ve yalnız dizinle ayrılır (edge/ vs platform/). Yeni alan eklemeden önce hangi formun sahibi olduğu YAZILI olarak belirlenir: kalibrasyon kanıtı ve tek-dataset düzeyindeki alanlar BU forma, paket/çıktı agregasyonu alanları counterpart'a girer. Ad benzerliğine bakarak hedef seçmek kusurdur (2026-07-31 denetimi)."
+  },
+  "x-updated": "2026-07-31"
 }

@@ -103,5 +103,26 @@
       },
       "unevaluatedProperties": false
     }
-  }
+  },
+  "x-form-role": {
+    "role": "platform_package_aggregate",
+    "emitter": "platform (dataset katmanı)",
+    "purpose": "Kalibre veri PAKETİNİN agregası: outputs[]/reports[] dosya listesi + SHA-256 + reflectance_scale + producer_tool.",
+    "counterpart": "https://api.tarlaanaliz.com/schemas/edge/calibrated_dataset_manifest.v1.schema.json",
+    "owns": [
+      "outputs",
+      "reports",
+      "reflectance_scale",
+      "producer_tool",
+      "batch_id",
+      "mission_id",
+      "field_id"
+    ],
+    "not_owned_here": {
+      "calibration_result / qc_report": "edge formu (kalibrasyon kanıtı) — bkz. counterpart",
+      "priority_zones / patches[] görselleri": "schemas/edge/intake_manifest.v1 → EdgeForm.priority_zones[].visualizations. Bu formda patches alanı YOKTUR ve eklenmemelidir."
+    },
+    "field_placement_rule": "İki dosya AYNI ADI taşır ve yalnız dizinle ayrılır (edge/ vs platform/). Yeni alan eklemeden önce hangi formun sahibi olduğu YAZILI olarak belirlenir: paket/çıktı agregasyonu alanları BU forma, kalibrasyon kanıtı alanları counterpart'a girer. Katman meta verisi (layer_type, calibration_tier) mevcut outputs[].file_artifact üzerine eklenir — yeni bir index_layers[] dizisi AÇILMAZ (2026-07-31 denetimi)."
+  },
+  "x-updated": "2026-07-31"
 }

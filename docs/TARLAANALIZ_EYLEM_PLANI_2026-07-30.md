@@ -171,7 +171,7 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 
 | # | İş | Tip | Bağımlılık |
 |---|---|---|---|
-| **C0** 🔴 | **ÖN KOŞUL (2026-07-31 denetimi).** İki `calibrated_dataset_manifest.v1` formunun rol ayrımını sabitle: **edge formu = kiosk kanıt manifesti** (`calibration_result`+`qc_report`) · **platform formu = dataset-katmanı paket agregası** (`outputs[]`/`reports[]`). Zaten belgeli (`schemas/edge/…:5` + `ssot/contracts_ssot.md:93`) ama **plan bunu ayırt etmiyordu** → C1/C2/C3 yanlış dosyayı hedefliyordu | PATCH | — |
+| ✅ **C0** | **YAPILDI (2026-07-31, dal `feat/contract-tur1`).** İki `calibrated_dataset_manifest.v1` formunun rol ayrımı **makine-okunur** hâle getirildi. ⚠️ *Uygulama sırasında düzeltilen varsayım:* prose çapraz-atıf **iki yönde de zaten vardı** (`edge/…:5` **ve** `platform/…:5`) — eksik olan belge değil, **zorlanabilirlik**ti; prose C1/C2/C3'ün yanlış dosyayı hedeflemesini engelleyememişti. **Yapılan:** her iki şemaya `x-form-role` (`role`, `emitter`, `purpose`, `counterpart`=karşı `$id`, `owns[]`, `not_owned_here`, `field_placement_rule`) + `x-updated` · `ssot/contracts_ssot.md` KR-072'ye alan-sahipliği tablosu · **`tests/test_manifest_form_roles.py` (12 test)** — `counterpart`↔`$id` birebir, `owns[]` hayalî alan sayamaz, iki form aynı alanı sahiplenemez, **C2 regresyon kapısı** (`patches`/`priority_zones` calibrated manifest'e sızmaz). **C5 kalan deltası da bu commit'te:** `analysis_type.enum` v1.4.1→**v1.4.2** KG-0.f çapraz atfı (davranış değişikliği yok). **Doğrulama:** validate 89/0 · pytest 560+12 · breaking **0** | PATCH | — |
 | **C1′** | **`schemas/platform/calibrated_dataset_manifest.v1`** → `outputs[].file_artifact`'e opsiyonel **`layer_type`** (ortho/ndvi/ndre/ndwi) + **`calibration_tier`** ekle. ⚠️ **Yeni `index_layers[]` dizisi AÇILMAZ** — `outputs[]`, `reflectance_scale` (`reflectance_0_1/0_100/scaled_int/unknown`) ve `producer_tool` **zaten mevcut**, tekrarlanmaz | MINOR | 0.a, 0.c, C0 |
 | **C2′** 🔴 | **`schemas/edge/intake_manifest.v1`** → **`PlatformForm`'a `priority_zones` ekle** (bugün **yalnız `EdgeForm`'da** var) ve `visualizations`'a **`object_key`** koy. `EdgeForm`'daki göreli yol `x-deprecated` işaretlenir, **kaldırılmaz** (non-breaking). ⚠️ Eski C2 `calibrated_dataset_manifest`'i hedefliyordu — **o şemada `patches` alanı YOK** (contract genelinde 0 eşleşme) | MINOR | 0.a, C0 |
 | **C2″** | Edge aynası: `priority_zone.py:31,55` regex + `max_length=128` `object_key` için genişletilir (vendored senkron) | — | C2′ |
@@ -192,6 +192,14 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 >
 > **TUR 1 = C0 + C1′ + C2′ + C2″ + C3′ + C9 + C10 + AL-C1 + AL-C2** *(+ C6 koşullu, E13 kararına bağlı)*
 > **TUR 2 = C7** (tekil görüntü, demo sonrası)
+>
+> **📍 Tur 1 ilerleme (dal: `feat/contract-tur1`)** — ✅ C0 · ⬜ C1′ · ⬜ C2′ · ⬜ C2″ · ⬜ C3′ ·
+> ⬜ C9 · ⬜ C10 · ⬜ AL-C1 · ⬜ AL-C2 · ⬜ C6 *(E13 bekliyor)* · ⬜ **C8 töreni**
+>
+> ⚠️ **Tur boyunca `pin_version.py --verify` KIRMIZIDIR** — agrega checksum bilerek re-pin
+> edilmez; ara re-pin yayımlanmış `7.2.0` etiketinin checksum anlamını bozar. Tek re-pin noktası
+> **C8**'dir. (`test_pin_version::test_real_repo_checksum_verifies` bu yüzden tur boyunca düşer;
+> diğer 560 test yeşil kalmalıdır.)
 >
 > **Neden AL-C1/C2 Tur 1'de:** ikisi de saf **additive** (1 enum değeri + 2 opsiyonel alan) → aynı MINOR'a
 > sığar; **[0] ölçüm temelinin tek açılabilir kilidi** (§11.5) ve C8 töreni tur başına +1-2 gün.

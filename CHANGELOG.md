@@ -7,6 +7,59 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [Unreleased] — CONTRACT TUR 1 (devam ediyor)
+
+> ⚠️ Bu bölüm **açık bir sürüm turudur.** Tur içeriği tamamlanınca **C8 release töreninde**
+> tek sürüm numarası altında toplanır: sürüm bump → `pin_version.py` → annotated tag → 3 repo pin.
+> **Tur boyunca `pin_version.py --verify` KIRMIZIDIR** (agrega checksum bilerek re-pin edilmez —
+> ara re-pin, yayımlanmış `7.2.0` etiketinin checksum anlamını bozardı).
+> Tur tanımı: `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §3.1 → "🔒 TUR TANIMI".
+
+### C0 — `calibrated_dataset_manifest.v1` iki-form ayrımı makine-okunur hâle getirildi
+
+**Tip:** PATCH-düzeyi (metadata/açıklama; hiçbir alan, `required` veya enum değeri değişmedi —
+`breaking_change_detector`: **0 değişiklik, 0 breaking**).
+
+**Sorun:** `calibrated_dataset_manifest.v1.schema.json` **iki ayrı dosyadır** ve yalnız dizinle
+ayrılır (`schemas/edge/` = kalibrasyon kanıtı · `schemas/platform/` = paket agregası). Her ikisinin
+description'ında karşılıklı **prose** atıf zaten vardı, ama bu bir plan turunun üç iş kalemini
+(C1/C2/C3) yanlış dosyaya yazmasını **engelleyemedi** — `patches[].object_key` "calibrated
+manifest'e eklensin" diye planlandı, oysa `patches` alanı **hiçbir** calibrated formda yok
+(gerçek yeri: `intake_manifest.v1 → EdgeForm.priority_zones[].visualizations`).
+
+### Added
+
+- **`schemas/edge/calibrated_dataset_manifest.v1.schema.json`** + **`schemas/platform/…`:**
+  makine-okunur **`x-form-role`** bloğu — `role`, `emitter`, `purpose`, `counterpart` (karşı
+  formun `$id`'si), `owns[]` (o formun sahiplendiği alanlar), `not_owned_here` (nereye ait
+  olduğu), `field_placement_rule` (yeni alan eklemeden önce sahiplik yazılı belirlenir).
+  `x-updated: 2026-07-31` eklendi. `properties`/`required`/`$defs` **DEĞİŞMEDİ**.
+- **`tests/test_manifest_form_roles.py`** (12 test): `x-form-role` varlığı ve zorunlu anahtarları ·
+  rollerin farklı olması · `counterpart` ↔ `$id` **birebir** eşleşmesi (yeniden adlandırma kırar) ·
+  `owns[]`'ın hayalî alan saymaması · iki formun **aynı alanı sahiplenmemesi** · **C2 regresyon
+  kapısı** (`patches`/`priority_zones`/`visualizations` calibrated manifest'e sızmaz) ·
+  `priority_zones`'un `intake_manifest EdgeForm`'da kalması · **C5/KG-0.f kapısı** (BENEFICIAL ve
+  THERMAL_STRESS "üretilemez" işaretli kalır ve enum'dan silinmez).
+
+### Changed
+
+- **`ssot/contracts_ssot.md` (KR-072):** iki formun rol/alan-sahipliği tablosu eklendi; yama
+  görsellerinin **hiçbirine ait olmadığı**, `intake_manifest.v1` altında olduğu yazıldı.
+- **`enums/analysis_type.enum.v1.json` v1.4.1 → v1.4.2** *(C5 kalan deltası)*: `metadata.changeNote`'a
+  **KG-0.f karar kaydı çapraz atfı** — izlenebilirlik notu, **davranış değişikliği yok.** KG-0.f'in
+  istediği "üretilemez" işaretleri (`BENEFICIAL → enum_valid_not_yet_emittable`,
+  `THERMAL_STRESS → requires_thermal_payload`) **zaten v1.4.0/v1.4.1'de mevcuttu**; C5 bu nedenle
+  Tur 1 kapsamından düştü. `enum` dizisi, `requires_bands` ve `availability` değerleri DEĞİŞMEDİ.
+
+### Notes
+
+- **Doğrulama:** `validate.py` 89 dosya / 0 hata · `pytest` **560 geçti + 12 yeni** ·
+  `breaking_change_detector` **0 breaking**. Tek kırmızı `test_pin_version::test_real_repo_checksum_verifies`
+  → **beklenen**, C8'de kapanır (yukarıdaki uyarıya bakın).
+- **Gerekçe arşivi:** `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (D-1, D-4).
+
+---
+
 ## [7.2.0] - 2026-07-14
 
 **Feature:** intake_manifest.v1 — edge/AV1 karantina görünürlüğü (İş Kolu B2)
