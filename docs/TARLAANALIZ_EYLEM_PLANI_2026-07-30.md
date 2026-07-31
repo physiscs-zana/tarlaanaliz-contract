@@ -1692,3 +1692,74 @@ ticarileşmeyecek bir hat için düşünün.
 | **B13-9** | **P9b** — gerçek uzman kapasitesi ölçümü + kalıcı kota | Üretim ölçeğine geçiş kapısı |
 | **B13-10** | **P7** — TKGM feature flag | Kurumsal protokol gelince |
 | **B13-11** | **AL-W4…AL-W10** — S2 bütçe, SupCon, Mahalanobis vb. | [0] ölçüm temeli + pilot verisi |
+
+
+---
+
+# 14. TUR 1 DENETİM SONRASI — ÇÖZÜM SIRASI (2026-07-31)
+
+> **Kaynak:** 10 disiplinli bağımsız denetim → ajanlar arası tartışma → senkronizasyon çatışma
+> matrisi → ana ajanın kanıta karşı kendi ölçümü. **146 bulgu** (14 KRİTİK / 45 YÜKSEK).
+> **Kanıt arşivi:** `denetim/denetim_raporu_2026-07-31_10disiplin.md` — o dosya iş listesi DEĞİLDİR.
+> ⛔ = **C8 release töreninden ÖNCE zorunlu.**
+
+**Öncelik hiyerarşisi (çatışma çözerken kullanılan ölçüt sırası):**
+① fiziksel/ölçüm geçerliliği → ② geri alınamazlık → ③ güvenlik değişmezi → ④ istatistiksel
+geçerlilik → ⑤ kanıt/kapı bütünlüğü → ⑥ mimari tutarlılık → ⑦ süreç kolaylığı.
+Anahtar ilke: **"Yeşil ama yalan bir kapı, kırmızı bir kapıdan tehlikelidir."**
+
+## 14.0 KADEME 0 — Kapılar dürüst hale gelsin (her şeyden ÖNCE)
+
+| # | İş | Kapatır | Dosya |
+|---|---|---|---|
+| **D1** ⛔ | `verify-checksums` → `summary.needs`; breaking kapısından `continue-on-error: true` kaldır | SD3, SD5 | `.github/workflows/contract_validation.yml` |
+| **D2** ⛔ | KR başlık çıkarıcısını normalize et (4 biçim: `## [KR-019]` · birleşik `## [KR-018 / KR-082]` · yazım hatası `## # [KR-033]` · `### KR-093`) | Q6, Q5 ön koşulu | `tests/test_kr_reference_integrity.py` |
+| **D3** ⛔ | `breaking_change_detector` **özyinelemeli** olsun (`properties`/`$defs`/`items`/`oneOf`/`allOf`/`if-then`) + regresyon testi | SD1, SD2, Y5 | `tools/breaking_change_detector.py` |
+| **D4** ⛔ | Parite kapısını canlandır: CI'ya `pyyaml`; `paths:` filtresine `ssot/**`, `docs/examples/**`, `docs/TARLAANALIZ_SSOT_v1_2_0.txt`, `drone_capability_matrix.yaml` | AR4, SD6, Q2, Q3, Q7, E14, Y3 | CI + `requirements-dev.txt` |
+| **D5** ⛔ | `test_pin_version` → `@pytest.mark.xfail(strict=True)` + `release_gate` marker (**deselect YASAK**) | Q1, Ç6 | `tests/test_pin_version.py`, `pyproject.toml` |
+| **D6** ⛔ | Release checklist'e **annotated tag** adımı + `PENDING_PROPAGATION` boş mu kontrolü | SD7, SD8 | `docs/checklists/SDLC_GATES.md` |
+
+## 14.1 KADEME 1 — Geri alınamaz + maliyet penceresi kapanıyor
+
+| # | İş | Kapatır |
+|---|---|---|
+| **D7** ⛔ | **Ç7 tek hamle (turdaki en yüksek kaldıraç):** `raw_frames[].footprint_wkt` **KALDIR** → `sees_patch_ids[]` (`maxItems:500`, `^[a-f0-9]{32}$`) · `observed_footprint_wkt` **KALIR** + `maxLength:4096` · `footprint_crs` const opsiyonel · **`\|koordinat\|>180 ⇒ derece değil`** ayırıcısı · `crs_mismatch` bayrağı bağlanır · `min(...,1.0)` kırpması kaldırılır · `except → 0.0` **fail-loud**. ⚠️ EWKT **kullanılmaz** — `shapely.wkt.loads`'u kırıyor (ölçüldü) | E7, G2, K7, P3, **G1**, Y2 |
+| **D8** ⛔ | **C6a:** `calibration_type` missing ⇒ **FAIL-CLOSED** (bağlam-bazlı) + alt-kümeye `NONE`. *(C6b = alt-küme bileşimi/satıcı adları → E13 sonrası)* | S1, S2 |
+| **D9** | **Ç5 zinciri:** ① `x-layer-classes` (raster_product/index/composite/derived_metric) → ② `IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY` **matriste** → ③ `index_requirements` yalnız `class:index` → ④ regresyon testi. ⏳ **② penceresi BU TUR** (üretici yok = bedava; sonra MAJOR) | A8, A9, A11, S10, S11, Y4 |
+
+## 14.2 KADEME 2 — C8 sıralama kilitleri (iş değil, SIRA)
+
+| # | Kilit |
+|---|---|
+| **D10** ⛔ | **E4:** E11 C8'den **önce merge EDİLMEZ** (`additionalProperties:false` → CHECK 1 → `REJECTED_QUARANTINE`, **geri dönüş yok**) · **E2:** C11 (`sorties`+`mission_date`) C8'den **ÖNCE** · **E1:** C2″ yeniden yaz — **edge regex DEĞİŞMEZ** · **E3:** C8'de `$ref`'ler inline veya yerel Registry, **yazılı karar** |
+| **D11** | **E5:** `relative_path` deseni gerçek ODM/GDAL adlarını kabul etsin (`odm_orthophoto.original.tif`, `*.tif.aux.xml`, boşluk/Türkçe) · **E6:** `maxItems:5000` → 25 m uçuş **5.229** kare |
+
+## 14.3 KADEME 3 — Denetim aletini onar
+
+| # | İş | Not |
+|---|---|---|
+| **D12** | **M2+M3+M4 birlikte:** "denetim satırı KR-019 konsensüsüne **KATILMAZ**" · `tile_id` zorunlu · `tile_group_id:null` + `size:const 1` | M'nin uyarısı bağlayıcı: bunlar kapanmadan D15 ikincil |
+| **D13** | **M1/Y1:** `audit_selection_rate` (π_h) + `audit_rotation_key` + `audit_bucket` | ⚠️ `audit_stratum` **opak dize kalsın** — A6'nın bozuk eşlemesini tele çimentolama |
+| **D14** | **Ç1:** öncelik kuralı normatif metin + `spot_check_suppressed` + `required_reviewers` sabit | |
+| **D15** | **Ç4 adım 1:** `confidence_score: {"const": 0}` + `x-deprecated-in-context` + CHANGELOG `Deprecated` | 2-MINOR penceresi başlar |
+
+## 14.4 KADEME 4 — Normatif kaynak tekilliği
+
+| # | İş | Kapatır |
+|---|---|---|
+| **D16** ⛔ | **Ç8 paketi:** KR-093 **tek gövdeye** indirilir · `stress_ratio` **TANIMLANIR** · saklama/rıza MUST'ları · `kr_registry.md` **türetilmiş dizine** iner · tekil-gövde kapısı · CLAUDE.md **"sayı değil üretici"** biçiminde | AR1, AR2, AR3, A3, K5, K3, Q5, Y6 |
+| **D17** ⛔ | **A1 zinciri:** `WATER_STRESS` → `requires_thermal_payload`/`proxy_only` + `stage_b`'den çıkar · A2 changeNote KG-0.f'i eksiksiz alıntılasın | A1, A2 |
+| **D18** | **K4:** `validate.py` FORBIDDEN_FIELDS **kapsam-duyarlı** + `api/` taranır (orada `phone` var) | K4 |
+
+## 14.5 KADEME 5 — SONRAYA (karar bu tur, uygulama sonraki)
+
+P1 çalışma zamanı zorlaması (platform: Pydantic + `enforce=True`) · K1 `{tenant}` opaklaştırma (**MAJOR**) ·
+K2 plan §0 veri yönetişimi kararı (**yeni 0.h**) · K3 saklama politikası · **C6b + S3/S4/S6/S7** (E13 sonrası) ·
+**S5 `scale_factor`** — E13'ün **hemen ardından ilk sırada** (EVI/SAVI'yi sessizce bozuyor, NDVI gizliyor) ·
+G3/G4/G5 geometri geçerliliği · Ç4 adım 2-3 (AL-P1 portal, v2 null) · Ç2 kalıntısı (yayın politikasına `n≥5`) ·
+A7 kanopi maskesi · A5/A6 fenoloji eşlemesi · §12 motor kararı sonrası `DTM`/`POINT_CLOUD` (S12)
+
+## 14.6 Şüpheli bulgular — kapatılmadan önce ölçülecek
+
+`M2` platform konsensüs yolu · `M4` worker bulk_approval yolu · `M1/P4` emisyon kodu yazılırken ·
+`Q21` `pytest -q` ×5 ardışık · `SD8` retro-tag koordinatör kararı · `A7` TAGEM/Bakanlık literatür teyidi

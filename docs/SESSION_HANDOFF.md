@@ -20,6 +20,49 @@
 
 ---
 
+## 0.A EN GÜNCEL OTURUM (2026-07-31) — Contract Tur 1 + 10-disiplin bağımsız denetim
+
+**Yapılan:** Contract Tur 1'in şema kalemleri tamamlandı (dal `feat/contract-tur1`, 7 commit):
+**C0** (iki-form ayrımı zorlanabilir) · **C9+C10** (KR-093 içerik + statü eşlemesi) · **C-SSOT**
+(iki SSOT kopyası bayt-özdeş) · **C-PARITE** (9 yanlış parite iddiası) · **C2′** (PlatformForm
+`priority_zones` + `object_key`) · **C1′+C3′** (`layer_type`/`band`/`calibration_type`, `raw_frames`)
+· **AL-C1+AL-C2** (i.i.d. denetim kanalı). 7 yeni test dosyası, **704 test**.
+
+**Sonra:** 10 disiplinden bağımsız denetim (agronomi/entomoloji · sensör-kalibrasyon · ML/DS ·
+pentest · sistem mimarisi · QA · SDLC · KVKK · edge/embedded · GIS/jeodezi) → ajanlar arası
+tartışma (4 çatışma çözüldü) → senkronizasyon çatışma matrisi → ana ajanın kanıta karşı ölçümü.
+
+### 📊 Sonuç: 146 bulgu (14 KRİTİK · 45 YÜKSEK) — 10/10 KRİTİK **doğrulandı**
+
+⚠️ **Turun şema işi büyük ölçüde doğru, ama KANIT KAPILARININ ÇOĞU YALAN SÖYLÜYOR.** En sert üç ölçüm:
+- `breaking_change_detector` **iç içe enum'lara kör** — `QUARANTINE_CAUTION` silindi, dedektör
+  "0 breaking" dedi. ⇒ commit mesajlarındaki *"0 breaking"* ifadesi bu tur için **kanıt değil**.
+- Yeni 156 testin **%40'ı CI'da hiç koşmuyor** (45 parite skip + 18 `pyyaml` skip).
+- Breaking kapısı `continue-on-error: true`; `verify-checksums` `summary.needs`'te **yok**.
+
+### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **KADEME 0**
+
+Eylem planı **§14.0** (D1…D6): CI teli · KR başlık çıkarıcısı · dedektör özyineleme · parite
+kapısı canlandırma · `xfail(strict)` · release checklist tag adımı.
+**Gerekçe:** bu altısı kapanmadan Kademe 1-4'ün hiçbirinin doğrulaması güvenilir değil.
+
+**Tam sıra:** `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` **§14** (18 kalem, ⛔ işaretliler C8 öncesi).
+**Kanıt:** `denetim/denetim_raporu_2026-07-31_10disiplin.md`.
+
+### ⏳ Kapanan maliyet pencereleri (bu tur yapılmazsa MAJOR olur)
+- **D9②** `IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY`: `layer_type`'ın üreticisi yok → **bedava**
+- **D7** `raw_frames[].footprint_wkt` kaldırma: üreticisi (E11) yok → **breaking değil**
+
+### 🔒 C8 sıralama kilitleri (D10)
+**E11 C8'den ÖNCE merge edilmez** (geri dönüşü olmayan karantina) · **C11 C8'den ÖNCE** ·
+**C2″'de edge regex DEĞİŞMEZ** · **C8'de `$ref`'ler inline** (air-gap).
+
+### Durum
+Dal `feat/contract-tur1` push'lu · `validate.py` 89/0 · `pytest` 704 geçti + 1 **beklenen**
+checksum kırmızısı (C8'de kapanır) · çalışma dizini temiz.
+
+---
+
 ## 0. EN GÜNCEL OTURUM (2026-07-30) — Fotogrametri motor kararı + Karar Günü (7 karar) + tek eylem planı
 
 **İstek:** DJI Terra / PIX4Dfields / Agisoft Metashape karşılaştırması → demo+pilot planı →
