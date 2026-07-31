@@ -901,7 +901,38 @@ kararı gerektirir. (−) İki ürün = iki fenolojik takvim, iki eşik seti.
 **Yan karar (ücretsiz kazanç).** BUĞDAY `strong` + `bookable:True` ama edge eşik/fenoloji
 tablosunda **yok**. İki YAML girdisi eklenerek güçlü verili üçüncü ürün açılacaktır (E8).
 
-**EK BULGU — KİRAZ: SİPARİŞ EDİLEBİLİR AMA İKİ YERDEN DÜŞÜYOR (2026-07-30 doğrulama turu).**
+> ## ✅ KG-0.d-EK **KAPANDI — YANLIŞ BULGU** (2026-07-31, kod-teyitli)
+>
+> **Aşağıdaki "KİRAZ sipariş edilebiliyor" tespiti YANLIŞTIR.** Koordinatör (A) seçeneğini
+> onayladı, ancak uygulamadan önce yapılan ölçüm gösterdi ki **kapatılacak bir risk yok** —
+> ve `bookable: false` yazmak **yanlış** olurdu.
+>
+> **Neden yanlıştı:** `crop_readiness.bookable` **"çiftçi sipariş edebilir"** demek DEĞİLDİR.
+> Sipariş yolunda **iki ayrı kapı** var ve ikisi de fail-closed uygulanıyor:
+>
+> | Kapı | Anlamı | Nerede uygulanıyor | CHERRY | RICE |
+> |---|---|---|---|---|
+> | **`is_gap_offered`** (KR-015 sunum kapsamı) | "bu sezon GAP'ta satılıyor mu" | `fields.py:273` · `change_crop_type.py:107` · missions · subscriptions | ❌ **`GAP_OFFERED_CROPS` = {COTTON, CORN, PISTACHIO, RICE, GRAPE}** → tarla bile açılamaz | ✅ |
+> | **`is_bookable`** (teslim edilebilirlik) | "model bu ürün için sonuç üretebilir mi" | **`missions.py:293`** · **`subscriptions.py:170`** | — | ❌ `False` → **booking reddedilir** |
+>
+> ⇒ **CHERRY çift kapılı kapalı:** tarla oluşturulamaz, ürün değiştirilemez, booking'e hiç gelmez.
+> ⇒ **RICE ters yönde de güvenli:** sunuluyor ama `is_bookable=False` → *"para alınıp teslim
+> edilemeyen analiz"* riski de kapalı (VO docstring'inin tam olarak kaçındığı şey).
+>
+> **Dört küme BİLEREK farklıdır** — `crop_type.py:50-68`'de 2026-07 denetim kararı olarak yazılı:
+> (1) `GAP_OFFERED_CROPS` (5, satılan) ⊂ (2) `_VALID_CODES` (7, VO-geçerli: +OLIVE +CHERRY) ·
+> (3) wire `crop_type.enum.v1` (8) · (4) worker-internal (12). *"hiçbiri diğerinin yanlış kopyası
+> değildir"*. Benim (ve önceki turun) hatası bu eksenleri **tek eksen sanmaktı**.
+>
+> **`bookable: false` yazmak ayrıca teknik olarak da yanlış olurdu:**
+> `tests/unit/test_crop_readiness_manifest_sync.py:97-105` `bookable == (stage1 ∈ {production,
+> pilot})` kuralını bağlıyor ve CHERRY'nin `stage1`'i gerçekten `pilot`. Elle düzenleme, tam da
+> o testin yakalamak için var olduğu **"insan sync hatası"** olurdu.
+>
+> **Sonuç:** kod değişikliği **YAPILMADI**; KİRAZ'ı ticari olarak **açma** işi §13 birikmiş
+> işler listesine (Ekim 2026+) alındı. **E8'in sıralaması da bu yüzden düzeltildi** (aşağıya bkz.).
+
+**~~EK BULGU — KİRAZ: SİPARİŞ EDİLEBİLİR AMA İKİ YERDEN DÜŞÜYOR~~ (2026-07-30 doğrulama turu — YÜRÜRLÜKTEN KALKTI, gerekçe kaydı olarak korunur).**
 Üç kaynak çapraz okundu (`crop_readiness.json` · `crop_type.enum.v1.json` · edge
 `ndvi_thresholds.yaml`/`phenology_calendar.yaml`):
 
@@ -929,12 +960,22 @@ ama **kendi `crop_type.enum.v1`'i CHERRY'yi tanımıyor** (doğrulandı: `False`
 gizlenmedi, buraya yazıldı. **KG-0.d-EK kararı artık üç kaynağı birden bağlar:**
 `crop_readiness.json` (bookable) · `crop_type.enum.v1` (wire) · SSOT KR-024 tablosu (normatif metin).
 
-**Düzeltme (E8 kapsamı):**
-1. **Önce KİRAZ kararı** — ya `bookable:False` yapılır (en hızlı, riski anında kapatır) ya da
-   contract enum'a eklenip (**breaking değil, MINOR**) edge tablosu yazılır. Bu bir **ürün
-   kararıdır**, mühendislik değil.
-2. **Sonra WHEAT** (zaten planlı, wire-enum'da var, tek eksik edge tablosu).
-3. **SUNFLOWER/OLIVE ertelenebilir** — `bookable:False` oldukları sürece acil değil.
+**~~Düzeltme (E8 kapsamı)~~ → YENİDEN DÜZELTİLDİ (2026-07-31): sıralamanın dayanağı çürüdü.**
+Eski sıralama *"KİRAZ sipariş edilebilen ve fiilen kırılan tek ürün"* varsayımına dayanıyordu;
+o varsayım **yanlış** (yukarıdaki kapanış kutusu). **Doğru ölçüt: `GAP_OFFERED_CROPS`** —
+bu sezon fiilen satılan **5 ürün**: `COTTON, CORN, PISTACHIO, RICE, GRAPE`.
+
+| Ürün | Satılıyor mu (`is_gap_offered`) | Wire enum | Edge tablosu | E8 önceliği |
+|---|---|---|---|---|
+| COTTON · CORN · PISTACHIO · GRAPE · RICE | ✅ | ✅ | ✅ | **iş yok** |
+| WHEAT | ❌ satılmıyor | ✅ | ❌ | 🟡 **düşük** — satışa açılırsa gerekir |
+| CHERRY | ❌ satılmıyor | ❌ | ❌ | 🟡 §13 (Ekim+) |
+| SUNFLOWER · OLIVE | ❌ satılmıyor | ✅ | ❌ | 🟢 ertelenebilir |
+
+⇒ **E8'de bugün ACİL İŞ YOK.** Satılan 5 ürünün beşinde de edge eşik + fenoloji tablosu **var**
+(doğrulandı). WHEAT'in *"iki YAML girdisiyle güçlü verili ürün açılır"* kazancı gerçek ama
+**satış kapsamına alınması ayrı bir ürün kararına bağlı** — o karar verilmeden tablo yazmak
+kullanılmayan config üretir. → E8 **§13'e (Ekim+) taşındı.**
 
 **Etkilenen:** E8 (kapsam düzeltmesi) · W7 · contract `crop_type.enum.v1` (KİRAZ kararına bağlı)
 · pilot planı P-3 · demo tasarımı
@@ -1608,3 +1649,43 @@ ticarileşmeyecek bir hat için düşünün.
 - [PIX4Dfields + M3M ölçülmüş vaka (Pix4D resmi blog)](https://www.pix4d.com/blog/input-savings-mavic-3-m) — 50 ha, 727 RGB + 2.908 ÇS, 34,1 GB, RGB 4:30 / ÇS 6:54, GSD 2,24/3,73 cm
 - [PIX4Dfields deneme kısıtı](https://support.pix4d.com/hc/en-us/articles/360000831403) — deneme sürümünde **export yok**
 - [ODM multispektral (M3M v3.5.3+)](https://docs.opendronemap.org/multispectral/) · [`--radiometric-calibration`](https://docs.opendronemap.org/arguments/radiometric-calibration/)
+
+
+---
+
+# 13. BİRİKMİŞ İŞLER — EKİM 2026 VE SONRASI
+
+> **Ne zaman bakılır:** FAZ 0 (pilot + demo) kapandıktan sonra. Bu bölümdeki hiçbir kalem
+> demo ya da pilot için gerekli DEĞİLDİR — buraya bilinçli olarak ertelendiler.
+> **Kural:** bir kalem buradan yukarı (§3 iş tabloları) ancak **yazılı bir karar** ile çıkar.
+
+## 13.1 Ürün kapsamı — yeni mahsul satışa açma
+
+| # | İş | Neden ertelendi | Gerçek maliyeti |
+|---|---|---|---|
+| **B13-1** | **KİRAZ'ı ticari olarak aç** *(KG-0.d-EK "seçenek B")* | 2026-07-31'de ölçüldü: **kapatılacak risk yok** — CHERRY `GAP_OFFERED_CROPS`'ta değil, tarla bile açılamıyor. Açmak **yeni özellik**, hata düzeltme değil | **Dört yerde birden:** ① platform `GAP_OFFERED_CROPS`'a `CHERRY` ② contract `crop_type.enum.v1`'e `CHERRY` (**MINOR**, + C8 töreni) ③ edge `ndvi_thresholds.yaml` + `phenology_calendar.yaml` ④ fiyat/fenoloji kayıtları. ⚠️ `data_status: limited` → tespit kalitesi zayıf olur; **ÖN RAPOR (indeks) sorunsuz** çalışır |
+| **B13-2** | **BUĞDAY'ı ticari olarak aç** | Wire enum'da **var**, edge tablosunda yok; ama `GAP_OFFERED_CROPS`'ta da yok → bugün satılmıyor. Tablo yazmak, satış kararı olmadan **kullanılmayan config** üretir | ① `GAP_OFFERED_CROPS`'a `WHEAT` ② edge iki YAML girdisi (**birkaç saat**) ③ fiyat kaydı. **Veri `strong`** → en ucuz gerçek kazanç, satış kararı verilirse ilk sıradaki |
+| **B13-3** | SUNFLOWER / OLIVE tabloları | İkisi de satılmıyor **ve** `stage1: research` → `is_bookable` zaten reddediyor | Düşük; B13-2 ile aynı desen |
+
+> ⚠️ **Dört eksen kuralı (2026-07 denetim kararı, `crop_type.py:50-68`):** bir mahsulü açmak
+> **tek yerde** yapılmaz. `GAP_OFFERED_CROPS` (satılan) · VO `_VALID_CODES` (domain-geçerli) ·
+> wire `crop_type.enum.v1` (mesaj) · worker-internal (12) **ayrı eksenlerdir**; biri diğerinin
+> kopyası değildir. Yalnız birini değiştirmek sessiz kırık üretir.
+
+## 13.2 Tesisat ve yönetişim
+
+| # | İş | Neden ertelendi |
+|---|---|---|
+| **B13-4** | **C-SSOT-2** — `TARLAANALIZ_SSOT_v1_2_0.txt` senkron aracına **salt-okunur drift dedektörü** olarak eklensin | Kök neden kapatıldı ama tekrarı önleyen otomasyon yok; rsync yolu bu turda test edilemedi |
+| **B13-5** | **C11** — `sorties[]` + `mission_date` AK-4 absorpsiyonu (edge vendored'da var, kanonikte yok) | I-5 gereği sapma geçici olmalı; ama demo yoluna girmiyor |
+| **B13-6** | **P13** — platform `end_to_end_workflow.md:30` başlık özeti bayat (*"C17 açık"* ↔ C17 satırı *"ÇÖZÜLDÜ"*) | Doküman tutarlılığı; kod etkisi yok |
+| **B13-7** | `## # [KR-033]` başlık yazım hatası (SSOT metni) | Bayt-özdeşlik korunsun diye bilerek düzeltilmedi; platform düzeltince aynı turda gelir |
+| **B13-8** | **E8** — edge eşik/fenoloji tabloları (WHEAT/SUNFLOWER/OLIVE/CHERRY) | Satılan 5 ürünün **beşinde de** tablo mevcut → bugün acil iş yok; B13-1/B13-2'ye bağlı |
+
+## 13.3 Ölçek ve model hattı *(zaten §11'de izleniyor, buraya yalnız takvim için)*
+
+| # | İş | Tetikleyici |
+|---|---|---|
+| **B13-9** | **P9b** — gerçek uzman kapasitesi ölçümü + kalıcı kota | Üretim ölçeğine geçiş kapısı |
+| **B13-10** | **P7** — TKGM feature flag | Kurumsal protokol gelince |
+| **B13-11** | **AL-W4…AL-W10** — S2 bütçe, SupCon, Mahalanobis vb. | [0] ölçüm temeli + pilot verisi |
