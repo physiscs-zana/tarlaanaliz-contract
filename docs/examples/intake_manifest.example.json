@@ -23,7 +23,7 @@
       "sha256_hash": "b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1a2b3c4d5e6f7a8b9c0d1e2f3a4b5",
       "mime_type": "image/jpeg",
       "captured_at": "2026-06-15T07:15:28Z",
-      "gps_lat": 37.9160,
+      "gps_lat": 37.916,
       "gps_lon": 40.2185
     }
   ],
@@ -35,6 +35,47 @@
     "signatures_version": "27304/2026-06-15"
   },
   "dataset_status": "RAW_INGESTED",
-  "available_bands": ["GREEN", "RED", "RED_EDGE", "NIR"],
-  "created_at": "2026-06-15T08:02:30Z"
+  "available_bands": [
+    "GREEN",
+    "RED",
+    "RED_EDGE",
+    "NIR"
+  ],
+  "created_at": "2026-06-15T08:02:30Z",
+  "priority_zones": [
+    {
+      "patch_id": "7c1f9a4b2e6d5038a91c4b7e2f8d6a05",
+      "geom": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              40.2,
+              37.9
+            ],
+            [
+              40.21,
+              37.9
+            ],
+            [
+              40.21,
+              37.91
+            ],
+            [
+              40.2,
+              37.9
+            ]
+          ]
+        ]
+      },
+      "priority_level": "EXPRESS",
+      "ndvi_value": 0.18,
+      "sampling_reason": "NDVI_THRESHOLD",
+      "visualizations": {
+        "true_color": "coop-diyarbakir/dataset_9f2c1b7a4e5d6c8b0a1f2e3d/patches/7c1f9a4b2e6d5038a91c4b7e2f8d6a05/true_color.jpg",
+        "false_color": "coop-diyarbakir/dataset_9f2c1b7a4e5d6c8b0a1f2e3d/patches/7c1f9a4b2e6d5038a91c4b7e2f8d6a05/false_color.jpg",
+        "ndvi_overlay": "coop-diyarbakir/dataset_9f2c1b7a4e5d6c8b0a1f2e3d/patches/7c1f9a4b2e6d5038a91c4b7e2f8d6a05/ndvi_overlay.png"
+      }
+    }
+  ]
 }

@@ -132,6 +132,69 @@ gidiyor — aynı adlı iki SSOT metni **ayrışmış** (hizalama ayrı kalem).
   `breaking_change_detector` **0 breaking**. Beklenen tek kırmızı: checksum (C8'de kapanır).
 - **Gerekçe arşivi:** `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (D-6, D-7, D-15).
 
+### C2′ — `intake_manifest.v1`: `PlatformForm.priority_zones` + `object_key` sahipliği
+
+**Tip:** MINOR (yalnız **opsiyonel** alan eklendi; `required` listeleri ve `enum`'lar değişmedi —
+`breaking_change_detector`: **0 breaking**). Demo kritik yolunun **① adımı**.
+
+**Sorun (D-1/D-2):** Eski C2 `calibrated_dataset_manifest`'e `patches[].object_key` eklemeyi
+söylüyordu; o şemada `patches` **yok** (contract genelinde 0 eşleşme). Görsel yollarının gerçek
+yeri `intake_manifest.v1` → `EdgeForm.priority_zones[].visualizations`. Ayrıca `priority_zones`
+**yalnız `EdgeForm`'da** vardı — oysa KG-0.a-EK *"anahtarı **platform üretir**, manifestteki
+`object_key` platformun **döndürdüğü** değerdir"* diyor ⇒ alanın yeri **PlatformForm**'dur.
+
+### Added
+
+- **`$defs.PlatformForm.priority_zones`** (opsiyonel dizi, `maxItems: 500`): EdgeForm ile
+  **aynı zone verisi** (`patch_id`, `geom`, `priority_level`, `ndvi_value`, `sampling_reason`;
+  aynı `required` listesi), ancak `visualizations` **göreli yol değil NESNE ANAHTARI** tutar.
+  ÖN RAPOR okuma ucunun (P6) kaynağıdır.
+- **`tests/test_intake_manifest_forms.py` (16 test)** — `oneOf` ayrımı gerçek yüklerle
+  doğrulanır (C2′'nin ana riski) · `object_key` sahipliği desen düzeyinde bağlanır ·
+  EdgeForm'un geriye uyumluluğu · iki formun aynı zone verisini taşıması.
+- **`docs/examples/intake_manifest.example.json`** → `priority_zones` + `object_key` örneği.
+
+### Changed
+
+- **`EdgeForm...visualizations.description`** netleştirildi: göreli yollar **M1'deki YEREL DOSYA
+  TANIMLAYICILARIDIR, nesne deposu anahtarı DEĞİLDİR**; platform onları S3 anahtarı olarak kabul
+  etmez, imzalamaz, kalıcılaştırmaz.
+
+### Notes — plandan bilinçli sapma
+
+Plan *"`EdgeForm`'daki göreli yol `x-deprecated` işaretlenir"* diyordu; **işaretlenmedi.**
+Gerekçe: edge hangi dosyaları ürettiğini bildirmek zorunda ve anahtarı **üretemez** (platform
+üretir). Alanı deprecate etmek edge'e dosyaları bildirecek bir yol bırakmazdı. Fiilen deprecate
+edilen şey **"bu yolu S3 anahtarı olarak kullanmak"**tır ve bu artık açıklamada yazılı.
+
+### Notes — `object_key` deseni (ölçülerek sertleştirildi)
+
+İlk yazımda desen `{tenant}` ve `{dataset_id}` **biçimlerini donduruyordu** (`[a-z0-9-]`,
+`[a-f0-9-]{32,36}`) — bu, platformun entity-önekli id'leriyle (`dataset_…`) çakışabilirdi.
+Ayrıca segment sınıfı `.` içerdiği için **`a/../b` traversal geçiyordu.** Desen, biçim yerine
+**güvenlik-anlamlı yapıyı** zorlayacak biçimde yeniden yazıldı:
+`^[A-Za-z0-9][A-Za-z0-9_-]*(/[A-Za-z0-9_-]+)+/patches/[a-f0-9]{32}/<ad>$`
+→ mutlak yol **RED** · `..` **RED** (segmentlerde `.` yok) · `patches/<id>/…` edge göreli yolu
+**RED** (`/patches/` öncesi ≥2 segment şartı) · `coop_abc/dataset_x9y8/patches/…` **KABUL**.
+Yedi vaka ile tek tek doğrulandı.
+
+### Notes — `oneOf` ayrımı ölçüldü (varsayım düzeltildi)
+
+`PlatformForm.required` ⊂ `EdgeForm.required` olduğu için ayrım `required` ile yapılmıyor.
+Ayrımın **tek** dayanağının `unevaluatedProperties` olduğunu varsaymıştım; ölçüm **üç bağımsız
+katman** gösterdi: ① `unevaluatedProperties` (`schema_version`/`drone_make`/`correlation_id`)
+② **kimlik biçimleri** (PlatformForm `^batch_[a-z0-9]{24}$`/`^field_…`/`^mission_…` ister)
+③ **`files[]` şekli** (`sha256_hash` ↔ `sha256`). Ayrım beklenenden sağlam; test yine de
+her iki örneğin **tam olarak bir** dala uyduğunu doğruluyor.
+
+### Notes
+
+- **Doğrulama:** `validate.py` 89 dosya / 0 hata · `pytest` **643 geçti (+16 yeni)** ·
+  `breaking_change_detector` **0 breaking**. Beklenen tek kırmızı: checksum (C8).
+- **Sırada:** `C2″` (edge `priority_zone.py` aynası) · `C1′` · `C3′`.
+
+---
+
 ### C-PARITE + C4-düzeltme — vendored parite iddiaları ve `sorties` sapması
 
 **Tip:** PATCH-düzeyi (yalnız `description` metinleri + yeni test; hiçbir alan/`required`/enum

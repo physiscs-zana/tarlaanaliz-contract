@@ -237,6 +237,110 @@
           "type": "integer",
           "minimum": 0,
           "description": "Edge/AV1 tarafında yerelde düşürülen karantina dosyalarının toplam boyutu (bayt). Opsiyonel, geriye uyumlu. quarantined_file_count ile birlikte anlamlıdır."
+        },
+        "priority_zones": {
+          "type": "array",
+          "maxItems": 500,
+          "description": "Öncelik bölgeleri — PLATFORM formu. EdgeForm ile aynı zone verisini taşır, ancak visualizations alanı GÖRELİ YOL değil NESNE ANAHTARI (object_key) tutar. Bu form, platformun sakladığı/döndürdüğü normalize edilmiş görünümdür (KG-0.a-EK). ÖN RAPOR okuma ucunun (P6) kaynağıdır. Opsiyonel, geriye uyumlu.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "patch_id": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{32}$",
+                "description": "UUID4 hex (32 chars, no dashes)."
+              },
+              "geom": {
+                "type": "object",
+                "description": "GeoJSON Polygon (WGS84). HC-02 compliant: patch boundary only, never atomic GPS point.",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Polygon"
+                  },
+                  "coordinates": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "array",
+                      "minItems": 4,
+                      "items": {
+                        "type": "array",
+                        "minItems": 2,
+                        "maxItems": 3,
+                        "items": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "additionalProperties": false
+              },
+              "priority_level": {
+                "type": "string",
+                "enum": [
+                  "EXPRESS",
+                  "NORMAL"
+                ]
+              },
+              "ndvi_value": {
+                "type": "number",
+                "minimum": -1.0,
+                "maximum": 1.0,
+                "description": "Patch mean NDVI value."
+              },
+              "sampling_reason": {
+                "type": "string",
+                "enum": [
+                  "NDVI_THRESHOLD",
+                  "RANDOM_SAMPLE"
+                ]
+              },
+              "visualizations": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "description": "Nesne deposu ANAHTARLARI (object keys) — PLATFORM tarafından üretilir (KG-0.a-EK kural 1). Edge'in manifestte verdiği göreli yol ASLA anahtar olarak kullanılmaz/kalıcılaştırılmaz; buradaki değer platformun DÖNDÜRDÜĞÜ anahtardır. Beklenen şema: {tenant}/{dataset_id}/patches/{patch_id}/{ad}. Desen, tenant/dataset BİÇİMİNİ dondurmaz ama güvenlik-anlamlı YAPIYI zorlar: mutlak yol reddedilir (ilk karakter alfanumerik), '..' traversal reddedilir (segmentlerde '.' yok) ve '/patches/' öncesi en az iki segment şarttır — bu sonuncusu edge'in 'patches/<id>/...' göreli yolunun anahtar olarak sızmasını engeller.",
+                "properties": {
+                  "true_color": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(/[A-Za-z0-9_-]+)+/patches/[a-f0-9]{32}/true_color\\.jpg$"
+                  },
+                  "false_color": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(/[A-Za-z0-9_-]+)+/patches/[a-f0-9]{32}/false_color\\.jpg$"
+                  },
+                  "ndvi_overlay": {
+                    "type": "string",
+                    "maxLength": 512,
+                    "pattern": "^[A-Za-z0-9][A-Za-z0-9_-]*(/[A-Za-z0-9_-]+)+/patches/[a-f0-9]{32}/ndvi_overlay\\.png$"
+                  }
+                },
+                "required": [
+                  "true_color",
+                  "false_color",
+                  "ndvi_overlay"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "patch_id",
+              "geom",
+              "priority_level",
+              "ndvi_value",
+              "sampling_reason"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "unevaluatedProperties": false
@@ -508,7 +612,7 @@
                   "object",
                   "null"
                 ],
-                "description": "Relative paths under patches/<patch_id>/ -- path traversal explicitly disallowed.",
+                "description": "patches/<patch_id>/ altındaki GÖRELİ YOLLAR -- path traversal açıkça yasak. ⚠️ Bunlar M1'deki YEREL DOSYA TANIMLAYICILARIDIR, nesne deposu anahtarı DEĞİLDİR (KG-0.a-EK kural 1): platform bu yolu S3 anahtarı olarak kabul etmez, imzalamaz ve kalıcılaştırmaz; anahtarı platform üretir ve PlatformForm.priority_zones[].visualizations içinde döndürür.",
                 "properties": {
                   "true_color": {
                     "type": "string",
@@ -569,5 +673,5 @@
     "KR-030"
   ],
   "x-ssot-version": "1.2.0",
-  "x-updated": "2026-05-30"
+  "x-updated": "2026-07-31"
 }
