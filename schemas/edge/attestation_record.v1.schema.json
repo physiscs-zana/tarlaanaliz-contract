@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/schemas/edge/attestation_record.v1.schema.json",
   "title": "AttestationRecord",
-  "description": "Cryptographic attestation record signed by the kiosk for each processing step. Edge interface/contracts/schemas/edge/attestation_record.v1 ile birebir uyumludur.",
+  "description": "Cryptographic attestation record signed by the kiosk for each processing step. Edge interface/contracts/schemas/edge/attestation_record.v1 vendored kopyasıyla `properties` + `required` düzeyinde EŞDEĞERDİR; bayt-özdeşlik BEKLENMEZ — vendored kopya `additionalProperties: false`, kanonik `unevaluatedProperties: false` idiomunu kullanır (bilinçli ve 9/9 şemada tutarlı; 2026-07-31'de ölçüldü). Doğrulama: tests/test_vendored_parity.py.",
   "type": "object",
   "properties": {
     "schema_version": {
@@ -26,7 +26,12 @@
     },
     "attestation_type": {
       "type": "string",
-      "enum": ["EDGE_SCAN", "HASH_SEAL", "CENTER_VERIFY", "CALIBRATION"],
+      "enum": [
+        "EDGE_SCAN",
+        "HASH_SEAL",
+        "CENTER_VERIFY",
+        "CALIBRATION"
+      ],
       "description": "Type of operation being attested."
     },
     "timestamp": {

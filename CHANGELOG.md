@@ -132,6 +132,60 @@ gidiyor — aynı adlı iki SSOT metni **ayrışmış** (hizalama ayrı kalem).
   `breaking_change_detector` **0 breaking**. Beklenen tek kırmızı: checksum (C8'de kapanır).
 - **Gerekçe arşivi:** `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (D-6, D-7, D-15).
 
+### C-PARITE + C4-düzeltme — vendored parite iddiaları ve `sorties` sapması
+
+**Tip:** PATCH-düzeyi (yalnız `description` metinleri + yeni test; hiçbir alan/`required`/enum
+değişmedi — `breaking_change_detector`: 9 değişiklik, **0 breaking**).
+
+**Sorun:** Dokuz kanonik şema açıklamasında *"... `interface/contracts/...` ile **birebir
+uyumludur**"* yazıyordu. Ölçüldü: **9/9'u bayt düzeyinde YANLIŞ.** Ama aynı ölçümde
+**9/9'unun `properties` + `required` kümeleri birebir aynı**; tek fark tutarlı bir idiom:
+
+| | kanonik | vendored |
+|---|---|---|
+| kapatma anahtarı | `unevaluatedProperties: false` | `additionalProperties: false` |
+
+9/9'da aynı olması bunun **çürüme değil, bilinçli bir konvansiyon** olduğunu gösterir →
+**yanlış olan, iddianın ifadesiydi.**
+
+### Changed
+
+- **9 şema açıklaması düzeltildi:** `edge/attestation_record` · `edge/calibrated_dataset_manifest` ·
+  `edge/evidence_bundle_ref` · `edge/upload_receipt` · `edge/worker_result` ·
+  `worker/calibrated_dataset` · `worker/calibration_metadata` · `worker/expert_feedback` ·
+  `worker/expert_review_queue`. Yeni ifade: *"vendored kopyasıyla `properties` + `required`
+  düzeyinde EŞDEĞERDİR; bayt-özdeşlik BEKLENMEZ — idiom farkı bilinçlidir."*
+
+### Added
+
+- **`tests/test_vendored_parity.py` (38 test):** 9 çift için `properties` / `required` / `$id`
+  paritesi · **sözcük kapısı** — *"birebir uyumludur"* ifadesinin geri gelmesi yasak
+  *(kanıtlandı: eski ifade yeniden konunca test düşüyor)* · idiom farkının açıklamada belgeli
+  kalması · kanonik tarafın `unevaluatedProperties` idiomunu koruması.
+  ⚠️ Kardeş depo yoksa test **atlanır (skip)** — CI'da "geçti" ile karıştırılmamalı.
+- ⚠️ **Kapı kendi eksik düzeltmesini yakaladı:** ilk turda 6 şema bulunmuştu; sözcük kapısı
+  kalan **3'ünü** (worker `calibration_metadata` / `expert_feedback` / `expert_review_queue`)
+  gösterdi. Sınıfın tamamı ancak testle kapandı.
+
+### Notes — `sorties` / `mission_date` (C4 ikinci kez düzeltildi)
+
+Aynı taramada ortaya çıktı: **`sorties` ve `mission_date` edge'in vendored interface
+sözleşmesinde VAR, kanonikte YOK** → *"C4 contract kalemi değil"* hükmü de eksikti; bu bir
+**AK-4 edge-ileri sapmasıdır** (I-5: yalnız geçici olabilir). Ayrıca planın *"bbox'ı zorunlu
+yapmak breaking olur"* önermesi de yanlıştı — `bbox` o şemada **zaten `required`**
+(`sorties[].required = [sortie_id, field_id, crop_type, bbox]`); opsiyonel olan **dizinin
+kendisi**. → Absorpsiyon eylem planında **C11** kalemidir.
+
+### Notes — C8'e devredilen vendored yayılımı (**C-VENDOR**)
+
+- worker `interface/contracts/analysis_type.enum.v1.json` **v1.4.1** ↔ kanonik **v1.4.2**
+  (C0'da bump; `enum` dizisi aynı, yalnız `changeNote`)
+- edge vendored `calibrated_dataset_manifest` + `intake_manifest` bu turun değişikliklerini almalı
+- **Bugün kırık yok:** worker/edge kendi hash kapılarını kullanır (I-4); sürüm dizesi hizası (I-1)
+  C8'in şartıdır.
+
+---
+
 ### C-SSOT — `TARLAANALIZ_SSOT_v1_2_0.txt`: iki repo kopyası hizalandı (checksum-nötr)
 
 **Tip:** doküman + test (şema/enum/api ağacına dokunulmadı → **Contracts Checksum etkilenmez**).

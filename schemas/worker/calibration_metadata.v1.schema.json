@@ -2,31 +2,54 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/schemas/worker/calibration_metadata.v1.schema.json",
   "title": "CalibrationMetadata",
-  "description": "Preprocessing calibration metadata contract [KR-018/082]. Worker pipeline'a giren kalibrasyon üstverisi. Worker interface/contracts/calibration_metadata.v1 ile birebir uyumludur.",
+  "description": "Preprocessing calibration metadata contract [KR-018/082]. Worker pipeline'a giren kalibrasyon üstverisi. Worker interface/contracts/calibration_metadata.v1 vendored kopyasıyla `properties` + `required` düzeyinde EŞDEĞERDİR; bayt-özdeşlik BEKLENMEZ — vendored kopya `additionalProperties: false`, kanonik `unevaluatedProperties: false` idiomunu kullanır (bilinçli ve 9/9 şemada tutarlı; 2026-07-31'de ölçüldü). Doğrulama: tests/test_vendored_parity.py.",
   "type": "object",
-  "required": ["calibration_type"],
+  "required": [
+    "calibration_type"
+  ],
   "properties": {
     "calibration_type": {
       "type": "string",
-      "enum": ["ABSOLUTE", "PANEL_ABSOLUTE", "DLS2_RELATIVE", "RELATIVE", "NONE"],
+      "enum": [
+        "ABSOLUTE",
+        "PANEL_ABSOLUTE",
+        "DLS2_RELATIVE",
+        "RELATIVE",
+        "NONE"
+      ],
       "description": "KR-018: NONE = HARD REJECT. G-3 (2026-06-01): ABSOLUTE eklendi — analysis_job.CalibrationMetadata + worker CalibrationLevel kodu ile birleştirildi (4 tanım artık tutarlı). ABSOLUTE ≡ Pix4D panel reflektans; platform sınırında PANEL_ABSOLUTE'a normalize edilebilir. Kanonik vocabulary: enums/calibration_type.enum.v1.json."
     },
     "calibration_panel_id": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "irradiance_sensor": {
-      "type": ["string", "null"]
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "calibration_timestamp": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "format": "date-time"
     },
     "sensor_model": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "description": "Drone sensor model from Platform metadata (ADR-002)"
     },
     "red_edge_center_nm": {
-      "type": ["number", "null"],
+      "type": [
+        "number",
+        "null"
+      ],
       "description": "Red Edge center wavelength for NDRE offset correction"
     }
   },

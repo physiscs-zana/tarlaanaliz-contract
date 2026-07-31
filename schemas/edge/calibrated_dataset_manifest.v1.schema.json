@@ -2,11 +2,18 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://api.tarlaanaliz.com/schemas/edge/calibrated_dataset_manifest.v1.schema.json",
   "title": "EdgeCalibratedDatasetManifest",
-  "description": "Edge tarafı kalibre veri manifesti — Pix4Dfields kalibrasyonunu tamamlamış dataset için (kiosk-emitted). calibration_result + qc_report + tool metadata içerir. Platform/dataset-katmanı paket manifesti için bkz. schemas/platform/calibrated_dataset_manifest.v1 (outputs[]/reports[] aggregation formu). Edge interface/contracts/schemas/edge/calibrated_dataset_manifest.v1 ile birebir uyumludur.",
+  "description": "Edge tarafı kalibre veri manifesti — Pix4Dfields kalibrasyonunu tamamlamış dataset için (kiosk-emitted). calibration_result + qc_report + tool metadata içerir. Platform/dataset-katmanı paket manifesti için bkz. schemas/platform/calibrated_dataset_manifest.v1 (outputs[]/reports[] aggregation formu). Edge interface/contracts/schemas/edge/calibrated_dataset_manifest.v1 vendored kopyasıyla `properties` + `required` düzeyinde EŞDEĞERDİR; bayt-özdeşlik BEKLENMEZ — vendored kopya `additionalProperties: false`, kanonik `unevaluatedProperties: false` idiomunu kullanır (bilinçli ve 9/9 şemada tutarlı; 2026-07-31'de ölçüldü). Doğrulama: tests/test_vendored_parity.py.",
   "type": "object",
   "properties": {
-    "schema_version": { "type": "string", "const": "1.2" },
-    "dataset_id": { "type": "string", "minLength": 1, "description": "Unique dataset identifier." },
+    "schema_version": {
+      "type": "string",
+      "const": "1.2"
+    },
+    "dataset_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique dataset identifier."
+    },
     "raw_manifest_ref": {
       "type": "string",
       "minLength": 1,
@@ -15,8 +22,16 @@
     "calibration_result": {
       "type": "object",
       "properties": {
-        "tool_name": { "type": "string", "minLength": 1, "description": "Calibration tool name, e.g. Pix4Dfields." },
-        "tool_version": { "type": "string", "minLength": 1, "description": "Version of the calibration tool." },
+        "tool_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Calibration tool name, e.g. Pix4Dfields."
+        },
+        "tool_version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Version of the calibration tool."
+        },
         "observed_footprint_wkt": {
           "type": "string",
           "minLength": 1,
@@ -24,11 +39,19 @@
         },
         "calibration_type": {
           "type": "string",
-          "enum": ["ABSOLUTE", "RELATIVE"],
+          "enum": [
+            "ABSOLUTE",
+            "RELATIVE"
+          ],
           "description": "Calibration type. DJI Mavic 3M produces RELATIVE only. Subset of enums/calibration_type.enum.v1.json (post-calibration manifest: only ABSOLUTE/RELATIVE)."
         }
       },
-      "required": ["tool_name", "tool_version", "observed_footprint_wkt", "calibration_type"],
+      "required": [
+        "tool_name",
+        "tool_version",
+        "observed_footprint_wkt",
+        "calibration_type"
+      ],
       "additionalProperties": false,
       "description": "Calibration processing result object."
     },
@@ -37,7 +60,11 @@
       "properties": {
         "pass_warn_fail": {
           "type": "string",
-          "enum": ["PASS", "WARN", "FAIL"],
+          "enum": [
+            "PASS",
+            "WARN",
+            "FAIL"
+          ],
           "description": "Overall QC verdict."
         },
         "coverage_ratio": {
@@ -48,11 +75,17 @@
         },
         "flags": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "description": "List of QC flags, e.g. blur_detected, overexposure, crs_mismatch."
         }
       },
-      "required": ["pass_warn_fail", "coverage_ratio", "flags"],
+      "required": [
+        "pass_warn_fail",
+        "coverage_ratio",
+        "flags"
+      ],
       "additionalProperties": false,
       "description": "Quality control report for the calibrated dataset."
     },
@@ -61,8 +94,16 @@
       "format": "date-time",
       "description": "ISO-8601 timestamp of calibration completion."
     },
-    "tool_name": { "type": "string", "minLength": 1, "description": "Top-level calibration tool name." },
-    "tool_version": { "type": "string", "minLength": 1, "description": "Top-level calibration tool version." },
+    "tool_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Top-level calibration tool name."
+    },
+    "tool_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Top-level calibration tool version."
+    },
     "correlation_id": {
       "type": "string",
       "pattern": "^corr_[a-f0-9]{16,32}$",
