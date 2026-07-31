@@ -132,6 +132,58 @@ gidiyor — aynı adlı iki SSOT metni **ayrışmış** (hizalama ayrı kalem).
   `breaking_change_detector` **0 breaking**. Beklenen tek kırmızı: checksum (C8'de kapanır).
 - **Gerekçe arşivi:** `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (D-6, D-7, D-15).
 
+### C-SSOT — `TARLAANALIZ_SSOT_v1_2_0.txt`: iki repo kopyası hizalandı (checksum-nötr)
+
+**Tip:** doküman + test (şema/enum/api ağacına dokunulmadı → **Contracts Checksum etkilenmez**).
+
+**Sorun (D-7'nin kökü):** Aynı adı ve aynı sürüm etiketini (`v1_2_0`) taşıyan iki dosya **ayrışmıştı**:
+contract kopyası **1706 satır / KR-084**'te bitiyor, platform kopyası **1895 satır / KR-093**'e
+gidiyordu. Kök neden: bu dosya **hiçbir senkron aracının kapsamında değil**
+(`tools/sync_to_repos.sh` yalnız `schemas/` + `enums/` + `CONTRACTS_VERSION.md` taşır).
+
+**Ölçüm (kopyalamadan ÖNCE yapıldı):**
+- Platform'da fazla: **KR-088, KR-091, KR-092, KR-093** · Contract'ta fazla: **yok**
+- 27 contract-only satırın tamamı **bayat**: (a) eski sürüm/tarih başlığı (son güncelleme 2026-03-07,
+  "Contract Versiyon Uyum 2.0.1" — bugün 7.2.0), (b) **`[KR-083] İl Operatörü`** metni — oysa
+  contract'ın **kendi** `enums/role.enum.v1.json`'ı `DISTRICT_REP`'i kanonik, `IL_OPERATOR`'ı
+  **DEPRECATED** ilan ediyor (yani contract kendi enum'uyla çelişiyordu), (c) 2026-06-14 öncesi
+  KR-024 tarama periyodu tablosu → **kaybedilecek özgün içerik yok.**
+- Her iki blob git'te **LF** → kopya **bayt-özdeş** oldu (Windows checkout'taki CRLF farkı git'in
+  `autocrlf` davranışıdır, içerik farkı değil).
+
+### Changed
+
+- **`docs/TARLAANALIZ_SSOT_v1_2_0.txt`:** platform kopyasıyla **bayt-özdeş** hâle getirildi
+  (49 → 53 KR anılıyor; KR-088/091/092/093 geldi; KR-083 `İlçe Temsilcisi`/`DISTRICT_REP` oldu).
+  Provenans dosyaya **eklenmedi** — bayt-özdeşlik korunsun diye kayıt buraya ve eylem planına yazıldı.
+- **`CLAUDE.md` (KR bölümü) — DÜZELTME:** *"The canonical source is `ssot/kr_registry.md`"* ifadesi
+  **yanlıştı.** Ölçüldü: `ssot/kr_registry.md` yalnız **6 KR** tutuyor (KR-088…KR-093);
+  tam korpus (~49 tanım) `docs/TARLAANALIZ_SSOT_v1_2_0.txt`'tedir. İki kaynak **tamamlayıcıdır,
+  iç içe değildir**; bir KR **en az birinde** tanımlı olmalıdır. Başlık biçiminin tek tip olmadığı
+  da yazıldı (`## [KR-019]` · birleşik `## [KR-018 / KR-082]` · kaynaktaki yazım hatası `## # [KR-033]`).
+
+### Added
+
+- **`tests/test_kr_reference_integrity.py` (10 test):** sarkan (dangling) kanonik atıf kapısı —
+  her `x-kr-ref` KR'si iki kaynağın **birleşiminde** tanımlı olmalı *(hizalama öncesi durumda
+  **düşüyor**: KR-093 hiçbir kaynakta yoktu — kanıtlandı)* · çıkarıcının **birleşik ve
+  hatalı-biçimli başlıkları** da görmesi (yanlış-alarm kapısı; dar bir regex bu turda 018/082/033
+  için yanlış alarm üretmişti) · KR-088/091/092/093'ün SSOT metninde kalması (ayrışma regresyonu) ·
+  KR-083'ün `İlçe Temsilcisi` adını koruması · `role.enum.v1` ↔ SSOT metni `DISTRICT_REP` mutabakatı.
+
+### Notes
+
+- ⚠️ **Açık kalem (kök neden):** SSOT metni senkron aracına **eklenmedi** — rsync yolu burada
+  test edilemediği için körlemesine tooling değişikliği yapılmadı. Worker'daki gibi **salt-okunur
+  drift dedektörü** olarak eklenmesi eylem planında **C-SSOT-2** kalemidir.
+- ⚠️ **Yan bulgu (KİRAZ):** platform'un KR-024 tablosu `| Kiraz | 14-21 |` satırını taşıyor; contract
+  `crop_type.enum.v1` **CHERRY tanımıyor**. Tablo **sadakatle** alındı, çelişki gizlenmedi →
+  KG-0.d-EK kararı artık **üç** kaynağı bağlıyor (`crop_readiness.json` · wire enum · SSOT KR-024).
+- ⚠️ Kaynaktaki `## # [KR-033]` yazım hatası **bilerek düzeltilmedi** (bayt-özdeşlik korunsun);
+  platform tarafında düzeltilirse contract kopyası aynı turda güncellenir.
+- **Doğrulama:** `validate.py` 89 dosya / 0 hata · `pytest` **589 geçti (+10 yeni)** · iki kopya
+  `cmp` ile **bayt-özdeş** ✅.
+
 ---
 
 ## [7.2.0] - 2026-07-14

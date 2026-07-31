@@ -186,6 +186,8 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 | **C7** | `frame_analysis_job.v1` **yeni şema** — tekil kare analiz işi (doğrulandı: `schemas/worker/` altında **yok**) | MINOR | C1′, C3′ |
 | **AL-C1** 🔴 | `expert_review_queue.v1` → `escalation_reason`'a **additive 7. değer `AUDIT_SAMPLE`**. Doğrulandı: kanonik **ve** worker vendored kopya **tam 6 değer**. Detay §11.2 | MINOR | — |
 | **AL-C2** 🔴 | `expert_review_queue.v1` → `audit_sample: bool` + `audit_stratum: string` (platform-otoriter eksen: crop×layer×fenoloji). Detay §11.2 | MINOR | — |
+| ✅ **C-SSOT** | **YAPILDI (2026-07-31) — iki SSOT kopyası hizalandı.** `docs/TARLAANALIZ_SSOT_v1_2_0.txt` contract kopyası platform kopyasıyla **bayt-özdeş** hâle getirildi (git'te ikisi de LF). **Ölçüm:** platform 4 KR fazla (**KR-088/091/092/093**), contract'ta **fazla KR yok**; 27 contract-only satırın tamamı bayat (eski başlık · **IL_OPERATOR** metni — contract'ın kendi `role.enum.v1`'i `DISTRICT_REP` kanonik/`IL_OPERATOR` DEPRECATED diyor · 2026-06-14 öncesi KR-024 tablosu) → **kaybedilen özgün içerik yok.** **Kapı:** `tests/test_kr_reference_integrity.py` (10 test) — her `x-kr-ref` KR'si iki kanonik kaynağın **birleşiminde** tanımlı olmalı; hizalama-öncesi durumda **düşüyor** (kanıtlandı). ⚠️ **Yan bulgu 1:** `ssot/kr_registry.md` yalnız **6 KR** tutuyor (088–093), tam korpus SSOT metninde (~49) — `CLAUDE.md`'nin *"kanonik kaynak kr_registry.md"* ifadesi **yanlıştı, düzeltildi.** ⚠️ **Yan bulgu 2:** KİRAZ çelişkisi üçüncü kaynağa yayıldı (bkz. KG-0.d-EK) | — | ✅ |
+| **C-SSOT-2** ⬜ | **Kök neden açık:** `docs/TARLAANALIZ_SSOT_v1_2_0.txt` **hiçbir senkron aracının kapsamında değil** (`tools/sync_to_repos.sh` yalnız `schemas/`+`enums/`+`CONTRACTS_VERSION.md` taşıyor). Bu yüzden iki kopya sessizce ayrıştı. → Dosya, worker'daki gibi **salt-okunur drift dedektörüne** eklenmeli (kopyalama değil, uyarı). *Şimdi yapılmadı: rsync yolu burada test edilemez, körlemesine tooling değişikliği yapılmadı.* | tooling | — |
 | **C8** | **Release töreni (I-1..I-5):** sürüm bump → **annotated `vX.Y.Z` tag** → `CONTRACTS_SHA256.txt` → platform submodule pin → worker vendor alt-kümesi → 3 repoda sürüm dizesi hizası. ⚠️ **Edge formuna dokunan her değişiklik** (C2′/C3′/C6) edge `interface/contracts/` vendored kopyası + **KR-041 hash** turunu da tetikler — şema açıklaması *"birebir uyumludur"* diyor | **zorunlu** | tur içeriği |
 
 ⚠️ **C8 her contract turunda tekrarlanır ve +1-2 gün maliyeti vardır.** İki tur:
@@ -913,6 +915,15 @@ tablosunda YOK → önceliklendirme eşiksiz kalır.
 **E8'in ürün listesinde öncelik ters.** E8 bugün WHEAT + **SUNFLOWER + OLIVE** ekliyor; oysa
 SUNFLOWER ve OLIVE `bookable:False`, yani sipariş edilemedikleri için eksiklikleri **zararsız**.
 Sipariş edilebilen ve fiilen kırılan tek ürün olan KİRAZ ise listede yok.
+
+**⚠️ EK KANIT (2026-07-31, SSOT hizalaması) — KİRAZ artık ÜÇÜNCÜ yerde de çelişiyor.**
+Contract'ın `docs/TARLAANALIZ_SSOT_v1_2_0.txt` kopyası platform'unkiyle hizalandığında, platform'un
+**2026-06-14 tarihli KR-024 tablosu** contract'a girdi ve o tablo **`| Kiraz | 14-21 |`** satırını
+içeriyor. Yani artık contract deposunun **kendi normatif metni** kirazı desteklenen ürün sayıyor,
+ama **kendi `crop_type.enum.v1`'i CHERRY'yi tanımıyor** (doğrulandı: `False`).
+→ Tablo **bilerek olduğu gibi alındı** (kaynağa sadakat + bayt-özdeşlik korundu); çelişki
+gizlenmedi, buraya yazıldı. **KG-0.d-EK kararı artık üç kaynağı birden bağlar:**
+`crop_readiness.json` (bookable) · `crop_type.enum.v1` (wire) · SSOT KR-024 tablosu (normatif metin).
 
 **Düzeltme (E8 kapsamı):**
 1. **Önce KİRAZ kararı** — ya `bookable:False` yapılır (en hızlı, riski anında kapatır) ya da

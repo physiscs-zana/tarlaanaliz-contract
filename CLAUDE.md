@@ -106,7 +106,23 @@ The validator (`tools/validate.py`) and CI workflow check for these automaticall
 
 ### 5. KR (Business Rule) References
 
-Business rules are referenced as `KR-NNN` throughout the codebase. The canonical source is `ssot/kr_registry.md`. Key KRs for this repo:
+Business rules are referenced as `KR-NNN` throughout the codebase.
+
+**Canonical KR sources — there are TWO and they are COMPLEMENTARY, not nested** (measured 2026-07-31):
+
+| File | Holds | Note |
+|---|---|---|
+| `docs/TARLAANALIZ_SSOT_v1_2_0.txt` | **Full KR corpus** (~49 definitions) | Heading format is NOT uniform: `## [KR-019]`, combined `## [KR-018 / KR-082]`, and one typo `## # [KR-033]`. Byte-identical with the platform copy (aligned 2026-07-31). |
+| `ssot/kr_registry.md` | **Supplementary registry** — only KR-088…KR-093 (data-layer expansion) | Do NOT assume a KR is undefined just because it is missing here. |
+
+A KR referenced via `x-kr-ref` must be defined in **at least one** of the two;
+`tests/test_kr_reference_integrity.py` enforces this (dangling-reference gate).
+
+> ⚠️ This section previously claimed `ssot/kr_registry.md` was *the* canonical source. That was
+> **imprecise** — it holds 6 of ~49 KRs — and it caused a real misdiagnosis during the 2026-07-31
+> audit. Corrected here.
+
+Key KRs for this repo:
 - **KR-050**: PII minimization (no email/TCKN/OTP)
 - **KR-081**: Contract-first / Schema gates (CI)
 - **KR-072**: Dataset lifecycle + chain of custody
