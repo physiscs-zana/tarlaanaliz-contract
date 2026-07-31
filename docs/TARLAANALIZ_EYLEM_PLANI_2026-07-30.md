@@ -1837,6 +1837,45 @@ release checklist'ine (§3G) girer.
 
 ## 14.5 KADEME 5 — SONRAYA (karar bu tur, uygulama sonraki)
 
+> ### 📍 KADEME 5 ilerleme (2026-07-31)
+> **Bu depoda yapılabilir olan iki kalem YAPILDI** (aşağıda ✅); kalanların hepsi ya
+> **başka depoya** ya **E13/motor kararına** ya **agronomi kararına** bağlı — bilerek
+> açık bırakıldı, her biri için engelin NE olduğu yazıldı.
+
+| # | Kalem | Durum | Engel / gerekçe |
+|---|---|---|---|
+| ✅ **G3/G4** | **`priority_zones[].geom` koordinat sınırları.** Ölçüldü: şema UTM METRE (`[500000, 4000000]`), enlem 91 ve boylam −181'i **kabul ediyordu** → yanlış CRS'teki poligon sözleşmeden geçip `ST_SetSRID(…,4326)` ile **yanlış damgalanıyordu** (G4). Artık `prefixItems` ile `[boylam ±180, enlem ±90]` zorlanıyor — D7'deki WKT derece ayırıcısının GeoJSON karşılığı (aynı kural, iki gösterim). EdgeForm master'da var olduğu için daraltma **beyanlı** (`x-compat-accepted`). ⚠️ **Şemanın zorlayamadıkları AÇIKÇA yazıldı** (halka kapanışı · papyon · halka yönü — JSON Schema bunları ifade edemez) ve iki test bu sınırı **regresyon kaydı** olarak tutuyor: kapı gördüğünü iddia etmiyor | ✅ | — |
+| ✅ **K2** | **Veri yönetişimi kararı (yeni 0.h)** — taslak §9'a değil buraya, karar tablosuna yazıldı (aşağıda) | ✅ taslak | Onay bekliyor |
+| ⬜ **S5** | `scale_factor` — reflektans ölçeği taşınmıyor; **EVI/SAVI'yi sessizce bozar, NDVI gizler** (NDVI orandır → ölçekten bağımsız; EVI'nin `+1`/`6R−7.5B` ve SAVI'nin `+L` toplama sabitleri ölçeğe DUYARLIDIR). Ölçüldü: alan yalnız `schemas/platform/calibration_result.v1.schema.json:69`'da var, indeks üretim yoluna **bağlı değil** | ⬜ | **E13** (hangi motor → hangi ölçek) kararına bağlı; plan bunu "E13'ün hemen ardından ilk sırada" diye işaretlemiş |
+| ⬜ **C6b · S3/S4/S6/S7** | Kalibrasyon alt-küme bileşimi, satıcı adları, paket-düzeyi tek `reflectance_scale`, RGB kare ayrımı | ⬜ | **E13** kararı |
+| ⬜ **K1** | `{tenant}` opaklaştırma | ⬜ | **MAJOR** — bu tur MINOR; sürüm penceresi kararı |
+| ⬜ **K3** | Saklama politikası MUST'ları | ⬜ | **D16-c**'ye bağlandı (KR-093 gövdesi tek yerde toplandı, MUST'lar oraya yazılacak) |
+| ⬜ **P1** | Çalışma zamanı zorlaması (Pydantic + `enforce=True`) | ⬜ | **platform deposu** · ⚠️ **SIRA KİLİDİ:** edge ürün sözlüğü hizalanmadan (E16) açılırsa edge çıktısı runtime'da reddedilir |
+| ⬜ **A5/A6 · A7** | Fenoloji eşlemesi · kanopi maskesi | ⬜ | **Agronomi kararı** — kaynak Bakanlık/TAGEM/dergipark düzeyinde teyit ister |
+| ⬜ **Ç2 · Ç4 adım 2-3 · S12** | Yayın politikası `n≥5` · portal/v2 · `DTM`/`POINT_CLOUD` | ⬜ | Ç4 → v2 penceresi · S12 → §12 motor kararı |
+
+> ### 🔒 KARAR TASLAĞI — **0.h Veri Yönetişimi** (K2, onay bekliyor)
+> **Sorun (K2):** plan §0 *"kamu araştırma projesi → veri yönetim planı, çiftçi rızası,
+> yayın/veri paylaşım politikası"* yükümlülüğünü **tanıyor** ama bu, listedeki **tek
+> eyleme dönüşmemiş** satırdı. Bu turda üç yeni veri kategorisi (öncelik bölgesi
+> poligonları + NDVI görselleri · seçilmiş ham kareler · denetim örneklemi etiketleri)
+> sözleşmeye girdi ve **hiçbiri** KR-090 saklama politikasında tanımlı değil (K3).
+>
+> **Taslak karar:**
+> 1. **Veri kategorisi kaydı zorunlu:** contract'a giren her yeni kişisel/konumsal veri
+>    kategorisi, aynı turda KR-090 saklama tablosuna bir satır ekler (süre + silme yolu +
+>    hukuki sebep). Kayıt yoksa kalem C8'e giremez.
+> 2. **Rıza metni ürün kararıdır, ama KAPSAMI sözleşmeden türetilir:** çiftçiye
+>    gösterilen rıza metni, `x-preliminary-content` + `raw_frames` + denetim kanalının
+>    kapsadığı veri kategorilerini eksiksiz saymalıdır.
+> 3. **Yayın/paylaşım politikası:** toplulaştırılmış çıktılarda **n≥5** eşiği (Ç2
+>    kalıntısı) — tek çiftçinin tarlası toplulaştırma içinde tanınamamalı.
+> 4. **Üçüncü kişi verisi:** komşu parsele taşan görüntü/izdüşüm **taşınmaz** (Ç7/D7 ile
+>    kare izdüşümü zaten kaldırıldı; kural genel hâle getirilir).
+>
+> **Onay:** ⬜ koordinatör · **Uygulama:** D16-c ile aynı turda (KR-090 + KR-093 gövdesi).
+
+
 P1 çalışma zamanı zorlaması (platform: Pydantic + `enforce=True`) · K1 `{tenant}` opaklaştırma (**MAJOR**) ·
 K2 plan §0 veri yönetişimi kararı (**yeni 0.h**) · K3 saklama politikası · **C6b + S3/S4/S6/S7** (E13 sonrası) ·
 **S5 `scale_factor`** — E13'ün **hemen ardından ilk sırada** (EVI/SAVI'yi sessizce bozuyor, NDVI gizliyor) ·

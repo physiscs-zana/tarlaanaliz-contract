@@ -269,3 +269,90 @@ class TestAcceptedTighteningDeclarations:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
+
+
+class TestGeoJsonCoordinateBounds:
+    """G3/G4 (KADEME 5) — `geom` artık DERECE dışını reddediyor.
+
+    Ölçüldü (2026-07-31): sınırsız `{"type":"number"}` hâli şunların HEPSİNİ kabul ediyordu —
+    UTM METRE koordinatı (`[500000, 4000000]`), enlem 91, boylam −181. Yanlış CRS'teki bir
+    poligon sözleşmeden sessizce geçiyor, ardından `ST_SetSRID(..., 4326)` onu **yanlış CRS
+    ile damgalıyordu** (G4). Bu, D7'de `observed_footprint_wkt` için konan derece
+    ayırıcısının GeoJSON karşılığıdır — aynı kural, aynı gerekçe, iki farklı gösterim.
+
+    ⚠️ Şemanın ZORLAYAMADIKLARI ayrıca test ediliyor (aşağıda): kapanış, kendini kesme ve
+    halka yönü JSON Schema ile ifade EDİLEMEZ; kapı bunları gördüğünü iddia etmemelidir.
+    """
+
+    @staticmethod
+    def _geom_validator(form: str) -> "Draft202012Validator":
+        schema = json.loads(
+            (ROOT / "schemas" / "edge" / "intake_manifest.v1.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        geom = schema["$defs"][form]["properties"]["priority_zones"]["items"]["properties"]["geom"]
+        return Draft202012Validator(geom)
+
+    @pytest.mark.parametrize("form", ["EdgeForm", "PlatformForm"])
+    @pytest.mark.parametrize(
+        ("label", "ring", "valid"),
+        [
+            ("WGS84 derece", [[32.0, 37.0], [32.1, 37.0], [32.1, 37.1], [32.0, 37.0]], True),
+            ("yükseklikli üçlü", [[32.0, 37.0, 850], [32.1, 37.0, 850], [32.1, 37.1, 850],
+                                  [32.0, 37.0, 850]], True),
+            ("UTM metre", [[500000, 4000000], [500100, 4000000], [500100, 4000100],
+                           [500000, 4000000]], False),
+            ("enlem 91", [[32.0, 91.0], [32.1, 91.0], [32.1, 91.1], [32.0, 91.0]], False),
+            ("boylam -181", [[-181.0, 37.0], [32.1, 37.0], [32.1, 37.1], [-181.0, 37.0]], False),
+        ],
+    )
+    def test_coordinate_bounds(self, form: str, label: str, ring: list, valid: bool) -> None:
+        document = {"type": "Polygon", "coordinates": [ring]}
+        errors = list(self._geom_validator(form).iter_errors(document))
+        assert (not errors) is valid, f"{form} / {label}"
+
+    @pytest.mark.parametrize("form", ["EdgeForm", "PlatformForm"])
+    def test_lon_lat_order_is_documented(self, form: str) -> None:
+        """RFC 7946 sırası [boylam, enlem] — ters yazım sessiz hata kaynağıdır."""
+        schema = json.loads(
+            (ROOT / "schemas" / "edge" / "intake_manifest.v1.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        coord = (schema["$defs"][form]["properties"]["priority_zones"]["items"]
+                 ["properties"]["geom"]["properties"]["coordinates"]["items"]["items"])
+        assert coord["prefixItems"][0]["maximum"] == 180, "ilk eleman BOYLAM olmalı (±180)"
+        assert coord["prefixItems"][1]["maximum"] == 90, "ikinci eleman ENLEM olmalı (±90)"
+
+    def test_schema_does_not_claim_to_validate_topology(self) -> None:
+        """Kapının GÖRMEDİĞİ şeyler AÇIKÇA yazılı olmalı (aşırı iddia etmesin).
+
+        Kapanmamış halka ve papyon (bowtie) JSON Schema ile ifade edilemez; bu belge
+        şemada yazılı değilse tüketici kapının bunları gördüğünü sanır.
+        """
+        schema = json.loads(
+            (ROOT / "schemas" / "edge" / "intake_manifest.v1.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        coord = (schema["$defs"]["PlatformForm"]["properties"]["priority_zones"]["items"]
+                 ["properties"]["geom"]["properties"]["coordinates"]["items"]["items"])
+        text = coord["description"]
+        for needle in ("KAPANIŞ", "KESEN", "ST_IsValid"):
+            assert needle in text, f"şemanın sınırı yazılı değil: {needle}"
+
+    def test_unclosed_and_bowtie_still_pass_by_design(self) -> None:
+        """Bilinen sınırın REGRESYON kaydı: bunlar şemadan geçer, tüketici yakalamalı."""
+        validator = self._geom_validator("PlatformForm")
+        unclosed = {"type": "Polygon",
+                    "coordinates": [[[32.0, 37.0], [32.1, 37.0], [32.1, 37.1], [32.05, 37.05]]]}
+        bowtie = {"type": "Polygon",
+                  "coordinates": [[[0, 0], [1, 1], [1, 0], [0, 1], [0, 0]]]}
+        assert not list(validator.iter_errors(unclosed)), (
+            "kapanmamış halka artık şemadan geçmiyor — güzel; bu testi ve şemadaki "
+            "'zorlayamadıklarım' notunu güncelleyin"
+        )
+        assert not list(validator.iter_errors(bowtie)), (
+            "papyon artık şemadan geçmiyor — bu testi ve notu güncelleyin"
+        )

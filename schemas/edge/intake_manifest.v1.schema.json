@@ -268,9 +268,24 @@
                         "type": "array",
                         "minItems": 2,
                         "maxItems": 3,
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180,
+                            "description": "Boylam (longitude), WGS84 DERECE. |değer| ≤ 180."
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90,
+                            "description": "Enlem (latitude), WGS84 DERECE. |değer| ≤ 90."
+                          }
+                        ],
                         "items": {
                           "type": "number"
-                        }
+                        },
+                        "description": "GeoJSON koordinat çifti **[boylam, enlem]** — sıra RFC 7946 gereği lon,lat'tır (lat,lon DEĞİL). Üçüncü eleman (yükseklik) opsiyoneldir.\n\n⚠️ **2026-07-31/G3 — sınırlar EKLENDİ.** Öncesinde `{\"type\":\"number\"}` idi ve şema şunların HEPSİNİ kabul ediyordu (ölçüldü): UTM METRE koordinatları (`[500000, 4000000]`), enlem 91, boylam −181. Yani yanlış CRS'teki bir poligon sözleşmeden sessizce geçiyor, ardından `ST_SetSRID(...,4326)` onu **yanlış CRS ile damgalıyordu** (G4). Sınırlar, D7'de `observed_footprint_wkt` için konan derece ayırıcısının GeoJSON karşılığıdır — aynı kural, aynı gerekçe.\n\n🔴 **ŞEMANIN ZORLAYAMADIKLARI (bilerek yazılı):** ① halka KAPANIŞI (ilk nokta = son nokta) — JSON Schema elemanlar arası eşitlik ifade edemez ② KENDİ KENDİNİ KESEN poligon (papyon/bowtie) ③ halka yönü (sağ-el kuralı). Bu üçü **tüketicide** doğrulanmalıdır (platform ingest: `ST_IsValid` + kapanış kontrolü). Şema bunları gördüğünü İDDİA ETMEZ."
                       }
                     }
                   }
@@ -674,8 +689,29 @@
                         "type": "array",
                         "minItems": 2,
                         "maxItems": 3,
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180,
+                            "description": "Boylam (longitude), WGS84 DERECE. |değer| ≤ 180."
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90,
+                            "description": "Enlem (latitude), WGS84 DERECE. |değer| ≤ 90."
+                          }
+                        ],
                         "items": {
                           "type": "number"
+                        },
+                        "description": "GeoJSON koordinat çifti **[boylam, enlem]** — sıra RFC 7946 gereği lon,lat'tır (lat,lon DEĞİL). Üçüncü eleman (yükseklik) opsiyoneldir.\n\n⚠️ **2026-07-31/G3 — sınırlar EKLENDİ.** Öncesinde `{\"type\":\"number\"}` idi ve şema şunların HEPSİNİ kabul ediyordu (ölçüldü): UTM METRE koordinatları (`[500000, 4000000]`), enlem 91, boylam −181. Yani yanlış CRS'teki bir poligon sözleşmeden sessizce geçiyor, ardından `ST_SetSRID(...,4326)` onu **yanlış CRS ile damgalıyordu** (G4). Sınırlar, D7'de `observed_footprint_wkt` için konan derece ayırıcısının GeoJSON karşılığıdır — aynı kural, aynı gerekçe.\n\n🔴 **ŞEMANIN ZORLAYAMADIKLARI (bilerek yazılı):** ① halka KAPANIŞI (ilk nokta = son nokta) — JSON Schema elemanlar arası eşitlik ifade edemez ② KENDİ KENDİNİ KESEN poligon (papyon/bowtie) ③ halka yönü (sağ-el kuralı). Bu üçü **tüketicide** doğrulanmalıdır (platform ingest: `ST_IsValid` + kapanış kontrolü). Şema bunları gördüğünü İDDİA ETMEZ.",
+                        "x-compat-accepted": {
+                          "change": "koordinat sınırları eklendi (serbest number → lon[-180,180] / lat[-90,90])",
+                          "date": "2026-07-31",
+                          "rationale": "Biçimsel daraltma. Ölçüldü: sınırsız hâl UTM metre koordinatlarını, enlem 91'i ve boylam −181'i kabul ediyordu; yani yanlış CRS'teki poligon sözleşmeden geçip `ST_SetSRID(...,4326)` ile yanlış damgalanıyordu (G3/G4). Meşru bir WGS84 poligonu bu sınırların DIŞINDA OLAMAZ — reddedilen tek şey zaten hatalı veridir. Üretici (edge NdviPrioritizer) WGS84 üretir; kırılan üretici yoktur.",
+                          "ref": "eylem planı §14.5 (G3/G4) · denetim bulguları G3, G4"
                         }
                       }
                     }

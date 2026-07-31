@@ -72,7 +72,22 @@ isabet: `$.info.contact.email`) + `phone` kapsam-duyarlı + `pyproject` yasak li
 **D16** kapı/tanım/doküman parçaları: tekil-gövde borcu donduruldu (**50 KR iki gövdeli**),
 `stress_ratio` beyanlı tanımsız, CLAUDE.md artık **sayı değil üretici komut** yayımlıyor.
 
-### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **D16-b (koordinatör kararı)** + KADEME 5
+### ✅ D16-b · D18-b · KADEME 5 (yapılabilir kısmı) da bu oturumda
+**D16-b** KR-093 **tek gövdeye** indi: normatif metin SSOT metninde, registry 24 satırlık
+işaretçi. Karar ölçümle: her iki dosyanın da alt-akış kopyaları BAYAT (registry'nin
+platform/worker kopyalarında KR-093 başlığı bile yok) → belirleyici fark **senkron
+mekanizması**: SSOT metninin var, registry'nin yok. Registry'ye özgü iki MUST taşındı,
+kayıpsızlık testle zorlanıyor. Borç **50 → 49**.
+**D18-b** OpenAPI künyesindeki e-posta **silindi**; PII kapısı artık **istisnasız**.
+**KADEME 5**: G3/G4 yapıldı — `geom` artık UTM metre / enlem 91 / boylam −181 reddediyor
+(D7'deki WKT derece ayırıcısının GeoJSON karşılığı); şemanın ZORLAYAMADIKLARI (halka
+kapanışı, papyon) açıkça yazıldı ve regresyon kaydına alındı. K2 için **0.h karar taslağı**
+yazıldı. Kalan KADEME 5 kalemlerinin hepsi E13/motor · agronomi · başka depo bağımlısı.
+
+### 🔴 SONRAKİ OTURUMUN İLK İŞİ — **C8 ön koşulları**
+⛔ **§14.2.1 `$ref` inline onayı** · ⛔ **D16-b2** (kalan 49 KR göçü) · **AK-10** (KR korpusu
+dağıtımı fiilen kırık: worker SSOT metnini hiç taşımıyor) · **0.h** onayı.
+Sonra C8 töreni: sürüm + annotated tag + 3 depo pin (SDLC_GATES §3G).
 **D16-b:** KR-093'ün iki gövdesi (SSOT metni 10 satır ↔ registry 98 satır) hangi kaynakta
 birleşecek? SSOT metni çapraz-repo (platform ile bayt-özdeş), registry tam gövdeleri taşıyor.
 Karar verilmeden gövde taşımak **normatif içerik kaybı** riski taşıdığı için bu turda yapılmadı.
