@@ -1921,7 +1921,9 @@ A7 kanopi maskesi · A5/A6 fenoloji eşlemesi · §12 motor kararı sonrası `DT
 
 | # | İş | Neden önce | Nerede |
 |---|---|---|---|
-| **1** | **`sync_kr_corpus.py --apply`** + platform ve worker'da AYRI commit/PR | KR korpusu 4/4 hedefte sapmış; **worker SSOT metnini hiç taşımıyor**. Kural metnini görmeyen depo kuralı uygulayamaz | bu depo (araç) + 2 kardeş depo (PR) |
+| ✅ **1a** | **SSOT metni senkronu YAPILDI** — platform [PR #348](https://github.com/physiscs-zana/tarlaanaliz-platform/pull/348) (KR-093 gövdesi, +12/−1) · worker [PR #183](https://github.com/physiscs-zana/tarlaanaliz_worker/pull/183) (korpus **ilk kez** eklendi). AK-10'un yarısı kapandı |
+| 🛑 **1b** | **`kr_registry.md` KOPYALANAMAZ — AYRIŞMIŞ ÇATAL (bu turda ölçüldü).** `--apply` ilk kez gerçek depolarda koşturulunca görüldü: kör kopyalama **platformda 143, worker'da 313 anlamlı satırı** yok edecekti (ör. worker'ın *"Admin Export Endpoint: POST /admin/training/export"*, bulut örtüsü çift eşik semantiği; platformun *"Risk & Business Continuity"* bölümü). Yani o kopyalar bayat değil, **kendi içerikleri olan çatallar**. Araç artık yazmadan önce ölçüyor ve **DOKUNMUYOR** (`DIVERGENT` durumu + 5 test). **Yapılacak: ELLE BİRLEŞTİRME** — D16-b deseni: contract'ta tek gövde, kardeş depoda işaretçi |
+| **1c** | ~~`sync_kr_corpus.py --apply` + PR~~ (1a ile yapıldı; 1b elle birleştirme bekliyor) | KR korpusu 4/4 hedefte sapmış; **worker SSOT metnini hiç taşımıyor**. Kural metnini görmeyen depo kuralı uygulayamaz | bu depo (araç) + 2 kardeş depo (PR) |
 | **2** | **D16-b2 — kalan 49 ikili gövde** | AR1 sınıfı açık: aynı KR iki yerde tanımlıysa biri sessizce bayatlar. Yön ve mekanizma KR-093'te kanıtlandı; kalanlar mekanik | `ssot/kr_registry.md` → işaretçi · gövde SSOT metnine |
 | **3** | **D4-b kararı** — parite kapısı CI'da koşsun mu? | CI'da **47 beyanlı skip** var; çapraz-repo sapmayı hiçbir kapı CI'da görmüyor (Y3). Ya PAT ile kardeş checkout, ya "yalnız C8'de yerel" yazılı kabul | koordinatör → CI |
 | **4** | **SD8 kararı** — etiketsiz 16 sürüm: retro-tag mı, kayıt notu mu? | I-2 değişmezi bugün tarihsel olarak TUTMUYOR; C8 bunu yalan raporlayamaz | koordinatör |

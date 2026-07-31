@@ -69,6 +69,32 @@ def _normalized_hash(path: Path) -> str:
     return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
+def _meaningful_lines(path: Path) -> set:
+    """İçerik taşıyan satırlar (tablo/çizgi/kod-çiti gürültüsü hariç)."""
+    return {
+        line.strip()
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines()
+        if len(line.strip()) > 25 and not line.strip().startswith(("|", "---", "```"))
+    }
+
+
+def content_only_in_destination(source: Path, destination: Path) -> set:
+    """Hedefte olup KAYNAKTA OLMAYAN içerik — üzerine yazılırsa KAYBOLUR.
+
+    ⚠️ Bu fonksiyon 2026-07-31'de, aracın kendisi kullanıcı direktifiyle ilk kez
+    `--apply` ile koşturulduğunda EKLENDİ. Ölçüm: `--apply` kardeş depoların
+    `kr_registry.md` kopyalarını ezecekti ve **platformda 143, worker'da 313 anlamlı
+    satır** yok olacaktı (ör. worker'ın "Admin Export Endpoint", bulut örtüsü çift eşik
+    semantiği; platformun "Risk & Business Continuity" bölümü).
+
+    Yani o kopyalar **bayat kopya değil, AYRIŞMIŞ ÇATAL**: kendi içerikleri var. Kör
+    kopyalama bir senkron değil, veri kaybıdır. Araç artık bunu önce ölçer.
+    """
+    if not destination.exists():
+        return set()
+    return _meaningful_lines(destination) - _meaningful_lines(source)
+
+
 def survey() -> List[Dict[str, object]]:
     rows: List[Dict[str, object]] = []
     for target in TARGETS:
@@ -87,7 +113,10 @@ def survey() -> List[Dict[str, object]]:
         elif not destination.exists():
             row["state"] = "MISSING"
         elif _normalized_hash(source) != _normalized_hash(destination):
-            row["state"] = "STALE"
+            lost = content_only_in_destination(source, destination)
+            row["state"] = "DIVERGENT" if lost else "STALE"
+            row["would_lose"] = len(lost)
+            row["sample_loss"] = sorted(lost)[:3]
         else:
             row["state"] = "IN_SYNC"
         rows.append(row)
@@ -110,27 +139,45 @@ def main() -> int:
     width = max(len(f"{r['repo']}/{r['destination']}") for r in rows)
     for row in rows:
         where = f"{row['repo']}/{row['destination']}"
-        print(f"  {row['state']:<14} {where:<{width}}  ← {row['source']}")
+        loss = f"  ⚠️ {row['would_lose']} satır kaybolurdu" if row.get("would_lose") else ""
+        print(f"  {row['state']:<14} {where:<{width}}  ← {row['source']}{loss}")
 
     absent = [r for r in rows if r["state"] == "REPO_ABSENT"]
-    drift = [r for r in rows if r["state"] in ("MISSING", "STALE")]
+    copyable = [r for r in rows if r["state"] in ("MISSING", "STALE")]
+    divergent = [r for r in rows if r["state"] == "DIVERGENT"]
 
     if args.apply:
-        for row in drift:
+        for row in copyable:
             source = ROOT / str(row["source"])
             destination = WORKSPACE / str(row["repo"]) / str(row["destination"])
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source, destination)
             print(f"  ✍  yazıldı: {destination}")
-        print(f"\n✅ {len(drift)} dosya kopyalandı. ⚠️ Her kardeş depoda AYRI commit + PR gerekir.")
-        return 0
+        if divergent:
+            print("\n🛑 AYRIŞMIŞ hedeflere YAZILMADI — kör kopyalama senkron değil, VERİ KAYBIDIR:")
+            for row in divergent:
+                print(f"   - {row['repo']}/{row['destination']}: hedefte olup kaynakta "
+                      f"OLMAYAN {row['would_lose']} anlamlı satır")
+                for line in row.get("sample_loss", []):  # type: ignore[union-attr]
+                    print(f"       · {line[:96]}")
+            print("   → Bunlar bayat kopya DEĞİL, ayrışmış ÇATALdır: elle BİRLEŞTİRİLMELİ")
+            print("     (contract'ta tek gövde + kardeş depoda işaretçi — D16-b deseni).")
+        print(f"\n✅ {len(copyable)} dosya kopyalandı · 🛑 {len(divergent)} hedef KORUNDU.")
+        print("⚠️ Her kardeş depoda AYRI commit + PR gerekir.")
+        return 1 if divergent else 0
 
     if absent:
         print(f"\nℹ️  {len(absent)} hedef ölçülemedi (kardeş depo bu makinede yok).")
-    if drift:
-        print(f"\n❌ KR korpusu SAPMIŞ — {len(drift)} hedef güncel değil.")
+    if divergent:
+        print(f"\n🛑 {len(divergent)} hedef AYRIŞMIŞ (çatal) — kopyalanamaz, BİRLEŞTİRME ister.")
+        for row in divergent:
+            print(f"   - {row['repo']}/{row['destination']}: {row['would_lose']} satır "
+                  "yalnız hedefte var")
+    if copyable:
+        print(f"\n❌ {len(copyable)} hedef bayat (güvenle kopyalanabilir).")
         print("   Düzeltme (bu depoda): python tools/sync_kr_corpus.py --apply")
-        print("   Sonra her kardeş depoda commit + PR (C8 töreninin parçası, SDLC_GATES §3C).")
+        print("   Sonra her kardeş depoda commit + PR (SDLC_GATES §3C).")
+    if divergent or copyable:
         return 1
     print("\n✅ KR korpusu tüm ölçülebilir hedeflerde güncel.")
     return 0

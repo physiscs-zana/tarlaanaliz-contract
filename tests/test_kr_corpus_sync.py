@@ -102,5 +102,74 @@ class TestDriftDetection:
         assert _sync.survey()[0]["state"] == "REPO_ABSENT"
 
 
+
+class TestDivergenceProtection:
+    """🛑 Kör kopyalama senkron DEĞİL, veri kaybıdır (2026-07-31'de yaşandı).
+
+    Kullanıcı direktifiyle `--apply` ilk kez GERÇEK kardeş depolarda koşturuldu ve
+    ölçüldü: `kr_registry.md` kopyalarını ezecekti — **platformda 143, worker'da 313
+    anlamlı satır** yok olacaktı (ör. worker'ın *"Admin Export Endpoint:
+    POST /admin/training/export"*, platformun *"Risk & Business Continuity"* bölümü).
+
+    Yani o kopyalar bayat DEĞİL, **ayrışmış ÇATAL**: kendi içerikleri var. Araç artık
+    yazmadan ÖNCE ölçer ve ayrışmış hedefe DOKUNMAZ.
+    """
+
+    def _pair(self, tmp_path: Path, source_text: str, dest_text: str) -> tuple[Path, Path]:
+        source = tmp_path / "source.md"
+        destination = tmp_path / "dest.md"
+        source.write_text(source_text, encoding="utf-8")
+        destination.write_text(dest_text, encoding="utf-8")
+        return source, destination
+
+    def test_unique_destination_content_is_detected(self, tmp_path: Path) -> None:
+        source, destination = self._pair(
+            tmp_path,
+            "Bu satir kaynakta ve hedefte AYNI sekilde bulunuyor.\n",
+            "Bu satir kaynakta ve hedefte AYNI sekilde bulunuyor.\n"
+            "Bu satir YALNIZ hedefte var ve ezilirse tamamen kaybolur.\n",
+        )
+        lost = _sync.content_only_in_destination(source, destination)
+        assert len(lost) == 1 and "YALNIZ hedefte" in next(iter(lost))
+
+    def test_pure_subset_destination_is_not_divergent(self, tmp_path: Path) -> None:
+        """Hedef, kaynağın alt kümesiyse kayıp yoktur → STALE (güvenle kopyalanır)."""
+        source, destination = self._pair(
+            tmp_path,
+            "Ortak satir burada hem kaynakta hem hedefte bulunmaktadir.\n"
+            "Kaynakta olan ve hedefte olmayan yeni bir satir daha var.\n",
+            "Ortak satir burada hem kaynakta hem hedefte bulunmaktadir.\n",
+        )
+        assert _sync.content_only_in_destination(source, destination) == set()
+
+    def test_missing_destination_has_nothing_to_lose(self, tmp_path: Path) -> None:
+        source = tmp_path / "source.md"
+        source.write_text("Herhangi bir icerik satiri burada duruyor olsun.\n", encoding="utf-8")
+        assert _sync.content_only_in_destination(source, tmp_path / "yok.md") == set()
+
+    def test_survey_marks_divergent_not_stale(self, tmp_path: Path,
+                                              monkeypatch: pytest.MonkeyPatch) -> None:
+        contract = tmp_path / "contract"
+        (contract / "docs").mkdir(parents=True)
+        (contract / "docs" / "src.md").write_text(
+            "Kanonik govde satiri burada yer almaktadir.\n", encoding="utf-8")
+        sibling = tmp_path / "sibling" / "docs"
+        sibling.mkdir(parents=True)
+        (sibling / "copy.md").write_text(
+            "Kanonik govde satiri burada yer almaktadir.\n"
+            "Kardes depoya OZGU bir bolum burada duruyor ve korunmalidir.\n",
+            encoding="utf-8")
+        monkeypatch.setattr(_sync, "ROOT", contract)
+        monkeypatch.setattr(_sync, "WORKSPACE", tmp_path)
+        monkeypatch.setattr(_sync, "TARGETS", (
+            _sync.Target("docs/src.md", "sibling", "docs/copy.md", "test gerekçesi — yeterince uzun"),
+        ))
+        row = _sync.survey()[0]
+        assert row["state"] == "DIVERGENT", (
+            "ayrışmış hedef STALE sayılıyor — `--apply` onu ezer ve kardeş depoya özgü "
+            "içerik kaybolur"
+        )
+        assert row["would_lose"] == 1
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
