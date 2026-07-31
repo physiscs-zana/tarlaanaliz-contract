@@ -119,25 +119,37 @@ class TestPhoneIsScoped:
         assert not errors
 
 
-class TestMetadataExceptionStaysNarrow:
-    """İstisna listesi sessizce genişleyemez — her yeni satır bu testi de değiştirir."""
+class TestGateHasNoExceptions:
+    """🔒 D18-b: PII kapısı İSTİSNASIZ çalışır.
 
-    def test_exception_list_is_exactly_the_declared_one(self) -> None:
-        assert _validate.METADATA_EXCEPTIONS == {
-            "api/platform_public.v1.yaml": ("$.info.contact.email",),
-        }, (
-            "PII istisna listesi değişmiş. Her istisna kapıyı zayıflatır: gerekçesini "
-            "validate.py'de yazın, burada bilinçli olarak onaylayın ve eylem planına "
-            "açık kalem ekleyin."
+    Kısa bir süre tek bir istisna vardı (`$.info.contact.email` — OpenAPI künyesindeki
+    destek adresi). Karar: **adres silindi**, istisna boşaldı. Gerekçe ölçümle: diğer iki
+    spec'te künye bloğu hiç yok · OpenAPI 3.1'de `info.contact` opsiyonel · adres depoda
+    başka hiçbir yerde geçmiyordu · ürünün kimlik modeli telefon+PIN.
+
+    Asıl gerekçe kapı hijyeni: her istisna, sonraki değişikliklerin arkasına
+    saklanabileceği kalıcı bir yüzeydir.
+    """
+
+    def test_exception_list_is_empty(self) -> None:
+        assert _validate.METADATA_EXCEPTIONS == {}, (
+            f"PII kapısına istisna eklenmiş: {_validate.METADATA_EXCEPTIONS}. Sıfır "
+            "istisnalı kapı tek istisnalı kapıdan güçlüdür. Gerçekten gerekiyorsa: "
+            "gerekçeyi validate.py'de yazın, bu testi bilinçli olarak değiştirin ve "
+            "eylem planı §14.5.1'e açık kalem ekleyin."
         )
 
-    def test_exception_is_metadata_not_a_data_field(self) -> None:
-        """İstisna yalnız BELGE KÜNYESİ yolunda olabilir; `components/paths` altında ASLA."""
-        for _file, paths in _validate.METADATA_EXCEPTIONS.items():
-            for path in paths:
-                assert path.startswith("$.info."), (
-                    f"veri yüzeyinde istisna: {path} — künye dışı istisna kabul edilemez"
-                )
+    def test_no_contact_email_in_openapi_specs(self) -> None:
+        """Silinen adres geri gelmesin (D18-b regresyon kapısı)."""
+        offenders = [
+            str(path.relative_to(ROOT)).replace("\\", "/")
+            for path in sorted((ROOT / "api").rglob("*.yaml"))
+            if "email:" in path.read_text(encoding="utf-8")
+        ]
+        assert not offenders, (
+            f"OpenAPI künyesine e-posta geri gelmiş: {offenders}. İletişim gerekiyorsa "
+            "`url:` kullanın — e-posta ürünün kimlik modeli dışıdır (KR-050)."
+        )
 
 
 if __name__ == "__main__":

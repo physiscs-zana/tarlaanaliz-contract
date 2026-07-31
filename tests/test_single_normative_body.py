@@ -24,12 +24,15 @@ KAPI TASARIMI — neden "yasak" değil de "borç dondurma":
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
 
 
 ROOT = Path(__file__).parent.parent
+KR_REGISTRY = ROOT / "ssot" / "kr_registry.md"
+SSOT_TEXT = ROOT / "docs" / "TARLAANALIZ_SSOT_v1_2_0.txt"
 
 # Çıkarıcıyı TEK yerden al (D2'de dört başlık biçimini tanır hâle getirildi).
 import sys
@@ -41,17 +44,49 @@ from test_kr_reference_integrity import (  # noqa: E402
 )
 
 
-#: 2026-07-31 ölçümü — İKİ kaynakta birden gövdesi olan KR sayısı (bilinen borç).
-#: Bu sayı YALNIZ KÜÇÜLEBİLİR. Arttıysa yeni bir ikili gövde eklenmiş demektir.
-KNOWN_DUAL_BODY_COUNT = 50
+#: İKİ kaynakta birden **GÖVDESİ** olan KR sayısı (bilinen borç).
+#: 2026-07-31: 50 ölçüldü → KR-093 göçüyle **49**. Bu sayı YALNIZ KÜÇÜLEBİLİR.
+KNOWN_DUAL_BODY_COUNT = 49
 
-#: Göçün İLK hedefi: veri-katmanı KR'leri (yalnız registry'de gövdeli olanlar hariç).
-#: KR-093 denetimde KRİTİK olarak işaretlendi (AR1) — çelişen iki gövde.
-PRIORITY_MIGRATION = ("KR-093",)
+#: Göçü TAMAMLANMIŞ KR'ler: registry'de yalnız işaretçi, gövde SSOT metninde.
+MIGRATED = ("KR-093",)
+
+#: Bir bölümün "gövde değil, işaretçi" olduğunu söyleyen makine-okunur damga.
+POINTER_MARK = "TÜRETİLMİŞ İŞARETÇİ"
+
+
+def _registry_sections() -> dict[str, str]:
+    """`ssot/kr_registry.md` → {KR kimliği: bölüm metni}."""
+    text = KR_REGISTRY.read_text(encoding="utf-8")
+    sections: dict[str, str] = {}
+    current: str | None = None
+    buffer: list[str] = []
+    for line in text.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("#") and re.search(r"KR-\d{3}", stripped):
+            if current:
+                sections[current] = "\n".join(buffer)
+            match = re.search(r"KR-\d{3}", stripped)
+            current, buffer = (match.group(0) if match else None), []
+        elif current:
+            buffer.append(line)
+    if current:
+        sections[current] = "\n".join(buffer)
+    return sections
+
+
+def _registry_body_krs() -> set[str]:
+    """Registry'de GERÇEK gövdesi olan KR'ler — işaretçiler SAYILMAZ.
+
+    ⚠️ Bu ayrım kapının canıdır: ilk yazımda başlık sayıyordum ve KR-093 göçünden
+    SONRA bile onu "iki gövdeli" görüyordum (işaretçi de başlık taşıyor). Yani kapı
+    göçü ölçemiyordu — yeşil ama yalan. Artık damgaya bakıyor.
+    """
+    return {kr for kr, body in _registry_sections().items() if POINTER_MARK not in body}
 
 
 def _dual_body_krs() -> set[str]:
-    return _ssot_defined_krs() & _registry_defined_krs()
+    return _ssot_defined_krs() & _registry_body_krs()
 
 
 class TestDualBodyDebtIsFrozen:
@@ -73,16 +108,34 @@ class TestDualBodyDebtIsFrozen:
             "yakalasın."
         )
 
-    def test_priority_migration_target_is_still_tracked(self) -> None:
-        """KR-093 göçü tamamlanınca bu test güncellenir (sessizce unutulmasın)."""
-        dual = _dual_body_krs()
-        for kr in PRIORITY_MIGRATION:
-            if kr not in dual:
-                pytest.fail(
-                    f"{kr} artık tek gövdeli — göç TAMAMLANMIŞ olabilir. PRIORITY_MIGRATION "
-                    "listesini ve KNOWN_DUAL_BODY_COUNT'ü güncelleyin, eylem planı §14.4/D16'yı "
-                    "kapatın."
-                )
+    @pytest.mark.parametrize("kr", MIGRATED)
+    def test_migrated_kr_has_pointer_in_registry(self, kr: str) -> None:
+        """Göçü biten KR registry'de yalnız İŞARETÇİ tutar — gövde geri yazılamaz."""
+        section = _registry_sections().get(kr, "")
+        assert section, f"{kr} registry'den tamamen kaybolmuş (işaretçi de kalmalı)"
+        assert POINTER_MARK in section, (
+            f"{kr} registry'de yeniden GÖVDE kazanmış. Normatif metin tek yerde durur "
+            "(docs/TARLAANALIZ_SSOT_v1_2_0.txt); ikinci gövde AR1'i geri getirir."
+        )
+
+    @pytest.mark.parametrize("kr", MIGRATED)
+    def test_migrated_kr_body_lives_in_the_ssot_text(self, kr: str) -> None:
+        assert kr in _ssot_defined_krs(), (
+            f"{kr} göç ettirildi ama SSOT metninde başlığı yok — gövde KAYBOLMUŞ olabilir"
+        )
+
+    def test_migration_preserved_the_registry_only_musts(self) -> None:
+        """Göç KAYIPSIZ olmalı: registry'ye özgü iki MUST maddesi SSOT metnine geçti mi?"""
+        ssot = SSOT_TEXT.read_text(encoding="utf-8")
+        for needle, what in (
+            ("Aşama A tespit DEĞİLDİR", "Y-D: öncelik bölgesi tespit değildir kuralı"),
+            ("yeni faz EKLENMEZ", "ADR-007 §2: yeni mission state/faz eklenmez kuralı"),
+            ("analysis_priority_zones", "Aşama A içerik kaynağı"),
+        ):
+            assert needle in ssot, (
+                f"göçte KAYIP: {what} SSOT metninde bulunamadı ({needle!r}). Göç, gövdeyi "
+                "taşımak demektir; silmek değil."
+            )
 
 
 class TestUndefinedQuantitiesAreDeclared:

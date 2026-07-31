@@ -12,9 +12,17 @@ info:
     
     **Base URL**: `https://api.tarlaanaliz.com/v1`
     
+  # KR-050 / D18-b (2026-07-31): `email` alanı KALDIRILDI.
+  # Gerekçe (ölçüm): ① diğer iki spec'te (platform_internal, edge_local) künye bloğu HİÇ yok
+  # → bu spec tek istisnaydı ② OpenAPI 3.1'de `info.contact` opsiyoneldir, silmek spec ihlali
+  # değildir ③ adres depo genelinde başka hiçbir yerde geçmiyordu (kırılan bağ yok)
+  # ④ ürünün kimlik modeli telefon+PIN'dir, e-posta kanalı model dışıdır (KR-050)
+  # ⑤ ASIL gerekçe kapı hijyeni: PII kapısındaki her istisna kalıcı bir yüzeydir; adres
+  #    silinince `tools/validate.py → METADATA_EXCEPTIONS` BOŞALDI ve kapı istisnasız hâle geldi.
+  # İletişim gerekirse `url:` alanı eklenebilir (e-posta değil) — doğrulanmış bir adres yokken
+  # uydurulmadı.
   contact:
     name: TarlaAnaliz API Support
-    email: api-support@tarlaanaliz.com
   license:
     name: Proprietary
 

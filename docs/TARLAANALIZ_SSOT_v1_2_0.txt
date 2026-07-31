@@ -731,6 +731,8 @@ Takvim değerleri **karar desteğidir**; parsel gözlemi, yerel fenoloji (sıcak
 
 ## [KR-093] Çiftçi Ön Raporu (İki-Fazlı Teslimat: PRELIMINARY → FULL)
 
+> 🔒 **TEK NORMATİF GÖVDE (2026-07-31, D16-b).** Bu KR'nin normatif metni YALNIZ buradadır. `ssot/kr_registry.md` artık bu başlık için **türetilmiş bir işaretçi** tutar (gövde tutmaz). Gerekçe: KR-093'ü uygulayan taraf PLATFORM'dur ve platform deposunda bu dosyanın kopyası vardır; `kr_registry.md` ise yalnız contract deposunda yaşar. Ölçüldü — Y-D (Aşama A) genişlemesinin MUST maddeleri yalnız registry'de duruyordu, yani kuralı uygulayacak olan onu GÖREMİYORDU. Birleştirmede registry'ye özgü iki madde (Aşama A tespit değildir · yeni faz eklenmez) buraya taşındı; hiçbir madde silinmedi.
+
 **Amaç:** Çiftçiye iki fazlı teslimat sağlamak. Uçuş + radyometrik kalibrasyon (KR-018) sonrası worker'ın ürettiği **deterministik indeks katmanları** (ortomozaik + NDVI/NDRE/stres) hazır olur olmaz, çiftçi bunları uzman konsensüs onayından (KR-019) ÖNCE **"ÖN RAPOR" (PRELIMINARY)** olarak görebilir. Uzman onayı sonrası aynı sonuç, uzman-doğrulanmış bulguların açıldığı **"TAM RAPOR" (FULL)** fazına geçer. Böylece çiftçi uçuştan hemen sonra tarlasının genel durumunu görür; kesin bulgular yine uzman kapısından geçer.
 
 **KR-019 ile ilişki (KRİTİK — çelişki yok):** KR-019 **tam rapor** (uzman-doğrulanmış bulgular: hastalık/zararlı/yabancı-ot tespitleri + uzman düzeltmeleri) için fail-closed yayın kapısıdır ve **DEĞİŞMEZ**. KR-093 bu kapının ÖNÜNDE, **tespit içermeyen** deterministik indeks görünümünü ayrı bir faz olarak tanımlar. Ön rapor, KR-019'un koruduğu uzman-doğrulanmış bulguları **İÇERMEZ**; dolayısıyla KR-019'un yayın kapısını zayıflatmaz. KR-019'daki "çiftçiye yayınlanmaz" kısıtı tespit/uzman-bağımlı içerik için **aynen** geçerlidir.
@@ -741,7 +743,16 @@ Takvim değerleri **karar desteğidir**; parsel gözlemi, yerel fenoloji (sıcak
 
 ### Zorunluluklar (MUST)
 
-[ZORUNLU] PRELIMINARY fazında çiftçiye sunulan içerik **YALNIZCA**: ortomozaik / deterministik indeks katmanları (`HEALTH`←ndvi, `NITROGEN_STRESS`←ndre) + `overall_health_index`. ⚠️ **2026-07-31/D17 DÜZELTMESİ:** `WATER_STRESS` bu listeden ÇIKARILDI — katman VEKİLDİR (`analysis_type.enum` → `availability: proxy_only`): doğrudan ölçümü CWSI (LWIR) veya NDMI (SWIR) ister, ikisi de referans donanımda (DJI Mavic 3M) YOKTUR (karar kaydı KG-0.f). Kaynağı `stress_ratio` ise hiçbir kanonik kaynakta TANIMLI DEĞİLDİR. Vekil bir gösterge, uzman kapısı öncesinde doğrulanmış bulgu gibi teslim edilemez. Katman hesaplanmaya devam edebilir; yalnız ÖN FAZDA sunulmaz. Termal/SWIR donanım gelirse yeniden değerlendirilir. Tespitler (findings: hastalık/zararlı/yabancı-ot), uzman düzeltmeleri ve uzman-bağımlı katmanlar PRELIMINARY yanıtında **YER ALMAZ** (fail-closed; sunum katmanı DTO'su bu bulguları hiç döndürmez).
+[ZORUNLU] **İçerik kapalı listedir ve İKİ AŞAMALIDIR.** `PRELIMINARY` fazında çiftçiye sunulabilecek içerik YALNIZCA aşağıdaki iki aşamadan ibarettir; listede olmayan hiçbir alan ön fazda sunulmaz. Makine-okunur kanonik kaynak: `enums/report_phase.enum.v1.json` → `x-preliminary-content` (bu metinle AYNI olmak zorundadır).
+
+  - **Aşama A (kalibrasyon sonrası — worker sonucu HENÜZ YOK; mission `UPLOADED`):** öncelik bölgeleri — `geom` (poligon) + `ndvi_value` + `priority_level` + `ndvi_overlay` görseli. Kaynak: `analysis_priority_zones` (edge NdviPrioritizer çıktısı; `intake_manifest.v1` `EdgeForm.priority_zones` üzerinden taşınır). ⟵ KG-0.b-R (Y-D) eklentisi, 2026-07-30 onaylı.
+  - **Aşama B (worker sonucu geldi — mission `IN_ANALYSIS`/`PENDING_REVIEW`):** ortomozaik + deterministik indeks katmanları (`HEALTH`←ndvi, `NITROGEN_STRESS`←ndre) + `overall_health_index`. ⚠️ 2026-07-31/D17: `WATER_STRESS` bu listeden ÇIKARILDI — katman VEKİLDİR (`analysis_type.enum` → `availability: proxy_only`; doğrudan ölçümü CWSI/LWIR veya NDMI/SWIR ister, ikisi de referans donanımda yoktur — KG-0.f) ve kaynağı `stress_ratio` hiçbir kanonik kaynakta TANIMLI DEĞİLDİR.
+
+[ZORUNLU] **Aşama A tespit DEĞİLDİR.** Öncelik bölgesi bir gözlemsel indeks türevidir (NDVI eşiği + poligon); sınıf/etiket/şiddet taşımaz. Bu nedenle KR-019'u zayıflatmaz ve KR-025'i (reçete/ilaçlama kararı yok) ihlal etmez.
+
+[ZORUNLU] **Yeni mission state / yeni faz EKLENMEZ.** `report_phase` kümesi `{PRELIMINARY, FULL}` olarak kalır (ADR-007 §2 korunur); faz yalnız `mission.status`'tan türetilir ve harita kanonik `mission_status.enum.v1` adlarıyla yazılır.
+
+[ZORUNLU] Tespitler (`findings`: hastalık/zararlı/yabancı-ot), uzman düzeltmeleri ve uzman-bağımlı katmanlar PRELIMINARY yanıtında **YER ALMAZ** (fail-closed; sunum katmanı DTO'su bu bulguları hiç döndürmez).
 
 [ZORUNLU] PRELIMINARY yanıtı görsel olarak **"ÖN RAPOR — uzman doğrulaması beklemede"** ibaresini taşır: bulguların kesin olmadığı ve nihai raporun uzman onayı sonrası yayınlanacağı çiftçiye açıkça belirtilir. Bu disclaimer FULL fazında **"TAM RAPOR (uzman onaylı)"** ibaresiyle değiştirilir.
 

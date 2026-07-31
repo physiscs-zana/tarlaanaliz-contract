@@ -1243,100 +1243,25 @@ Bir görevin uçuş yüksekliği (Y) ve hızı (v) değerlerini bitki türü + s
 
 ## KR-093 — Çiftçi Ön Raporu (İki-Fazlı Teslimat: PRELIMINARY → FULL)
 
-> **Versiyon notu (2026-07-31 · C0/C9):** Bu kayıt kanonik registry'ye **bu turda taşındı.**
-> KR-093 2026-07-06'da yürürlüğe girmişti ve contract artefaktları (`enums/report_phase.enum.v1.json`,
-> `schemas/events/analysis_preliminary_ready.v1.schema.json`) ona **normatif atıf** yapıyordu; ancak
-> tanım bu dosyada **yoktu** (dosya KR-092'de bitiyordu) → sarkan kanonik atıf. Kaynak normatif metin:
-> platform `docs/TARLAANALIZ_SSOT_v1_2_0.txt` [KR-093] + `docs/kr/kr_registry.md`.
-> ⚠️ Contract'ın kendi `docs/TARLAANALIZ_SSOT_v1_2_0.txt` kopyası **KR-084'te bitiyor** (platform kopyası
-> KR-093'e kadar gider) — iki kopya ayrışmıştır; hizalama **ayrı bir kalemdir**, bu kayıt onu beklemez.
-
-**1) Amaç**
-Çiftçiye iki fazlı teslimat. Uçuş + radyometrik kalibrasyon (KR-018) sonrası **tespit içermeyen**
-deterministik içerik, uzman konsensüs onayından (KR-019) **ÖNCE** "ÖN RAPOR" (`PRELIMINARY`) olarak
-gösterilir; uzman onayı sonrası aynı sonuç "TAM RAPOR" (`FULL`) fazına geçer. Çiftçi uçuştan hemen
-sonra tarlasının genel durumunu görür; kesin bulgular yine uzman kapısından geçer.
-
-**2) Kapsam / Applies-to:** platform *(worker yeni çıktı üretmez; edge yeni alan üretmez)*
-
-**3) Zorunluluklar (MUST)**
-
-1) **İçerik kapalı listedir.** `PRELIMINARY` fazında sunulabilecek içerik **YALNIZCA** aşağıdaki iki
-   aşamadır; kanonik makine-okunur kaynak `enums/report_phase.enum.v1.json` → `x-preliminary-content`:
-   - **Aşama A (kalibrasyon sonrası, worker sonucu YOK — mission `UPLOADED`):** öncelik bölgeleri —
-     `geom` (GeoJSON Polygon) + `ndvi_value` + `priority_level` + `ndvi_overlay` görseli.
-     Kaynak: `analysis_priority_zones` (edge NdviPrioritizer çıktısı; `intake_manifest.v1`
-     `EdgeForm.priority_zones` üzerinden taşınır). ⟵ **KG-0.b-R (Y-D) eklentisi, 2026-07-30 onaylı**
-   - **Aşama B (worker sonucu geldi — mission `IN_ANALYSIS`/`PENDING_REVIEW`):** ortomozaik +
-     deterministik indeks katmanları (`HEALTH`←ndvi, `NITROGEN_STRESS`←ndre)
-     + `overall_health_index`. ⟵ KR-093'ün özgün tanımı, **2026-07-31/D17 ile WATER_STRESS ÇIKARILARAK daraltıldı**
-     ⚠️ **2026-07-31/D17 DÜZELTMESİ:** `WATER_STRESS` bu listeden ÇIKARILDI — katman VEKİLDİR (`analysis_type.enum` → `availability: proxy_only`): doğrudan ölçümü CWSI (LWIR) veya NDMI (SWIR) ister, ikisi de referans donanımda (DJI Mavic 3M) YOKTUR (karar kaydı KG-0.f). Kaynağı `stress_ratio` ise hiçbir kanonik kaynakta TANIMLI DEĞİLDİR. Vekil bir gösterge, uzman kapısı öncesinde doğrulanmış bulgu gibi teslim edilemez. Katman hesaplanmaya devam edebilir; yalnız ÖN FAZDA sunulmaz. Termal/SWIR donanım gelirse yeniden değerlendirilir.
-2) **Tespit sızmaz (fail-closed).** Tespitler (`findings`: hastalık/zararlı/yabancı-ot), uzman
-   düzeltmeleri ve uzman-bağımlı katmanlar **hiçbir aşamada** `PRELIMINARY` yanıtında yer almaz;
-   sunum katmanı DTO'su bu bulguları hiç döndürmez. **KR-019 yayın kapısı DEĞİŞMEZ.**
-3) **Aşama A tespit değildir.** Öncelik bölgesi bir **gözlemsel indeks türevidir** (NDVI eşiği +
-   poligon); sınıf/etiket/şiddet taşımaz. Bu nedenle KR-019'u zayıflatmaz ve KR-025'i (reçete/ilaçlama
-   kararı yok) ihlal etmez.
-4) **Faz yalnız mission.status'tan türetilir**, bağımsız set edilemez. Harita **kanonik**
-   `mission_status.enum.v1` adlarıyla yazılır: `UPLOADED`/`IN_ANALYSIS`/`PENDING_REVIEW` →
-   `PRELIMINARY`; `DELIVERED` → `FULL`; `EXPERT_REJECTED` → geri çekilir. **Haritada olmayan statü
-   için faz TÜRETİLMEZ ve sonuç sunulmaz (fail-closed)** — "listelenmeyen = PRELIMINARY" varsayımı
-   yasaktır (uçuş öncesi `DRAFT`/`PLANNED` ön rapor üretemez).
-5) **Ödeme kapısı (KR-033) her iki aşamada geçerlidir:** ödenmemiş sonuç/tile → HTTP **402**.
-   Ön rapor ücretsiz teaser DEĞİLDİR. Sıra: önce ödeme (402), sonra faz türetme.
-6) **Disclaimer zorunludur:** `PRELIMINARY` yanıtı **"ÖN RAPOR — uzman doğrulaması beklemede"**
-   ibaresini taşır; `FULL`'de **"TAM RAPOR (uzman onaylı)"** ile değiştirilir.
-7) **Konsensüs RED** (mission `EXPERT_REJECTED`) → ön rapor **geri çekilir**: özet API **409**,
-   hiçbir katman/bölge sunulmaz. **ESCALATED** → `PENDING_REVIEW`'da kalır, faz `PRELIMINARY` kalır.
-8) **Bildirim:** worker sonucu geldiğinde (mission `PENDING_REVIEW`) uzman kapısıyla **PARALEL**
-   `analysis.preliminary_ready` wire olayı + çiftçi bildirimi (best-effort, KR-066). Telefon (PII)
-   wire'a girmez (KR-071). ⚠️ Bu olay **yalnız Aşama B'yi** haber verir; Aşama A için okuma yolu
-   (çiftçi ucu) kullanılır, yeni wire olayı **eklenmez**.
-9) **Yeni mission state / yeni faz eklenmez.** `report_phase` kümesi `{PRELIMINARY, FULL}` olarak kalır
-   (ADR-007 §2 korunur).
-
-**4) Kanıt / Artefact**
-- `enums/report_phase.enum.v1.json` — `x-preliminary-content` (kapalı içerik listesi) + `x-derived-from`
-  (kanonik statü haritası + `unlisted_status_behavior` + `platform_internal_aliases`)
-- `schemas/events/analysis_preliminary_ready.v1.schema.json` — Aşama B wire olayı (PII'siz)
-- `schemas/edge/intake_manifest.v1.schema.json` — `EdgeForm.priority_zones` (Aşama A kaynağı)
-- Platform: `ResultSummaryDTO.report_phase`, çiftçi ön rapor okuma ucu, PWA faz rozeti + disclaimer
-
-**5) Audit / Log**
-- `WORKER_BRIDGE.PRELIMINARY_READY` — Aşama B; ön bildirim + wire olayı yayınlandı (`correlation_id`)
-- `analysis.preliminary_ready` — dış tüketiciler için wire olayı (best-effort)
-
-**6) Hata Modları**
-- mission `EXPERT_REJECTED` → 409 (ön rapor geri çekildi; katman/bölge sunulmaz)
-- ödenmemiş sonuç/tile → 402 (KR-033; `PRELIMINARY` dahil, faz türetmeden ÖNCE)
-- sonucun sahibi değil → 403 (RBAC, fail-closed)
-- haritada olmayan mission.status → faz türetilmez, sonuç sunulmaz (fail-closed)
-- Aşama A'da öncelik bölgesi yok (bayrak kapalı / bölge üretilmedi) → **boş liste**, 500 değil
-- ön bildirim yayını hatası → best-effort yutulur (KR-066); sonuç işleme bozulmaz
-
-**7) Test / Kabul Kriterleri**
-- mission `UPLOADED` + ödeme OK → `report_phase=PRELIMINARY`, **yalnız** öncelik bölgeleri döner;
-  `findings` **yok**
-- mission `PENDING_REVIEW` → `report_phase=PRELIMINARY`, indeks katmanları + `overall_health_index`;
-  `findings` **yok**
-- mission `DELIVERED` → `report_phase=FULL`
-- mission `EXPERT_REJECTED` → 409
-- ödenmemiş → 402 (faz türetmeden ÖNCE)
-- mission `DRAFT`/`PLANNED` → faz türetilmez, sonuç sunulmaz (fail-closed)
-- `x-derived-from.mapping` anahtarlarının **tamamı** `mission_status.enum.v1` üyesidir
-- `x-preliminary-content` hiçbir aşamasında `findings`/`detections` geçmez
-
-**8) Cross-refs**
-- KR-019 (uzman konsensüs kapısı — DOKUNULMAZ; KR-093 onun önündeki tespit-içermeyen fazdır)
-- KR-033 (ödeme kapısı — `PRELIMINARY` dahil), KR-025 (reçete yok), KR-018 (kalibrasyon hard-gate)
-- KR-066 (best-effort/KVKK), KR-071 (PII wire'a girmez), KR-064 (katman sunumu), KR-088/KR-091 (dashboard)
-- ADR: platform `docs/adr/ADR-007-preliminary-farmer-view.md` (§2 yeni state yok, §5 Aşama B bildirimi)
-- Karar kaydı: `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §9 **KG-0.b-R (Y-D)**
-
-> **⚠️ Çapraz-repo notu (AK-4).** KR-093 `Applies-to: platform`'tur ve özgün normatif metni platform
-> deposundadır. Aşama A eklentisi **koordinatör onaylı** (KG-0.b-R, 2026-07-30) ve contract burada
-> **kanonik** hâle getirilmiştir; platform `docs/kr/kr_registry.md` + `docs/TARLAANALIZ_SSOT_v1_2_0.txt`
-> kopyalarının bu metni **aynalaması** ayrı bir platform kalemidir (P6/P12 ile aynı turda).
-> Sapma **geçicidir**, kalıcı divergence yasaktır.
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-07-31, D16-b).**
+> KR-093'ün tek normatif metni: **`docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-093]`**.
+>
+> **Karar gerekçesi (ölçümle, tahminle değil):**
+> 1. **Her iki dosyanın da alt-akış kopyaları BAYAT.** Ölçüldü: `kr_registry.md`'nin platform
+>    (`docs/kr/`, `contracts/ssot/`) ve worker (`docs/reference/`) kopyalarının **hiçbirinde**
+>    KR-093 başlığı yok; SSOT metninin platform kopyası da contract'tan farklı. Yani dağıtım
+>    kâğıt üzerinde var, içerikte yok.
+> 2. **Fark: senkron MEKANİZMASI.** SSOT metni C-SSOT turunda bayt-özdeş hâle getirildi ve
+>    `tests/test_kr_reference_integrity.py` onu koruyor. `kr_registry.md` için **hiçbir senkron
+>    aracı yok** (`tools/sync_to_repos.sh` yalnız `schemas/`+`enums/`+`CONTRACTS_VERSION.md`
+>    taşır — plan kalemi C-SSOT-2). Tutulamayan bir kaynağı normatif ilan etmek, çürümeyi
+>    kurala dönüştürmektir.
+> 3. **Kayıp yok:** bu dosyaya özgü iki MUST maddesi — *"Aşama A tespit değildir"* ve
+>    *"yeni mission state / yeni faz eklenmez"* — ve Aşama A içerik listesi (kaynak:
+>    `analysis_priority_zones`) SSOT metnine **taşındı**; ortak maddeler zaten oradaydı.
+>
+> ⚠️ Bu başlık altına **yeniden gövde yazılmaz** — `tests/test_single_normative_body.py`
+> ikili gövde borcunu dondurur ve yeni ikili gövdeyi kırmızıya çevirir.
 
 ---
+

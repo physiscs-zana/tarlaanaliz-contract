@@ -32,20 +32,16 @@ SCOPED_FIELDS: Dict[str, tuple] = {
 }
 
 
-# --- BELGE ÜSTVERİSİ istisnası (dar, beyanlı) -------------------------------
-# `api/platform_public.v1.yaml` → `$.info.contact.email` = `api-support@tarlaanaliz.com`.
-# Bu bir VERİ ALANI değil, OpenAPI belge üstverisidir (destek adresi). KR-050 kimlik/veri
-# ekseninde e-posta toplamayı yasaklar; belge künyesi o eksende değildir.
+# --- BELGE ÜSTVERİSİ istisnası — ŞU AN BOŞ, ÖYLE KALMALI --------------------
+# 2026-07-31/D18: `api/` ağacı ilk kez tarandığında tek isabet çıkmıştı —
+# `api/platform_public.v1.yaml → $.info.contact.email` (destek adresi). Kısa süre için
+# dar bir istisna tanımlandı, sonra **D18-b kararıyla adres SİLİNDİ** ve istisna boşaldı.
 #
-# ⚠️ İstisna BİLEREK tek bir TAM YOLA bağlıdır — "api/ altında email serbest" DEĞİL.
-# Yeni bir istisna eklemek `tests/test_pii_scope_gate.py`'yi de değiştirmeyi gerektirir
-# (sessizce genişletilemez). 2026-07-31'de bulundu: bu alan bugüne kadar HİÇBİR kapıdan
-# geçmiyordu, çünkü `api/` ne bu araçta ne CI grep işinde taranıyordu.
-#
-# 🔵 AÇIK KARAR (koordinatör): adres tamamen SİLİNEBİLİR de — o zaman istisna da kalkar.
-METADATA_EXCEPTIONS: Dict[str, tuple] = {
-    'api/platform_public.v1.yaml': ('$.info.contact.email',),
-}
+# 🔒 KURAL: bu sözlük BOŞ kalır. Bir güvenlik kapısındaki her istisna, sonraki
+# değişikliklerin arkasına saklanabileceği kalıcı bir yüzeydir; sıfır istisnalı kapı
+# tek istisnalı kapıdan kesinlikle güçlüdür. `tests/test_pii_scope_gate.py` boşluğu
+# ZORLAR — yeni bir istisna eklemek testi de bilinçli olarak değiştirmeyi gerektirir.
+METADATA_EXCEPTIONS: Dict[str, tuple] = {}
 
 
 def _rel(path: Path) -> str:
