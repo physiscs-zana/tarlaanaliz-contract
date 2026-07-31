@@ -1,10 +1,22 @@
 # Oturum Devir Notu (Session Handoff)
 
-> Amaç: Farklı bilgisayarlar arasında çalışırken oturum durumunu taşımak.
+> Amaç: Farklı bilgisayarlar arasında çalışırken **oturum durumunu** taşımak.
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-07-30
+**Son güncelleme:** 2026-07-31
+
+> ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
+> Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
+> **İŞ LİSTESİ TUTMAZ.**
+>
+> | Dosya | Rolü |
+> |---|---|
+> | **`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md`** | ⭐ **Yapılacak işlerin TEK kaynağı** (C/E/W/P/WEB/AL kalemleri, dalgalar, kararlar) |
+> | bu dosya | Depo durumu + devir (işler için yukarıdakine bakılır) |
+> | `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` | Kanıt arşivi — her düzeltmenin `dosya:satır` dayanağı |
+>
+> Aynı iş için ikinci bir liste açılmaz; bir kalem değişecekse **eylem planında** değişir.
 
 ---
 
@@ -20,7 +32,7 @@ işleri, çapraz analiz ve teknik referans orada. **Sonraki oturum önce onu oku
 ### Bu oturumda ALINAN 7 KARAR (KG-0.a … KG-0.g · onaylı 2026-07-30)
 | Kod | Karar | Contract etkisi |
 |---|---|---|
-| KG-0.a | Edge→Platform taşıma: **manifest + presigned PUT** (platform ikili gövde ucu açmaz). **Önkoşul: E14** | C1/C2/C3 |
+| KG-0.a | Edge→Platform taşıma: **manifest + presigned PUT** (platform ikili gövde ucu açmaz). **Önkoşul: E14** | C0/C1′/C2′/C3′ *(2026-07-31'de hedef şemalar düzeltildi)* |
 | KG-0.b**-R** 🔄 | ÖN RAPOR: **ADR-007 değişmez**, direktif **Y-D** ile karşılanır — çiftçi kalibrasyondan sonra **`analysis_priority_zones`**'tan tarlasındaki **sorunlu kırmızı NDVI bölgelerini** görür (`geom` + `ndvi_value` + `ndvi_overlay`). *(Oturum içinde revize: önceki Y-C/"durum bildirimi + ertele" yürürlükten kalktı)* | — (şema değişmez) |
 | KG-0.c | Ham kareler **bütün gitmez** — yalnız işaretli yamaları gören kareler | C3 |
 | KG-0.d | Pilot **ÜZÜM**, demo hikâyesi **ANTEP FISTIĞI** (kaynak: `crop_readiness.json`) | — |
@@ -75,18 +87,18 @@ NDVI farkı ③ dk/ha + tepe RAM (32 GB'da) ④ gerçek GB/dönüm.
 **Karar ağacı:** ODM çalıştı → ücretsiz kal (~$300/yıl Terra) · ODM çalışmadı → Metashape ·
 zonasyon/VRA **ürün** olacaksa → Fields. Tam gerekçe ve kaynaklar: eylem planı **§12**.
 
-### ⚠️ CONTRACT TARAFINDA BEKLEYEN — sonraki oturumun ilk işi
-| # | İş | Neden kritik |
-|---|---|---|
-| **AL-C1** | `expert_review_queue.v1` → `escalation_reason`'a **additive `AUDIT_SAMPLE`** | Doğrulandı: kanonik + worker vendored kopyada **tam 6 değer**. i.i.d. denetim tile'ını taşıyacak neden **yok**; güven-temelli neden altında yollamak **yansızlığı bozar**. Worker tek taraflı ekleyemez (§2.1) |
-| **AL-C2** | `expert_review_queue.v1` → `audit_sample: bool` + `audit_stratum: string` | `audit_stratum` **platform-otoriter eksende** (crop×layer×fenoloji) olmalı |
-| **AL-P1** | *(platform)* Portal **anti-anchoring**: denetim tile'ında uzmana tahmin/güven **gösterilmez** | Görürse etiket modele demirlenir → **tüm ölçüm temeli geçersiz** |
-| **C1/C2/C3** | `calibrated_dataset_manifest.v1` → `index_layers[]`, `patches[].object_key`, `raw_frames[]` | KG-0.a/0.c uygulaması |
-| **KG-0.f** | `analysis_type.enum.v1.json` metadata: `BENEFICIAL` + `THERMAL_STRESS` "üretilemez" notu | M3M'de termal bant yok; BENEFICIAL için model yok |
+### ⚠️ CONTRACT TARAFINDA BEKLEYEN → **ARTIK EYLEM PLANI §3.1'DE** (2026-07-31)
 
-**Kaynak devir spesi:** `tarlaanaliz-worker/denetim/audit_escalation_reason_devir_spec_2026_07_19.md`
-(worker'ın karar-hazır devri — **platform seçer, worker uydurmaz**).
-⚠️ AL-C1/C2 + C1/C2/C3 **aynı sürüm turunda** birleştirilmeli (tek C8 tören maliyeti).
+> Buradaki iş listesi **kaldırıldı** — aynı iş iki dosyada tutulduğu için bayatlıyordu
+> (C1/C2/C3 yanlış şemayı hedefliyordu, KG-0.f zaten yapılmıştı).
+> **Yürürlükteki liste tek yerde:** eylem planı **§3.1 → "🔒 TUR TANIMI"** bloğu.
+>
+> **TUR 1 = C0 + C1′ + C2′ + C2″ + C3′ + C9 + C10 + AL-C1 + AL-C2** *(+C6 koşullu)*
+> *(C4 düştü — contract kalemi değil · C5 düştü — zaten yapılmış · AL-C1/C2 Tur 2'den Tur 1'e alındı)*
+>
+> **Kaynak devir spesi:** `tarlaanaliz-worker/denetim/audit_escalation_reason_devir_spec_2026_07_19.md`
+> (worker'ın karar-hazır devri — **platform seçer, worker uydurmaz**).
+> **Neden değiştiği:** `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (kanıt arşivi).
 
 ### Doğrulama (bu oturumda geçti)
 `python tools/check_no_egeanaliz.py` → OK · `python tools/validate.py` → **0 hata, ALL VALIDATIONS PASSED**
@@ -97,14 +109,21 @@ zonasyon/VRA **ürün** olacaksa → Fields. Tam gerekçe ve kaynaklar: eylem pl
   (sürüm kontrolüne alındı; onlara atıf yapan `audit_escalation_reason_devir_spec` ile aynı dizin).
 - Eylem planı proje kökünden → **`tarlaanaliz-contract/docs/`** taşındı (kök artık temiz).
 
-### 📌 Sonraki oturum — önerilen sıra
-1. **`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md`'yi oku** (tek eylem kaynağı).
-2. **Contract turu:** AL-C1 + AL-C2 + C1/C2/C3 + KG-0.f metadata notu → **tek sürümde**, sonra C8 töreni
-   (annotated tag + `pin_version.py` + 3 repo pin).
-3. **Demo kritik yolunu** paralel başlat (yukarıdaki 6 adım) — ürün açısından en acil zincir.
-4. **E14 (kalibrasyon kanıtı üreticisi) C13'ten ÖNCE** — yoksa hat bağlansa bile HC-05 M1 içinde durur.
-5. `end_to_end_workflow.md` C13/C15/C16 + `open_items_decisions_2026-06.md` kayıtlarını işle
-   (metinler eylem planı §9.1'de kopyala-yapıştır hazır).
+### 📌 Sonraki oturum — önerilen sıra *(2026-07-31 denetimine göre güncellendi)*
+1. **`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md`'yi oku** — **yapılacak işlerin tek kaynağı.**
+   Özellikle §3.1 "TUR TANIMI" + §9 "2026-07-31 BAĞIMSIZ DENETİM TURU" tablosu.
+2. **C0 önce** — iki `calibrated_dataset_manifest` formunun rol ayrımını sabitle; C1′/C2′/C3′ bu karar
+   olmadan yazılamaz.
+3. **KR-093'ü `ssot/kr_registry.md`'ye taşı** (bugün KR-092'de bitiyor) → sonra **C9 + C10**;
+   ÖN RAPOR'un kanonik içerik tanımı ve statü eşlemesi bunlar olmadan Y-D'yi kapsamıyor.
+4. **E13 kararı → C6** (`RELATIVE` mi `DLS2_RELATIVE` mi) — sıra planda ters yazılmıştı.
+5. **Contract Tur 1'i tek sürümde** kapat, sonra C8 töreni (annotated tag + `pin_version.py` + 3 repo pin).
+6. **Demo kritik yolu artık 7 adım** (⓪ C9/C10 · ① C2′ · ② E10 · ③ E12 *+P9a* · ④ P4 · ⑤ P6 · ⑥ P12 ·
+   **⑦ WEB1 ekran**) — ⑦ olmadan demo API cevabında kalır.
+7. **E14 (kalibrasyon kanıtı üreticisi) C13'ten ÖNCE** — yoksa hat bağlansa bile HC-05 M1 içinde durur.
+   *(Bu tespit denetimde tam doğrulandı: 5 tüketici / 0 üretici.)*
+8. `end_to_end_workflow.md` C13/C15/C16 + `open_items_decisions_2026-06.md` kayıtlarını işle
+   (metinler eylem planı §9.1'de kopyala-yapıştır hazır — **Y-D'ye göre düzeltilmiş hâlleriyle**).
 
 ### 🟡 Açık kalan tek ürün kararı
 **KİRAZ:** `crop_readiness.json` → `bookable: True`, ama `crop_type.enum.v1` (8 ürün) **ve** edge
@@ -187,18 +206,29 @@ Ya `bookable: False` ya enum + tablo eklenmeli. Detay: eylem planı KG-0.d-EK.
 
 ## 1. Depo Durumu (Snapshot)
 
-- **Kontrat sürümü (CONTRACTS_VERSION.md):** `7.0.1` — Breaking: **NO** (7.0.0'a göre PATCH:
-  metadata/description iç-tutarlılık; enum dizileri değişmedi). NOT: 7.0.0'ın kendisi breaking'di
-  (phenology_stage MAIZE_*→CORN_* rename).
-  - Checksum (SHA-256): `32c747a5876dcb612aade23c4a822ac7e8b23ac47d0042c85021b994db16c40c`
-  - 7.0.1 fix commit'i: `3aa5fa2` (8 dosya). Öncesi: 7.0.0 rename `c0fa705`, 6.2.0 `d5f18b9`.
+> ⚠️ **2026-07-31'de DÜZELTİLDİ — bu bölüm iki sürüm bayattı.** `7.0.1` yazıyordu ve §3 tüketici
+> tablosu "platform GERİDE, re-pin gerekli" diyordu; **ikisi de yanlıştı** ve sonraki oturumu
+> **zaten yapılmış** bir re-pin turuna yollayacaktı. Aradaki sürümler: **7.1.0** (`analysis_result.v1
+> → tile_counts`, KR-088) ve **7.2.0** (`intake_manifest.v1` edge/AV1 karantina sayaçları).
+>
+> **KALICI KURAL:** Bu bölüm **C8 release töreninin parçası olarak** güncellenir.
+> Sürüm bump'ından sonra güncellenmediyse **release eksiktir.**
+
+- **Kontrat sürümü (CONTRACTS_VERSION.md):** **`7.2.0`** — Breaking: **NO** (MINOR; iki opsiyonel
+  top-level alan, `required` değişmedi).
+  - Checksum (SHA-256): **`5d3c204d0cad6946939c90c9778c9d1d9df3e69b78207ee8ce638ac3bd494c02`**
+  - Sürüm zinciri: `7.0.1` (`3aa5fa2`) → `7.1.0` (`58899e2`) → **`7.2.0` (`02845fb`)**
+  - **Etiketler doğrulandı (2026-07-31):** `v6.1.0 · v7.0.1 · v7.1.0 · v7.2.0` — **dördü de
+    *annotated*** (`git for-each-ref … %(objecttype)` → `tag`) ⇒ **I-2 değişmezi TUTUYOR.**
   - Checksum yalnız `schemas/`+`enums/`+`api/` ağacını kapsar; CHANGELOG.md / docs/ değişiklikleri
-    (bu handoff + denetim/ raporu dahil) checksum'ı DEĞİŞTİRMEZ. `git log` `3aa5fa2`'den daha yeni bir
-    head gösterirse (bu oturum-kapanış handoff/denetim commit'i) bu NORMALDIR — sürüm kimliği SHA'ya
-    değil, yukarıdaki checksum'a dayanır (F6: self-referential SHA'dan kaçınıldı).
+    (bu handoff + denetim/ raporu dahil) checksum'ı DEĞİŞTİRMEZ. `git describe` etiketten sonra
+    `vX.Y.Z-N-g…` gösterirse ve N doküman commit'iyse bu NORMALDIR — sürüm kimliği SHA'ya değil,
+    yukarıdaki checksum'a dayanır (F6: self-referential SHA'dan kaçınıldı).
+  - **Kapı durumu (2026-07-31 koşuldu):** `pin_version.py --verify` ✅ · `validate.py` ✅ 89 dosya / 0 hata.
 - **Tek çalışma deposu:** `.../TARLA-ANALİZ/tarlaanaliz-contract` (origin = `github.com/physiscs-zana/tarlaanaliz-contract`)
 
-### Dallar / PR durumu — 2026-07-12 itibarıyla
+### Dallar / PR durumu — **2026-07-31** itibarıyla: çalışma dizini temiz, **açık PR yok**
+*(aşağıdaki tablo 07-12 tarihli tarihsel kayıttır)*
 
 | Öğe | Durum | Not |
 |---|---|---|
@@ -244,14 +274,19 @@ görülüyor → o depoya bu oturumdan **dokunulmadı** (çakışmayı önlemek 
 
 ---
 
-## 3. Tüketici (consumer) Durumu — 2026-07-12
+## 3. Tüketici (consumer) Durumu — **2026-07-31 (dört depoda ölçüldü)**
 
 | Servis | Sürüm | Senkron | Not |
 |---|---|---|---|
-| **Contract (SSOT)** | `7.0.1` (3aa5fa2) | — | master; checksum `32c747a5…` |
-| **Platform** | 4.3.0 pin (submodule 82d2fd8) | ⚠ GERİDE (4.3.0 → 7.0.1) | 6.2.0 + 7.0.0 + 7.0.1'e re-pin gerekli; checksum `32c747a5…` |
-| **Worker** | `v5.1.1` (bağımsız şema + kendi hash gate) | ⚠ AKSİYON | phenology_stage tüketiyorsa MAIZE_*→CORN_* aynı turda hizalanmalı (7.0.0 breaking; hâlâ açık) |
-| **Edge** | `1.2.0` (bağımsız pin + kendi hash gate) | Temiz | phenology_stage tüketmez; 7.0.0 rename edge'i etkilemez |
+| **Contract (SSOT)** | **`7.2.0`** (`02845fb`, tag `v7.2.0` *annotated*) | — | master; checksum `5d3c204d…` |
+| **Platform** | **`7.2.0`** (`contracts/` submodule + kök `CONTRACTS_VERSION.md`) | ✅ **HİZALI** | checksum `5d3c204d…` birebir; per-dosya LF-hash `ed700c63…` |
+| **Worker** | **`v7.2.0`** (kendi KR-041 hash gate'i ile) | ✅ **HİZALI** | I-4: vendored **alt-küme**, bayt-özdeşlik beklenmez |
+| **Edge** | **`1.3.0`** (bağımsız sürüm şeması) | ✅ Temiz | Kendi pin/hash gate'i; metinde 7.2.0'a atıf var |
+
+> ✅ **I-1 (sürüm dizesi hizası) ve I-2 (annotated tag) DOĞRULANDI — senkron kırık değil.**
+> Bu tablonun eski hâli platformu "GERİDE" gösteriyordu; **2026-07-31'de ölçülerek düzeltildi.**
+> ⚠️ *Eski §2/§3.1'deki `phenology_stage` ve worker `v5.1.1` maddeleri tarihsel kayıttır —
+> 7.0.1→7.2.0 zincirinde kapandı.*
 
 ---
 

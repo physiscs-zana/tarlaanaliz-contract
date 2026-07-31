@@ -1,10 +1,19 @@
 # TARLAANALIZ — EYLEM PLANI, İŞ AKIŞI VE REPO BAZLI İŞ SIRALAMASI
 
-> **Tarih:** 2026-07-30 · **Statü:** Kamu araştırma projesi · **Koordinatör:** proje sahibi
-> **Bu dosya tek kaynaktır.** Oturumun diğer plan dosyaları bu dosyada birleştirildi ve silindi.
-> Ayrıntılı yazılım karşılaştırması + kaynak listesi için: `fotogrametri_yazilim_karsilastirmasi_2026-07-29.md`
+> **Tarih:** 2026-07-30 · **Son revizyon:** 2026-07-31 (bağımsız denetim turu)
+> **Statü:** Kamu araştırma projesi · **Koordinatör:** proje sahibi
+> **Bu dosya YAPILACAK İŞLERİN TEK KAYNAĞIDIR.** Başka hiçbir dosyada iş listesi tutulmaz.
+> Ayrıntılı yazılım karşılaştırması + kaynak listesi **§8'e özetlendi** (ayrı karşılaştırma dosyası silindi).
 > **Referans donanım:** DJI Mavic 3M (tek drone) · işleme: RTX 3090 masaüstü (24 GB VRAM / 32 GB RAM / 1 TB)
 > **M1/M2 istasyonları henüz ALINMADI** — planın tamamı bunu varsayar.
+>
+> ### 📐 Dosya rolleri (karışıklık önleyici — 2026-07-31)
+> | Dosya | Rolü | İş listesi tutar mı? |
+> |---|---|---|
+> | **bu dosya** | **Yapılacak işlerin tek kaynağı** (C/E/W/P/WEB/AL kalemleri) | ✅ **EVET — tek** |
+> | `docs/SESSION_HANDOFF.md` | Depo durumu fotoğrafı + oturumlar arası devir | ❌ hayır (buraya işaret eder) |
+> | `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` | **Kanıt arşivi** — her düzeltmenin `dosya:satır` dayanağı | ❌ hayır (gerekçe arşivi) |
+> | `denetim/` altındaki diğer raporlar | Tarihsel denetim kayıtları | ❌ hayır |
 
 ---
 
@@ -39,7 +48,7 @@ Bu yedi karar birbirini etkiliyor; ayrı ayrı verilemez. Hepsi yazılı hâle g
 | # | Karar | Öneri | Neden birlikte |
 |---|---|---|---|
 | **0.a** | **C13 taşıma mimarisi**: (1) platformda parça-yükleme ucu · (2) manifest + presigned PUT | **(2)** | C16'yı da çözer; platformu veri yolundan çıkarır |
-| **0.b** | **C15 ön rapor**: Y-A (ADR-009, yeni faz) · Y-B (direktifi reddet) · **Y-C (rapor değil, durum bildirimi)** | **Y-C** | ADR-007 §2/§5 korunur, üç ADR birden açılmaz |
+| **0.b** | **C15 ön rapor**: Y-A (yeni faz + yeni ADR) · Y-B (direktifi reddet) · Y-C (durum bildirimi) · **Y-D (öncelik bölgesi kaynaklı ÖN RAPOR)** | **Y-D** ⟵ *KG-0.b-R ile revize; Y-C yürürlükten kalktı* | ADR-007 §2/§5 korunur, üç ADR birden açılmaz |
 | **0.c** | **Ham kare politikası**: (i) hiç gitmez · (ii) tamamı · (iii) yalnız işaretli yamaları gören kareler | **(iii)** | 0.a'nın anahtar şemasını belirler |
 | **0.d** | **Pilot + demo ürünü** | **GRAPE birincil** · PISTACHIO ikincil (§2.1) | Eğitim veri seti + eşik tablosu kesişimi |
 | **0.e** | **Dev-station modu**: M1+M2 rolü tek makinede; hangi güvenlik gevşetmeleri, nasıl denetime yazılır | **Gerekli** | M1/M2 alınmadı; yoksa hiçbir veri platforma girmez |
@@ -162,17 +171,34 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 
 | # | İş | Tip | Bağımlılık |
 |---|---|---|---|
-| **C1** | `calibrated_dataset_manifest.v1` → `index_layers[]` ekle: `{object_key, layer_type(ortho/ndvi/ndre/ndwi), reflectance_scale, engine_name, calibration_tier}` | MINOR | 0.a, 0.c |
-| **C2** | `calibrated_dataset_manifest.v1` → `patches[].object_key` ekle (mevcut göreli yol alanı deprecate) | MINOR | 0.a |
-| **C3** | `calibrated_dataset_manifest.v1` → `raw_frames[]` ekle (opsiyonel; yalnız seçilmiş kareler: `{object_key, frame_id, footprint_wkt, band}`) | MINOR | 0.c |
-| **C4** | `intake_manifest.v1` → `sorties[].bbox` politikası: zorunlu yapmak **breaking**; öneri **opsiyonel kalsın**, edge'de fail-loud doğrulama (E9) | karar | 0.d |
-| **C5** | `analysis_type.enum.v1` → `metadata`'ya "üretilemez" notu: `BENEFICIAL` (model yok), `THERMAL_STRESS` (M3M'de termal bant yok). **Enum değeri değişmez** | PATCH | 0.f |
-| ~~**C6**~~ | ~~`calibration_type.enum.v1` → M3M için `RELATIVE` tier'ı~~ **KAPANDI — iş yok.** Enum zaten `ABSOLUTE / PANEL_ABSOLUTE / DLS2_RELATIVE / RELATIVE / NONE / AGNOSTIC` içeriyor ve `RELATIVE` tanımı birebir *"Saha-bazlı göreli kalibrasyon (ör. **DJI Mavic 3M çıktısı**)"* diyor. ⚠️ E13 için nüans: M3M'in **dahili ışık sensörü** olduğu için `DLS2_RELATIVE` ("ışık/irradyans sensörü ile göreli") daha doğru tier olabilir — hangisinin yazılacağı E13'te karara bağlanmalı | — | — |
-| **C7** | `frame_analysis_job.v1` **yeni şema** — tekil kare analiz işi | MINOR | C1, C3 |
-| **C8** | **Release töreni (I-1..I-5):** sürüm bump → **annotated `vX.Y.Z` tag** → `CONTRACTS_SHA256.txt` → platform submodule pin → worker vendor alt-kümesi → 3 repoda sürüm dizesi hizası | **zorunlu** | C1-C7 |
+| **C0** 🔴 | **ÖN KOŞUL (2026-07-31 denetimi).** İki `calibrated_dataset_manifest.v1` formunun rol ayrımını sabitle: **edge formu = kiosk kanıt manifesti** (`calibration_result`+`qc_report`) · **platform formu = dataset-katmanı paket agregası** (`outputs[]`/`reports[]`). Zaten belgeli (`schemas/edge/…:5` + `ssot/contracts_ssot.md:93`) ama **plan bunu ayırt etmiyordu** → C1/C2/C3 yanlış dosyayı hedefliyordu | PATCH | — |
+| **C1′** | **`schemas/platform/calibrated_dataset_manifest.v1`** → `outputs[].file_artifact`'e opsiyonel **`layer_type`** (ortho/ndvi/ndre/ndwi) + **`calibration_tier`** ekle. ⚠️ **Yeni `index_layers[]` dizisi AÇILMAZ** — `outputs[]`, `reflectance_scale` (`reflectance_0_1/0_100/scaled_int/unknown`) ve `producer_tool` **zaten mevcut**, tekrarlanmaz | MINOR | 0.a, 0.c, C0 |
+| **C2′** 🔴 | **`schemas/edge/intake_manifest.v1`** → **`PlatformForm`'a `priority_zones` ekle** (bugün **yalnız `EdgeForm`'da** var) ve `visualizations`'a **`object_key`** koy. `EdgeForm`'daki göreli yol `x-deprecated` işaretlenir, **kaldırılmaz** (non-breaking). ⚠️ Eski C2 `calibrated_dataset_manifest`'i hedefliyordu — **o şemada `patches` alanı YOK** (contract genelinde 0 eşleşme) | MINOR | 0.a, C0 |
+| **C2″** | Edge aynası: `priority_zone.py:31,55` regex + `max_length=128` `object_key` için genişletilir (vendored senkron) | — | C2′ |
+| **C3′** | **`schemas/edge/calibrated_dataset_manifest.v1`** → `raw_frames[]` ekle (opsiyonel; yalnız seçilmiş kareler: `{object_key, frame_id, footprint_wkt, band}`). Kare seçimi kalibrasyon çıktısıdır → **edge formu** | MINOR | 0.c, C0 |
+| ~~**C4**~~ | ~~`intake_manifest.v1` → `sorties[].bbox` politikası~~ → **CONTRACT KALEMİ DEĞİL (2026-07-31).** `sorties` contract'ın **hiçbir** şemasında yok (repo geneli tarandı); yalnız **edge-yerel** görev manifestinde (`aggregator.py:101,151`). Var olmayan alan `required` yapılamaz → karar **E9'a taşındı**, C8 tören maliyeti **yok** | — | — |
+| ~~**C5**~~ | ~~`analysis_type.enum.v1` → "üretilemez" notu~~ → **YAPILDI (v1.4.1'de mevcut, 2026-07-31 doğrulandı).** `BENEFICIAL → availability: enum_valid_not_yet_emittable` (*"model olgunluğuyla henüz emit edilemez"*) · `THERMAL_STRESS → requires_thermal_payload` (*"**Mavic 3M'de üretilemez**"*). İkisi de **makine-okunur**. Kalan tek delta: `changeNote`'a KG-0.f çapraz atfı → **C0 ile aynı commit** | — | — |
+| **C9** 🔴 | **KR-093 içerik tanımını genişlet (2026-07-31 denetimi).** Bugün iki kanonik artefakt PRELIMINARY içeriğini **"YALNIZ/ONLY"** diyerek kapatıyor: `analysis_preliminary_ready.v1` (*"carries **ONLY** deterministic index layers (HEALTH/NITROGEN_STRESS/WATER_STRESS) + overall_health_index"*) ve `report_phase.enum.v1` (*"**Yalnız** deterministik indeks katmanları… sunulur"*). Y-D'nin göstereceği **öncelik bölgesi (poligon + `ndvi_value` + `ndvi_overlay`)** bu listede **YOK** → liste genişletilir. **Ön koşul: KR-093 kaydı `ssot/kr_registry.md`'ye taşınmalı (bugün KR-092'de bitiyor)** | MINOR | 0.b-R |
+| **C10** 🔴 | **`report_phase.x-derived-from.mapping`'i kalibrasyon-sonrasına aç.** Bugün tam 4 giriş var (`ANALYZING/PENDING_REVIEW → PRELIMINARY`, `DONE → FULL`, `EXPERT_REJECTED → WITHDRAWN`); Y-D raporu **kalibrasyondan hemen sonra** gösteriliyor ve o an mission `UPLOADED` (`mission.py:84`) → **mapping'de karşılığı yok.** Bunun "çalışıyor" görünmesinin tek sebebi platform kodundaki catch-all `else PRELIMINARY` (`results_service_impl.py:227`) — yani platform **kanonikten geniş**. Ya `UPLOADED → PRELIMINARY` eklenir ya *"listelenmeyen statüler PRELIMINARY (fail-closed)"* yazılır. **Aynı turda:** mapping'deki **kanonik olmayan `ANALYZING`** adı `IN_ANALYSIS`'e çevrilir (`mission_status.enum.v1`'de `ANALYZING` yok; platform-içi ad — çeviri `mission.py:27`'de belgeli) | MINOR | 0.b-R, C9 |
+| **C6** ⚠️ | **KOŞULLU AÇIK — "kapandı, iş yok" HÜKMÜ GERİ ALINDI (2026-07-31).** Enum kanonik olarak `ABSOLUTE / PANEL_ABSOLUTE / DLS2_RELATIVE / RELATIVE / NONE / AGNOSTIC` içeriyor ve `RELATIVE` = *"Saha-bazlı göreli kalibrasyon (ör. **DJI Mavic 3M çıktısı**)"*. **AMA** `x-context-subsets` ölçüldü: `edge/calibrated_dataset_manifest` alt kümesi **yalnız `["ABSOLUTE","RELATIVE"]`** — `DLS2_RELATIVE` **kabul edilmiyor** (buna karşılık `edge/intake_manifest` alt kümesi onu içeriyor). → **E13 kararı `DLS2_RELATIVE` çıkarsa contract değişikliği ZORUNLU** (alt küme + şema enum'u genişletilir; **MINOR, breaking değil**). `RELATIVE` çıkarsa iş yok. **Sıra düzeltmesi: E13 kararı C6'dan ÖNCE gelir** (planda ters yazılmıştı) | koşullu MINOR | **E13 kararı** |
+| **C7** | `frame_analysis_job.v1` **yeni şema** — tekil kare analiz işi (doğrulandı: `schemas/worker/` altında **yok**) | MINOR | C1′, C3′ |
+| **AL-C1** 🔴 | `expert_review_queue.v1` → `escalation_reason`'a **additive 7. değer `AUDIT_SAMPLE`**. Doğrulandı: kanonik **ve** worker vendored kopya **tam 6 değer**. Detay §11.2 | MINOR | — |
+| **AL-C2** 🔴 | `expert_review_queue.v1` → `audit_sample: bool` + `audit_stratum: string` (platform-otoriter eksen: crop×layer×fenoloji). Detay §11.2 | MINOR | — |
+| **C8** | **Release töreni (I-1..I-5):** sürüm bump → **annotated `vX.Y.Z` tag** → `CONTRACTS_SHA256.txt` → platform submodule pin → worker vendor alt-kümesi → 3 repoda sürüm dizesi hizası. ⚠️ **Edge formuna dokunan her değişiklik** (C2′/C3′/C6) edge `interface/contracts/` vendored kopyası + **KR-041 hash** turunu da tetikler — şema açıklaması *"birebir uyumludur"* diyor | **zorunlu** | tur içeriği |
 
-⚠️ **C8 her contract turunda tekrarlanır ve +1-2 gün maliyeti vardır.** İki tura bölmek en verimli:
-**Tur 1 = C1+C2+C3+C5+C6** (C13/C15/C16 için), **Tur 2 = C7** (tekil görüntü için).
+⚠️ **C8 her contract turunda tekrarlanır ve +1-2 gün maliyeti vardır.** İki tur:
+
+> ### 🔒 TUR TANIMI — KANONİK (2026-07-31 denetimiyle yeniden tanımlandı)
+>
+> **TUR 1 = C0 + C1′ + C2′ + C2″ + C3′ + C9 + C10 + AL-C1 + AL-C2** *(+ C6 koşullu, E13 kararına bağlı)*
+> **TUR 2 = C7** (tekil görüntü, demo sonrası)
+>
+> **Neden AL-C1/C2 Tur 1'de:** ikisi de saf **additive** (1 enum değeri + 2 opsiyonel alan) → aynı MINOR'a
+> sığar; **[0] ölçüm temelinin tek açılabilir kilidi** (§11.5) ve C8 töreni tur başına +1-2 gün.
+> Tur 2'ye ertelenirse dedup canlı bağlama + S2 bütçesi demo sonrasına kayar.
+> *(Bu, §11.2'deki eski "C-Tur-2 ile birleştirilebilir" ifadesini **yürürlükten kaldırır**.)*
+>
+> **Neden C4 ve C5 listede yok:** C4 contract kalemi değil (edge'e taşındı) · C5 zaten yapılmış.
 
 ## 3.2 EDGE (`tarlaanaliz-edge`)
 
@@ -186,11 +212,11 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 | **E6** | **`CalibrationEngineRunner` protokolü** + **`TerraRunner`** (⚠️ **"Terra'nın CLI'si YOK" iddiası TEYİTLİ DEĞİL — bkz. 0.g ikinci açık kalem; DJI'dan yazılı cevap gelmeden kod yazılmaz.** Güvenli varsayım: runner = **çıktı klasörü izleyici**, süreç başlatıcı değil — CLI çıkarsa izleyici yine çalışır, tersi doğru değil) + **`OdmRunner`** (Docker CLI). Uydurma `--headless` argv'si kaldırılır. *(FAZ 1'de `MetashapeRunner`: doğru başsız komut **`metashape.sh -platform offscreen -r script.py`** — `-platform offscreen` olmadan sunucuda açılmaz; API referansı `metashape_python_api_2_3_0.pdf`)* | `src/core/services/calibration_gate/pix4d_runner.py` → yeniden adlandır | 0.d |
 | **E7** | `_discover_output` dosya adları **config'den**. ⚠️ **DJI Terra çıktı adları resmi dokümanda tam yayınlanmamış** — yalnız `dsm.tif` / `gsddsm.tif` teyitli; DOM ve bant/indeks raster adları belirtilmemiş. **Tahminle yazılamaz, ilk koşumda ölçülecek** (ölçüm #2) | aynı dosya | E6, ölçüm #2 |
 | **E8** | `ndvi_thresholds.yaml` + `phenology_calendar.yaml` → ⚠️ **KAPSAM DÜZELTİLDİ (0.d ek bulgusu):** sıra **① KİRAZ kararı** (bugün `bookable:True` ama hem wire-enum'da hem edge tablosunda YOK → sipariş edilebiliyor, iş iki yerden düşüyor; ya `bookable:False` ya enum+tablo) → **② WHEAT** (wire-enum'da var, tek eksik tablo) → **③ SUNFLOWER/OLIVE ertelenebilir** (`bookable:False`, sipariş edilemez → zararsız). Bugün edge'de 5 ürün (COTTON/CORN/PISTACHIO/GRAPE/RICE), contract'ta 8 | `config/processing/` · contract `crop_type.enum.v1` (① için) | ① ürün kararı |
-| **E9** | **Sortie bbox fail-loud doğrulaması** — bbox yoksa `PRIORITIZATION_MIXED_CROP` sessiz çöküşü yerine açık hata | `src/core/services/prioritization/ndvi_prioritizer.py` | C4 |
-| **E10** 🔴🔴 | **DEMO KRİTİK YOLU ②.** Yama görselleri → **nesne anahtarı** (göreli yol yerine) + presigned PUT ile yükleme. ⚠️ **Bugün `ndvi_overlay` yerel diske yazılıp manifeste göreli yol konuyor** → **kırmızı NDVI görseli merkeze hiç ulaşmıyor.** KG-0.b-R'nin göstermek istediği görsel tam olarak bu. Bu madde olmadan ÖN RAPOR'da poligon + NDVI değeri gelir, **görsel gelmez** | `src/core/services/pipeline/calibration_pipeline.py:332-336` | C2, E2 |
-| **E11** | **Kare seçici (frame selector)** — EXIF footprint (GPS+yaw+H+GSD) + ODM `shots.geojson` ile işaretli yamayı gören kareleri bul | yeni: `src/core/services/frames/frame_selector.py` | C3, ölçüm #5 |
-| **E12** 🔴 | `ENABLE_NDVI_PRIORITIZATION` bayrağını **AÇ** — ⚠️ **statü değişti (KG-0.b-R):** artık "ertelenebilir" değil, **ÖN RAPOR'un ön koşulu.** Bayrak kapalıyken `priority_zones` **hiç üretilmez** → `analysis_priority_zones` boş → P6/P12 gösterecek bir şey bulamaz → demo çöker. **P9 uyarısı hâlâ geçerli ama ölçek farklı:** kota sıçraması 28.000 dönüm/gün için hesaplanmıştı; **pilotta günde 3-5 tarla** olduğu için uzman yükü ihmal edilebilir. → **Pilotta AÇ**, üretim ölçeğine geçmeden önce kotayı yeniden ölç | `src/shared/config.py:160`, `.env.example:113` | E4 sonrası · **demo öncesi zorunlu** |
-| **E13** | `calibrated_validator` → manifeste **motor adı** + `calibration_tier` (M3M için `RELATIVE`) yazsın | `src/core/services/calibration_gate/calibrated_validator.py` | C1, C6 |
+| **E9** ⚠️ | **YENİDEN YAZILDI (2026-07-31) — gerekçe bayattı.** Eski metin *"`PRIORITIZATION_MIXED_CROP` **sessiz** çöküşü yerine açık hata"* diyordu; **çöküş zaten sesli:** `calibration_pipeline.py:207` yorumu *"instead of happening silently"*, `:230` olay yayılıyor, `custody_logger.py:93` kanonik denetim olayı, `:399` docstring *"audited rather than silent"*. → **Gerçek karar:** MIXED_CROP **denetim uyarısı mı, sert hata mı?** Öneri: **pilotta uyarı** (mixed-crop tarla uçuşu bloke etmesin), **üretimde sert hata**; `build_profiles.yaml` üzerinden profillenir → **E1 ile birleşir**. Ayrıca **eski C4'ün konusu (`sorties[].bbox` zorunlu mu)** buraya taşındı: bu **edge-yerel manifest kararıdır** (`aggregator.py:101,151`), contract turu gerektirmez | `src/core/services/pipeline/calibration_pipeline.py:207,230` · `config/build_profiles.yaml` | **E1** (C4 değil) |
+| **E10** 🔴🔴 | **DEMO KRİTİK YOLU ②.** Yama görselleri → **nesne anahtarı** (göreli yol yerine) + presigned PUT ile yükleme. ⚠️ **Bugün `ndvi_overlay` yerel diske yazılıp manifeste göreli yol konuyor** → **kırmızı NDVI görseli merkeze hiç ulaşmıyor.** KG-0.b-R'nin göstermek istediği görsel tam olarak bu. Bu madde olmadan ÖN RAPOR'da poligon + NDVI değeri gelir, **görsel gelmez** | `src/core/services/pipeline/calibration_pipeline.py:332-336` | **C2′**, E2 |
+| **E11** | **Kare seçici (frame selector)** — EXIF footprint (GPS+yaw+H+GSD) + ODM `shots.geojson` ile işaretli yamayı gören kareleri bul | yeni: `src/core/services/frames/frame_selector.py` | **C3′**, ölçüm #5 |
+| **E12** 🔴 | `ENABLE_NDVI_PRIORITIZATION` bayrağını **AÇ** — ⚠️ **statü değişti (KG-0.b-R):** artık "ertelenebilir" değil, **ÖN RAPOR'un ön koşulu.** Bayrak kapalıyken `priority_zones` **hiç üretilmez** → `analysis_priority_zones` boş → P6/P12 gösterecek bir şey bulamaz → demo çöker. **P9 uyarısı hâlâ geçerli ama ölçek farklı:** kota sıçraması 28.000 dönüm/gün için hesaplanmıştı; **pilotta günde 3-5 tarla** olduğu için uzman yükü ihmal edilebilir. → **Pilotta AÇ**, üretim ölçeğine geçmeden önce kotayı yeniden ölç. 🔴 **ÖN KOŞUL EKLENDİ (2026-07-31): P9a olmadan AÇILMAZ.** §10.5/§11.5 kuralı *"E12, KİLİT-2 kapalıyken açılmaz; ya dedup bağlanır ya kota manuel sınırlanır"* diyordu ama **iki kaçış yolundan hiçbiri bir iş kalemine bağlı değildi** (tek kota kalemi P9, Dalga 4'te = demodan sonra). KİLİT-2 gerçekten kapalı: `should_send_to_expert` **çağrısız** (`prototype_manager.py:546`). → Kaçış yolu **P9a** olarak Dalga 2'ye alındı | `src/shared/config.py:160`, `.env.example:113` | E4 sonrası · **P9a** · **demo öncesi zorunlu** |
+| **E13** ⚠️ | `calibrated_validator` → manifeste **motor adı** + **`calibration_result.calibration_type`** yazsın. **Alan adı düzeltmesi (2026-07-31):** planda geçen `calibration_tier` contract'ta **yok**; kanonik ad `calibration_result.calibration_type`. **Karar E13'te verilir ve C6'yı tetikler:** `RELATIVE` → contract işi yok · `DLS2_RELATIVE` (M3M'de dahili ışık sensörü var) → **C6 zorunlu**, çünkü `edge/calibrated_dataset_manifest` alt kümesi bugün yalnız `["ABSOLUTE","RELATIVE"]` | `src/core/services/calibration_gate/calibrated_validator.py` | C1′ · **C6'dan ÖNCE** |
 | **E14** 🔴 | **KALİBRASYON KANITI ÜRETİCİSİ — EN ÖNCELİKLİ İŞ.** `calibration_result` ve `observed_footprint_wkt` **beş yerde tüketiliyor, sıfır yerde üretiliyor**: ① `sync.py:207-255` → `calibration_result.json` **dosyasını** ve **üst düzey** `observed_footprint_wkt`'i şart koşuyor, yoksa HC-05 upload kapısı `FAILED` ② `calibrated_validator.py:114-122` → **manifest alanı** `calibration_result`'ın 4 alt alanını şart koşuyor (`tool_name`, `tool_version`, `observed_footprint_wkt`, `calibration_type` — contract'ta hepsi **required**) ③ `qc_report_writer.py:245-256,341` → coverage'ı bundan hesaplıyor ④ `package_assembler.py:52` → dosyayı paketliyor ⑤ `dataset.py:123-125` → `calibration_result_ref` yoksa CALIBRATED geçişi `ValueError`. **`calibration_pipeline.run()` bunu `calibrated_manifest_path` olarak GİRDİ alıyor** ve docstring'i "upstream'de Pix4Dfields + `calibration_proof_checker` üretir" diyor — ama proof_checker yalnız **karşılaştırıyor**, üretmiyor. → **İki artefakt üretilmeli:** standalone `calibration_result.json` + manifest içi nested alan. `observed_footprint_wkt` ortho GeoTIFF extent'inden hesaplanır (KR-065 **ödeme** girdisi). ⚠️ **Bu iş C13'ten ÖNCE gelir:** boru bağlansa bile HC-05 **M1'in kendi içinde** takılır | yeni `src/core/services/calibration_gate/calibration_result_writer.py` | E6, E13 |
 
 ## 3.3 WORKER (`tarlaanaliz-worker`)
@@ -212,15 +238,33 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 | **P1** | `POST /ingest/manifests` yanıtına **presigned PUT URL listesi** ekle (süre + bucket + anahtar kapsamı kısıtlı) | `src/presentation/api/v1/endpoints/ingest.py:363,371` | 0.a |
 | **P2** | **Yeni uç `POST /ingest/complete`** — nesneler yüklendi, hash doğrula, Dataset `RAW_INGESTED` | aynı dosya | P1 |
 | **P3** | Presigned üretimini **ingest anahtarlarına genişlet** + anahtar şeması `{tenant}/{dataset_id}/{raw\|layers\|patches}/{ad}`. ✅ `generate_presigned_url` **zaten var** (`patches.py:165`) → PUT yönü + kapsam kısıtı eklenecek. 🔴 **ANAHTARI PLATFORM ÜRETİR — edge'in verdiği yol ASLA imzalanmaz** (0.a ek şartı). "Edge'in anahtarını doğrula" biçiminde uygulamak YETERSİZDİR | `src/infrastructure/external/storage_adapter.py` | P1 |
-| **P4** | `patches.py` → **object_key zorunlu**; yoksa **açık hata** (bugünkü sessiz 404 yerine). 🔴 **Güvenlik yarısı:** GET presign'da anahtar **DB'den** okunur, istekten/manifestten gelen yol imzalanmaz; kapsam dışı talep `SECURITY.DENY`. **Kabul testi:** sahte manifestle başka kiracının yolu istendiğinde uç 403/deny dönmeli (bugün geçerli URL üretiyor — çapraz-kiracı sızıntı riski) | `src/presentation/api/v1/endpoints/patches.py:151-156,165-175` | C2, E10 |
+| **P4** ⚠️ | `patches.py` → **object_key zorunlu**; yoksa **açık hata** (bugünkü sessiz 404 yerine). 🟠 **Güvenlik yarısı — 2026-07-31'de DÜZELTİLDİ:** eski metin *"anahtar DB'den okunur"* diyordu; **kod bunu zaten yapıyor** (`patches.py:151` → `viz_paths = patch_row.visualization_paths`; platformdaki **tüm** presign çağrıları `:165/:169/:173` oradan besleniyor, istekten anahtar alan **hiçbir** çağrı yok) → **kural işlevsizdi (no-op)** ve P4'ün güvenlik yarısını "yapılmış" gösteriyordu. **Doğru kural:** *anahtar DB'den okunur **VE DB'ye yalnız platformun ürettiği anahtar yazılır**; edge'in önerdiği yol hiçbir aşamada kalıcılaştırılmaz* → `ingest_service_impl.py:266`'daki `pz.visualizations.model_dump()` passthrough'u değişir. **Şiddet düzeltmesi:** anlık risk **çapraz-kiracı değil**; `patches.py:118-148`'de gerçek sahiplik kapısı var (`DatasetModel ⨝ ExpertReviewModel` → `403 PATCH.OWNERSHIP_DENIED`), sömürü **ele geçirilmiş edge + o mission'a atanmış uzman** ister. **Kabul testi iki koşullu kurulur** — tek koşullu test bugün de yeşil geçer, hiçbir şey kanıtlamaz | `patches.py:118-175` · `ingest_service_impl.py:258-266` | **C2′**, E10 |
 | **P5** | **C15 (Y-C):** `DATASET.STATE_TRANSITION → CALIBRATED` üzerinden çiftçiye **durum bildirimi** ("uçuşunuz işlendi, analiz sürüyor"). ⚠️ `results_service_impl` ve `report_phase` **DEĞİŞMEZ** — ADR-007 korunur | `src/infrastructure/messaging/`, `farmer_notifier` | 0.b |
-| **P6** 🔴 | **ÇİFTÇİ ÖN RAPOR UCU — yeniden tanımlandı (KG-0.b-R).** ~~layer_registry'ye yazmak~~ **değil**: `analysis_priority_zones`'u çiftçiye açan **okuma ucu**. Döndürür: `geom` (GeoJSON Polygon) + `ndvi_value` + `priority_level` + **presigned `ndvi_overlay` URL'i**. **Kapılar:** ① sahiplik (çiftçi yalnız kendi tarlası) ② **KR-033 ödeme** ③ `report_phase == PRELIMINARY` ④ **tespit/`findings` ASLA** ⑤ KR-071 PII yok. Bugün bu tabloyu yalnız `worker_dispatch_handler` ve `expert_review_prioritization_service` okuyor — çiftçi ucu **yok** | yeni uç (öneri `GET /missions/{id}/preliminary`) + `analysis_priority_zone_repository_impl` | 0.b-R · C13 · E12 |
-| **P12** 🔴 | **PRELIMINARY için ikinci içerik kaynağı.** `results_service_impl.py:227` fazı zaten `PRELIMINARY` veriyor ama içerik **worker sonucundan** geliyor; worker sonucu yokken ÖN RAPOR boş kalır. → Worker sonucu **YOKKEN** öncelik bölgelerinden sun; **geldiğinde** mevcut davranış aynen sürsün. `raw_findings` kırpması (`:247`) **değişmez** | `src/application/services/results_service_impl.py` | 0.b-R · P6 |
+| **P6** 🔴 | **ÇİFTÇİ ÖN RAPOR UCU — yeniden tanımlandı (KG-0.b-R).** ~~layer_registry'ye yazmak~~ **değil**: `analysis_priority_zones`'u çiftçiye açan **okuma ucu**. Döndürür: `geom` (GeoJSON Polygon) + `ndvi_value` + `priority_level` + **presigned `ndvi_overlay` URL'i**. **Kapılar:** ① sahiplik (çiftçi yalnız kendi tarlası) ② **KR-033 ödeme** ③ `report_phase == PRELIMINARY` ④ **tespit/`findings` ASLA** ⑤ KR-071 PII yok. Bugün bu tabloyu `worker_dispatch_handler`, `expert_review_prioritization_service`, `worker_bridge_consumer.py:1088` (kota) ve `worker_job_publisher.py:115` okuyor — **çiftçi ucu yok** ✅ (2026-07-31 doğrulandı). ⚠️ **ÖN KOŞUL EKLENDİ: C9 + C10.** Kanonik tanım bugün PRELIMINARY içeriğini *"YALNIZ 4 kalem"* diye kapatıyor (öncelik bölgesi listede yok) ve `report_phase` mapping'inde **kalibrasyon-sonrası statü yok**; ikisi düzeltilmeden bu uç kanonik tanımın dışına çıkar | yeni uç (öneri `GET /missions/{id}/preliminary`) + `analysis_priority_zone_repository_impl` | 0.b-R · **C9 · C10** · C13 · E12 |
+| **P12** 🔴 | **PRELIMINARY için ikinci içerik kaynağı.** `results_service_impl.py:227` fazı zaten `PRELIMINARY` veriyor ama içerik **worker sonucundan** geliyor; worker sonucu yokken ÖN RAPOR boş kalır. → Worker sonucu **YOKKEN** öncelik bölgelerinden sun; **geldiğinde** mevcut davranış aynen sürsün. `raw_findings` kırpması (`:247`) **değişmez** (satır 227/247 birebir doğrulandı). ⚠️ **Kabul kriteri eklendi (2026-07-31):** dönen `report_phase` değeri **C10'un kanonik mapping'ine karşı** test edilir. Bugün `:227` bir **catch-all** (`"FULL" if DONE else "PRELIMINARY"`) — yani platform kanonik mapping'den **geniş**; C10 bunu kanonikleştirmeden P12 doğrulanamaz | `src/application/services/results_service_impl.py` | 0.b-R · P6 · **C9 · C10** |
 | **P7** | **TKGM feature flag'ini AÇ** — kod hazır (`tkgm_rest_adapter.py`, `tkgm_megsis_wfs_adapter.py`, idari cache, `GET /parcels/lookup|reverse-lookup|validate`, `settings.py:212`). **Yalnız kurumsal protokol geldikten sonra** | `src/infrastructure/config/settings.py:212` | TKGM protokolü |
 | **P8** | `contracts` submodule pin + `CONTRACTS_SHA256.txt` güncelle (her contract turundan sonra) | repo kökü | C8 |
-| **P9** | **Uzman kotası — ölçek-koşullu uyarı (KG-0.b-R ile revize).** `analysis_priority_zones` dolunca kota 1→N sıçrar. ⚠️ Eski hâli "E12 ile aynı sürümde açılmasın" idi; **E12 artık ÖN RAPOR için zorunlu.** Uzlaşma: **pilotta aç** (günde 3-5 tarla → yük ihmal edilebilir), **üretim ölçeğine geçmeden ÖNCE** gerçek uzman kapasitesini ölç ve kotayı sınırla. Ölçüm sonucu §11'deki S2 bütçesine (B) de girdi olur | `worker_bridge_consumer.py:1085-1112` | E12 · **üretim öncesi kapı** |
+| **P9** | **Uzman kotası — ölçek-koşullu uyarı (KG-0.b-R ile revize).** `analysis_priority_zones` dolunca kota 1→N sıçrar. ⚠️ Eski hâli "E12 ile aynı sürümde açılmasın" idi; **E12 artık ÖN RAPOR için zorunlu.** Uzlaşma: **pilotta aç** (günde 3-5 tarla → yük ihmal edilebilir), **üretim ölçeğine geçmeden ÖNCE** gerçek uzman kapasitesini ölç ve kotayı sınırla. 🔴 **İKİYE BÖLÜNDÜ (2026-07-31)** — çünkü §10.5/§11.5'in tanıdığı iki kaçış yolundan **hiçbiri bir iş kalemine bağlı değildi** ve P9 demodan sonraydı | `worker_bridge_consumer.py:1085-1112` | ↓ |
+| **P9a** 🔴 | **PİLOT KOTA TAVANI — Dalga 2, E12 ile AYNI sürümde.** `daily_image_capacity` için sabit üst sınır + aşımda kuyruğa alma. Bu, §10.5'in *"kota manuel sınırlanır"* kaçış yolunun uygulamasıdır ve **E12'nin ön koşuludur** (KİLİT-2 kapalı: `should_send_to_expert` çağrısız) | `worker_bridge_consumer.py:1085-1112` | **E12 ile aynı sürüm** |
+| **P9b** | **Gerçek uzman kapasitesi ölçümü + kalıcı kota** (S2 bütçesi B girdisi) | aynı dosya | Dalga 4 · **üretim öncesi kapı** |
 | **P10** | **POLİGON-KMZ çıktısı ekle.** Mevcut generator **waypoint** rotası üretiyor (docstring: "DJI Ground Station veya Litchi"). Haritalama görevinde Pilot 2'ye **waypoint değil poligon** verilmeli — Pilot 2 o zaman bindirme / gimbal −90° / shutter tetiklemesini **kendisi** kurar. Waypoint KMZ'de fotogrametri parametreleri kaybolur | `src/core/domain/services/flight_route_generator.py:331` (`flight_route_to_kmz`) | 0.d |
 | **P11** | *(uzun vade)* **WPML üretimi** — `.kmz` içinde `template.kml` + `waylines.wpml` (DJI Cloud API açık spesifikasyonu). Pilot cihaza dokunmadan görev gönderimi | aynı dosya | P10 |
+
+## 3.5 WEB / ARAYÜZ (`tarlaanaliz-platform/web`) — 🆕 2026-07-31 denetiminde eklendi
+
+> **Neden yoktu:** Planın §3 tabloları yalnız contract/edge/worker/platform-backend kapsıyordu.
+> Demo kritik yolunun ①–⑥ adımlarının **hepsi** şema/edge/backend'de bitiyordu — çiftçinin
+> **görmesi** için bir ekran yoktu. Plan geneli tarandı (`web|frontend|PWA|Next.js|arayüz|ekran|UI`):
+> **sıfır** iş kalemi. Oysa `tarlaanaliz-platform/web/` (`web/package.json`) mevcut ve
+> `docs/REPO_BOUNDARY_RULES.txt` `tarlaanaliz-web`'i **bağlayıcı** biçimde ayrı tüketici sayıyor.
+> KG-0.b-R'nin direktifi *"çiftçi tarlasındaki sorunlu kırmızı NDVI bölgelerini **görsün**"*di.
+
+| # | İş | Dosya/alan | Bağımlılık |
+|---|---|---|---|
+| **WEB1** 🔴🔴 | **DEMO KRİTİK YOLU ⑦ — ÖN RAPOR EKRANI.** Tarla haritası üzerinde `analysis_priority_zones` poligonları (`geom`), `ndvi_value`'ya göre renk skalası (kırmızı = sorunlu), poligona tıklayınca presigned **`ndvi_overlay`** görseli. Başlık: **"ÖN RAPOR"**. Kaynak: P6 ucu | `tarlaanaliz-platform/web/` | **P6** · P12 |
+| **WEB2** 🟠 | **Kapı ve boş-durum mesajları:** ödeme kapılı (KR-033) · henüz bölge üretilmedi · `report_phase == FULL`'a geçince tam rapora yönlendirme · tespit **asla gösterilmez** (KR-019) | aynı | WEB1 |
+
+⚠️ **Takvim etkisi:** Dalga 2 **+3-5 gün** uzar. WEB1 olmadan demo, API cevabında kalır.
 
 ---
 
@@ -269,8 +313,10 @@ ADIM 0  KARAR GÜNÜ (7 karar)                                    1 gün, kod yo
    ├─ DALGA 1 — TEMEL (paralel yürür)
    │   ├─ E: 🔴 E14 KALİBRASYON KANITI ÜRETİCİSİ ⟵ İLK İŞ     3-4 gün
    │   │      (C13'ten ÖNCE — yoksa HC-05 M1'in içinde takılır)
-   │   ├─ C: Tur 1 (C1,C2,C3,C5) + C8 töreni               3-5 gün
-   │   ├─ E: E1 dev-station · E2 S3 istemcisi · E8 YAML        4-6 gün
+   │   ├─ C: Tur 1 = C0+C1′+C2′+C2″+C3′+C9+C10+AL-C1+AL-C2    4-6 gün
+   │   │      (+C6 koşullu · C4 düştü · C5 zaten yapılmış) + C8 töreni
+   │   │      ⟵ C0 ve C9/C10 diğerlerinin ÖN KOŞULU
+   │   ├─ E: E1 dev-station (+E9 profili) · E2 S3 · E8 YAML    4-6 gün
    │   ├─ P: P1,P2,P3 presigned + complete ucu                 4-6 gün
    │   └─ W: W3 ODM'yi M3M'e uyarla · W6 etiket şeması         3-5 gün
    │        ⟵ PİLOT BU DALGA SÜRERKEN BAŞLAR (kod beklemez)
@@ -280,17 +326,26 @@ ADIM 0  KARAR GÜNÜ (7 karar)                                    1 gün, kod yo
    │   ├─ P: P4 patches · P5 durum bildirimi                   4-6 gün
    │   │
    │   ├─ 🔴🔴 DEMO KRİTİK YOLU (KG-0.b-R) — sırayla, hepsi zorunlu:
-   │   │   ① C2  `patches[].object_key` şeması            (C-Tur-1'de)
+   │   │   ⓪ C9+C10 kanonik ÖN RAPOR tanımı              (C-Tur-1'de)
+   │   │        (içerik listesi "YALNIZ 4 kalem" + mapping'de
+   │   │         kalibrasyon-sonrası statü YOK → ikisi de açılmalı)
+   │   │   ① C2′ intake_manifest PlatformForm object_key  (C-Tur-1'de)
    │   │   ② E10 ndvi_overlay → GERÇEK nesne anahtarı      2-3 gün
    │   │        (bugün yerel göreli yol → görsel merkeze ULAŞMIYOR)
    │   │   ③ E12 ENABLE_NDVI_PRIORITIZATION = true         0,5 gün
    │   │        (kapalıyken priority_zones HİÇ üretilmiyor)
-   │   │   ④ P4  patches object_key doğrulama              1 gün
+   │   │        ⚠️ ÖN KOŞUL: P9a kota tavanı (KİLİT-2 kapalı)
+   │   │   ④ P4  patches object_key + anahtar sahipliği    1-2 gün
    │   │   ⑤ P6  çiftçi ÖN RAPOR okuma ucu                 2-3 gün
    │   │   ⑥ P12 PRELIMINARY ikinci içerik kaynağı         2-3 gün
+   │   │   ⑦ WEB1 ÖN RAPOR EKRANI  🆕                      3-4 gün
+   │   │        (⑥'ya kadar her şey API'de biter; ekran YOKTU)
    │   │   ───────────────────────────────────────────────────────
    │   │   ⚠️ Herhangi biri eksikse çiftçi KIRMIZI GÖRSELİ göremez:
-   │   │      ②'siz görsel yok · ③'süz bölge yok · ⑤/⑥'sız ekran yok
+   │   │      ⓪'sız kanonik dışı · ②'siz görsel yok · ③'süz bölge yok
+   │   │      ⑤/⑥'sız veri yok · ⑦'siz EKRAN yok
+   │   ├─ P: P9a pilot kota tavanı (E12 ile aynı sürüm)        1 gün
+   │   ├─ WEB: WEB1 ÖN RAPOR ekranı · WEB2 kapı mesajları      4-5 gün
    │   ├─ W: W2 reflektans ölçeği                              2-3 gün
    │   └─ E: E10 yama nesne anahtarı (C16 kapanır)             2-3 gün
    │        ⟵ DEMO BU DALGA BİTİNCE MÜMKÜN
@@ -303,12 +358,14 @@ ADIM 0  KARAR GÜNÜ (7 karar)                                    1 gün, kod yo
    │   └─ W: W7 veri seti kararı                               karar
    │
    └─ DALGA 4 — AYRI SÜRÜM
-       ├─ P9 kota ölçümü + sınırlama (E12 Dalga 2'de açıldı)   1 gün
+       ├─ P9b uzman kapasitesi ölçümü + kalıcı kota           1 gün
        │     ⟵ ÜRETİM ölçeğine geçiş kapısı, pilot için değil
+       │       (P9a pilot tavanı Dalga 2'ye alındı)
        └─ P7 TKGM flag (protokol gelince)                      1 gün
 ```
 
 **Süre tahminleri %80 coverage kapısını (`--cov-fail-under=80`) ve contract törenini içerir.**
+⚠️ **2026-07-31 revizyonu Dalga 2'yi +3-5 gün uzatır** (WEB1/WEB2 + P9a); Dalga 1 +1 gün (C9/C10).
 
 ## 5.2 Paralel iki hat — kod pilotu beklemez, pilot kodu beklemez
 
@@ -600,18 +657,30 @@ Nesne anahtarını **platform ÜRETİR; edge'in verdiği hiçbir yol imzalanmaz.
 sınırlansın" ifadesinden daha güçlü ve daha dar bir yükümlülüktür — P3 aksi hâlde *"edge'in
 anahtarını doğrula"* biçiminde de uygulanabilir ki bu yeterli DEĞİLDİR.
 
-*Neden (bugünkü kod, ölçüldü):* `patches.py:165-175` edge'in manifeste yazdığı **göreli yolu** S3
-anahtarı kabul edip `settings.s3_default_bucket` ile imzalıyor. Yani anahtarı fiilen **edge
-belirliyor**. Bu yalnız "nesne yok → 404" sorunu değil: hatalı ya da ele geçirilmiş bir edge,
-manifeste **başka kiracının** yolunu yazarsa platform ona geçerli presigned URL üretir →
-**çapraz-kiracı veri sızıntısı.**
+*Neden (bugünkü kod, ölçüldü):* `patches.py:165-175` edge'in manifeste yazdığı **göreli yolu**
+(DB'ye `visualization_paths` olarak aynen kaydedilmiş hâlini) S3 anahtarı kabul edip
+`settings.s3_default_bucket` ile imzalıyor. Yani anahtarı fiilen **edge belirliyor**.
+
+> **🟠 ŞİDDET DÜZELTMESİ (2026-07-31 öz-denetim).** Burada önce *"çapraz-kiracı veri sızıntısı"*
+> yazıyordu — **anlık risk olarak abartılıydı.** `patches.py:118-148`'de gerçek bir sahiplik kapısı
+> var: `DatasetModel ⨝ ExpertReviewModel.expert_id`, eşleşmezse `403 PATCH.OWNERSHIP_DENIED`.
+> Sömürü **iki koşul** ister: (1) hatalı/ele geçirilmiş edge **ve** (2) o dataset'in mission'ına
+> **atanmış uzman** kimliği. Doğru ifade: *"ele geçirilmiş edge + atanmış uzman bileşiminde
+> **çapraz-dataset okuma**"*. **Kararı değiştirmez** — anahtar sahipliği kuralı yine zorunlu,
+> yalnız aciliyet etiketi 🔴→🟠 iner ve kabul testi **iki koşullu** kurulur.
 
 *Bağlayıcı kural:*
 1. Anahtar şeması yalnız platformda üretilir: `{tenant}/{dataset_id}/{raw|layers|patches}/{...}`.
    Manifestteki `object_key` alanı platformun **döndürdüğü** değerdir, edge'in önerdiği değil.
 2. Presigned **PUT** URL'leri yalnız platformun ürettiği anahtarlar için verilir.
-3. Presigned **GET** (uzman görseli) üretilirken anahtar **DB'den** okunur; istekten/manifestten
-   gelen bir yol asla doğrudan imzalanmaz.
+3. **⚠️ DÜZELTİLDİ (2026-07-31).** Eski metin: *"Presigned GET üretilirken anahtar DB'den okunur;
+   istekten/manifestten gelen bir yol asla doğrudan imzalanmaz."* — **Bu kural işlevsizdi (no-op):**
+   kod bunu **zaten** yapıyor (`patches.py:151` → `viz_paths = patch_row.visualization_paths`;
+   platformdaki tüm presign çağrıları `:165/:169/:173` oradan besleniyor, istekten anahtar alan
+   çağrı **yok**). Kural bu hâliyle P4'ün güvenlik yarısını "yapılmış" gösteriyordu.
+   **Yürürlükteki kural:** *anahtar DB'den okunur **VE DB'ye yalnız platformun ürettiği anahtar
+   yazılır**; edge'in önerdiği yol hiçbir aşamada kalıcılaştırılmaz* →
+   `ingest_service_impl.py:266`'daki `pz.visualizations.model_dump()` passthrough'u değişmelidir.
 4. Kapsam dışı anahtar talebi `SECURITY.DENY` üretir ve **sessiz düşmez**.
 5. Kabul testi: sahte bir manifestle başka kiracının yolu istendiğinde uç **403/deny** dönmeli;
    bu test P4 ile aynı turda yazılır.
@@ -643,7 +712,8 @@ karşılar.
 yüzeyi. (−) Çiftçi kalibrasyondan hemen sonra *rapor* değil *durum* görür — ürün beklentisi
 kısmen karşılanır. (−) C15 "çözüldü" değil "kapsamı daraltılarak kapatıldı" olarak kaydedilir.
 
-**Reddedilen alternatifler.** *Y-A (ADR-009 ile yeni faz):* direktifi tam karşılar ama üç ADR ve
+**Reddedilen alternatifler.** *Y-A (yeni faz + **ileride tahsis edilecek bir ADR numarası** — burada
+önce "ADR-009" yazıyordu, ama ADR-009 dev-station'a ayrıldı; bkz. §9.1-C):* direktifi tam karşılar ama üç ADR ve
 üç KR ekseni yeniden açılır; C13 kapanmadan zaten akmaz → **FAZ 1'e ertelendi.**
 *Y-B (direktifi reddet):* sıfır kod, ama ürün beklentisi tamamen karşılanmaz.
 
@@ -674,9 +744,18 @@ C15 maddesi "KARAR BEKLİYOR" → "Y-C ile kapatıldı" olarak güncellenir.
 > | **Tespitler zaten kırpılıyor** | `results_service_impl.py:247` → `raw_findings = ... if report_phase == "FULL" else None` |
 >
 > **Yani istediğiniz ÖN RAPOR = `analysis_priority_zones`'un çiftçiye sunulması.**
-> Eksik olan tek şey **okuma yolu** — bugün bu tabloyu yalnız `worker_dispatch_handler`
-> (işlem sırası ipucu) ve `expert_review_prioritization_service` (uzman kuyruğu) okuyor;
-> **çiftçiye açan bir uç yok.**
+> Eksik olan tek şey **okuma yolu** — bugün bu tabloyu `worker_dispatch_handler`
+> (işlem sırası ipucu), `expert_review_prioritization_service` (uzman kuyruğu),
+> `worker_bridge_consumer.py:1088` (kota sayımı) ve `worker_job_publisher.py:115` okuyor;
+> **çiftçiye açan bir uç yok** ✅ *(2026-07-31'de dört okuyucu da doğrulandı)*.
+>
+> ⚠️ **2026-07-31 EKİ — "şema değişmez" kısmı düzeltildi.** Bu blok *"yeni faz gerekmiyor, şema
+> değişmiyor"* diyor. **Faz kısmı doğru** (yeni mission state/faz eklenmiyor), **şema kısmı değil:**
+> iki kanonik artefakt PRELIMINARY içeriğini **"YALNIZ/ONLY"** diyerek dört kaleme kapatıyor
+> (`analysis_preliminary_ready.v1` + `report_phase.enum.v1`) ve öncelik bölgesi o listede **yok**;
+> ayrıca `report_phase` statü eşlemesinde **kalibrasyon-sonrası statü bulunmuyor** (`UPLOADED` yok).
+> → **C9 + C10** eklendi. Y-D kararı **değişmiyor**, yalnız kanonik tanım onu kapsayacak biçimde
+> genişletiliyor.
 >
 > ### Üç eksen neden yeniden açılmıyor
 > | Eksen | Durum |
@@ -955,7 +1034,7 @@ satın alma takvimi
 | # | Karar | Statü | Tip | ADR | Ana etkisi |
 |---|---|---|---|---|---|
 | 0.a | Manifest + presigned PUT (**önkoşul: E14**) | ☑ Onaylı | mimari | — | C13 + C16 + ham kare tek mekanizmada |
-| 0.b | Y-C melez ön rapor | ☑ Onaylı | governance | ★ ADR-007 yorum notu | ADR-004/005/007 korunur |
+| 0.b | **Y-D** — öncelik bölgesi kaynaklı ÖN RAPOR *(~~Y-C~~ KG-0.b-R ile değiştirildi)* | ☑ Onaylı | governance | ★ ADR-007 yorum notu (**Y-D'yi** anlatır) | ADR-004/005/007 korunur · **C9+C10 ön koşul** |
 | 0.c | Yalnız işaretli kareler | ☑ Onaylı | mimari | — | 533 GB/gün → yönetilebilir |
 | 0.d | Üzüm pilot + fıstık demo | ☑ Onaylı | ürün | — | `bookable`+`strong` ürünle çalışma |
 | 0.e | dev-station profili | ☑ Onaylı | güvenlik | ★ yeni ADR | Pilot verisi platforma girebilir |
@@ -972,6 +1051,37 @@ satın alma takvimi
 | **0.g-EK** | "Terra'nın CLI'si yok" **teyitli değil** — E6'nın tasarımı buna dayanıyor | ⏳ açık kalem | DJI'dan yazılı cevap; satın alma yazısına eklenir (ek maliyet yok) |
 | **0.f-düzeltme** | Optik sınır irtifası **37-74 cm** (önce "74 cm-1,5 m" yazıyordu, 2× yüksek) | ☑ düzeltildi | Kararı **güçlendirir**; GSD formülleri bağımsız doğrulandı |
 
+### 🔬 2026-07-31 BAĞIMSIZ DENETİM TURU — plana işlenen düzeltmeler
+
+**Yöntem:** İki turlu; her iddia bugünkü koda/şemaya karşı ölçüldü, sonra denetimin kendisi tersine
+sınandı (1 iddia geri çekildi, 1 şiddet düşürüldü, 4 yeni bulgu). **Kanıt arşivi:**
+`denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (her satırın `dosya:satır` dayanağı orada).
+**Hiçbir onaylı karar geri alınmadı** — düzeltmeler kalemlerin **hedefini, sırasını ve kapsamını** bağlar.
+
+| Kod | Ne değişti | Etkilenen kalem |
+|---|---|---|
+| **D-1** | C1/C2/C3 **yanlış şemayı hedefliyordu.** İki `calibrated_dataset_manifest.v1` formu var (edge = kanıt manifesti · platform = paket agregası) ve **`patches` alanı contract'ın hiçbir şemasında yok**; göreli yol `intake_manifest.v1 EdgeForm.priority_zones[].visualizations`'ta | **C0** (yeni) · **C1′ C2′ C2″ C3′** |
+| **D-2** | **`priority_zones` yalnız `EdgeForm`'da**, `PlatformForm`'da yok → 0.a-EK "anahtarı platform üretir" kuralıyla çelişiyordu | **C2′** |
+| **D-3** | **C4 contract kalemi değil** — `sorties` contract'ta hiç yok, edge-yerel manifestte | C4 kapatıldı → **E9** |
+| **D-4** | **C5 zaten yapılmış** (v1.4.1: `enum_valid_not_yet_emittable` + `requires_thermal_payload`/"Mavic 3M'de üretilemez") | C5 kapatıldı |
+| **D-5** | **C6 "iş yok" yanlıştı** — `x-context-subsets['edge/calibrated_dataset_manifest']` yalnız `["ABSOLUTE","RELATIVE"]`; `DLS2_RELATIVE` kabul edilmiyor | **C6 koşullu açık** · **E13 önce** |
+| **D-6** | **"Şema değişmez" iddiası kanonikle çelişiyor** — iki artefakt PRELIMINARY içeriğini "YALNIZ 4 kalem" diye kapatıyor **ve** `report_phase` mapping'inde kalibrasyon-sonrası statü yok | **C9 + C10** (yeni) · P6 · P12 |
+| **D-7** | **KR-093 kanonik registry'de yok** (`ssot/kr_registry.md` KR-092'de bitiyor) ama contract artefaktları ona normatif atıf yapıyor | **C9 ön koşulu** |
+| **D-8** | **Demo kritik yolunda ekran yoktu** — ①–⑥ hepsi API'de bitiyordu; `platform/web/` mevcut | **WEB1 + WEB2** (yeni) · adım **⑦** |
+| **D-9** | **E12 ↔ KİLİT-2 kuralı hiçbir kaleme bağlı değildi**; tek kota kalemi demodan sonraydı | **P9a** (Dalga 2) · P9b (Dalga 4) |
+| **D-10** | **0.a-EK Kural 3 işlevsizdi (no-op)** — kod zaten DB'den okuyor; kapatma yalnız "DB'ye platform anahtarı yazılır" ile olur. Şiddet 🔴→🟠 (sahiplik kapısı var) | Kural 3 · **P4** |
+| **D-11** | **E9'un gerekçesi bayattı** — çöküş zaten sesli (`PRIORITIZATION.MIXED_CROP` denetim olayı); gerçek karar "uyarı mı sert hata mı" | **E9** yeniden yazıldı |
+| **D-12** | **AL-C1/C2 tur çelişkisi** — §11.2 "Tur 2", devir notu "Tur 1" diyordu | **Tur 1** (bağlayıcı) |
+| **D-13** | §9.1 kopyala-yapıştır blokları **yürürlükten kalkmış Y-C metnini** taşıyordu | §9 özet · §9.1-A · §9.1-C |
+| **D-14** | **ADR-009 iki işe verilmişti**; platform ADR'leri 008'de bitiyor | ADR-009 = dev-station |
+| **D-15** | `report_phase` mapping'i **kanonik olmayan `ANALYZING`** adını kullanıyor (`mission_status.enum.v1`'de `IN_ANALYSIS` var) | **C10** ile birlikte |
+| **D-16** | Başlıkta **silinmiş dosyaya atıf** vardı (`fotogrametri_yazilim_karsilastirmasi_2026-07-29.md`) | başlık düzeltildi |
+
+**Depo durumu (2026-07-31 ölçüldü):** contract **`7.2.0`** · checksum `5d3c204d…` · dört etiket de
+**annotated** → **I-2 tutuyor** · platform **7.2.0** · worker **v7.2.0** · edge **1.3.0** (kendi şeması)
+→ **I-1 tutuyor.** `pin_version.py --verify` ✅ · `validate.py` ✅ 89 dosya / 0 hata.
+*(Devir notu §1 bunu `7.0.1` sanıyordu — iki sürüm bayattı, düzeltildi.)*
+
 ---
 
 ## 9.1 — Yönetişim kayıt satırları (kopyala-yapıştır)
@@ -984,7 +1094,7 @@ satın alma takvimi
 | Kod | Karar | Tip | Etkilenen | Statü |
 |-----|-------|-----|-----------|-------|
 | KG-0.a | Edge→Platform taşıma: manifest + presigned PUT; platform ikili gövde ucu AÇMAZ. **Önkoşul: E14 kalibrasyon kanıtı üreticisi (C13'ten önce).** | DECIDED | C13, C16 | Uygulama Dalga 1-2 |
-| KG-0.b | ÖN RAPOR: ADR-007 değiştirilmez; direktif Y-C (rapor değil **durum bildirimi** + ham katman) ile karşılanır. `report_phase`/KR-019 dokunulmaz. | DECIDED | C15 | ADR-007'ye yorum notu |
+| KG-0.b | ~~ÖN RAPOR: direktif **Y-C** (rapor değil durum bildirimi + ham katman) ile karşılanır.~~ ⟵ **KG-0.b-R (Y-D) ile DEĞİŞTİRİLDİ; yürürlükte değildir.** Tarihçe kaydı olarak korunur. | **SUPERSEDED** | C15 | Yürürlükteki karar: **KG-0.b-R** |
 | KG-0.c | Ham kareler bütün olarak merkeze gitmez; yalnız işaretli yamaları gören kareler (`raw_frames[]`). | DECIDED | C3, E11 | Depolama üst sınırı ilk uçuşta teyit |
 | KG-0.d | Pilot birincil ürün ÜZÜM; demo ana hikâyesi ANTEP FISTIĞI; YZ tespit vitrini ÜZÜM. Pamuk/çeltik/zeytin/ayçiçeği pilot dışı. Kaynak: `crop_readiness.json`. | DECIDED | E8, W7 | BUĞDAY için iki YAML girdisi açılacak |
 | KG-0.e | `dev-station` build profili: M1+M2 tek makinede. Gevşetmeler `build_profiles.yaml`'da tek tek adlandırılır; paketler "üretim değil" etiketlenir. Kırmızı çizgi: HC-01/02/05/07 ve SHA-256 gevşetilmez. | DECIDED | E1 | Yeni ADR gerekir |
@@ -996,6 +1106,13 @@ satın alma takvimi
 | KG-0.b-R | **REVİZE (koordinatör direktifi):** ÖN RAPOR = **`analysis_priority_zones`'un çiftçiye sunulması** (Y-D). Çiftçi, kalibrasyondan sonra tarlasındaki **sorunlu kırmızı NDVI bölgelerini** (`geom` + `ndvi_value` + `ndvi_overlay`) "ÖN RAPOR" başlığı altında görür. **Yeni faz/mission state EKLENMEZ** — `results_service_impl.py:227` zaten `PRELIMINARY` türetiyor; eklenen yalnız **içerik kaynağı**. KR-019 (tespit yok), KR-033 (ödeme kapılı), KR-025 (reçete yok), ADR-007 §2 **korunur**. Önceki "FAZ 1'e ertele" kararı yürürlükten kalktı. | **DECIDED** | P6 (yeniden tanım), P12 (yeni), E12 (aç) | ADR-007 yorum notu Y-D'yi anlatacak; demo kritik yolu |
 | KG-0.d-EK | **KİRAZ:** `bookable:True` ama contract wire-enum'da ve edge tablosunda YOK → sipariş edilebiliyor, iş iki yerden düşüyor. E8 sırası: ① KİRAZ kararı (bookable:False **veya** enum+tablo) ② WHEAT ③ SUNFLOWER/OLIVE ertelenebilir (`bookable:False` → zararsız). | **KARAR BEKLİYOR** (ürün) | E8, `crop_type.enum.v1` | Sipariş açıkken risk canlı |
 | KG-0.g-EK | **"Terra'nın CLI'si yok" teyitli değil** — E6'nın tasarımı buna dayanıyor. DJI'dan yazılı cevap (CLI var mı · hangi lisansta · çıktı adları dokümante mi) satın alma sorgusuyla aynı yazıda istenir. Cevaba kadar E6 "klasör izleyici" varsayımıyla tasarlanır (güvenli taraf). | AÇIK KALEM | E6, §7 bulgu 1-3 | Cevap gelmeden E6 kodlanmaz |
+
+<!-- 2026-07-31 bağımsız denetim turu — kararları DEĞİŞTİRMEZ, kalemlerin hedef/sıra/kapsamını bağlar -->
+| KG-0.b-R2 | **ÖN RAPOR kanonik tanımı genişletilir.** `analysis_preliminary_ready.v1` ve `report_phase.enum.v1` PRELIMINARY içeriğini **"YALNIZ deterministik indeks katmanları + overall_health_index"** diye kapatıyor; öncelik bölgesi (poligon + `ndvi_value` + `ndvi_overlay`) listede YOK. Ayrıca `report_phase.x-derived-from.mapping`'de **kalibrasyon-sonrası statü yok** (`UPLOADED` eksik); "çalışıyor" görünmesinin sebebi platformun catch-all'u (`results_service_impl.py:227`). → **C9 + C10.** Ön koşul: **KR-093 kaydı contract `ssot/kr_registry.md`'ye taşınmalı** (bugün KR-092'de bitiyor). | DECIDED | C9, C10, P6, P12 | Y-D kararı değişmez; kanonik tanım onu kapsar |
+| KG-0.a-EK2 | **Anahtar sahipliği kuralı 3 düzeltildi.** Eski hâli (*"GET presign'da anahtar DB'den okunur"*) **işlevsizdi** — kod bunu zaten yapıyor (`patches.py:151`). Yürürlükteki kural: *anahtar DB'den okunur **VE DB'ye yalnız platformun ürettiği anahtar yazılır**.* Şiddet 🔴→🟠: sahiplik kapısı var (`patches.py:118-148`), sömürü **ele geçirilmiş edge + atanmış uzman** ister. Kabul testi **iki koşullu** kurulur. | DECIDED | P4, `ingest_service_impl.py:266` | Tek koşullu test bugün de yeşil geçer |
+| KG-0.b-WEB | **Demo kritik yoluna ⑦ ARAYÜZ adımı eklendi.** ①–⑥'nın hepsi API'de bitiyordu; `tarlaanaliz-platform/web/` mevcut ve `REPO_BOUNDARY_RULES.txt` web'i bağlayıcı biçimde ayrı tüketici sayıyor. → **WEB1** (ÖN RAPOR ekranı) + **WEB2** (kapı/boş-durum mesajları). Dalga 2 **+3-5 gün**. | DECIDED | WEB1, WEB2 | Ekransız demo API cevabında kalır |
+| KG-0.e-E12 | **E12 ön koşulu bir kaleme bağlandı.** §10.5/§11.5 kuralı ("KİLİT-2 kapalıyken açılmaz; ya dedup ya kota") yazılıydı ama **hiçbir iş kalemi yoktu**; tek kota kalemi (P9) demodan sonraydı. → **P9a** (pilot kota tavanı, Dalga 2, E12 ile aynı sürüm) + **P9b** (kalıcı kota, Dalga 4). | DECIDED | E12, P9a, P9b | Aksi hâlde plan demo gecesi kendi kuralını ihlal eder |
+| KG-C-TUR1 | **Contract Tur 1 yeniden tanımlandı:** `C0 + C1′ + C2′ + C2″ + C3′ + C9 + C10 + AL-C1 + AL-C2` (+C6 koşullu). **C4 düştü** (contract kalemi değil), **C5 düştü** (yapılmış). AL-C1/C2 Tur 2'den **Tur 1'e alındı** — [0] ölçüm temelinin tek açılabilir kilidi. | DECIDED | §3.1, §5.1, §11.2 | Kanıt: `denetim/…_2026-07-31_…md` |
 ```
 
 ### B) `tarlaanaliz-platform/docs/architecture/end_to_end_workflow.md` → durum güncellemesi
@@ -1026,8 +1143,9 @@ yama görselleri `object_key` taşıyacak (C2 + E10 + P4). ⚠️ **Statü yüks
 
 | Karar | Yapılacak | Dosya |
 |---|---|---|
-| 0.b | ADR-007'ye **yorum notu**: "2026-07-29 ürün direktifi KG-0.b ile Y-C biçiminde karşılandı; §2 ve §5 değişmedi." ADR yeniden yazılmaz | `docs/adr/ADR-007-preliminary-farmer-view.md` |
-| 0.e | **Yeni ADR** (ör. ADR-009): dev-station profili, gevşetilen kontrollerin listesi, kırmızı çizgiler, geri alma koşulu (M1/M2 teslim) | `docs/adr/ADR-009-dev-station-profile.md` |
+| 0.b | ADR-007'ye **yorum notu (Y-D metni — 2026-07-31'de düzeltildi):** *"2026-07-29 ürün direktifi **KG-0.b-R ile Y-D** biçiminde karşılandı: ÖN RAPOR içeriği `analysis_priority_zones`'tan sunulur. **Yeni mission state / yeni faz eklenmedi**; §2 ve §5 değişmedi. İçerik tanımı C9, statü eşlemesi C10 ile kanonikleştirildi."* ADR yeniden yazılmaz. ⚠️ Eski taslak metin "Y-C" diyordu — **yürürlükten kalkmış kararı** ADR'ye yazdıracaktı | `docs/adr/ADR-007-preliminary-farmer-view.md` |
+| 0.e | **Yeni ADR — ADR-009 (numara doğrulandı 2026-07-31: platform ADR'leri ADR-008'de bitiyor, 009 boş):** dev-station profili, gevşetilen kontrollerin listesi, kırmızı çizgiler, geri alma koşulu (M1/M2 teslim). ⚠️ **ADR-009 bu işe tahsis edilmiştir**; Y-A ileride canlanırsa **başka numara** alır | `docs/adr/ADR-009-dev-station-profile.md` |
+| **P-10 / C9** | **KR-093 kaydını kanonik registry'ye taşı** — bugün `ssot/kr_registry.md` **KR-092'de bitiyor** ve `ssot/contracts_ssot.md`'de de yok; oysa contract'ın kendi artefaktları (`report_phase.enum.v1`, `analysis_preliminary_ready.v1`) KR-093'e **normatif** atıf yapıyor → sarkan kanonik atıf. Tanımı olmayan KR değiştirilemez, **C9'un ön koşuludur** | `tarlaanaliz-contract/ssot/kr_registry.md` (kaynak: platform `docs/kr/kr_registry.md`) |
 | 0.f | `analysis_type.enum.v1.json` **metadata notu**: `BENEFICIAL` ve `THERMAL_STRESS` için "not producible with current sensor/model set" + gerekçe | `tarlaanaliz-contract/enums/analysis_type.enum.v1.json` |
 
 ---
@@ -1164,7 +1282,7 @@ güncellenmelidir.** 40 uzman varsayımı da bu planda hiçbir yerde doğrulanm�
 | **W7+** | W7 kapsamı genişletilsin: veri seti boşluğu **+** contract(8)↔readiness(12) enum hizası **+** EK-A'yı 8 mahsule genişletme | worker + contract | 🟠 Orta |
 | **W9** | **W6 etiket şeması EK-A'dan türetilsin** — sıfırdan yazma; EK-A ✅/⚠️/❌ sütunları taksonomiye çevrilsin | worker | 🟠 Orta |
 | **KG-0.d gözden geçirme** | YZ tespit vitrini: üzüm/Botrytis → **mısır/ot** (Ç-1 seçenek A) — **karar sizin** | — | 🔴 Demo öncesi |
-| **E12 sıra kuralı** | E12, KİLİT-2 kapalıyken açılmaz; ya dedup bağlanır ya kota manuel sınırlanır | edge + platform | 🟠 Orta |
+| **E12 sıra kuralı** | E12, KİLİT-2 kapalıyken açılmaz; ya dedup bağlanır ya kota manuel sınırlanır. ✅ **2026-07-31: iş kalemine bağlandı** → **P9a** (pilot kota tavanı, Dalga 2, E12 ile aynı sürüm). Önceden kural yazılıydı ama **hiçbir kaleme bağlı değildi** | edge + platform | 🔴 **E12 ön koşulu** |
 | **Ölçek mutabakatı** | Pilotta tile/gün ölçülsün; tasarımın 100k-600k ve 40-uzman varsayımları güncellensin | — | 🟡 Pilot çıktısı |
 | **Küçük düzeltme** | `odm_run_botrytis.sh:6` yorumu "per altitude" → "per **angle**" | worker | 🟢 Düşük |
 
@@ -1216,7 +1334,7 @@ Artık yapılacak işler için **bu bölüm otoriterdir**; o iki dosya gerekçe/
 |---|---|---|---|
 | **AL-C1** 🔴 | `expert_review_queue.v1` → `escalation_reason` enum'una **additive 7. değer `AUDIT_SAMPLE`**. Bugün i.i.d. denetim tile'ını taşıyacak bir neden **yok**; mevcut güven-temelli bir neden altında yollamak hem **yansızlığı bozar** hem `escalation_total{reason}` metriğini kirletir. Worker enum'a **tek taraflı ekleyemez** (§2.1 platform-otoriter) | ✅ Kanonik contract **ve** worker vendored kopya: tam **6 değer** (`LOW_CONFIDENCE, LOW_AGREEMENT, OOD_DETECTED, HIGH_EPISTEMIC, EXPERT_RE_TRIGGER, QUARANTINE_CAUTION`) — `AUDIT_SAMPLE` yok | 🔴 [0]'ın ön-koşulu |
 | **AL-C2** 🔴 | `expert_review_queue.v1` → **denetim-modu alanları**: `audit_sample: bool` + `audit_stratum: string`. ⚠️ `audit_stratum` platform-otoriter eksende ifade edilmeli (`crop_type` × `analysis_type` × fenoloji-penceresi); eksen karışımı **şema hatasıdır** | Devir spesi §3-B: **bilimsel olarak A'dan üstün**; A+B **birlikte** önerilir (A metrik temizliği, B körlük) | 🔴 [0]'ın ön-koşulu |
-| — | ⚠️ AL-C1/C2 **C8 sürüm törenine** dahildir (annotated tag + SHA256 + 3 repo pin). C-Tur-2 ile birleştirilebilir | — | — |
+| — | ⚠️ AL-C1/C2 **C8 sürüm törenine** dahildir (annotated tag + SHA256 + 3 repo pin). **TUR 1'e dâhildir** (2026-07-31 kararı — eski *"C-Tur-2 ile birleştirilebilir"* ifadesi **yürürlükten kalktı**; Tur 2 demo sonrası olduğu için [0] ölçüm temelini bloke ediyordu). Bkz. §3.1 "TUR TANIMI" | — | — |
 
 **Kaynak devir spesi:** `tarlaanaliz-worker/denetim/audit_escalation_reason_devir_spec_2026_07_19.md`
 — worker'ın karar-hazır devri; **platform seçer, worker uydurmaz.**
@@ -1255,6 +1373,9 @@ Artık yapılacak işler için **bu bölüm otoriterdir**; o iki dosya gerekçe/
 
 ⚠️ **§10.3/T-3 hatırlatması:** **E12** (NDVI önceliklendirme bayrağı) **KİLİT-2 kapalıyken açılmamalı** —
 uzman yükünü artırırken azaltıcıyı devre dışı bırakır.
+✅ **2026-07-31 çözümü:** bu kural artık **P9a**'ya bağlıdır (pilot kota tavanı, Dalga 2, E12 ile aynı
+sürüm). Önceki hâlinde kural yazılıydı ama **hiçbir iş kalemine bağlı değildi** ve tek kota kalemi
+(P9) demodan sonraydı → demo gecesi plan kendi kuralını ihlal edecekti.
 
 ## 11.6 Bilinçli YAPILMAYACAKLAR (kapsam kayması önleyici)
 
@@ -1449,7 +1570,7 @@ ve üretim motoru kararını **tahminle değil pilotun ölçümüyle** vermenizi
 Terra EDU'yu **almayın** (500 foto sınırı). Eğitim lisanslarını ancak gerçekten
 ticarileşmeyecek bir hat için düşünün.
 
-## 12.7 Kaynaklar (§12 için)
+## 12.8 Kaynaklar (§12 için)
 
 - [DJI Terra sürüm-işlev tablosu (resmi)](https://support.dji.com/help/content?customId=01700004862&spaceId=17&re=US&lang=en&documentType=&paperDocType=ARTICLE) — **"The reconstruction of 500+ photos is not supported"** (Education) · Agriculture = 3 cihaz, 2D Multispectral dahil
 - [DJI Terra FAQ](https://enterprise.dji.com/dji-terra/faq) — ücretsiz lisanslar unbind edilemez
