@@ -1911,6 +1911,56 @@ A7 kanopi maskesi · A5/A6 fenoloji eşlemesi · §12 motor kararı sonrası `DT
 | ⬜ **AK-9** 🔴 | **`stress_ratio` TANIMSIZ** — KR-093'ün `WATER_STRESS` kaleminin kaynağı olarak **3 yerde** anılıyor, **0 yerde** tanımlı (A3 doğrulandı). Worker `channel_spec.py` adı `derived_indices` listesinde taşıyor ama `compute_indices_v2` çıktısında hesap YOK: ad var, üretim yok | Formülü tahminle yazmak doğrulanamaz kapı üretir (`CHLOROPHYLL_A` dersi). WATER_STRESS artık `proxy_only` ve ön fazdan çıktığı için bugün **zorunlu teslimat değil** → tanım, termal/SWIR donanım kararıyla birlikte verilir | `analysis_type → metadata.indexDefinitions.stress_ratio` (`UNDEFINED_PENDING_DECISION` + gerekçe) · kapı: `test_single_normative_body.py` |
 | ⬜ **AK-8** | **`expert_labeling_card.calendar_risk_by_crop` FARKLI EKSEN kullanıyor:** anahtarları `^[a-z_]+$` ve örnekleri *"cereals, fruit_trees, cotton"* — yani mahsul **GRUBU** ile mahsul **ADI** aynı sözlükte karışıyor. Ürün sözlüğü kapısı bunu bilerek kapsam dışı bıraktı (farklı eksen) | Grup ekseninin kanonik bir sözlüğü YOK; tanımlamak agronomi kararıdır (hangi gruplar, hangi mahsul hangi gruba?) | `schemas/worker/expert_labeling_card.v1.schema.json` → `calendar_risk_by_crop.patternProperties` |
 
+## 14.7 🔜 SONRAKİ OTURUM — SIRALI İŞ LİSTESİ (2026-07-31 kapanışında yazıldı)
+
+> Bu tablo, oturum kapanışındaki **tek yürürlükteki sıradır**. Üstündeki kademeler
+> (§14.0–§14.5) neyin NEDEN yapıldığını anlatır; burası **ne yapılacağını** söyler.
+> Kural: bir kalem burada yoksa yapılmaz; yapılacaksa önce buraya yazılır.
+
+### ⛔ ÖNCE — C8 release törenini AÇAN kalemler (sırayla)
+
+| # | İş | Neden önce | Nerede |
+|---|---|---|---|
+| **1** | **`sync_kr_corpus.py --apply`** + platform ve worker'da AYRI commit/PR | KR korpusu 4/4 hedefte sapmış; **worker SSOT metnini hiç taşımıyor**. Kural metnini görmeyen depo kuralı uygulayamaz | bu depo (araç) + 2 kardeş depo (PR) |
+| **2** | **D16-b2 — kalan 49 ikili gövde** | AR1 sınıfı açık: aynı KR iki yerde tanımlıysa biri sessizce bayatlar. Yön ve mekanizma KR-093'te kanıtlandı; kalanlar mekanik | `ssot/kr_registry.md` → işaretçi · gövde SSOT metnine |
+| **3** | **D4-b kararı** — parite kapısı CI'da koşsun mu? | CI'da **47 beyanlı skip** var; çapraz-repo sapmayı hiçbir kapı CI'da görmüyor (Y3). Ya PAT ile kardeş checkout, ya "yalnız C8'de yerel" yazılı kabul | koordinatör → CI |
+| **4** | **SD8 kararı** — etiketsiz 16 sürüm: retro-tag mı, kayıt notu mu? | I-2 değişmezi bugün tarihsel olarak TUTMUYOR; C8 bunu yalan raporlayamaz | koordinatör |
+| **5** | **0.h onayı** (K2 veri yönetişimi taslağı §14.5) | Üç yeni veri kategorisi sözleşmeye girdi, KR-090 saklama tablosunda yok (K3) | koordinatör |
+| **6** | **C6 kararı** = **E13** (RELATIVE mi DLS2_RELATIVE mi) | C6 koşullu MINOR; E13 kararı C6'dan ÖNCE gelir | edge ölçümü |
+| **7** | **C8 TÖRENİ** — `pin_version` → annotated tag → 3 depo pin | `SDLC_GATES §3G`; ön koşul: 1-6 kapanmış olmalı | bu depo + 3 depo |
+
+### 🔴 KARDEŞ DEPO İŞLERİ (contract'tan yapılamaz — her biri ayrı PR)
+
+| # | Depo | İş | Kaynak bulgu |
+|---|---|---|---|
+| **E15** | edge | `qc_report_writer`: `min(...,1.0)` kırpması kaldırılsın · `except → 0.0` **fail-loud** · `footprint_crs` okunup uyuşmazlıkta `crs_mismatch` yazılsın | G1 (KR-065 ödeme) |
+| **E16** | edge | Ürün sözlüğü BÜYÜK harfe: `sorties[].crop_type` üreticisi + vendored `worker_result` enum'u + fixture'lar | AK-7 |
+| **P14** | platform | `worker_job_publisher.py:80-84` fail-open `PANEL_ABSOLUTE` adımı kaldırılsın, tip yoksa `NONE` | S1 |
+| **P15** | platform | `spectral_tier.py:51` `EXTENDED_INDICES` → `CHLOROPHYLL_A` yerine **`LCI`** | AK-1 |
+| **P16** | platform | Konsensüs yolu `consensus_participation: EXCLUDED` satırını **saymamalı** | M2 |
+| **W8** | worker | Denetim satırı emisyonu: `tile_id`, π_h, rotation, bucket, `confidence_score: 0` tel üzerine yazılsın (sampler bunları zaten hesaplıyor) | M1/M3 |
+| **P1** | platform | Şema zorlaması (`enforce=True`) — ⚠️ **E16'dan SONRA** açılmalı, yoksa edge çıktısı runtime'da reddedilir | P1 |
+
+### ⏳ BLOKE — engeli kalkınca (sıra değil, koşul)
+
+`S5 scale_factor` + `C6b`/`S3`/`S4`/`S6`/`S7` → **E13 kararı** · `K1 {tenant}` → **MAJOR penceresi** ·
+`K3` saklama MUST'ları → **D16-c** (KR-093 gövdesi tek yerde) · `A5/A6` fenoloji · `A7` kanopi maskesi →
+**agronomi kararı (TAGEM/Bakanlık kaynaklı)** · `S12 DTM/POINT_CLOUD` → **§12 motor kararı** ·
+`Ç4 adım 2-3` → v2 penceresi · `C7` (tekil kare şeması) → **Tur 2, demo sonrası** ·
+`E11` kare seçici → **C8'den ÖNCE MERGE EDİLMEZ** (D10-E4 kilidi).
+
+### 🧪 KAPI BORCU (bu turda açık kalan)
+
+| # | Borç | Ölçüm |
+|---|---|---|
+| **AK-2** | Dedektör `$ref` hedeflerini çözmez (`REF_CHANGED` görünür ama sınıflandırılmaz) | E3 inline'ı riski büyük ölçüde kaldırdı |
+| **AK-3** | `NORMATIVE_ANNOTATION_KEYS` elle tutulan 5 anahtar | yeni normatif blok eklenirse listeye yazılmalı |
+| **AK-5** | 8 dosyada `x-compat-accepted` beyanı — gerekçe *"üretici yok"*; üretici yazılınca **bayatlar** | beyanlara `revisit_when` alanı eklenmeli |
+| **AK-8** | `calendar_risk_by_crop` mahsul GRUBU ile mahsul ADINI karıştırıyor | grup sözlüğü tanımsız (agronomi) |
+| **AK-9** | `stress_ratio` tanımsız (`UNDEFINED_PENDING_DECISION`) | WATER_STRESS `proxy_only` olduğu için bugün zorunlu değil |
+
+---
+
 ## 14.6 Şüpheli bulgular — kapatılmadan önce ölçülecek
 
 `M2` platform konsensüs yolu · `M4` worker bulk_approval yolu · `M1/P4` emisyon kodu yazılırken ·

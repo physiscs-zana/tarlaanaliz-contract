@@ -20,7 +20,31 @@
 
 ---
 
-## 0.B EN GÜNCEL OTURUM (2026-07-31, ikinci oturum) — **KADEME 0 · 1 · 2 · 3 kapandı**
+## 0.B EN GÜNCEL OTURUM (2026-07-31, ikinci oturum) — **KADEME 0→5 + öz-denetim**
+
+> ### 🔚 OTURUM KAPANIŞ ÖZETİ
+> **Yapılan:** eylem planı §14'ün **beş kademesi** (KADEME 0,1,2,3 tam · 4 kısmi · 5 kısmi) +
+> onaylanan iki karar (**§14.2.1 `$ref` inline** · **D16-b tek gövde**) + **D18-b** + **AK-10**.
+> **Sayılar:** yerelde **910 test / 2 beyanlı xfail / 0 skip** · `validate.py` **96 dosya / 0 hata**
+> · dedektör **0 breaking** · **CI 9/9 yeşil** (`headRefOid` her turda doğrulandı).
+> **Yeni:** 9 test dosyası · 3 araç (`inline_refs.py`, `sync_kr_corpus.py` + `validate.py` genişletildi)
+> · `dist/schemas/` yayın biçimi (68 dosya, harici `$ref` 0).
+>
+> **⚠️ ÖZ-DENETİMDE BULDUĞUM KENDİ HATALARIM (4 adet, hepsi düzeltildi):**
+> 1. `analysis_type.enum`'a konvansiyon dışı **üst düzey `version`** alanı ekledim → kaldırıldı.
+> 2. D17'de makine-okunur listeden `WATER_STRESS`'i çıkardım ama **KR-093'ün iki prose gövdesi
+>    bayat kaldı** → AR1'in yenisini ürettim; düzeltildi + kalıcı "makine↔metin" kapısı yazıldı.
+> 3. D16-b gerekçemde **"registry yalnız contract'ta yaşar"** dedim — sığ `ls` yüzünden YANLIŞ;
+>    derin ölçüm yönü değiştirmedi ama gerekçe **senkron mekanizması**na dayandırıldı.
+> 4. Tekil-gövde kapım **başlık** sayıyordu, **gövde** değil → göçü göremiyordu; damga tabanlı
+>    ölçüme çevrildi (mutasyonla kanıtlandı).
+>
+> **Kapı kanıtı:** 26 kapının **22'si mutasyonla** doğrulandı · 2'si kısmi (kardeş depo gerekiyor)
+> · 2'si henüz koşulmadı (C8 töreni · CI parite kararı).
+>
+> **📌 SONRAKİ OTURUM: eylem planı §14.7** — sıralı iş listesi oradadır (C8'i açan 7 kalem,
+> 7 kardeş depo işi, bloke kalemler, kapı borcu). Bu dosya iş listesi tutmaz.
+
 
 **Yapılan:** Eylem planı **§14.0 (D1…D6)** — *"kapılar dürüst hale gelsin"*. Altısı da bitti,
 üstüne denetimde görülmemiş **dördüncü bir CI yalanı** bulunup kapatıldı (D3-b).
