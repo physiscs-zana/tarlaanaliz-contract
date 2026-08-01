@@ -2058,3 +2058,47 @@ Ayrıca worker `W2` (ölçek motor başına: ODM 0-1 / Metashape 32768) aynı ka
 
 `M2` platform konsensüs yolu · `M4` worker bulk_approval yolu · `M1/P4` emisyon kodu yazılırken ·
 `Q21` `pytest -q` ×5 ardışık · `SD8` retro-tag koordinatör kararı · `A7` TAGEM/Bakanlık literatür teyidi
+
+---
+
+## 14.8 🔬 ÖZ-DENETİM SONRASI SIRALI İŞ LİSTESİ (2026-08-01 · **SONRAKİ OTURUM BURADAN BAŞLAR**)
+
+> Kaynak: `denetim/denetim_raporu_2026-08-01_ozdenetim_6lens.md` (6 lens · 51 ham bulgu).
+> ⚠️ O rapor **kanıt arşividir, iş listesi değildir**; yapılacak işler **yalnız burada** tutulur.
+>
+> **Denetimin bilinen sınırı — bunu bilerek oku:** 109 ajanın 69'u oturum kotasında düştü;
+> `sürüm-riski` lensi hiç koşmadı ve çürütme turu yarım kaldı. Aşağıdaki **ÖD-1/2/3 elle
+> doğrulandı**; ÖD-4 ve sonrası **doğrulanmamıştır** — her birinin ilk adımı "önce ölç".
+
+### 🔴 ÖNCE — elle doğrulanmış, kanıtlı (bu üçü aynı kök nedene bakıyor)
+
+| # | Kalem | Kanıt (ölçüldü) | Ne yapılacak |
+|---|---|---|---|
+| **ÖD-1** 🔴 | **Enum kayıt defteri ile şemanın inline enum'u ayrışık — ve hiçbir kapı ikisini bağlamıyor.** `enums/calibration_type.enum.v1.json` → `x-context-subsets['edge/calibrated_dataset_manifest']` = `[ABSOLUTE, RELATIVE, PANEL_ABSOLUTE]` **ama** `schemas/edge/calibrated_dataset_manifest.v1.schema.json` → `/properties/calibration_result/properties/calibration_type.enum` = `[ABSOLUTE, RELATIVE]`. **⇒ C6b/S2 kararı FİİLEN UYGULANMADI:** `PANEL_ABSOLUTE` taşıyan belge bugün hâlâ reddedilir | Şema ile defter ayrı yerlerde; bu D16'nın kapattığı "ikili gerçek" deseninin **şema tarafındaki** hâli | ① Şemanın inline enum'unu deftere hizala (C6b'yi gerçekten uygula) ② **Sınıf kapısı yaz:** her bağlam için defter ↔ inline enum eşitliğini zorlayan test (5 bağlamın hepsi) ③ Mutasyonla doğrula |
+| **ÖD-2** 🔴 | **S5 + W12 TEL ÜSTÜNDE ÖLÜ.** `schemas/worker/analysis_job.v1.schema.json` → `$defs/CalibrationMetadata` props = `[calibration_panel_id, calibration_timestamp, calibration_type, irradiance_sensor]`, `unevaluatedProperties: false`. `scale` **yok** → `jsonschema.validate` ile ölçüldü: *"Unevaluated properties are not allowed ('scale' was unexpected)"*. Yani platform bir işe `scale` koyarsa **şema reddeder**; worker'ın W12'de yazdığı okuma kodu asla veri görmez | `worker/calibration_metadata.v1.schema.json` güncellendi ama **işin taşıyıcısı** `analysis_job.v1`'in kendi `$defs` kopyası güncellenmedi — aynı kavramın iki şema tanımı var | ① `analysis_job.v1 → $defs/CalibrationMetadata`'ya `scale` ekle (ve `calibration_method` — S4 aynı delikten düşüyor olabilir, **ölç**) ② İki tanımın ayrışmasını yasaklayan kapı yaz ③ Uçtan uca doğrula: örnek job belgesi `scale` ile valide olmalı |
+| **ÖD-3** 🔴 | **E13/C6b kapıları yalan yeşil.** `tests/test_calibration_type_axis.py:60` `_calibrated_subset()` yalnız `x-context-subsets`'i okuyor; şemanın inline enum'una **hiç bakmıyor**. Aynı desen `tests/test_calibrated_manifest_fields.py`'de de var | Kararın değeri (`ABSOLUTE`) şemadan silinse kapı yeşil kalır — kapı korduğunu iddia ettiği yüzeyi ölçmüyor | ÖD-1'in kapısı bunu da kapatır; ayrıca bu iki test dosyasındaki **tüm** `x-context-subsets` okumalarını gözden geçir: hangisi şemayı da ölçmeli? |
+
+### 🟠 SONRA — denetimden çıkan, **önce doğrulanacak** bulgular
+
+| # | Kalem | İlk adım |
+|---|---|---|
+| **ÖD-4** | Worker vendored kopyası yayımlanmış v7.3.0'ın **önünde** olabilir (beyansız AK-4/I-5 sapması) | `interface/contracts/` ↔ `v7.3.0` tag'i diff'le; sapma varsa ya geri al ya `denetim/*_devir_spec_*.md` ile beyan et |
+| **ÖD-5** | E13 kararı `data/drone_capability_matrix.yaml` ile çelişebilir | Matristeki M3M kalibrasyon kaydını oku; `ABSOLUTE` ile tutarlı mı? |
+| **ÖD-6** | Platform'da S1 fail-open (`CALIBRATED → PANEL_ABSOLUTE güvenlik-ağı`) **hâlâ canlı** olabilir (`worker_job_publisher.py:80-84`) — E13'ün "panel kanıtı" zincirini deler | Kodu oku; canlıysa **P14** kalemiyle birleştir |
+| **ÖD-7** | SD8 nüfusu eksik ölçülmüş olabilir: `2.0.1 / 2.1.0 / 4.1.2` sürümleri `CONTRACTS_VERSION.md`'ye yazılmış ama etiketsiz | `git log -S"## Version: 2.0.1"` vb. ile ölç; varsa retro-tag turunu tamamla veya kayda geçir |
+| **ÖD-8** | Vendored parite kapısı `$defs`'e kör ve 16 vendored dosyanın yalnız **9'unu** izliyor — S5 boşluğu tam bu delikten geçti | `PARITY_PAIRS` listesini 16'ya tamamla + `$defs` karşılaştırması ekle |
+| **ÖD-9** | Sınıf 1 (kodlamasız dosya okuma) tek depoya tarandı — dört depoda çok daha fazla üye olabilir | **W11** ile birleştir; taramayı dört depoya genişlet |
+| **ÖD-10** | Sınıf 3 (vendored'a prose taşıma) kapanmadı — 16 vendored dosyanın 13'ü hâlâ şişkin olabilir | Boyut + non-ASCII ölçümü; **C8-a** aracıyla birlikte çöz |
+| **ÖD-11** | `D16-b2` kapısı işaretçi **damgasına** bakıyor: damga dururken altına çelişkili gövde yazılabilir | Damga + gövde-yokluğu birlikte zorlansın |
+| **ÖD-12** | "Göç taşımadır, silme değil" kapısı **başlık** sayıyor — normatif gövde silinse yeşil kalabilir | İçerik-uzunluğu/anahtar-madde tabanlı ölçüme çevir |
+| **ÖD-13** | `dist/` yayın ağacı PII / validate / checksum kapılarının **kapsamı dışında**; yetim dosya denetimi yok | `validate.py` ve PII kapısını `dist/`e genişlet |
+| **ÖD-14** | Platform `main.py` sürüm sabiti sınıfı yarım süpürülmüş olabilir (log satırlarında `7.2.0` kalıntısı) | `grep -rn "7\.2\.0" platform/src` → kalanları temizle |
+| **ÖD-15** | `SDLC_GATES.md` SD8'i hem "karar bekliyor" hem "kapandı" diyor olabilir (bayat blok) | Çelişen bloğu tekilleştir |
+| **ÖD-16** | CHANGELOG'da yayımlanan dedektör komutu çalışmıyor olabilir ("üreteci yayınla" ihlali) | Komutu koştur; çalışmıyorsa düzelt |
+
+### 📌 DENETİMİN KENDİSİNİN BORCU
+
+| # | Kalem |
+|---|---|
+| **ÖD-0** | **`sürüm-riski` lensi hiç koşmadı** (API hatası). v7.3.0'ın yayımlanmış içeriği ↔ CHANGELOG örtüşmesi, migration-guide gereksinimi, ve **TUR 2 açıkken master'ı vendor'lama riski** denetlenmedi. Sonraki oturumda bu lens tek başına koşturulmalı. |
+| **ÖD-0b** | Çürütme turu yarım kaldı (51 bulgunun 35'i skeptik gördü) ve workflow'un eleme mantığı "skeptiği düşen bulguyu ele" şeklinde çalıştı → **haksız elenen bulgu olabilir**. Ham liste denetim raporunda; ÖD-4…ÖD-16 oradan türetildi. |

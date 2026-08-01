@@ -67,10 +67,28 @@
 > **+** dedektörden bağımsız derinlik taraması (157 dosya, `$defs`/`items`/`oneOf` dahil). Dedektörün
 > `FIELD_MADE_REQUIRED` için `x-compat-accepted` beyanını **hiç kontrol etmediği** ölçüldü (**AK-11**).
 >
-> **📌 SONRAKİ OTURUM:** eylem planı **§14.7** (sıralı iş listesi) + yeni **🔶 MAJOR TURU (`v8.0.0`)**
-> bölümü. Sıradaki mantıklı işler: **W11** (worker kodlama kusuru, 5 üye) · **C8-a** (vendored yayılım
-> aracı — bu turda elle yapıldı, aynı hata tekrarlanabilir) · **AK-11** (dedektör tutarsızlığı, S7-b'nin
-> doğrudan engeli) · kardeş depo kalemleri **E15/E16/E17 · P14/P15/P16 · W8/W10**.
+> **📌 SONRAKİ OTURUM — TEK GİRİŞ NOKTASI: eylem planı `§14.8`.**
+> Kullanıcı "devam et" dediğinde **§14.8'in başından** başla; sıra oradadır.
+> (§14.7 kapandı · §14.8 öz-denetimden doğdu · 🔶 MAJOR TURU bölümü ayrıca bekliyor.)
+>
+> ### 🔬 OTURUM SONU ÖZ-DENETİMİ (6 lens · 109 ajan · 3.5M token)
+> Kanıt arşivi: `denetim/denetim_raporu_2026-08-01_ozdenetim_6lens.md`
+>
+> **🔴 Üç KRİTİK bulgu ELLE DOĞRULANDI** (ajan iddiası kanıt sayılmadı) ve **hepsi gerçek** —
+> üçü de aynı kök nedene bakıyor: *aynı kavramın iki şema tanımı var ve hiçbir kapı ikisini bağlamıyor.*
+> 1. **C6b/S2 kararı fiilen uygulanmadı** — `PANEL_ABSOLUTE` yalnız enum **kayıt defterine**
+>    (`x-context-subsets`) yazıldı; şemanın **inline** enum'u hâlâ `[ABSOLUTE, RELATIVE]`.
+>    Yani karar kâğıt üzerinde; `PANEL_ABSOLUTE` taşıyan belge bugün de reddedilir.
+> 2. **S5 + W12 tel üstünde ÖLÜ** — `analysis_job.v1 → $defs/CalibrationMetadata` `scale`
+>    taşımıyor ve `unevaluatedProperties: false`; ölçüldü: *"Unevaluated properties are not
+>    allowed ('scale' was unexpected)"*. Worker'ın okuma kodu asla veri görmeyecek.
+> 3. **E13/C6b kapıları yalan yeşil** — kayıt defterini ölçüyorlar, şemayı değil.
+>
+> **⚠️ Denetimin kendi borcu (dürüstlük notu):** 109 ajanın **69'u oturum kotasında düştü**.
+> `sürüm-riski` lensi **hiç koşmadı** (v7.3.0'ın yayımlanmış içeriği denetlenmedi → **ÖD-0**) ve
+> çürütme turu yarım kaldı; workflow "skeptiği düşen bulguyu ele" mantığıyla çalıştığı için
+> **haksız elenen bulgu olabilir** (**ÖD-0b**). §14.8'deki ÖD-4…ÖD-16 bu yüzden
+> **"önce doğrula"** notuyla girdi — hiçbiri kanıtlanmış sayılmaz.
 
 ---
 
