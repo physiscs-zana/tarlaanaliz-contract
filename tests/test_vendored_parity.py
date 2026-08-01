@@ -330,6 +330,16 @@ PENDING_PROPAGATION: dict[str, dict] = {
     #    ölçmüyordu; bunu ancak elle fark ettim).
 }
 
+W14_DECISION = (
+    "KARAR (koordinator, 2026-08-01): bu degerler WORKER'DA KALIR - platformda gerekmiyor. "
+    "Artik kapatilacak bir borc degil, BEYAN EDILMIS EKSEN FARKI: worker-ici arastirma "
+    "ekseni (12 urun / 7 bolge) ile tel-ustu GAP ekseni (8 urun / 9 bolge) BILEREK ayridir "
+    "(platform crop_type.py:50-68 dort-kume kaydi). Bugun LATENT: bu degerleri tasiyan bir "
+    "is uretilemiyor (CHERRY platformda cift kapili kapali; GAP_OFFERED_CROPS 5 urun). "
+    "YENIDEN ACILMA KOSULU: bu urun/bolge siparis edilebilir hale gelirse tel ONCE "
+    "genisletilmeli, yoksa worker'in urettigi kayit kanonik dogrulamada reddedilir. | "
+)
+
 #: 🔴 VENDORED İLERİ — I-5'e göre KALICI OLAMAZ, ama bugün var ve ÖLÇÜLDÜ (ÖD-8).
 #: Her giriş bir BORÇTUR: nereye ait olduğu ve hangi plan kalemiyle kapanacağı yazılı.
 #: Liste BÜYÜYEMEZ (`test_vendored_ahead_debt_does_not_grow`).
@@ -340,7 +350,8 @@ KNOWN_VENDORED_AHEAD: dict[str, dict] = {
             "/properties/tr_resistance_notes/items/properties/region": {"EGE"},
         },
         "why": (
-            "Kanonik bölge sözlüğü **GAP-only kapsam kararıyla** daraltıldı "
+            W14_DECISION
+            + "Kanonik bölge sözlüğü **GAP-only kapsam kararıyla** daraltıldı "
             "(`2d77024`, 2026-06-26: *'fix region leakage in ported examples "
             "(Aegean coords/ids → neutral GAP)'*). Worker'ın vendored kopyası `EGE`'yi "
             "taşımaya devam ediyor → worker `EGE` etiketli bir kart üretirse kanonik "
@@ -353,36 +364,11 @@ KNOWN_VENDORED_AHEAD: dict[str, dict] = {
             "/properties/crop_type": {"APPLE", "CHERRY", "FIG", "PEACH"},
         },
         "why": (
-            "Terk edilmiş worker 5.x dalından kalan meyve ağaçları. Kanonik `crop_type` "
+            W14_DECISION
+            + "Tarihce: terk edilmis 5.x dalindan kalan meyve agaclari. Kanonik `crop_type` "
             "GAP 8-ürün kümesidir (aynı `2d77024` kararı: *'Aegean CHERRY/FIG/APPLE/PEACH "
             "not adopted'*). Devir notunda 2026-07-05'ten beri *'ayrıca hizalanacak'* diye "
             "işaretli ama hiçbir kapı ölçmüyordu. Kapanış: worker deposu (W-kalemi)."
-        ),
-    },
-    "worker_result.v1.schema.json": {
-        "enums": {
-            "/properties/crop_type": {"corn", "cotton", "grape", "pistachio", "rice"},
-        },
-        "why": (
-            "AK-7 / **E16**: edge ürün sözlüğü küçük harf, kanonik tel-üstü sözlük BÜYÜK "
-            "harf. Plan kalemi zaten açık (E16 — edge deposu); burada ölçülür ve kapanınca "
-            "bu giriş silinir. ⚠️ Sıra kilidi: platform P1 (`enforce=True`) E16'dan ÖNCE "
-            "açılırsa edge çıktısı runtime'da reddedilir. NOT: bu bir EKLEME değil "
-            "**değiştirme** — aynı pointer'da kanonik de 'ileri' görünür (8 BÜYÜK harf "
-            "değer vendored'da yok). Tek borç, iki yön: E16 ikisini birden kapatır."
-        ),
-    },
-    "intake_manifest.v1.schema.json": {
-        "enums": {
-            "/properties/sorties/items/properties/crop_type": {
-                "corn", "cotton", "grape", "pistachio", "rice",
-            },
-        },
-        "why": (
-            "Aynı E16 sınıfı, ikinci dosya: `sorties[].crop_type` üreticisi de küçük harf "
-            "yazıyor (C11 absorpsiyonunda kanonik BÜYÜK harfe çevrildi, vendored kopya "
-            "eski sözlükte kaldı). E16 kalemi bu iki dosyayı BİRLİKTE kapatmalı — yalnız "
-            "`worker_result` düzeltilirse edge içinde iki ayrı sözlük kalır."
         ),
     },
 }
@@ -722,7 +708,7 @@ class TestVendoredAheadDebtIsBounded:
     #: 2026-08-01 ÖLÇÜMÜ (tahmin değil): EGE ×2 pointer · meyve ağaçları ×4 değer ·
     #: küçük harf crop_type ×5 değer, İKİ dosyada (worker_result + intake_manifest.sorties).
     #: Toplam 4 dosya girişi / 5 pointer / 16 değer.
-    MEASURED_DEBT_VALUES = 16
+    MEASURED_DEBT_VALUES = 6
 
     def test_debt_does_not_grow(self) -> None:
         total = sum(
