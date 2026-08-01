@@ -53,9 +53,10 @@
           "type": "string",
           "enum": [
             "ABSOLUTE",
-            "RELATIVE"
+            "RELATIVE",
+            "PANEL_ABSOLUTE"
           ],
-          "description": "Calibration type. DJI Mavic 3M produces RELATIVE only. Subset of enums/calibration_type.enum.v1.json (post-calibration manifest: only ABSOLUTE/RELATIVE)."
+          "description": "Calibration type. DJI Mavic 3M produces RELATIVE only. Subset of enums/calibration_type.enum.v1.json → x-context-subsets['edge/calibrated_dataset_manifest'] — the registry and this inline enum MUST stay equal (tests/test_context_subset_binding.py). C6b/S2 (2026-08-01): PANEL_ABSOLUTE eklendi; intake dört değer kabul ederken bu belge ikisini kabul ediyordu, yani aynı istasyon intake'te panel bildirip kalibre manifestte AYNI değeri yazamıyordu. Bilerek dışarıda: NONE (kalibrasyon başarısızsa manifest hiç üretilmez — calibrated_validator CHECK 2) · DLS2_RELATIVE (E13 kararı: satıcıya özgü donanım adı + irradyans YÖNTEMİ ayrı eksen)."
         }
       },
       "required": [

@@ -25,14 +25,25 @@ yanlış** olduğunu gösterdi.
            *"Bunlar sensör-tipine özgüdür ve calibration_type ile birleştirilmez."*
            `DLS2_RELATIVE` zaten bu ayrımı ihlal eden tarihsel bir değerdir.
 
-SONUÇ — **C6 İŞ YOK.** `edge/calibrated_dataset_manifest` alt kümesi bugün
-`["ABSOLUTE", "RELATIVE"]`; karar `ABSOLUTE` olduğu için **contract değişikliği
-gerekmiyor** (alt küme genişletilmesi ve MINOR bump iptal). C8 töreninin önündeki
-E13/C6 kilidi kalkar.
+SONUÇ — **C6 İŞ YOK.** Karar `ABSOLUTE` olduğu için alt kümeyi `DLS2_RELATIVE` ile
+genişletmek gerekmedi; C8 töreninin önündeki E13/C6 kilidi kalktı.
+
+⚠️ **Aynı gün, sonra:** C6b/S2 alt kümeye `PANEL_ABSOLUTE`'u **ekledi** (intake bu değeri
+zaten kabul ediyordu; kalibre manifestte yazılamaması aynı istasyonun iki belgesi arasında
+sessiz bir daralmaydı). Yani bugünkü alt küme `["ABSOLUTE", "RELATIVE", "PANEL_ABSOLUTE"]`
+ve E13 yalnız `DLS2_RELATIVE`'i dışarıda tutar. Bu satır bir kez bayat kaldı — dosyanın
+geri kalanı sayıyı değil **ölçümü** kullanır.
 
 BU KAPI NEYİ KORUR: bir sonraki tur *"M3M'de de ışık sensörü var, DLS2_RELATIVE
 ekleyelim"* diyebilir. O ekleme, yanlış donanım adını ve eksen karışıklığını kalibre
 paket yüzeyine sokar. Kapı bunu kırmızıya çevirir ve gerekçeyi gösterir.
+
+🔴 **ÖD-3 (2026-08-01) — bu kapı YALAN YEŞİLDİ ve düzeltildi.** `_calibrated_subset()`
+yalnız `x-context-subsets` **kayıt defterini** okuyordu; belgeleri kabul/ret eden şey ise
+şemanın **inline** enum'u. Ölçüldü: defter `PANEL_ABSOLUTE` diyorken şema hâlâ
+`[ABSOLUTE, RELATIVE]` idi — kapı yeşil, karar uygulanmamış. Artık her iddia **iki yüzeyde
+birden** ölçülüyor; ikisinin eşitliğini ayrıca `tests/test_context_subset_binding.py`
+zorluyor (defterden ya da şemadan tek taraflı sapma kırmızıdır).
 """
 
 from __future__ import annotations
@@ -45,6 +56,7 @@ import pytest
 ROOT = Path(__file__).parent.parent
 ENUM = ROOT / "enums" / "calibration_type.enum.v1.json"
 SSOT_TEXT = ROOT / "docs" / "TARLAANALIZ_SSOT_v1_2_0.txt"
+CALIBRATED_SCHEMA = ROOT / "schemas" / "edge" / "calibrated_dataset_manifest.v1.schema.json"
 
 #: E13 kararının değeri. Değişirse bu dosyanın gerekçesi de yeniden yazılmalıdır.
 E13_DECISION = "ABSOLUTE"
@@ -57,7 +69,8 @@ def _enum_doc() -> dict:
     return json.loads(ENUM.read_text(encoding="utf-8"))
 
 
-def _calibrated_subset() -> list[str]:
+def _registry_subset() -> list[str]:
+    """Kayıt defteri (`x-context-subsets`) — anlam ve gerekçenin yaşadığı yer."""
     subsets = _enum_doc()["x-context-subsets"]
     assert CALIBRATED_CONTEXT in subsets, (
         f"'{CALIBRATED_CONTEXT}' alt kümesi enum'dan kaybolmuş — E13'ün yazdığı yüzey "
@@ -66,15 +79,32 @@ def _calibrated_subset() -> list[str]:
     return list(subsets[CALIBRATED_CONTEXT])
 
 
+def _schema_subset() -> list[str]:
+    """Şemanın inline enum'u — **belgeleri fiilen kabul/ret eden** yüzey (ÖD-3)."""
+    doc = json.loads(CALIBRATED_SCHEMA.read_text(encoding="utf-8"))
+    node = doc["properties"]["calibration_result"]["properties"]["calibration_type"]
+    return list(node["enum"])
+
+
+def _calibrated_surfaces() -> dict[str, list[str]]:
+    """İki yüzey birden. E13 iddiaları **ikisinde de** doğrulanır.
+
+    Tek yüzey ölçmek ÖD-1'in oluşmasına izin verdi: karar deftere yazıldı, şema
+    güncellenmedi, kapı yeşil kaldı ve `PANEL_ABSOLUTE` taşıyan belge reddedilmeye
+    devam etti.
+    """
+    return {"kayıt defteri": _registry_subset(), "şema inline enum": _schema_subset()}
+
+
 class TestE13DecisionHolds:
     def test_decided_value_is_accepted_by_the_calibrated_manifest(self) -> None:
         """E13 kararı bugünkü alt kümede GEÇERLİ olmalı — yoksa C6 yeniden açılır."""
-        subset = _calibrated_subset()
-        assert E13_DECISION in subset, (
-            f"E13 kararı '{E13_DECISION}' ama {CALIBRATED_CONTEXT} alt kümesi {subset}. "
-            "Karar değeri kabul edilmiyorsa contract değişikliği (C6) yeniden ZORUNLU "
-            "hâle gelir; 'C6 iş yok' hükmü bu satıra dayanıyordu."
-        )
+        for surface, subset in _calibrated_surfaces().items():
+            assert E13_DECISION in subset, (
+                f"E13 kararı '{E13_DECISION}' ama {CALIBRATED_CONTEXT} **{surface}** {subset}. "
+                "Karar değeri kabul edilmiyorsa contract değişikliği (C6) yeniden ZORUNLU "
+                "hâle gelir; 'C6 iş yok' hükmü bu satıra dayanıyordu."
+            )
 
     def test_decision_value_exists_in_canonical_vocabulary(self) -> None:
         assert E13_DECISION in _enum_doc()["enum"], (
@@ -89,9 +119,13 @@ class TestE13DecisionHolds:
         sensörünü onunla adlandırmak, uygulaması olmayan bir adı sözleşmeye yazmaktır.
         Ayrıca irradyans **yöntemi** ayrı eksendir (`x-separate-axis`).
         """
-        subset = _calibrated_subset()
+        for surface, subset in _calibrated_surfaces().items():
+            self._assert_no_dls2(surface, subset)
+
+    @staticmethod
+    def _assert_no_dls2(surface: str, subset: list[str]) -> None:
         assert "DLS2_RELATIVE" not in subset, (
-            f"'DLS2_RELATIVE' {CALIBRATED_CONTEXT} alt kümesine eklenmiş. E13 kararı bunu "
+            f"'DLS2_RELATIVE' {CALIBRATED_CONTEXT} **{surface}**'ine eklenmiş. E13 kararı bunu "
             "iki gerekçeyle reddetti: (a) DLS2 bir MicaSense donanımıdır (SSOT KR-018: "
             "'MicaSense RedEdge-P/Altum-PT: DLS2 + reflectance panel'), M3M'nin güneş "
             "sensörü DLS2 değildir; (b) enum'un kendi x-separate-axis bloğu irradyans "

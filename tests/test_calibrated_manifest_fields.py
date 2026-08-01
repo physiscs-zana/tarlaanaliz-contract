@@ -249,17 +249,31 @@ class TestCalibrationTypeUsesCanonicalName:
         denemesinde alt-küme intake ile TAM hizalandı ve `tests/test_calibration_type_axis.py`
         bunu kırmızıya çevirdi — iki kararın çelişmesini kapı engelledi. Kalan tutarsızlık
         bilinçlidir ve **S3**'e (MAJOR pencere) bağlıdır.
+
+        🔴 **ÖD-3 (2026-08-01):** bu test eskiden YALNIZ kayıt defterini okuyordu. Kararı
+        uygulayan yüzey ise `schemas/edge/calibrated_dataset_manifest.v1` içindeki inline
+        enum'dur ve ölçüldü ki o gün ayrışmıştı (defter üç değer, şema iki). Artık **iki
+        yüzey de** ölçülüyor; eşitliğin kendisini `tests/test_context_subset_binding.py`
+        zorluyor.
         """
-        subsets = _load(CALIBRATION_ENUM)["x-context-subsets"]
-        assert set(subsets["edge/calibrated_dataset_manifest"]) == {
-            "ABSOLUTE",
-            "RELATIVE",
-            "PANEL_ABSOLUTE",
-        }, (
-            "edge kalibre alt-kümesi C6b kararından sapmış. `NONE` eklendiyse: edge zaten "
-            "başarısız kalibrasyonda manifest üretmiyor. `DLS2_RELATIVE` eklendiyse: E13 "
-            "kararına aykırı (bkz. test_calibration_type_axis.py)."
-        )
+        decision = {"ABSOLUTE", "RELATIVE", "PANEL_ABSOLUTE"}
+        surfaces = {
+            "kayıt defteri": set(
+                _load(CALIBRATION_ENUM)["x-context-subsets"]["edge/calibrated_dataset_manifest"]
+            ),
+            "şema inline enum": set(
+                _load(EDGE_FORM)["properties"]["calibration_result"]["properties"][
+                    "calibration_type"
+                ]["enum"]
+            ),
+        }
+        for name, values in surfaces.items():
+            assert values == decision, (
+                f"edge kalibre **{name}** C6b kararından sapmış ({sorted(values)}). "
+                "`NONE` eklendiyse: edge zaten başarısız kalibrasyonda manifest üretmiyor. "
+                "`DLS2_RELATIVE` eklendiyse: E13 kararına aykırı (bkz. "
+                "test_calibration_type_axis.py). Eksikse: karar kâğıt üzerinde kalmış demektir."
+            )
 
 
 class TestRawFramesOwnership:

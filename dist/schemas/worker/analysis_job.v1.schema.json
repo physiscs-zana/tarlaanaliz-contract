@@ -272,7 +272,7 @@
     "CalibrationMetadata": {
       "type": "object",
       "title": "Calibration Metadata",
-      "description": "Worker runtime calibration metadata embedded by Platform. calibration_type kanonik vocabulary: enums/calibration_type.enum.v1.json. Worker alt-kümesi (ABSOLUTE/PANEL_ABSOLUTE/DLS2_RELATIVE/RELATIVE/NONE) analysis_job, calibration_metadata ve calibrated_dataset arasında tutarlıdır (G-3, 2026-06-01).",
+      "description": "Worker runtime calibration metadata embedded by Platform. calibration_type kanonik vocabulary: enums/calibration_type.enum.v1.json. Worker alt-kümesi (ABSOLUTE/PANEL_ABSOLUTE/DLS2_RELATIVE/RELATIVE/NONE) analysis_job, calibration_metadata ve calibrated_dataset arasında tutarlıdır (G-3, 2026-06-01).\n\n⚠️ NORMATİF GÖVDE BURADA DEĞİL: alan anlamları `schemas/worker/calibration_metadata.v1.schema.json`'da yaşar; bu blok o sözleşmenin **iş belgesine gömülü** hâlidir ve doğrulama anlamı (enum/required/if-then) onunla AYNI olmak zorundadır. Kapı: `tests/test_calibration_metadata_single_definition.py`. Bilerek taşınmayan iki alan (`sensor_model`, `red_edge_center_nm`) orada gerekçesiyle beyanlıdır — iş belgesinde onları `drone_metadata` taşır (ADR-002).\n\n🔴 ÖD-2 (2026-08-01) — bu blok neden değişti: S5+W12 turunda `scale` yalnız kanonik `calibration_metadata.v1`'e eklendi, işi TAŞIYAN bu kopyaya eklenmedi. `unevaluatedProperties: false` olduğu için ölçüldü ki platform bir işe `scale` yazsaydı belge REDDEDİLECEKTİ (*\"Unevaluated properties are not allowed ('scale' was unexpected)\"*) ve worker'ın `resolve_reflectance_divisor` okuma kodu veriyi asla görmeyecekti. Aynı delikten S4'ün `calibration_method` alanı da düşüyordu.",
       "properties": {
         "calibration_type": {
           "type": "string",
@@ -303,6 +303,65 @@
             "null"
           ],
           "format": "date-time"
+        },
+        "scale": {
+          "type": "object",
+          "description": "S5/W12 — per-job reflektans ölçeği (DN→reflektans kodlaması). Normatif gövde: `schemas/worker/calibration_metadata.v1.schema.json` → `properties/scale`; sözlük `schemas/platform/calibration_result.v1` ile birebir aynıdır. Bildirilmezse tüketici kendi yapılandırılmış varsayılanına düşer ve GÖRÜNÜR loglar (`x-normalization.scale.missing` = DECLARED_FALLBACK).",
+          "properties": {
+            "reflectance_scale": {
+              "type": "string",
+              "enum": [
+                "reflectance_0_1",
+                "reflectance_0_100",
+                "scaled_int",
+                "unknown"
+              ],
+              "description": "Çıktının sayısal ölçeği."
+            },
+            "scale_factor": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "`scaled_int` durumunda bölen (ör. 10000, 32768, 65535)."
+            }
+          },
+          "required": [
+            "reflectance_scale"
+          ],
+          "unevaluatedProperties": false,
+          "x-kr-ref": "KR-018",
+          "allOf": [
+            {
+              "$comment": "scaled_int bir BÖLEN olmadan anlamsızdır — tüketiciyi tahmine zorlar (S5'in doğduğu boşluk).",
+              "if": {
+                "properties": {
+                  "reflectance_scale": {
+                    "const": "scaled_int"
+                  }
+                },
+                "required": [
+                  "reflectance_scale"
+                ]
+              },
+              "then": {
+                "required": [
+                  "scale_factor"
+                ]
+              }
+            }
+          ]
+        },
+        "calibration_method": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "REFLECTANCE_PANEL",
+            "DLS_IRRADIANCE",
+            "EMPIRICAL_LINE",
+            null
+          ],
+          "description": "S4 — kalibrasyonun NASIL yapıldığı; `calibration_type` ile AYRI EKSEN (`enums/calibration_type.enum.v1.json` → `x-separate-axis`). Normatif gövde: `schemas/worker/calibration_metadata.v1.schema.json` → `properties/calibration_method`. `null` = bildirilmedi."
         }
       },
       "required": [
