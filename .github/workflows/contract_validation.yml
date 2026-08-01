@@ -100,6 +100,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          # ÖD-16 (2026-08-01): süit artık CHANGELOG'da YAYIMLANAN dedektör komutlarının
+          # bugün çözülebilir olduğunu zorluyor (`--old v7.2.0` gibi). Varsayılan sığ
+          # checkout ETİKET GETİRMEZ → kapı yerelde yeşil, CI'da kırmızı olur ve
+          # gerekçesi "komut bozuk" sanılır. Tam geçmiş + etiketler bu yüzden gerekli;
+          # aynı ihtiyaç `tools/breaking_change_detector.py --old <tag>` için de var.
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Setup Python
         uses: actions/setup-python@v6

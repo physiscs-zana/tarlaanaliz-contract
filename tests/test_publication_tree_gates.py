@@ -151,7 +151,11 @@ class TestPublishedGeneratorRuns:
             )
             assert resolved.returncode == 0, (
                 f"CHANGELOG `--old {ref}` yayımlıyor ama bu ne dizin ne çözülebilir bir git "
-                "ref. Yayımlanan üreteç koşmuyorsa yanındaki sayı da doğrulanamaz."
+                "ref. Yayımlanan üreteç koşmuyorsa yanındaki sayı da doğrulanamaz.\n"
+                "⚠️ CI'da bu hatayı görüyorsanız önce CHECKOUT'a bakın: sığ (shallow) "
+                "checkout **etiket getirmez** ve kapı komutu bozuk sanır. "
+                "`.github/workflows/contract_validation.yml` → `fetch-depth: 0` + "
+                "`fetch-tags: true` (2026-08-01/ÖD-16'da tam bu yüzden eklendi)."
             )
 
 
