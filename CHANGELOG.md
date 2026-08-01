@@ -103,6 +103,34 @@ uyuşmazsa bu iki indeks sessizce bozulur **ve NDVI'nin doğru görünmesi hatay
   yapılırsa alan ölü taşınır → bir sonraki C8'e bırakıldı, sessizce değil **beyanla**.
   Worker'ın okuma yarısı ayrı kalem: **W12**.
 
+### ÖD-9 … ÖD-16 — kapılar gördüğünü iddia ettikleri yüzeyi ölçsün (şema değişikliği YOK)
+
+**ÖD-9 (dört depo tarandı, AST):** kodlamasız dosya okuma sınıfı **worker'a özgü** —
+contract/edge/platform **0**, worker 12. W11 listesi düzeltildi (`map_renderer` rasterio
+`MemoryFile.open()` → yanlış pozitif; `safe_path.py:19` docstring örneği). ⚠️ Ölçüm
+aracının kendi hatası da bulundu: `open(dosya, mod)` ↔ `Path.open(mod)` imza farkı.
+
+**ÖD-10 (varsayım çürüdü):** 16 vendored dosyanın **0'ı** kanoniğinden fazla prose
+taşıyor (37.336 ↔ 71.490 karakter). Kalan risk yükte değil **okuyucuda** (W11). Yine de
+yeni kapı olayın şeklini yasaklıyor: `test_vendored_prose_does_not_exceed_canonical`.
+
+**ÖD-11:** `TÜRETİLMİŞ İŞARETÇİ` damgası bir **muafiyet değildir** — damgalı bölüme
+1500 karakter tavanı (ölçüm: işaretçiler ≤1366, gövdeler ≥1483) + "işaretçi bir hedef
+göstermeli".
+
+**ÖD-12:** "göç taşımadır" kapısı **başlık** sayıyordu → artık **içerik** ölçüyor (her
+gövdeye asgari uzunluk + toplam hacim tabanı; 4 bölüm başlığı beyanlı).
+
+**ÖD-13:** yayın ağacı ilk kez kapı altında — `validate.py` **96 → 164 dosya**; yayın
+kopyası kaynağının PII kapsamını devralır; `inline_refs --check` artık **yetim** dosya arar.
+
+**ÖD-15:** `SDLC_GATES.md` SD8'i iki yerde iki farklı hâlde anlatıyordu → tek gövde §3G.
+
+**ÖD-16:** CHANGELOG'da yayımlanan `--old v7.2.0` komutu **düşüyordu**; dedektör artık
+git ref kabul ediyor ve bir test yayımlanan her `--old` argümanının çözülebilirliğini
+zorluyor. CI checkout'u `fetch-depth: 0` + `fetch-tags: true` yapıldı (sığ checkout etiket
+getirmiyordu → kapı CI'da yanlış gerekçeyle kırmızıydı).
+
 ### 🔄 E13-R — kalibrasyon tipi **drone başına türetilir** (E13'ün filo-geneli `ABSOLUTE` kararı GERİ ALINDI)
 
 **Tip:** şema değişikliği YOK (yalnız enum'a normatif `x-derivation` bloğu + kapı) → MINOR.

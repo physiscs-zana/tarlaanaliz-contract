@@ -319,27 +319,15 @@ PENDING_PROPAGATION: dict[str, dict] = {
             "Üçü de additive/daraltma ve edge'de üretici yok (ölçüldü) → C8 töreninde yayılır."
         ),
     },
-    "analysis_job.v1.schema.json": {
-        "properties": set(),
-        "required": set(),
-        "enums": {
-            "/$defs/CalibrationMetadata/properties/scale/properties/reflectance_scale",
-            "/$defs/CalibrationMetadata/properties/calibration_method",
-        },
-        "defs": {"CalibrationMetadata"},
-        "why": (
-            "🔴 ÖD-2 (2026-08-01) — S5+W12'nin AÇIK YARISI. Worker `job_handler.py:136` "
-            "gelen işi vendored `analysis_job.v1`'e karşı doğruluyor ve o kopyanın "
-            "`$defs/CalibrationMetadata` bloğu `additionalProperties: false` ile 4 alan "
-            "taşıyor → platform `scale` yazarsa iş **worker'ın kapısında reddedilir**; "
-            "W12'de yazılan `resolve_reflectance_divisor` okuma kodu veriyi asla görmez. "
-            "Kanonik taraf bu turda düzeltildi (`scale` + `calibration_method` eklendi); "
-            "vendored yarısı worker deposunda ayrı bir PR ister (W-kalemi) çünkü KR-041 "
-            "öz-hash'i de yeniden hesaplanmalı. Okuma kodu ZATEN var — yani bu, S5'in "
-            "'alanı okuyacak kod yoksa vendor'lama' istisnasına GİRMEZ; aksine yayılım "
-            "gecikirse kod ölü kalır."
-        ),
-    },
+    # ✅ `analysis_job.v1.schema.json` beyanı **SİLİNDİ** (2026-08-01, aynı gün):
+    #    ÖD-2'nin worker yarısı **W13** ile kapandı — vendored `$defs/CalibrationMetadata`
+    #    artık `scale` + `calibration_method` taşıyor (worker PR #187, KR-041 hash
+    #    f1447fb6… → 66747d4a…) ve `job_handler.py:136` ölçek taşıyan işi kabul ediyor.
+    #    Beyan yerinde bırakılsaydı **liste yalan söylerdi**: "kanonik ileri, vendored
+    #    almadı" derken ikisi de aynı yüzeyi taşıyor olurdu. Bayat beyan, gerçek bir
+    #    gecikmeyi gizleyecek gürültüdür — bu yüzden aşağıdaki `defs` bayatlık kapısı
+    #    da bu turda yazıldı (SUBSET çiftlerinde beyanın bayatlığını hiçbir kapı
+    #    ölçmüyordu; bunu ancak elle fark ettim).
 }
 
 #: 🔴 VENDORED İLERİ — I-5'e göre KALICI OLAMAZ, ama bugün var ve ÖLÇÜLDÜ (ÖD-8).
@@ -659,6 +647,30 @@ class TestSubsetPairsMayOmitButNotContradict:
         assert not offenders, (
             f"{Path(canonical).name}: vendored kopya kanonik sözlükte OLMAYAN değer(ler) "
             f"kabul ediyor: {offenders}. Dar alt küme daraltabilir, değer UYDURAMAZ (I-4/I-5)."
+        )
+
+    @pytest.mark.parametrize(("canonical", "vendored"), SUBSET_PAIRS, ids=SUBSET_IDS)
+    def test_declared_def_propagation_is_not_stale(self, canonical: str, vendored: str) -> None:
+        """Yayılım bittiğinde `defs` beyanı SİLİNMELİ — liste yalan söylemesin.
+
+        Bu kapı 2026-08-01'de **eksikliği elle fark edildiği için** yazıldı: W13 worker
+        vendored kopyasını senkronladıktan sonra `PENDING_PROPAGATION['analysis_job']`
+        beyanı bayatladı ve hiçbir test bunu görmedi (bayatlık kapıları yalnız MIRROR
+        çiftlerinin `properties`/`enums` eksenini ölçüyordu). Bayat beyan, gerçek bir
+        gecikmeyi gizleyen gürültüdür.
+        """
+        cj, vj = _pair(canonical, vendored)
+        cd, vd = cj.get("$defs", {}), vj.get("$defs", {})
+        declared = set(PENDING_PROPAGATION.get(Path(canonical).name, {}).get("defs", set()))
+        stale = sorted(
+            name
+            for name in declared
+            if name in cd and name in vd
+            and not (set(cd[name].get("properties", {})) - set(vd[name].get("properties", {})))
+        )
+        assert not stale, (
+            f"{Path(canonical).name}: `defs` beyanı bayat — {stale} artık vendored kopyada "
+            "senkron. Beyanı kaldırın (C8 kontrol listesi bu listeyi boş görmek ister)."
         )
 
     @pytest.mark.parametrize(("canonical", "vendored"), SUBSET_PAIRS, ids=SUBSET_IDS)
