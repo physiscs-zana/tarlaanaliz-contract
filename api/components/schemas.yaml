@@ -134,6 +134,17 @@ components:
     PriceBook:
       $ref: '../../schemas/platform/pricing.v1.schema.json'
     
+    # SD10 (2026-08-01): bu bileşen YOKTU ve `platform_public.v1.yaml` iki yerden
+    # ona `$ref` veriyordu (ödeme uçları, KR-033) → **sarkan referans**. Hiçbir kapı
+    # görmedi: OpenAPI lint adımı ruleset'siz koşuyordu (hiç kural yok) + `|| echo` +
+    # `continue-on-error` ile susturulmuştu, yani CI'da daima "pass" görünüyordu.
+    # Spectral ruleset ile koşturulduğunda çözülemeyen referans `null` olarak gelip
+    # aracı çökertiyordu ("Cannot read properties of null (reading 'enum')").
+    # Sürüm seçimi ölçüldü: `payment_intent.v1` şemasının kendisi `x-deprecated`
+    # taşıyor, kanonik olan **v2** (`title: PaymentIntent`, 22 alan).
+    PaymentIntent:
+      $ref: ../../schemas/platform/payment_intent.v2.schema.json
+
     PayrollRecord:
       $ref: '../../schemas/platform/payroll.v1.schema.json'
     

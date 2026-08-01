@@ -45,11 +45,19 @@ METADATA_EXCEPTIONS: Dict[str, tuple] = {}
 
 
 def _rel(path: Path) -> str:
-    """Depo köküne göre posix yol (kapsam kuralları bununla eşleşir)."""
+    """Depo köküne göre posix yol (kapsam kuralları bununla eşleşir).
+
+    ÖD-13 (2026-08-01): `dist/schemas/...` yayın kopyası **kaynağının kapsamını devralır**.
+    Yayın ağacı araçla üretilir (`tools/inline_refs.py`); ikizini ayrı bir dosya sayarsak
+    `user_pii.v1` gibi meşru bir PII taşıyıcısı yayın tarafında "kapsam dışı" diye kırmızı
+    verir — kapı gürültüye boğulur ve ilk refleks onu kapatmak olur. Bayatlık ayrı bir
+    kapının işidir (`inline_refs.py --check`); burada İÇERİK kuralı koşar.
+    """
     try:
-        return path.resolve().relative_to(Path(__file__).resolve().parents[1]).as_posix()
+        relative = path.resolve().relative_to(Path(__file__).resolve().parents[1]).as_posix()
     except ValueError:  # pragma: no cover — depo dışı yol
         return path.as_posix()
+    return relative[len("dist/"):] if relative.startswith("dist/schemas/") else relative
 
 
 def _check_forbidden_recursive(obj: Any, path: str, schema_path: Path) -> List[str]:
@@ -208,6 +216,27 @@ def validate_enum_file(enum_path: Path) -> List[str]:
     return errors
 
 
+def validation_targets(base_dir: Path) -> List[Path]:
+    """Kapının FİİLEN taradığı dosyalar — kapsam iddiası burada ölçülebilir olsun.
+
+    `main()` bu listeyi kullanır; `tests/test_publication_tree_gates.py` de aynı listeyi
+    okur. Böylece "yayın ağacı da taranıyor" iddiası kaynak koda bakarak değil
+    **ölçülerek** doğrulanır (ÖD-13).
+    """
+    targets: List[Path] = []
+    targets.extend(sorted((base_dir / 'schemas').rglob('*.json')))
+    enums_dir = base_dir / 'enums'
+    if enums_dir.exists():
+        targets.extend(sorted(enums_dir.rglob('*.json')))
+    dist_dir = base_dir / 'dist' / 'schemas'
+    if dist_dir.exists():
+        targets.extend(sorted(dist_dir.rglob('*.json')))
+    api_dir = base_dir / 'api'
+    if api_dir.exists():
+        targets.extend(sorted(api_dir.rglob('*.yaml')))
+    return targets
+
+
 def main():
     """Main validation"""
     # Windows consoles default to a legacy code page (e.g. cp1254) that cannot
@@ -240,6 +269,18 @@ def main():
             print(f"Validating {enum_file.relative_to(base_dir)}...")
             errors = validate_enum_file(enum_file)
             all_errors.extend(errors)
+
+    # ÖD-13 (2026-08-01): YAYIN AĞACI da doğrulanır. `dist/schemas/` hava-boşluklu M1'in
+    # tükettiği biçimdir (harici `$ref` yok) ve bugüne kadar HİÇBİR kapıdan geçmiyordu:
+    # ne validate, ne PII taraması, ne checksum. Yani kaynağa giremeyen bir PII alanı
+    # yayın ağacına elle eklenebilir ya da bayat bir kopya orada yaşamaya devam edebilirdi.
+    # (Bayatlık `inline_refs.py --check` ile ayrıca ölçülür; burada İÇERİK kuralları koşar.)
+    dist_dir = base_dir / 'dist' / 'schemas'
+    if dist_dir.exists():
+        for dist_file in sorted(dist_dir.rglob('*.json')):
+            total_files += 1
+            print(f"Validating {dist_file.relative_to(base_dir)} (yayın ağacı)...")
+            all_errors.extend(validate_json_schema(dist_file))
 
     # OpenAPI PII taraması (D18/K4) — `api/` ağacı önceden HİÇBİR kapıdan geçmiyordu.
     api_dir = base_dir / 'api'

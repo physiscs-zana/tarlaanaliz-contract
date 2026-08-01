@@ -66,10 +66,16 @@ BİLİNEN SINIRLAR (bilerek — kapı bunları GÖRDÜĞÜNÜ iddia etmez):
 
 import argparse
 import json
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Any
 from enum import Enum
+
+#: Depo kökü — `--old v7.2.0` gibi bir git ref verildiğinde worktree buradan çıkarılır.
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class ChangeType(Enum):
@@ -866,18 +872,68 @@ def main():
     parser.add_argument('--json', action='store_true', help='Output JSON format')
     
     args = parser.parse_args()
-    
-    old_dir = Path(args.old)
-    new_dir = Path(args.new)
-    
-    if not old_dir.exists():
-        print(f"❌ Old directory not found: {old_dir}")
+
+    cleanups: list = []
+    try:
+        old_dir = _materialize(args.old, cleanups)
+        new_dir = _materialize(args.new, cleanups)
+        return _run(args, old_dir, new_dir)
+    finally:
+        for cleanup in cleanups:
+            cleanup()
+
+
+def _materialize(target: str, cleanups: list) -> Path:
+    """Dizin ya da **git ref** kabul et; ref ise geçici bir worktree'ye çıkar.
+
+    ÖD-16 (2026-08-01): aracın kendi kullanım satırı `--old v1.0.0 --new v1.1.0` diyordu
+    ve CHANGELOG bu biçimi **yayımlıyordu** (`--old v7.2.0 --new .`), ama kod yalnız
+    dizin kabul ediyordu → yayımlanan komut `❌ Old directory not found: v7.2.0` ile
+    düşüyordu. Bu, deponun kendi *"sayıyı değil ÜRETECİ yayınla"* kuralının ihlaliydi:
+    yayımlanan üreteç koşmuyorsa, yanındaki sayı da doğrulanamaz.
+    """
+    path = Path(target)
+    if path.exists():
+        return path
+
+    resolved = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", f"{target}^{{commit}}"],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    if resolved.returncode != 0:
+        print(f"❌ Not a directory and not a git ref: {target}", file=sys.stderr)
         sys.exit(1)
-    
+
+    workdir = Path(tempfile.mkdtemp(prefix="bcd-"))
+    checkout = workdir / "tree"
+    added = subprocess.run(
+        ["git", "worktree", "add", "--detach", str(checkout), resolved.stdout.strip()],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    if added.returncode != 0:
+        shutil.rmtree(workdir, ignore_errors=True)
+        print(f"❌ git worktree add failed for {target}: {added.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
+
+    def cleanup() -> None:
+        subprocess.run(["git", "worktree", "remove", "--force", str(checkout)],
+                       cwd=ROOT, capture_output=True, text=True)
+        shutil.rmtree(workdir, ignore_errors=True)
+        # `remove` başarısız olsa bile (ör. dosya kilidi) yönetim kaydı geride kalmasın:
+        # ölçüldü — kayıt kalırsa `git worktree list` çıktısı "prunable" satırlarla dolar
+        # ve bir sonraki oturum bunu gerçek bir worktree sanar.
+        subprocess.run(["git", "worktree", "prune"], cwd=ROOT, capture_output=True, text=True)
+
+    cleanups.append(cleanup)
+    print(f"   {target} → geçici worktree: {checkout}", file=sys.stderr)
+    return checkout
+
+
+def _run(args, old_dir: Path, new_dir: Path):
     if not new_dir.exists():
         print(f"❌ New directory not found: {new_dir}")
         sys.exit(1)
-    
+
     # Detect changes across the checksummed contract trees: schemas/ AND enums/.
     # The canonical enum SSOT (crop_type, phenology_stage, analysis_type, ...)
     # lives at top-level enums/; enum value removals/renames are MAJOR breaking

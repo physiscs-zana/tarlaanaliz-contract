@@ -158,9 +158,14 @@ Yayın (release) öncesi yapılacak son kontroller.
 > içindeki bu liste *"kanonik ileri, vendored henüz almadı"* beyanıdır ve C8 töreninin
 > görevi tam olarak onu **boşaltmaktır**. Kontrol edilmediği için beyanlar bayatlayabiliyordu.
 >
-> 🔴 **Koordinatör kararı bekliyor (SD8, §14.6):** etiketsiz 16 eski sürüm için
-> *retro-tag mı, "etiketsiz sürümler" kayıt notu mu?* Karar verilene kadar I-2'nin
-> "tarihsel olarak da tutuyor" biçiminde raporlanması YASAK.
+> ✅ **SD8 KAPANDI — bu blok TARİHSEL KAYITTIR.** Yukarıdaki *"20 sürüme karşılık 4 etiket"*
+> ve *"etiketsiz 16 eski sürüm"* sayıları o günün ölçümüdür ve **ikisi de eksikti**
+> (ÖD-7, 2026-08-01: gerçek nüfus **22 sürüm**; sabit `## Version:` biçimi arandığı için
+> `2.0.1 / 2.1.0 / 4.1.2` sayıma hiç girmemişti). Karar ve bugünkü durum **tek yerde**:
+> aşağıdaki §3G. *(2026-08-01/ÖD-15: bu paragraf eskiden "koordinatör kararı bekliyor"
+> diyordu ve §3G'de aynı kararın "kapandı" kaydı vardı — aynı soru iki yerde iki farklı
+> cevap taşıyordu. Tek gövde kuralı burada da geçerli: karar §3G'de yaşar, burası ona
+> işaret eder.)*
 
 ## 3A) Versiyon + Changelog
 
@@ -297,12 +302,23 @@ git describe --tags HEAD                                                      # 
 - [ ] Etiket push edildi (`git ls-remote --tags origin | grep vX.Y.Z`)
 - [ ] Üç tüketici deposunda sürüm dizesi hizalandı (I-1) ve platform submodule pini bu **etiketli commit**
 
-✅ **SD8 KAPANDI (2026-08-01) — I-2 artık tarihsel olarak da tutuyor.** Eski not
-*"etiketsiz 16 tarihsel sürüm"* diyordu; ölçüm **15** buldu (CHANGELOG 19 sürüm, depoda 4 tag).
-**14'üne** geriye dönük annotated tag atıldı; release commit'i **ölçümle** bulundu
-(`CONTRACTS_VERSION.md`'ye `## Version: X.Y.Z` satırının eklendiği commit — `git log -S`), ve
-yöntem halihazırda etiketli **4 sürümde 4/4 doğrulandı**. Her tag mesajında *retro olduğu*,
-gerçek yayın tarihi ve yöntem yazılıdır.
+✅ **SD8 KAPANDI (2026-08-01) — I-2 artık tarihsel olarak da tutuyor: 22/22.**
+
+**İki turda kapandı ve ikinci tur birincinin NÜFUS ÖLÇÜMÜNÜ düzeltti:**
+
+| Tur | Ölçüm yöntemi | Bulduğu nüfus | Atılan tag |
+|---|---|---|---|
+| SD8 (1. tur) | `git log -S"## Version: X.Y.Z"` — **sabit başlık biçimi** | 19 sürüm / 15 etiketsiz | 14 |
+| ÖD-7 (2. tur) | dosyanın **her commit'indeki blob** okunup `^#{0,2}\s*\**Version:\**` ile çıkarıldı — **biçimden bağımsız** | **22 sürüm** / 3 etiketsiz | **+3** (`v2.0.1` · `v2.1.0` · `v4.1.2`) |
+
+🔴 **Ders (D2'nin tekrarı):** sabit bir başlık biçimi varsayan arama **nüfus kaybettirir**.
+KR çıkarıcısında aynı hata *"her başlık düzeyi + 4 biçim"* kuralıyla kapatılmıştı; sürüm
+tarafında tekrarlandı. Yeni bir "hepsini say" ölçümü yazarken **önce biçim çeşitliliğini
+ölç**.
+
+Release commit'i her iki turda da **ölçümle** bulundu ve yöntem doğrulandı: 1. turda
+etiketli 4 sürümde 4/4, 2. turda **19/19** (ölçümün bulduğu commit = mevcut tag'in commit'i).
+Her tag mesajında *retro olduğu*, gerçek yayın tarihi ve yöntem yazılıdır.
 
 🔴 **Tek istisna — `2.0.2` etiketlenmedi ve etiketlenmeyecek:** CHANGELOG'da girdisi var ama
 `CONTRACTS_VERSION.md`'ye hiç `## Version: 2.0.2` yazılmamış → release commit'i belirlenemiyor.

@@ -203,6 +203,25 @@ def _enums_by_pointer(doc: Any) -> dict[str, set]:
     return found
 
 
+#: Prose sayılan anahtarlar (ÖD-10). Doğrulamaya girmezler; taşınmaları yükü şişirir.
+PROSE_KEYS = ("description", "$comment", "why", "note", "notes")
+
+
+def _prose_chars(doc: Any) -> int:
+    """Belgedeki prose (açıklama) karakter toplamı."""
+    total = 0
+    if isinstance(doc, dict):
+        for key, value in doc.items():
+            if key in PROSE_KEYS and isinstance(value, str):
+                total += len(value)
+            else:
+                total += _prose_chars(value)
+    elif isinstance(doc, list):
+        for value in doc:
+            total += _prose_chars(value)
+    return total
+
+
 def _field_name(pointer: str) -> str:
     """`/$defs/EdgeForm/properties/calibration_type` → `calibration_type`.
 
@@ -300,27 +319,15 @@ PENDING_PROPAGATION: dict[str, dict] = {
             "Üçü de additive/daraltma ve edge'de üretici yok (ölçüldü) → C8 töreninde yayılır."
         ),
     },
-    "analysis_job.v1.schema.json": {
-        "properties": set(),
-        "required": set(),
-        "enums": {
-            "/$defs/CalibrationMetadata/properties/scale/properties/reflectance_scale",
-            "/$defs/CalibrationMetadata/properties/calibration_method",
-        },
-        "defs": {"CalibrationMetadata"},
-        "why": (
-            "🔴 ÖD-2 (2026-08-01) — S5+W12'nin AÇIK YARISI. Worker `job_handler.py:136` "
-            "gelen işi vendored `analysis_job.v1`'e karşı doğruluyor ve o kopyanın "
-            "`$defs/CalibrationMetadata` bloğu `additionalProperties: false` ile 4 alan "
-            "taşıyor → platform `scale` yazarsa iş **worker'ın kapısında reddedilir**; "
-            "W12'de yazılan `resolve_reflectance_divisor` okuma kodu veriyi asla görmez. "
-            "Kanonik taraf bu turda düzeltildi (`scale` + `calibration_method` eklendi); "
-            "vendored yarısı worker deposunda ayrı bir PR ister (W-kalemi) çünkü KR-041 "
-            "öz-hash'i de yeniden hesaplanmalı. Okuma kodu ZATEN var — yani bu, S5'in "
-            "'alanı okuyacak kod yoksa vendor'lama' istisnasına GİRMEZ; aksine yayılım "
-            "gecikirse kod ölü kalır."
-        ),
-    },
+    # ✅ `analysis_job.v1.schema.json` beyanı **SİLİNDİ** (2026-08-01, aynı gün):
+    #    ÖD-2'nin worker yarısı **W13** ile kapandı — vendored `$defs/CalibrationMetadata`
+    #    artık `scale` + `calibration_method` taşıyor (worker PR #187, KR-041 hash
+    #    f1447fb6… → 66747d4a…) ve `job_handler.py:136` ölçek taşıyan işi kabul ediyor.
+    #    Beyan yerinde bırakılsaydı **liste yalan söylerdi**: "kanonik ileri, vendored
+    #    almadı" derken ikisi de aynı yüzeyi taşıyor olurdu. Bayat beyan, gerçek bir
+    #    gecikmeyi gizleyecek gürültüdür — bu yüzden aşağıdaki `defs` bayatlık kapısı
+    #    da bu turda yazıldı (SUBSET çiftlerinde beyanın bayatlığını hiçbir kapı
+    #    ölçmüyordu; bunu ancak elle fark ettim).
 }
 
 #: 🔴 VENDORED İLERİ — I-5'e göre KALICI OLAMAZ, ama bugün var ve ÖLÇÜLDÜ (ÖD-8).
@@ -643,6 +650,30 @@ class TestSubsetPairsMayOmitButNotContradict:
         )
 
     @pytest.mark.parametrize(("canonical", "vendored"), SUBSET_PAIRS, ids=SUBSET_IDS)
+    def test_declared_def_propagation_is_not_stale(self, canonical: str, vendored: str) -> None:
+        """Yayılım bittiğinde `defs` beyanı SİLİNMELİ — liste yalan söylemesin.
+
+        Bu kapı 2026-08-01'de **eksikliği elle fark edildiği için** yazıldı: W13 worker
+        vendored kopyasını senkronladıktan sonra `PENDING_PROPAGATION['analysis_job']`
+        beyanı bayatladı ve hiçbir test bunu görmedi (bayatlık kapıları yalnız MIRROR
+        çiftlerinin `properties`/`enums` eksenini ölçüyordu). Bayat beyan, gerçek bir
+        gecikmeyi gizleyen gürültüdür.
+        """
+        cj, vj = _pair(canonical, vendored)
+        cd, vd = cj.get("$defs", {}), vj.get("$defs", {})
+        declared = set(PENDING_PROPAGATION.get(Path(canonical).name, {}).get("defs", set()))
+        stale = sorted(
+            name
+            for name in declared
+            if name in cd and name in vd
+            and not (set(cd[name].get("properties", {})) - set(vd[name].get("properties", {})))
+        )
+        assert not stale, (
+            f"{Path(canonical).name}: `defs` beyanı bayat — {stale} artık vendored kopyada "
+            "senkron. Beyanı kaldırın (C8 kontrol listesi bu listeyi boş görmek ister)."
+        )
+
+    @pytest.mark.parametrize(("canonical", "vendored"), SUBSET_PAIRS, ids=SUBSET_IDS)
     def test_no_vendored_only_top_level_property(self, canonical: str, vendored: str) -> None:
         """Düz vendored biçim, kanonikte HİÇBİR yerde olmayan bir alan taşıyamaz."""
         cj, vj = _pair(canonical, vendored)
@@ -653,6 +684,35 @@ class TestSubsetPairsMayOmitButNotContradict:
         assert not extra, (
             f"{Path(canonical).name}: vendored kopyada kanoniğin HİÇBİR formunda olmayan "
             f"alan(lar): {extra} — AK-4 sapması."
+        )
+
+
+class TestVendoredCopiesStayLean:
+    """ÖD-10 — vendored kopya kanoniğin DAR alt kümesidir; prose de kırpılır.
+
+    NEDEN (C8, 2026-08-01): kanonikten vendored'a **12 KB prose** taşındı ve worker'da
+    **45 test** Windows cp1254 altında kırıldı. Tetikleyici düzeltildi ama *"16 dosyanın
+    13'ü hâlâ şişkin olabilir"* varsayımı ölçülmemişti.
+
+    **ÖLÇÜLDÜ (2026-08-01) — varsayım büyük ölçüde ÇÜRÜDÜ:** hiçbir vendored dosya
+    kanoniğinden fazla prose taşımıyor (0/16); vendored toplam prose 37.336 karakter,
+    kanonik 71.490 (≈%52). Kalan risk yükte değil **okuyucuda**: kodlamasız `open()`
+    (worker `contract_validator.py:233` — **W11**, hâlâ açık).
+
+    Bu kapı olayın tam şeklini yasaklar: kanonik prose'u toptan vendored'a taşımak.
+    """
+
+    @pytest.mark.parametrize(
+        ("canonical", "vendored"), MIRROR_PAIRS + SUBSET_PAIRS, ids=IDS + SUBSET_IDS
+    )
+    def test_vendored_prose_does_not_exceed_canonical(self, canonical: str, vendored: str) -> None:
+        cj, vj = _pair(canonical, vendored)
+        canonical_prose, vendored_prose = _prose_chars(cj), _prose_chars(vj)
+        assert vendored_prose <= canonical_prose, (
+            f"{Path(canonical).name}: vendored kopya kanonikten FAZLA prose taşıyor "
+            f"({vendored_prose} > {canonical_prose}). I-4 gereği vendored dar alt kümedir; "
+            "prose işaretçiye indirilir. C8'de bu kural çiğnendiğinde 45 test cp1254'te "
+            "kırılmıştı."
         )
 
 

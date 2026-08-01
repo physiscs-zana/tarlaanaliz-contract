@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TarlaAnaliz Edge Local API
-  version: 1.0.0
+  version: 7.3.0
   description: |
     Local API for kiosk/edge station (offline-capable).
     UI ↔ Kiosk communication for batch creation, scanning, signing.
@@ -52,6 +52,18 @@ paths:
       tags: [Scan]
       summary: Scan memory card
       description: Scan card, compute hashes, run AV
+      # SD10 (2026-08-01): yol `{batch_id}` şablonu taşıyordu ama işlem onu HİÇ
+      # tanımlamıyordu (redocly `path-parameters-defined`). Sonuç: istemci üreticileri
+      # bu uç için parametresiz bir imza üretir ve çağrı 404'e düşer. Kapı görmedi —
+      # OpenAPI lint adımı ruleset'siz + `|| echo` + `continue-on-error` ile susturulmuştu.
+      parameters:
+        - name: batch_id
+          in: path
+          required: true
+          description: Transfer batch identifier (edge/transfer_batch.v1 → batch_id)
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Scan complete

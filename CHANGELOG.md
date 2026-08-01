@@ -103,6 +103,126 @@ uyuşmazsa bu iki indeks sessizce bozulur **ve NDVI'nin doğru görünmesi hatay
   yapılırsa alan ölü taşınır → bir sonraki C8'e bırakıldı, sessizce değil **beyanla**.
   Worker'ın okuma yarısı ayrı kalem: **W12**.
 
+### SD9 + SD10 — OpenAPI yüzeyi: donmuş sürüm dizesi + **hiçbir kural koşmayan** lint kapısı
+
+**SD9 (karar, koordinatör onaylı):** üç spec'in `info.version`'ı **set sürümünü izliyor**
+(`1.0.0` → `7.3.0`). Dayanak ölçüldü: OpenAPI 3.1 alanı *"the version of the OpenAPI
+**Document**"* diye tanımlıyor ve bu depoda belge **set** olarak yayımlanıyor (I-1);
+"API MAJOR hattı" savunması düştü (hat zaten `servers.url` `…/v1` + dosya adında);
+alanı okuyan tüketici **yok** (dört depoda 0 eşleşme). Alan **elle yazılmaz** —
+`tools/pin_version.py → sync_openapi_versions()` C8'de yazar, kapı ölçer.
+
+**SD10 (kapı yalanı):** `Lint OpenAPI Specs` adımı **hiçbir kural koşmuyordu** ve daima
+"pass" gösteriyordu — `spectral lint` **ruleset'siz** çağrılıyordu (*"No ruleset has been
+found"*), üstüne `|| echo` ve `continue-on-error: true`. Kurallar koşturulunca **25 hata +
+63 uyarı** çıktı ve **üçü gerçek kusurdu**:
+
+| Kusur | Etkisi |
+|---|---|
+| `api/components/responses.yaml` → `nullable: true` | **OAS 3.0** anahtarı; 3.1'de kaldırıldı → sessizce yok sayılıyordu, istemci `next_cursor`'ı **zorunlu string** sanıyordu |
+| `api/edge_local.v1.yaml` → `/batches/{batch_id}/scan` | yol parametresi **hiç tanımlı değildi** → üretilen istemci imzası parametresiz kalır |
+| `api/platform_public.v1.yaml` ödeme uçları | **var olmayan** `PaymentIntent` bileşenine iki **sarkan `$ref`** (KR-033) |
+
+#### Changed
+- CI adımı **redocly**'ye çevrildi (spectral bu ağaçta `spectral:oas` ile **çöküyor**:
+  *"Cannot read properties of null (reading 'enum')"* — kanonik JSON Şemalara giden göreli
+  `$ref` zincirini çözemiyor). Susturucular **kaldırıldı**.
+- `.redocly.yaml` — yapısal kurallar `error`; `operationId` (39) ve `4XX` (19) eksikleri
+  **görünür `warn`** olarak bırakıldı (ratchet sırası yazılı).
+- `.redocly.lint-ignore.yaml` — **elle** yazıldı, yalnız tek sınıf: kanonik şemaların
+  `notes`/`metadata` anahtarları (23 ihlal / 12 dosya) → **SD11**. `--generate-ignore-file`
+  toptan 85 bulguyu susturacaktı; kapıyı yeniden kör edeceği için kullanılmadı.
+
+#### Added
+- `tests/test_publication_tree_gates.py` → **araçtan bağımsız `$ref` kapısı** (npm/ağ
+  gerekmez) + SD9 sürüm kapısı. **4/4 mutasyon** kırmızı.
+
+### ÖD-9 … ÖD-16 — kapılar gördüğünü iddia ettikleri yüzeyi ölçsün (şema değişikliği YOK)
+
+**ÖD-9 (dört depo tarandı, AST):** kodlamasız dosya okuma sınıfı **worker'a özgü** —
+contract/edge/platform **0**, worker 12. W11 listesi düzeltildi (`map_renderer` rasterio
+`MemoryFile.open()` → yanlış pozitif; `safe_path.py:19` docstring örneği). ⚠️ Ölçüm
+aracının kendi hatası da bulundu: `open(dosya, mod)` ↔ `Path.open(mod)` imza farkı.
+
+**ÖD-10 (varsayım çürüdü):** 16 vendored dosyanın **0'ı** kanoniğinden fazla prose
+taşıyor (37.336 ↔ 71.490 karakter). Kalan risk yükte değil **okuyucuda** (W11). Yine de
+yeni kapı olayın şeklini yasaklıyor: `test_vendored_prose_does_not_exceed_canonical`.
+
+**ÖD-11:** `TÜRETİLMİŞ İŞARETÇİ` damgası bir **muafiyet değildir** — damgalı bölüme
+1500 karakter tavanı (ölçüm: işaretçiler ≤1366, gövdeler ≥1483) + "işaretçi bir hedef
+göstermeli".
+
+**ÖD-12:** "göç taşımadır" kapısı **başlık** sayıyordu → artık **içerik** ölçüyor (her
+gövdeye asgari uzunluk + toplam hacim tabanı; 4 bölüm başlığı beyanlı).
+
+**ÖD-13:** yayın ağacı ilk kez kapı altında — `validate.py` **96 → 164 dosya**; yayın
+kopyası kaynağının PII kapsamını devralır; `inline_refs --check` artık **yetim** dosya arar.
+
+**ÖD-15:** `SDLC_GATES.md` SD8'i iki yerde iki farklı hâlde anlatıyordu → tek gövde §3G.
+
+**ÖD-16:** CHANGELOG'da yayımlanan `--old v7.2.0` komutu **düşüyordu**; dedektör artık
+git ref kabul ediyor ve bir test yayımlanan her `--old` argümanının çözülebilirliğini
+zorluyor. CI checkout'u `fetch-depth: 0` + `fetch-tags: true` yapıldı (sığ checkout etiket
+getirmiyordu → kapı CI'da yanlış gerekçeyle kırmızıydı).
+
+### 🔄 E13-R — kalibrasyon tipi **drone başına türetilir** (E13'ün filo-geneli `ABSOLUTE` kararı GERİ ALINDI)
+
+**Tip:** şema değişikliği YOK (yalnız enum'a normatif `x-derivation` bloğu + kapı) → MINOR.
+
+**Karar (koordinatör onaylı, 2026-08-01 ikinci oturum):** kalibre pakete yazılacak
+`calibration_type` **sabit değildir**; `drone_capability_matrix.yaml →
+capabilities[drone_type].calibration_class`'tan türetilir:
+`relative → RELATIVE` · `absolute → ABSOLUTE | PANEL_ABSOLUTE`.
+
+**Neden geri alındı (ÖD-5 ölçümü — üç kanonik kaynak da E13'ün tersini söylüyordu):**
+
+| Kaynak | Hüküm |
+|---|---|
+| `drone_capability_matrix.yaml:18` | `DJI_MAVIC_3M → calibration_class: relative` · *"Pix4Dfields göreli kalibrasyon sağlar"* |
+| `docs/TARLAANALIZ_SSOT_v1_2_0.txt:79` ve `:1014` | *"Pix4Dfields, M3M için tam radyometrik kalibrasyon **değil**, göreli (relative) kalibrasyon sağlar"* |
+| platform `src/core/domain/value_objects/calibration_class.py:41` | `DJI_MAVIC_3M: RELATIVE` — 2.0× tolerans gevşemesi bu sınıfa bağlı |
+
+E13'ün gerekçesi (panel zorunlu · motor Pix4Dfields · enum `ABSOLUTE`'u *"Pix4D
+panel-tabanlı"* diye tanımlıyor) kendi içinde tutarlıydı ama **bu üç kaynağı hiç
+ölçmemişti**. Panel zorunluluğu ayırt edici değildir: SOP gereği panel **her** sınıfta
+kullanılır (KR-018/KR-092), ayırt edici olan **sensör sınıfıdır**.
+
+🔴 **Ölçülen sonuç:** sabit `ABSOLUTE` yazılsaydı worker'ın
+`FINETUNE_ALLOWED_CALIBRATIONS` kümesi (`src/core/domain/enums.py:73`) M3M verisini **ince
+ayara uygun** sayacaktı → K-3'ün *"fine-tuning: SADECE PANEL+DLS2"* kuralı sessizce
+delinir, platformun 2.0× tolerans gevşemesi devreye girmez, zaman serisi karşılaştırmaları
+SSOT `:1014`'ün açıkça reddettiği bir varsayıma oturur.
+
+💰 **Kabul edilen bedel (yazılı, `x-superseded-e13-2026-08-01.cost_accepted`):** demo/pilot
+filosu M3M olduğu için M3M verisi **ince ayara girmez**, yalnız SSL ön-eğitimine girer.
+Alternatifi göreli veriyi mutlak etiketle eğitime sokmaktı.
+
+✅ **E13'ün ayakta kalan yarısı:** `DLS2_RELATIVE` kalibre paket yüzeyinden **reddedilmeye
+devam ediyor** (satıcıya özgü donanım adı + irradyans ayrı eksen). Yeniden adlandırma **S3**.
+
+#### Added
+- **`enums/calibration_type.enum.v1.json` → `x-derivation`:** makine-okunur türetme tablosu
+  (`source` · `map` · `forbidden` · `consumer_obligation` · geri alma kaydı). Kural yalnız
+  prose'da yaşasaydı bir sonraki tur onu görmezdi — E13'ün ilk hâlinin düştüğü hata buydu.
+- **YENİ kapı** `tests/test_calibration_type_derivation.py` (14 test): türetme matrise
+  **bağlı** mı · her sınıf eşlenmiş mi · türetilen değer kalibre yüzeyde **yazılabilir** mi
+  (yoksa kural kâğıt üzerinde kalır — ÖD-1'in aynısı) · **göreli sınıf mutlak etiket
+  üretemez** (regresyon) · kararın üç dayanağı yerinde mi · geri alma kaydı bedeliyle
+  birlikte duruyor mu. **8/8 mutasyon** kırmızı.
+
+#### Changed
+- `tests/test_calibration_type_axis.py`: docstring'i E13-R'yi yansıtıyor; panel
+  gerekçesinin *ayırt edici olmadığı* açıkça yazıldı (o dosya artık eksenin temizliğini
+  korur, türetme mantığını değil).
+
+#### Consumer obligations (bu depodan zorlanamaz — kalibre manifest `drone_type` taşımaz)
+- **edge (E14):** değeri intake'teki drone modelinden + matristen **türetir**; matriste
+  olmayan drone için değer uydurmaz → kalibrasyon reddedilir (fail-closed).
+- **platform (P14 — ACİLLEŞTİ):** `worker_job_publisher.py:80-84` fail-open
+  `CALIBRATED → PANEL_ABSOLUTE` adımı **kaldırılmalı**. Ölçüldü: canlı. E13-R sonrası bu
+  adım göreli veriyi mutlak etiketle worker'a gönderen tek yol hâline geliyor.
+- **worker:** tipi olduğu gibi tüketir; `RELATIVE` ince ayara girmez (K-3).
+
 ### ÖD-1 · ÖD-2 · ÖD-3 · ÖD-8 — *"aynı kavramın iki tanımı, ikisini bağlayan kapı yok"* (hepsi MINOR)
 
 **Tip:** MINOR — dedektör ölçümü: **3 değişiklik / 0 breaking** (enum değeri eklendi ×1,

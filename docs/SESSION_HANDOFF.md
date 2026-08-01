@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-01
+**Son güncelleme:** 2026-08-01 (ikinci oturum — §14.8 + E13-R)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,66 @@
 
 ---
 
-## 0.A EN GÜNCEL OTURUM (2026-08-01) — **§14.7 tamamı + C8 töreni + TUR 2 açılışı**
+## 0.A EN GÜNCEL OTURUM (2026-08-01, **ikinci oturum**) — **§14.8'in tamamı + E13 geri alındı**
+
+> ### 🔚 OTURUM KAPANIŞ ÖZETİ
+>
+> **§14.8'deki 16 ÖD kaleminin 15'i kapandı** (kalan: **ÖD-0** — `sürüm-riski` lensi hâlâ
+> koşmadı). Üstüne **bir karar geri alındı** (E13 → **E13-R**, koordinatör onayı) ve
+> denetimin görmediği **beş yeni sapma** ölçümle bulundu.
+>
+> | Depo | Durum |
+> |---|---|
+> | contract | PR **#25 MERGED** (9/9 yeşil) · PR **#26 AÇIK** (E13-R + ÖD-4/6/7/9…16) |
+> | worker | PR **#187 MERGED** (W13 — 3/3 yeşil) · KR-041 hash `f1447fb6…` → `66747d4a…` |
+> | platform | **DOKUNULMADI** (o deponun CLAUDE.md'si "commit yalnız açık istekle" diyor) → **P17** yazıldı |
+> | edge | dokunulmadı → **E16-b** yazıldı |
+>
+> **🔄 E13 GERİ ALINDI — kararın kendisi ölçümle çürüdü.** E13 kalibre pakete filo-geneli
+> sabit `ABSOLUTE` yazıyordu; üç kanonik kaynak da tersini söylüyordu (matris
+> `DJI_MAVIC_3M: relative` · SSOT `:79`/`:1014` · platform `calibration_class.py:41`).
+> Ölçülen sonuç: sabit `ABSOLUTE` worker'ın `FINETUNE_ALLOWED_CALIBRATIONS` kümesi
+> üzerinden **K-3'ü etiket yoluyla delerdi** (göreli M3M verisi ince ayara girerdi).
+> **E13-R:** değer `calibration_class`'tan türetilir. 💰 Bedel yazılı ve kabul edildi:
+> **M3M verisi ince ayara girmez** (yalnız SSL ön-eğitimi).
+>
+> **🔴 ÖD-2 zinciri KAPANDI (contract + worker birlikte).** `analysis_job.v1` gömülü
+> `$defs/CalibrationMetadata` kanonikten ayrışmıştı ve `unevaluatedProperties: false`
+> taşıyordu → `scale` taşıyan iş **worker'ın kapısında** düşerdi; W12'nin okuma kodu
+> veriyi asla görmezdi. İki depo aynı turda düzeltildi.
+>
+> **Yeni kapılar (hepsi mutasyonla doğrulandı — bu turda toplam 44 mutasyon):**
+> `test_context_subset_binding` (defter↔şema) · `test_calibration_metadata_single_definition`
+> (iki tanım ayrışamaz + **belge düzeyinde** doğrulama) · `test_calibration_type_derivation`
+> (E13-R) · `test_publication_tree_gates` (yayın ağacı + yayımlanan üreteç) ·
+> `test_vendored_parity` **9→16 dosya**, MIRROR/SUBSET kipleri, enum ekseni, prose tavanı.
+>
+> **📌 SONRAKİ OTURUM:** ① PR **#26**'yı merge et ② **ÖD-0** (`sürüm-riski` lensi tek
+> başına koşturulmalı — v7.3.0'ın yayımlanmış içeriği hâlâ denetlenmedi) ③ kardeş depo
+> kalemleri: **W14** (EGE + meyve ağaçları) · **E16/E16-b** (küçük harf crop sözlüğü) ·
+> **P14** (E13-R ile acilleşti) · **P17** (sürüm log sabitleri) · **W11** (kodlamasız
+> `open()`) ④ sonra C8 töreni (TUR 2 hâlâ `PENDING_REPIN`).
+>
+> ### 🔬 BU TURUN İKİ METODOLOJİ DERSİ (ikisi de kendi kapımda yakalandı)
+> 1. **Uygulanmayan mutasyon yeşil verir** ve kapıyı kör sandırır (dosyalar CRLF, desenler
+>    `\n` ile yazılmıştı → hiç eşleşmedi). Mutasyon script'leri artık "uygulandı mı"
+>    kontrolüyle koşuyor.
+> 2. **Ölçüm aracının kendi hatası** bulguyu uydurur: builtin `open(dosya, mod)` ile
+>    `Path.open(mod)` imzaları farklı; ilk tarayıcı `p.open("rb")`'yi — hem de bir
+>    **checksum aracında** — "kodlamasız okuma" diye raporladı. **Önce aracı doğrula.**
+>
+> ### 📋 Bu turda ölçülen, denetimin GÖRMEDİĞİ beş sapma
+> `analysis_job` vendored kopyası (W13 · kapandı) · `expert_labeling_card` **EGE** ·
+> `expert_review_queue` **APPLE/CHERRY/FIG/PEACH** (ikisi **W14**) ·
+> `intake_manifest.sorties[].crop_type` küçük harf (**E16-b**) · edge kalibre manifestte
+> `raw_frames[].band`'e **RGB** yayılmamış + `qc_report.flags` kısıtsız (C8 yayılımı, beyanlı).
+>
+> **I-2 tamamlandı:** ÖD-7'de nüfus **biçimden bağımsız** yeniden ölçüldü (19→**22** sürüm);
+> `v2.0.1 · v2.1.0 · v4.1.2` retro-tag'leri atıldı ve **push edildi** → **22/22**.
+
+---
+
+## 0.A′ ÖNCEKİ OTURUM (2026-08-01) — **§14.7 tamamı + C8 töreni + TUR 2 açılışı**
 
 > ### 🔚 OTURUM KAPANIŞ ÖZETİ
 >

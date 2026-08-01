@@ -116,6 +116,21 @@ def build() -> Tuple[Dict[str, str], List[str]]:
     return produced, warnings
 
 
+def find_orphans(produced: Dict[str, str], dist_dir: Path) -> List[str]:
+    """Yayın ağacında olup KAYNAĞI OLMAYAN dosyalar (ÖD-13).
+
+    Ayrı bir fonksiyon: kapının bu yönü de testten ölçülebilsin (`--write` yetim dosyayı
+    silmez, yalnız üzerine yazar — sapma kalıcıdır, o yüzden kapı şart).
+    """
+    if not dist_dir.exists():
+        return []
+    return sorted(
+        path.relative_to(dist_dir).as_posix()
+        for path in dist_dir.rglob("*.json")
+        if path.relative_to(dist_dir).as_posix() not in produced
+    )
+
+
 def main() -> int:
     for stream in (sys.stdout, sys.stderr):
         reconfigure = getattr(stream, "reconfigure", None)
@@ -154,7 +169,21 @@ def main() -> int:
         for relative in stale[:10]:
             print(f"   - {relative}", file=sys.stderr)
         return 1
-    print(f"✅ dist/ güncel: {len(produced)} dosya")
+
+    # ÖD-13 (2026-08-01): YETİM dosya denetimi. Kapı bugüne kadar yalnız "üretilen her
+    # dosya dist'te güncel mi" diye soruyordu; ters yönü — dist'te olup KAYNAĞI OLMAYAN
+    # dosya — hiç sormuyordu. Kaynağı silinen bir şema yayın ağacında yaşamaya devam eder
+    # ve hava-boşluklu M1 onu geçerli sözleşme sanar. `--write` da onu silmez (yalnız
+    # üzerine yazar), yani sapma kalıcıdır.
+    orphans = find_orphans(produced, DIST)
+    if orphans:
+        print(f"❌ dist/ YETİM dosya ({len(orphans)}) — kaynağı YOK, elle silinmeli:",
+              file=sys.stderr)
+        for relative in orphans[:10]:
+            print(f"   - {relative}", file=sys.stderr)
+        return 1
+
+    print(f"✅ dist/ güncel: {len(produced)} dosya (yetim yok)")
     return 0
 
 

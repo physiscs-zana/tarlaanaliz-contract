@@ -1,0 +1,51 @@
+# OpenAPI kapısı — SD10 (2026-08-01)
+#
+# NEDEN BU DOSYA VAR:
+#   CI'daki "Lint OpenAPI Specs" adımı **hiçbir kural koşmuyordu** ve yine de daima
+#   "pass" gösteriyordu. Üç katman üst üste:
+#     ① `spectral lint` çağrısı ruleset'sizdi → araç "No ruleset has been found" deyip
+#        çıkıyordu (sıfır kural),
+#     ② `|| echo "OpenAPI linting completed"` → kabuk daima 0 döndürüyordu,
+#     ③ `continue-on-error: true` → hata olsa bile iş düşmüyordu.
+#   Ölçüldü: kurallar gerçekten koşturulunca **25 hata + 63 uyarı** çıktı ve iki tanesi
+#   gerçek kusurdu (aşağıda). Bu, D3'ün (breaking kapısı) birebir aynı sınıfı:
+#   *"yeşil ama yalan bir kapı, kırmızı bir kapıdan tehlikelidir."*
+#
+# ARAÇ SEÇİMİ — spectral DEĞİL redocly:
+#   Spectral bu depoda `spectral:oas` ruleset'i ile **çöküyor**
+#   ("Cannot read properties of null (reading 'enum')"): kanonik JSON Şemalara giden
+#   göreli `$ref` zincirini çözemiyor. Redocly aynı ağacı sorunsuz çözüyor ve zaten
+#   `package.json → openapi:validate` ile bu deponun ilan ettiği araç.
+#
+# BULUNAN GERÇEK KUSURLAR (ikisi de bu turda düzeltildi):
+#   * `api/components/responses.yaml` → `nullable: true` — OpenAPI **3.0** anahtarı;
+#     3.1'de kaldırıldı, sessizce yok sayılıyordu (istemciler alanı zorunlu sanıyordu).
+#   * `api/edge_local.v1.yaml` → `/batches/{batch_id}/scan` yol parametresini hiç
+#     tanımlamıyordu (üretilen istemci imzası parametresiz kalır).
+#   * (Ayrıca `platform_public.v1.yaml` iki yerden **var olmayan** `PaymentIntent`
+#     bileşenine `$ref` veriyordu — sarkan referans, aynı turda düzeltildi.)
+
+extends:
+  - recommended
+
+rules:
+  # ── Kalan borç: BEYANLI ve ÖLÇÜLÜ (susturma değil, ratchet) ───────────────
+  # `operationId` 39 işlemde yok, `4XX` yanıtı 19 işlemde yok. İkisi de gerçek
+  # eksiklik ama **davranışsal kusur değil**; toptan doldurmak bu turun kapsamını
+  # aşar ve gözden geçirilmeden yazılan `operationId`'ler istemci API'sini kalıcı
+  # olarak kilitler. `warn` olarak GÖRÜNÜR kalıyorlar (CI çıktısında sayılıyorlar),
+  # build'i düşürmüyorlar. Kapatma sırası: önce `operation-4xx-response` (hata
+  # sözleşmesi), sonra `operation-operationId`.
+  operation-operationId: warn
+  operation-4xx-response: warn
+
+  # Sunucu örnekleri ve lisans künyesi: ürün kararı, sözleşme kusuru değil.
+  no-server-example.com: warn
+  info-license: warn
+  info-license-strict: off
+
+  # ── Yapısal kurallar SERT ──────────────────────────────────────────────────
+  # Bu iki kural yukarıdaki üç gerçek kusuru yakalayan kurallardır; `error` kalır.
+  struct: error
+  path-parameters-defined: error
+  no-unresolved-refs: error
