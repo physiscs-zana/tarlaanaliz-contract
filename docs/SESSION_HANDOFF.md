@@ -32,7 +32,7 @@
 > |---|---|
 > | contract | PR **#25 MERGED** (9/9) · PR **#26 MERGED** (9/9 — E13-R + ÖD-4/6/7/9…16 + SD9/SD10) |
 > | worker | PR **#187 MERGED** (W13 — 3/3) · PR **#188 MERGED** (W11 — 6/6) · KR-041 hash `f1447fb6…` → `66747d4a…` |
-> | platform | PR **#351 AÇIK** (P14 + P17) — kullanıcı **commit onayı verdi**; CI'da 5/6 pass, backend testleri koşuyordu |
+> | platform | PR **#351 MERGED** (P14 + P17 — 6/6 yeşil; kullanıcı commit onayı verdi) |
 > | edge | dokunulmadı — **E16 ölçüldü, üretici kararı bekliyor** (aşağıda) |
 >
 > **🔄 E13 GERİ ALINDI — kararın kendisi ölçümle çürüdü.** E13 kalibre pakete filo-geneli
