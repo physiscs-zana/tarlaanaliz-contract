@@ -1985,6 +1985,33 @@ A7 kanopi maskesi · A5/A6 fenoloji eşlemesi · §12 motor kararı sonrası `DT
 | ⬜ **W11** 🟠 | **Worker'da kodlamasız dosya okuma — C8'de ölçülerek bulundu.** `src/application/contract_validator.py:233` şemayı `open()` ile **kodlama belirtmeden** okuyor; Windows cp1254'te UTF-8 içerik **45 testi birden** kırdı. Eski vendored dosya şans eseri cp1254-uyumluydu, CI Linux'ta (UTF-8) hiç görünmezdi → **latent, platform-bağımlı** kusur. C8'de asıl tetikleyici düzeltildi (vendored'a 12 KB prose taşınmıyor artık) ama **okuyucu hâlâ kırılgan**. Sınıf tarandı, 4 üye daha: `src/shared/safe_path.py:19` · `src/core/services/memory/cold_storage_manager.py:263,293` · `src/core/services/training/ssl_pretrain.py:2131`. (98 ham eşleşmenin gerisi yanlış pozitif — `rasterio.open`/`Image.open`/`fiona.open` `encoding` almaz.) **Yapılacak:** beşine de `encoding="utf-8"` + bir lint kuralı ya da test | Worker deposu; C8'i bloke etmiyor | C8 turu ölçümü |
 | ⬜ **C8-a** 🟡 | **Vendored yayılım aracı yok — elle yapıldı.** C8'de `PENDING_PROPAGATION` boşaltma işi tek seferlik bir script'le yürütüldü (kanonikten alan taşıma + `unevaluatedProperties`→`additionalProperties` + prose kırpma). Bir sonraki turda aynı iş yine elle yapılacak ve **aynı hata tekrarlanabilir** (ilk denemede prose taşınıp 45 test kırıldı). `tools/` altına kalıcı bir `propagate_vendored.py` yazılmalı: beyandaki alanları taşır, idiom çevirir, prose'u işaretçiye indirir, sonucu parite testiyle doğrular | Araç kararı | C8 turu |
 
+### 🔶 MAJOR TURU — `v8.0.0` (biriken kalemler, henüz AÇILMADI)
+
+> **Neden ayrı bir tur:** aşağıdaki üçü de `versioning_policy.md`'ye göre **breaking**tir
+> (enum değeri yeniden adlandırma · `required` genişletme · alan biçimi değiştirme).
+> Her biri tek başına yapılırsa üç ayrı MAJOR bump, üç migration guide ve **üç kez**
+> üç-depo re-pin turu demektir. Tek turda toplamak bunu bire indirir.
+>
+> ⚠️ **Ön koşul: MINOR turu (TUR 2) önce C8 ile kapatılır.** Açık bir MINOR turunun
+> üstüne MAJOR açmak, `PENDING_REPIN` beyanını iki anlamlı hâle getirir.
+
+| # | Kalem | Neden MAJOR | Ölçülen dayanak |
+|---|---|---|---|
+| **S3** | `DLS2_RELATIVE` → satıcıdan bağımsız bir ad (öneri: `IRRADIANCE_RELATIVE`) | Enum değeri **yeniden adlandırma** | DLS2 bir **MicaSense** parçasıdır (SSOT KR-018: *"MicaSense RedEdge-P/Altum-PT: DLS2 + reflectance panel"*); M3M'de güneş sensörü var ama DLS2 **değil**. E13 kararı değeri kalibre paket yüzeyinden zaten dışladı — bu tur adı da düzeltir. ⚠️ Yeni ad **`x-separate-axis`** ile çelişmemeli: irradyans bir **yöntemdir** (`DLS_IRRADIANCE`), tip değil — bu yüzden değerin *tamamen kaldırılması* da bir seçenektir ve tur içinde tartışılmalı |
+| **S7-b** | `raw_frames[].band` → `required` | `FIELD_MADE_REQUIRED` | Alan opsiyonelken yokluğu **iki şeyi** kodluyor (RGB kompozit / bant bilinmiyor). MINOR turunda denendi, dedektör beyanı tanımadı (**AK-11**). Üretici YOK (ölçüldü: üç depoda 0 eşleşme) → pratikte kimseyi kırmaz |
+| **K1** | `{tenant}` opaklaştırma | Alan biçimi değişimi | Plan §14.5'te zaten "MAJOR penceresi" olarak işaretli |
+
+**Tur açılış sırası (yazılı ki atlanmasın):**
+1. **AK-11 önce çözülür** — dedektör `FIELD_MADE_REQUIRED` için `x-compat-accepted` desteklemeli
+   ya da "required daraltması beyanla geçilemez" **yazılı kural** olmalı. Aksi hâlde S7-b'nin
+   gerekçesi (üretici yok) makine tarafından hiç görülmez.
+2. `docs/migration_guides/` altına **tek** rehber: üç değişiklik + tüketici adımları.
+3. `pin_version.py --major --breaking` · `CONTRACTS_VERSION.md` → `breaking_change: true`.
+4. Üç depo re-pin (platform submodule + worker öz-hash + edge upstream ref).
+
+**Bu turda YAPILMAYACAK olanlar (kapsam kilidi):** MINOR yapılabilen hiçbir şey MAJOR tura
+eklenmez — MAJOR turu ne kadar şişerse tüketici geçişi o kadar riskli olur.
+
 ### 🔴 KARDEŞ DEPO İŞLERİ (contract'tan yapılamaz — her biri ayrı PR)
 
 | # | Depo | İş | Kaynak bulgu |
