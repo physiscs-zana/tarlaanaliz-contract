@@ -176,18 +176,31 @@ class TestEdgeRealOutputAgainstCanonical:
             + "; ".join(f"{list(e.path)}: {e.message[:120]}" for e in errors[:3])
         )
 
-    def test_remaining_gap_is_exactly_the_crop_case(self) -> None:
-        """Kalan TEK fark ürün adı biçimidir → E16 (edge tarafı, C8'de)."""
+    def test_crop_case_gap_is_closed(self) -> None:
+        """✅ E16 KAPANDI (2026-08-01) — bu testin İDDİASI TERSİNE ÇEVRİLDİ.
+
+        Eski hâli *"kalan TEK fark ürün adı biçimidir"* diyordu ve edge fixture'ının
+        **küçük harf** yazdığını doğruluyordu. Koordinatör kararı (2026-08-01):
+        **edge sınırda normalize eder** — `_canonical_crop()` eklendi, iki vendored enum
+        kanonik BÜYÜK harfe çekildi (edge PR #50). Dolayısıyla edge'in gerçek çıktısı
+        artık kanoniği **olduğu gibi** geçer; biçim düzeltmesi (`.upper()`) gerekmez.
+
+        Test, kapanışın **geri alınmadığını** ölçer: fixture küçük harfe dönerse ya da
+        kanonik doğrulama hata verirse kırmızıya döner.
+        """
         document = self._fixture()
         crops = [s.get("crop_type") for s in document.get("sorties", [])]
         if not crops:
             pytest.skip("kardeş depo yok: fixture sortie taşımıyor")
-        assert all(c == c.lower() for c in crops), (
-            "edge fixture'ı artık BÜYÜK harf yazıyor gibi görünüyor — E16 kapanmış olabilir; "
-            "öyleyse bu testi ve plandaki E16 satırını güncelleyin."
+        assert all(c == c.upper() for c in crops), (
+            f"edge fixture'ı hâlâ küçük harf ürün yazıyor: {crops}. E16 geri alınmış "
+            "olabilir — edge `_canonical_crop` normalizasyonu ve vendored enum'lar kontrol edilmeli."
         )
-        errors = list(_validator().iter_errors(document))
-        assert errors, "beklenen crop-biçimi hatası görünmüyor (E16 kapandıysa testi güncelleyin)"
+        errors = sorted(_validator().iter_errors(document), key=lambda e: list(e.path))
+        assert not errors, (
+            "edge'in gerçek çıktısı DÜZELTME OLMADAN kanoniği geçmiyor: "
+            + "; ".join(f"{list(e.path)}: {e.message[:120]}" for e in errors[:3])
+        )
 
 
 if __name__ == "__main__":
