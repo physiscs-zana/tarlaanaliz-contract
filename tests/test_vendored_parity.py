@@ -124,7 +124,25 @@ def _pair(canonical_rel: str, vendored_rel: str) -> tuple[dict, dict]:
 # Yayılım kopyalama DEĞİL, alan taşımadır: vendored idiom (`additionalProperties: false`)
 # korundu, kanonikten gelen alt yapılarda `unevaluatedProperties` → `additionalProperties`
 # çevrildi (I-4 — vendored kanoniğin dar alt kümesidir, bayt-özdeşlik beklenmez).
-PENDING_PROPAGATION: dict[str, dict] = {}
+#
+# ── YENİ TUR (v7.3.0 sonrası) ────────────────────────────────────────────────
+PENDING_PROPAGATION: dict[str, dict] = {
+    "calibration_metadata.v1.schema.json": {
+        "properties": {"scale"},
+        "required": set(),
+        "why": (
+            "S5 (2026-08-01) — reflektans ölçeği. Ölçüldü: alan bugüne kadar YALNIZ platform "
+            "şemalarındaydı; worker'ın vendor'ladığı 8 sözleşmenin hiçbirinde yoktu, bu yüzden "
+            "worker ölçeği TÜM FİLO için tek global env'den okuyor "
+            "(`src/shared/config.py:236` → 10000.0). Worker kodu düzeltmeyi kendisi tarif "
+            "ediyor: 'per-job reflectance_scale'i calibration_metadata sözleşmesine ekleyip "
+            "okumak' (`pipeline.py:2358`). Bu girdi o düzeltmenin SÖZLEŞME yarısıdır; "
+            "worker'ın OKUMA yarısı ayrı bir kalem (W12) ve E13 kararıyla motor artık belli "
+            "(Pix4Dfields). ⚠️ Yayılım, worker okuma kodu hazır olmadan yapılırsa alan ölü "
+            "taşınır — bu yüzden bir sonraki C8'e bırakıldı, sessizce değil BEYANLA."
+        ),
+    },
+}
 
 
 def _pending(canonical: str, axis: str) -> set[str]:

@@ -7,6 +7,61 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [Unreleased] — CONTRACT TUR 2 (devam ediyor)
+
+> ⚠️ Bu bölüm **açık bir sürüm turudur.** İçerik tamamlanınca **C8 release töreninde** tek
+> sürüm numarası altında toplanır. **Tur boyunca `pin_version.py --verify` KIRMIZIDIR**
+> (agrega checksum bilerek re-pin edilmez — ara re-pin, yayımlanmış `v7.3.0` etiketinin
+> checksum anlamını bozar). Beyan: `CONTRACTS_VERSION.md` → `**Checksum State:** PENDING_REPIN`.
+
+### S5 — reflektans ölçeği worker sözleşmesine eklendi (`worker/calibration_metadata.v1`)
+
+**Tip:** MINOR (opsiyonel `scale` bloğu; `required` değişmedi).
+
+**Sorun (ölçüldü):** reflektans ölçeği bugüne kadar **yalnız platform** şemalarındaydı
+(`platform/calibration_result.v1` → `scale`, `platform/calibrated_dataset_manifest.v1`).
+Worker'ın vendor'ladığı **8 sözleşmenin** ve kanonik `schemas/worker/*` şemalarının
+**hiçbirinde** yoktu. Sonuç: worker ölçeği **tüm filo için tek bir global ortam
+değişkeninden** okuyor (`src/shared/config.py:236` → `reflectance_scale = 10000.0`).
+Worker kodu bunu zaten biliyor ve düzeltmeyi kendisi tarif ediyor: *"The canonical fix is a
+per-job scale field in the calibration contract"* (`config.py:230-234`) ·
+*"Kalıcı çözüm: per-job reflectance_scale'i calibration_metadata sözleşmesine ekleyip
+okumak"* (`pipeline.py:2358`).
+
+**Neden sessiz bir hata sınıfı:** NDVI = (NIR−Red)/(NIR+Red) bir **orandır** → ölçekten
+bağımsızdır ve yanlış ölçekte bile makul görünür. EVI'nin `− 7.5·Blue + 1.0` ve SAVI'nin
+`+ L` **toplama sabitleri** ise reflektansın 0–1 aralığında olduğunu varsayar. Ölçek
+uyuşmazsa bu iki indeks sessizce bozulur **ve NDVI'nin doğru görünmesi hatayı maskeler.**
+
+### Added
+
+- **`schemas/worker/calibration_metadata.v1.schema.json`:** opsiyonel `scale` bloğu —
+  `reflectance_scale` (enum: `reflectance_0_1|reflectance_0_100|scaled_int|unknown`) +
+  `scale_factor` (number, `exclusiveMinimum: 0`). Alan adları ve enum değerleri
+  `platform/calibration_result.v1` → `scale` ile **birebir aynıdır** (dört depo tek standart;
+  yeni ad icat edilmedi). Blok içinde `reflectance_scale` zorunlu; `scaled_int` seçilmişse
+  `allOf`/`if-then` ile **`scale_factor` de zorunlu** — "ölçekli tamsayı" deyip neye
+  böleceğini söylememek S5'in doğduğu boşluğun ta kendisiydi.
+- **`x-normalization.scale.missing`:** eksik ölçek davranışı **yazılı** — `DECLARED_FALLBACK`.
+  Burada bilerek FAIL-CLOSED yapılmadı (`calibration_type`'ın aksine): `scale` bugün hiçbir
+  üretici tarafından yazılmıyor, sert kapı tüm filoyu anında durdururdu. Sapma **geçicidir**
+  (I-5) — üretici (E14 `calibration_result_writer`) alanı yazmaya başladığında politika
+  `FAIL_CLOSED`'a çevrilir. Bugünkü tek savunma worker'ın doyum alarmıdır
+  (`pipeline.py:2364`, `event_type=radiometric_scale_mismatch`) — bir kapı değil, alarmdır.
+
+### Gates
+
+- **YENİ:** `tests/test_reflectance_scale_contract.py` (11 test) — ölçek sözlüğünün platform
+  ↔ worker ↔ manifest arasında ayrışmasını yasaklar, `scaled_int`'in bölensiz kalmasını
+  reddeder, eksik-ölçek beyanının silinmesini ve "NDVI maskeler" notunun kaybolmasını
+  kırmızıya çevirir. **5/5 mutasyon** doğrulandı.
+- `PENDING_PROPAGATION`'a `calibration_metadata.v1` beyanı eklendi: kanonik ileri gitti,
+  worker vendored kopyası henüz almadı. ⚠️ Yayılım worker'ın **okuma kodu** hazır olmadan
+  yapılırsa alan ölü taşınır → bir sonraki C8'e bırakıldı, sessizce değil **beyanla**.
+  Worker'ın okuma yarısı ayrı kalem: **W12**.
+
+---
+
 ## [7.3.0] - 2026-08-01 — CONTRACT TUR 1 (C8 ile kapatıldı)
 
 **Breaking-change:** HAYIR (MINOR) — **iki bağımsız ölçümle** doğrulandı:

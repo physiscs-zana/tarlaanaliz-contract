@@ -51,6 +51,59 @@
         "null"
       ],
       "description": "Red Edge center wavelength for NDRE offset correction"
+    },
+    "scale": {
+      "type": "object",
+      "description": "S5 (2026-08-01): reflektans ölçeği — ham DN değerlerini reflektansa çeviren kodlama. Alan adları ve enum değerleri `schemas/platform/calibration_result.v1` → `scale` bloğuyla BİREBİR AYNIDIR (dört depo tek standart; yeni ad icat edilmedi).\n\n**Neden eklendi — ölçüldü:** bu alan bugüne kadar YALNIZ platform şemalarında vardı; worker'ın vendor'ladığı 8 sözleşmenin ve kanonik `schemas/worker/*` şemalarının HİÇBİRİNDE yoktu. Worker bu yüzden ölçeği TÜM FİLO İÇİN TEK bir global ortam değişkeninden okuyor (`src/shared/config.py:236` → `reflectance_scale: float = 10000.0`). Worker kodu bunu zaten biliyor ve çözümü söylüyor: *\"The canonical fix is a per-job scale field in the calibration contract\"* (aynı dosya) · *\"Kalıcı çözüm: per-job reflectance_scale'i calibration_metadata sözleşmesine ekleyip okumak\"* (`pipeline.py:2358`). Bu alan o düzeltmenin sözleşme yarısıdır.\n\n**Neden SESSİZ bir hata sınıfı:** NDVI = (NIR−Red)/(NIR+Red) bir ORANDIR → ölçekten bağımsızdır ve yanlış ölçekte bile makul görünür. Buna karşılık EVI'nin `… − 7.5·Blue + 1.0` ve SAVI'nin `… + L` TOPLAMA sabitleri reflektansın 0–1 aralığında olduğunu VARSAYAR; ölçek uyuşmazsa bu iki indeks sessizce bozulur ve NDVI'nin doğru görünmesi hatayı gizler.",
+      "properties": {
+        "reflectance_scale": {
+          "type": "string",
+          "enum": [
+            "reflectance_0_1",
+            "reflectance_0_100",
+            "scaled_int",
+            "unknown"
+          ],
+          "description": "Çıktının sayısal ölçeği. Kanonik vocabulary `schemas/platform/calibration_result.v1` ile ortaktır."
+        },
+        "scale_factor": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "`scaled_int` durumunda bölen (ör. 10000, 32768, 65535). Diğer ölçeklerde anlamsızdır ve yazılmaz."
+        }
+      },
+      "required": [
+        "reflectance_scale"
+      ],
+      "unevaluatedProperties": false,
+      "x-kr-ref": "KR-018",
+      "allOf": [
+        {
+          "$comment": "scaled_int bir BÖLEN olmadan anlamsızdır — 'ölçekli tamsayı' demek ama neye böleceğini söylememek, tüketiciyi tahmine zorlar (S5'in tam olarak doğduğu boşluk).",
+          "if": {
+            "properties": {
+              "reflectance_scale": {
+                "const": "scaled_int"
+              }
+            },
+            "required": [
+              "reflectance_scale"
+            ]
+          },
+          "then": {
+            "required": [
+              "scale_factor"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "x-normalization": {
+    "scale.missing": {
+      "policy": "DECLARED_FALLBACK",
+      "description": "Ölçek bildirilmemişse tüketici KENDİ yapılandırılmış varsayılanına düşer (worker: `settings.reflectance_scale`) ve bunu GÖRÜNÜR biçimde loglar. Burada FAIL-CLOSED yapılmadı — calibration_type'ın aksine: `scale` bugün hiçbir üretici tarafından yazılmıyor (ölçüldü), sert kapı tüm filoyu anında durdururdu. Sapma GEÇİCİDİR (I-5): üretici (E14 `calibration_result_writer`) alanı yazmaya başladığında bu beyan `FAIL_CLOSED`'a çevrilir.",
+      "existing_detector": "worker `pipeline.py:2364` — bir sahnenin >%50 pikseli ≥0.99'a kırpılıyorsa ölçek uyuşmazlığı WARNING'i yazılır (`event_type=radiometric_scale_mismatch`). Bu bir kapı DEĞİL, alarmdır; alan doldurulana kadar tek savunma odur."
     }
   },
   "unevaluatedProperties": false

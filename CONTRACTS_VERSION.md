@@ -4,7 +4,20 @@
 
 **Release Date:** 2026-08-01T04:39:56.257141Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `13c0ab5eb6b36085886688acfa7daa9ccca0524ef15e5991cd850182fbd5d59c`
+**Contracts Checksum (SHA-256):** `13c0ab5eb6b36085886688acfa7daa9ccca0524ef15e5991cd850182fbd5d59c`  
+**Checksum State:** PENDING_REPIN — tur `feat/s5-reflectance-scale` sürüyor
+
+> **PENDING_REPIN ne demek:** Bu tur boyunca `schemas/`+`enums/` ağacı değişti ama agrega
+> checksum **bilerek** yeniden pinlenmedi — ara re-pin, yayımlanmış `v7.3.0` etiketinin
+> checksum anlamını bozar. Tek re-pin noktası **bir sonraki C8 release törenidir**
+> (`docs/checklists/SDLC_GATES.md` §3G).
+>
+> **Tur içinde beklenen kırmızı (bu bir arıza DEĞİL):**
+> `tests/test_pin_version.py::test_real_repo_checksum_verifies` → `xfail(strict=True)`.
+> Koşul makine-okunur olarak yukarıdaki satırdan okunur; `pin_version.py` C8'de bu dosyayı
+> baştan üretince beyan **kendini siler** ve üç kapı aynı anda sertleşir.
+>
+> **Tur içeriği:** S5 — `worker/calibration_metadata.v1`'e reflektans ölçeği (`scale`) bloğu.
 
 ---
 
