@@ -41,6 +41,16 @@
 > Bu tur `S5 · C6b/S2 · S4 · S6 · S7` taşıyor ve **bir sonraki C8 töreninde** kapatılır.
 > Tur içi **beklenen** iki xfail: checksum + `PENDING_PROPAGATION`.
 >
+> **✅ Kapanış anı doğrulaması (2026-08-01):** dört depoda **0 açık PR** · dört çalışma ağacı
+> **temiz**, push edilmemiş commit **yok** · I-1 hizası `7.3.0 = 7.3.0 = v7.3.0` (edge yerel
+> `1.4.0`, upstream ref `7.3.0`) · I-2 `objecttype=tag`. Merge edilen PR'lar: contract
+> **#22 · #23 · #24** · platform **#349 · #350** · worker **#184 · #185 · #186** · edge **#49**.
+>
+> **`PENDING_PROPAGATION` bugün ne taşıyor:** yalnız `calibration_metadata.v1 ← calibration_method`
+> (S4). ⚠️ Bunu C8'de yaymadan önce worker'da OKUYAN bir tüketici olmalı — S5'te yayılım
+> okuma kodundan önce yapılmaya kalkışıldı ve şema `additionalProperties: false` olduğu için
+> gerçek belge reddedilecekti; W12 ikisini birlikte taşıyarak çözdü. Aynı hata tekrarlanmasın.
+>
 > **🔴 BU OTURUMDA KENDİ KAPILARIM BENİ 5 KEZ YAKALADI** (hepsi düzeltildi — kapılar çalışıyor):
 > 1. **C6b ↔ E13 çelişkisi:** alt-kümeyi intake ile *tam* hizaladım, `DLS2_RELATIVE`'i aynı gün
 >    reddettiğim yüzeye soktum → `test_calibration_type_axis.py` kırmızı.
