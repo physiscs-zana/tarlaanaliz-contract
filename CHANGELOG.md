@@ -103,6 +103,70 @@ uyuşmazsa bu iki indeks sessizce bozulur **ve NDVI'nin doğru görünmesi hatay
   yapılırsa alan ölü taşınır → bir sonraki C8'e bırakıldı, sessizce değil **beyanla**.
   Worker'ın okuma yarısı ayrı kalem: **W12**.
 
+### ÖD-1 · ÖD-2 · ÖD-3 · ÖD-8 — *"aynı kavramın iki tanımı, ikisini bağlayan kapı yok"* (hepsi MINOR)
+
+**Tip:** MINOR — dedektör ölçümü: **3 değişiklik / 0 breaking** (enum değeri eklendi ×1,
+opsiyonel alan eklendi ×2; `required` değişmedi). Öz-denetimin üç KRİTİK bulgusu da aynı
+kök nedene bakıyordu: *bir karar bir yere yazıldı, belgeyi doğrulayan yüzeye yazılmadı ve
+hiçbir kapı ikisini karşılaştırmıyordu.*
+
+**ÖD-1 — C6b/S2 kararı kâğıt üzerindeydi.** Kayıt defteri
+(`calibration_type.enum.v1 → x-context-subsets['edge/calibrated_dataset_manifest']`)
+`PANEL_ABSOLUTE` diyordu; **şemanın inline enum'u** hâlâ `[ABSOLUTE, RELATIVE]` idi. Yani
+karar "yapıldı" diye kayıtlıyken `PANEL_ABSOLUTE` taşıyan bir kalibre manifest o gün de
+**reddediliyordu.** Şema deftere hizalandı.
+
+**ÖD-2 — S5+W12 tel üstünde ÖLÜYDÜ.** `analysis_job.v1 → $defs/CalibrationMetadata`
+kanonik `calibration_metadata.v1`'den ayrışmıştı (4 alan ↔ 8 alan) ve
+`unevaluatedProperties: false` taşıyordu. Ölçüldü (jsonschema): `scale` bloğu taşıyan bir iş
+belgesi *"Unevaluated properties are not allowed ('scale' was unexpected)"* ile **reddediliyordu**
+— W12'de worker'a yazılan `resolve_reflectance_divisor` okuma kodu veriyi asla göremezdi.
+S4'ün `calibration_method` alanı da aynı delikten düşüyordu. İkisi de gömülü tanıma eklendi;
+`sensor_model`/`red_edge_center_nm` **bilerek** taşınmadı (iş belgesinde onları
+`drone_metadata` taşır — ADR-002) ve bu beyan **ölçülüyor**.
+
+**ÖD-3 — E13/C6b kapıları yalan yeşildi.** `test_calibration_type_axis.py` ve
+`test_calibrated_manifest_fields.py` kararı yalnız **kayıt defterinden** okuyordu; kararın
+değeri şemadan silinse kapılar yeşil kalırdı. Her iki dosya artık **iki yüzeyi birden** ölçüyor.
+
+**ÖD-8 — parite kapısı iki yönden dardı.** Ölçüldü: **16 vendored dosyanın 9'u** izleniyordu
+(ÖD-2 tam da izlenmeyen `analysis_job`'dan geçti) ve karşılaştırma yalnız üst düzey
+`properties`/`required` idi — `$defs` ve **enum değerleri** hiç ölçülmüyordu. Kapsam 16'ya
+çıkarıldı, iki karşılaştırma kipi (MIRROR / SUBSET) tanımlandı ve enum ekseni eklendi.
+
+### Added
+
+- **`schemas/edge/calibrated_dataset_manifest.v1`:** `calibration_result.calibration_type`
+  enum'una **`PANEL_ABSOLUTE`** (C6b/S2'nin fiilen uygulanması; additive → MINOR).
+- **`schemas/worker/analysis_job.v1 → $defs/CalibrationMetadata`:** opsiyonel **`scale`**
+  bloğu (`scaled_int` için `if/then` bölen zorunluluğuyla birlikte) + opsiyonel
+  **`calibration_method`**. Doğrulama anlamı kanonik `calibration_metadata.v1` ile birebir;
+  normatif gövde orada, burada **işaretçi** (D16 idiomu).
+
+### Gates
+
+- **YENİ:** `tests/test_context_subset_binding.py` (31 test) — defterdeki **her** bağlam
+  gerçek bir şema yüzeyine çözülmeli, inline enum ile defter **küme olarak eşit** olmalı ve
+  defterde kaydı olmayan bir kalibrasyon yüzeyi kalmamalı. Yüzey keşfi ad listesiyle değil
+  **ölçümle** yapılır (8 yüzey bulunuyor). **7/7 mutasyon** kırmızı.
+- **YENİ:** `tests/test_calibration_metadata_single_definition.py` (18 test) — iki tanımın
+  ayrışmasını yasaklar; beyan edilen eksikliğin **taşıyıcısı ölçülür** (gerekçe doğrulanabilir
+  olmalı, yazılı olması yetmez); ve asıl iddia **belge düzeyinde** sınanır: `scale` taşıyan iş
+  geçmeli, bölensiz `scaled_int` düşmeli. **9/9 mutasyon** kırmızı.
+- **GENİŞLETİLDİ:** `tests/test_vendored_parity.py` — 9 → **16 dosya**, MIRROR/SUBSET kipleri,
+  enum yüzeyi karşılaştırması, "kapalı vendored form kanonik alanı atlayamaz" kuralı (ÖD-2'nin
+  tam kuralı) ve `test_every_vendored_file_is_tracked` (kapsamı ölçülmeyen kapı = olmayan kapı).
+  **7/7 mutasyon** kırmızı.
+- **Yeni beyanlar (`PENDING_PROPAGATION`, enum ekseni ilk kez):** edge kalibre manifestte
+  `calibration_type` (+`PANEL_ABSOLUTE`) · `raw_frames[].band` (+`RGB`, **S7 yayılmamıştı**) ·
+  `qc_report.flags` (D7 sözlüğü — vendored tarafta alan hâlâ **kısıtsız string**) · worker
+  `analysis_job` `$defs/CalibrationMetadata` (ÖD-2'nin worker yarısı — W-kalemi).
+- **YENİ borç kaydı (`KNOWN_VENDORED_AHEAD`, 4 dosya / 5 pointer / 16 değer):** ÖD-8 ile
+  **ilk kez ölçülen** ters yön sapmaları — worker `expert_labeling_card` ve
+  `expert_review_queue` kanoniğin GAP-only kapsam kararıyla (`2d77024`) çıkardığı `EGE` ve
+  meyve ağaçlarını (APPLE/CHERRY/FIG/PEACH) hâlâ kabul ediyor; edge `worker_result` ve
+  `intake_manifest.sorties[]` crop sözlüğü **küçük harf** (AK-7/E16). Liste yalnız **küçülür**.
+
 ---
 
 ## [7.3.0] - 2026-08-01 — CONTRACT TUR 1 (C8 ile kapatıldı)
