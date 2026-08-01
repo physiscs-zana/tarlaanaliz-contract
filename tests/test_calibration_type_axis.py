@@ -1,8 +1,16 @@
 """E13 kararı kapısı — `calibration_type` ekseni temiz kalsın.
 
-E13 KARARI (2026-08-01): edge kalibre paket manifestine yazılacak değer **`ABSOLUTE`**.
-Soru planda *"RELATIVE mi DLS2_RELATIVE mi"* diye kurulmuştu; ölçüm **ikisinin de
-yanlış** olduğunu gösterdi.
+🔄 **E13-R (2026-08-01, ikinci oturum — koordinatör onaylı): KARAR TÜRETMEYE ÇEVRİLDİ.**
+Aşağıdaki gerekçe *mutlak sınıf* sensörler için geçerliliğini korur, ama kalibre pakete
+yazılacak değer **filo-geneli sabit değildir**: `drone_capability_matrix.yaml →
+capabilities[drone_type].calibration_class`'tan türetilir (göreli sınıf → `RELATIVE`).
+Türetme kuralının kapısı **ayrı dosyadadır**: `tests/test_calibration_type_derivation.py`.
+Bu dosya eksenin *temizliğini* korur (yanlış donanım adı sızmasın, karar değeri şemadan
+kaybolmasın); türetme mantığını değil.
+
+E13 KARARI (2026-08-01, ilk hâli): edge kalibre paket manifestine yazılacak değer
+**`ABSOLUTE`**. Soru planda *"RELATIVE mi DLS2_RELATIVE mi"* diye kurulmuştu; ölçüm
+**ikisinin de yanlış** olduğunu gösterdi.
 
 ÖLÇÜM (dosya:satır ile):
   ① **Panel ZORUNLU.** `docs/TARLAANALIZ_SSOT_v1_2_0.txt` KR-018: *"Reflectance Panel
@@ -148,7 +156,14 @@ class TestE13DecisionHolds:
 
 
 class TestPanelRequirementIsTheBasis:
-    """E13'ün (a) gerekçesi: panel zorunlu olduğu için sonuç MUTLAK reflektanstır."""
+    """E13'ün (a) gerekçesi: panel zorunlu olduğu için MUTLAK SINIF sensörde sonuç mutlaktır.
+
+    🔄 **E13-R düzeltmesi:** panel zorunluluğu tek başına *ayırt edici* değildir — SOP
+    gereği panel HER uçuşta kullanılır (KR-018/KR-092), yani göreli sınıf bir sensörde de
+    kullanılır. Ayırt edici olan **sensör sınıfıdır** (`calibration_class`). Aşağıdaki
+    testler kararın mutlak-sınıf ayağını korur; göreli sınıf kuralı
+    `tests/test_calibration_type_derivation.py`'de zorlanır.
+    """
 
     def test_panel_is_mandatory_in_normative_text(self) -> None:
         text = SSOT_TEXT.read_text(encoding="utf-8")

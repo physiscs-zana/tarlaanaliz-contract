@@ -103,6 +103,64 @@ uyuşmazsa bu iki indeks sessizce bozulur **ve NDVI'nin doğru görünmesi hatay
   yapılırsa alan ölü taşınır → bir sonraki C8'e bırakıldı, sessizce değil **beyanla**.
   Worker'ın okuma yarısı ayrı kalem: **W12**.
 
+### 🔄 E13-R — kalibrasyon tipi **drone başına türetilir** (E13'ün filo-geneli `ABSOLUTE` kararı GERİ ALINDI)
+
+**Tip:** şema değişikliği YOK (yalnız enum'a normatif `x-derivation` bloğu + kapı) → MINOR.
+
+**Karar (koordinatör onaylı, 2026-08-01 ikinci oturum):** kalibre pakete yazılacak
+`calibration_type` **sabit değildir**; `drone_capability_matrix.yaml →
+capabilities[drone_type].calibration_class`'tan türetilir:
+`relative → RELATIVE` · `absolute → ABSOLUTE | PANEL_ABSOLUTE`.
+
+**Neden geri alındı (ÖD-5 ölçümü — üç kanonik kaynak da E13'ün tersini söylüyordu):**
+
+| Kaynak | Hüküm |
+|---|---|
+| `drone_capability_matrix.yaml:18` | `DJI_MAVIC_3M → calibration_class: relative` · *"Pix4Dfields göreli kalibrasyon sağlar"* |
+| `docs/TARLAANALIZ_SSOT_v1_2_0.txt:79` ve `:1014` | *"Pix4Dfields, M3M için tam radyometrik kalibrasyon **değil**, göreli (relative) kalibrasyon sağlar"* |
+| platform `src/core/domain/value_objects/calibration_class.py:41` | `DJI_MAVIC_3M: RELATIVE` — 2.0× tolerans gevşemesi bu sınıfa bağlı |
+
+E13'ün gerekçesi (panel zorunlu · motor Pix4Dfields · enum `ABSOLUTE`'u *"Pix4D
+panel-tabanlı"* diye tanımlıyor) kendi içinde tutarlıydı ama **bu üç kaynağı hiç
+ölçmemişti**. Panel zorunluluğu ayırt edici değildir: SOP gereği panel **her** sınıfta
+kullanılır (KR-018/KR-092), ayırt edici olan **sensör sınıfıdır**.
+
+🔴 **Ölçülen sonuç:** sabit `ABSOLUTE` yazılsaydı worker'ın
+`FINETUNE_ALLOWED_CALIBRATIONS` kümesi (`src/core/domain/enums.py:73`) M3M verisini **ince
+ayara uygun** sayacaktı → K-3'ün *"fine-tuning: SADECE PANEL+DLS2"* kuralı sessizce
+delinir, platformun 2.0× tolerans gevşemesi devreye girmez, zaman serisi karşılaştırmaları
+SSOT `:1014`'ün açıkça reddettiği bir varsayıma oturur.
+
+💰 **Kabul edilen bedel (yazılı, `x-superseded-e13-2026-08-01.cost_accepted`):** demo/pilot
+filosu M3M olduğu için M3M verisi **ince ayara girmez**, yalnız SSL ön-eğitimine girer.
+Alternatifi göreli veriyi mutlak etiketle eğitime sokmaktı.
+
+✅ **E13'ün ayakta kalan yarısı:** `DLS2_RELATIVE` kalibre paket yüzeyinden **reddedilmeye
+devam ediyor** (satıcıya özgü donanım adı + irradyans ayrı eksen). Yeniden adlandırma **S3**.
+
+#### Added
+- **`enums/calibration_type.enum.v1.json` → `x-derivation`:** makine-okunur türetme tablosu
+  (`source` · `map` · `forbidden` · `consumer_obligation` · geri alma kaydı). Kural yalnız
+  prose'da yaşasaydı bir sonraki tur onu görmezdi — E13'ün ilk hâlinin düştüğü hata buydu.
+- **YENİ kapı** `tests/test_calibration_type_derivation.py` (14 test): türetme matrise
+  **bağlı** mı · her sınıf eşlenmiş mi · türetilen değer kalibre yüzeyde **yazılabilir** mi
+  (yoksa kural kâğıt üzerinde kalır — ÖD-1'in aynısı) · **göreli sınıf mutlak etiket
+  üretemez** (regresyon) · kararın üç dayanağı yerinde mi · geri alma kaydı bedeliyle
+  birlikte duruyor mu. **8/8 mutasyon** kırmızı.
+
+#### Changed
+- `tests/test_calibration_type_axis.py`: docstring'i E13-R'yi yansıtıyor; panel
+  gerekçesinin *ayırt edici olmadığı* açıkça yazıldı (o dosya artık eksenin temizliğini
+  korur, türetme mantığını değil).
+
+#### Consumer obligations (bu depodan zorlanamaz — kalibre manifest `drone_type` taşımaz)
+- **edge (E14):** değeri intake'teki drone modelinden + matristen **türetir**; matriste
+  olmayan drone için değer uydurmaz → kalibrasyon reddedilir (fail-closed).
+- **platform (P14 — ACİLLEŞTİ):** `worker_job_publisher.py:80-84` fail-open
+  `CALIBRATED → PANEL_ABSOLUTE` adımı **kaldırılmalı**. Ölçüldü: canlı. E13-R sonrası bu
+  adım göreli veriyi mutlak etiketle worker'a gönderen tek yol hâline geliyor.
+- **worker:** tipi olduğu gibi tüketir; `RELATIVE` ince ayara girmez (K-3).
+
 ### ÖD-1 · ÖD-2 · ÖD-3 · ÖD-8 — *"aynı kavramın iki tanımı, ikisini bağlayan kapı yok"* (hepsi MINOR)
 
 **Tip:** MINOR — dedektör ölçümü: **3 değişiklik / 0 breaking** (enum değeri eklendi ×1,

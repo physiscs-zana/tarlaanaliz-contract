@@ -75,6 +75,35 @@
       "NONE"
     ]
   },
+  "x-derivation": {
+    "decision": "E13-R (2026-08-01, koordinatör onaylı) — kalibre pakete yazılacak `calibration_type` FİLO-GENELİ SABİT DEĞİLDİR; **drone başına türetilir**.",
+    "source": "drone_capability_matrix.yaml → capabilities[drone_type].calibration_class (kanonik, makine-okunur)",
+    "map": {
+      "relative": {
+        "allowed": ["RELATIVE"],
+        "why": "Sensör sınıfı göreli. Ölçülen dayanak üç yerde birden: (1) `drone_capability_matrix.yaml` → `DJI_MAVIC_3M.calibration_class: relative` + notu *'Pix4Dfields göreli kalibrasyon sağlar'*; (2) `docs/TARLAANALIZ_SSOT_v1_2_0.txt:79` *'Pix4Dfields, M3M için tam radyometrik kalibrasyon DEĞİL, göreli (relative) kalibrasyon sağlar'* ve `:1014` aynı hüküm; (3) platform `src/core/domain/value_objects/calibration_class.py:41` → `DJI_MAVIC_3M: RELATIVE` (tolerans 2.0× gevşetmesi bu sınıfa bağlı). Panel kullanılmış olması bu sınıfı yükseltmez: panel SOP gereği zaten zorunludur (KR-018), yani panelin varlığı sınıflar arasında AYIRT EDİCİ bir sinyal değildir."
+      },
+      "absolute": {
+        "allowed": ["ABSOLUTE", "PANEL_ABSOLUTE"],
+        "why": "Sensör sınıfı mutlak (Sentera 6X · MicaSense RedEdge-P · Altum-PT · Sequoia+). Edge `ABSOLUTE` yazar; platform sınırında `PANEL_ABSOLUTE`'a normalize edilebilir (bkz. `x-normalization`)."
+      }
+    },
+    "forbidden": {
+      "relative": ["ABSOLUTE", "PANEL_ABSOLUTE", "DLS2_RELATIVE"],
+      "why": "🔴 Göreli sınıf bir dronun paketine mutlak etiket yazmak ÜÇ zincirî bozar: (1) worker `FINETUNE_ALLOWED_CALIBRATIONS` (`src/core/domain/enums.py:73`) `ABSOLUTE`'u ince ayara UYGUN sayar → K-3'ün *'fine-tuning: SADECE PANEL+DLS2'* kuralı sessizce delinir ve göreli veri model eğitimine girer; (2) platform'un göreli sınıfa ayırdığı **2.0× tolerans** gevşemesi devreye girmez; (3) zaman serisi karşılaştırmaları mutlak tutarlılık varsayar — SSOT `:1014` bunu açıkça reddediyor."
+    },
+    "consumer_obligation": {
+      "edge": "E14 `calibration_result_writer` / `calibrated_validator`: kalibre manifeste yazılacak değeri intake'teki drone modelinden ve matristen TÜRETİR; sabit yazmaz. Matriste olmayan bir drone için değer uydurulmaz — kalibrasyon reddedilir (fail-closed, KR-018).",
+      "platform": "`worker_job_publisher._map_calibration_type` edge'in gönderdiği gerçek tipi olduğu gibi geçirir (G-2). Eksik tip için `NONE` yazılır; **yükseltme YASAKTIR** (bkz. `x-normalization.x-superseded-2026-07-31` / P14).",
+      "worker": "Tipi olduğu gibi tüketir; `RELATIVE` ince ayara girmez (K-3), yalnız SSL ön-eğitimine girer."
+    },
+    "x-superseded-e13-2026-08-01": {
+      "what": "E13'ün ilk hâli: *'kalibre pakete yazılacak değer filo-geneli **ABSOLUTE**'* (2026-08-01, aynı gün).",
+      "why_reversed": "Gerekçesi (panel zorunlu · motor Pix4Dfields · enum ABSOLUTE'u 'Pix4D panel-tabanlı' diye tanımlıyor) kendi içinde tutarlıydı ama **bu üç kaynağı hiç ölçmemişti** ve üçü de tersini söylüyor (yukarıdaki `map.relative.why`). Ölçüm 2026-08-01 ikinci oturumda yapıldı (ÖD-5) ve karar koordinatör onayıyla türetmeye çevrildi.",
+      "what_survives": "E13'ün `DLS2_RELATIVE` reddi **geçerliliğini korur**: satıcıya özgü donanım adı + irradyans bir YÖNTEMDİR (`x-separate-axis`), tip değil. Yeniden adlandırma **S3** (MAJOR penceresi).",
+      "cost_accepted": "Demo/pilot filosu M3M (göreli) olduğu için M3M verisi ince ayara girmez; öğrenme döngüsü mutlak sınıf bir sensör alınana kadar SSL ön-eğitimiyle sınırlıdır. Bu bedel bilerek kabul edildi — alternatifi, göreli veriyi mutlak etiketle eğitime sokmaktı."
+    }
+  },
   "x-separate-axis": {
     "calibration_method": "AYRI eksen — bu enum DEĞİL. Reflektans yöntemleri: REFLECTANCE_PANEL/DLS_IRRADIANCE/EMPIRICAL_LINE (datasets/calibration_certificate, edge/calibration_result reflektans). Termal fabrika yöntemleri: FACTORY_RADIOMETRIC/FACTORY_RADIOMETRIC_ILS (platform/calibration_result, edge/calibration_result termal). Bunlar sensör-tipine özgüdür ve calibration_type ile birleştirilmez."
   },
