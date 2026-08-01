@@ -423,6 +423,38 @@ git tag -a v2.0.0 -m "Release v2.0.0 - Breaking changes"
 git push origin v2.0.0
 ```
 
+> #### 📌 Tarihsel kayıt — SD8 (2026-08-01): 14 geriye dönük tag + 1 istisna
+>
+> **Sorun:** I-2 değişmezi (*"her contract sürümü annotated tag alır"*) tarihsel olarak
+> **tutmuyordu.** Ölçüm: CHANGELOG'da **19 sürüm**, depoda yalnız **4 tag**
+> (`v6.1.0`, `v7.0.1`, `v7.1.0`, `v7.2.0`) → **15 sürüm etiketsiz**. Etiketsiz sürüm,
+> tüketicinin tag ile pinlenmesini engeller ve `git describe` çıktısını bulanıklaştırır
+> (`vA.B.C-N-g…`).
+>
+> **Karar: geriye dönük tag AT — ama yalnız ölçülebilenlere.** 14 sürüme annotated
+> retro-tag atıldı; her tag mesajında *retro olduğu*, *gerçek yayın tarihi* ve
+> *release commit'inin nasıl bulunduğu* yazılıdır. Tag'lerin oluşturma tarihi
+> 2026-08-01'dir, sürümlerin yayın tarihi değil — bu ayrım gizlenmez.
+>
+> **Yöntem (tahmin değil ölçüm):** release commit'i, `CONTRACTS_VERSION.md`'ye
+> `## Version: X.Y.Z` satırının eklendiği commit'tir (`git log -S`). Yöntem, halihazırda
+> etiketli **dört** sürümde **4/4 doğrulandı** — dördünde de mevcut tag ile ölçümün
+> bulduğu commit aynı çıktı. Doğrulanmamış bir yöntemle tag atmak, doğrulanamaz kanıt
+> üretirdi.
+>
+> **🔴 İSTİSNA — `2.0.2` etiketlenmedi ve etiketlenmeyecek.** CHANGELOG'da bir girdisi
+> var (`## [2.0.2] - 2026-03-15`) ama `CONTRACTS_VERSION.md`'ye **hiçbir zaman**
+> `## Version: 2.0.2` yazılmamış → release commit'i belirlenemiyor. Bu sürüm ya fiilen
+> yayımlanmadı ya da sürüm kilidi güncellenmeden yayımlandı. **Uydurulmuş bir commit'e
+> tag atmak, kilidi olmayan bir sürümü varmış gibi göstermek olurdu.** Kayıt buraya
+> düşülür; tag atılmaz.
+>
+> **Doğrulama (bu turda koşuldu):** 14 sürüm commit'inin tamamında `git describe --tags`
+> **temiz** `vX.Y.Z` döndü (0 bulanık); 18 tag'in tamamı annotated (`git cat-file -t` →
+> `tag`). Tag push'u hiçbir workflow tetiklemez — `contract_validation.yml` yalnız
+> `branches: [master]` push + `pull_request` dinler, `on: push: tags:` yok ve depoda
+> release oluşturan bir adım bulunmuyor (ölçüldü). Yani retro-tag **yan etkisizdir**.
+
 GitHub Release oluştur:
 
 ```markdown
