@@ -115,38 +115,16 @@ def _pair(canonical_rel: str, vendored_rel: str) -> tuple[dict, dict]:
 # Ters yön (vendored ileri) NORMAL DEĞİLDİR: o bir AK-4 sapmasıdır ve sert hata verir.
 #
 # Biçim: {şema dosya adı: {"properties": {...}, "required": {...}, "why": "..."}}
-PENDING_PROPAGATION: dict[str, dict] = {
-    "calibrated_dataset_manifest.v1.schema.json": {
-        "properties": {"raw_frames"},
-        "required": set(),
-        "why": "C3′ (KG-0.c seçilmiş ham kareler) — edge vendored kopyaya C8'de yayılır",
-    },
-    "expert_review_queue.v1.schema.json": {
-        "properties": {
-            "audit_sample",
-            "audit_stratum",
-            # KADEME 3 (D12–D15, 2026-07-31) — denetim satırının ÖLÇÜM BÜTÜNLÜĞÜ alanları.
-            # Hepsi denetim satırında zorunlu, olağan incelemede opsiyonel; worker vendored
-            # kopyasına C8'de yayılır. Worker üreticisi (audit_set_sampler) π_h ve bucket'ı
-            # ZATEN hesaplıyor — yayılım, hesaplananı tele koymaktır.
-            "tile_id",
-            "consensus_participation",
-            "audit_selection_rate",
-            "audit_rotation_key",
-            "audit_bucket",
-            "spot_check_suppressed",
-        },
-        "required": set(),
-        "why": (
-            "AL-C2 (i.i.d. denetim-modu alanları) — worker vendored kopyaya C8'de yayılır. "
-            "⚠️ AYRICA: AL-C1 `escalation_reason`'a additive `AUDIT_SAMPLE` ekledi. Bu kapı "
-            "enum DEĞERLERİNİ karşılaştırmaz, ama worker tarafında "
-            "tests/contract/test_expert_review_queue_schema.py::TestReasonEnumParity "
-            "worker `EscalationReason` enum'unu kanonikle birebir bağlar → worker vendor "
-            "edene kadar O TEST KIRMIZI kalır. Bu beklenen ve C8'de kapanır."
-        ),
-    },
-}
+# ✅ C8 (2026-08-01, v7.3.0): BEYAN BOŞALTILDI — yayılım YAPILDI.
+#   * edge   `calibrated_dataset_manifest.v1` ← `raw_frames` (C3′/KG-0.c)
+#   * worker `expert_review_queue.v1`        ← 8 denetim alanı (AL-C2/D12–D15)
+#                                             + `escalation_reason` enum'una `AUDIT_SAMPLE`
+#                                               (AL-C1, additive)
+#                                             + 5 dallı `allOf` ölçüm-bütünlüğü bloğu
+# Yayılım kopyalama DEĞİL, alan taşımadır: vendored idiom (`additionalProperties: false`)
+# korundu, kanonikten gelen alt yapılarda `unevaluatedProperties` → `additionalProperties`
+# çevrildi (I-4 — vendored kanoniğin dar alt kümesidir, bayt-özdeşlik beklenmez).
+PENDING_PROPAGATION: dict[str, dict] = {}
 
 
 def _pending(canonical: str, axis: str) -> set[str]:

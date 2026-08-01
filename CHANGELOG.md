@@ -7,13 +7,49 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
-## [Unreleased] — CONTRACT TUR 1 (devam ediyor)
+## [7.3.0] - 2026-08-01 — CONTRACT TUR 1 (C8 ile kapatıldı)
 
-> ⚠️ Bu bölüm **açık bir sürüm turudur.** Tur içeriği tamamlanınca **C8 release töreninde**
-> tek sürüm numarası altında toplanır: sürüm bump → `pin_version.py` → annotated tag → 3 repo pin.
-> **Tur boyunca `pin_version.py --verify` KIRMIZIDIR** (agrega checksum bilerek re-pin edilmez —
-> ara re-pin, yayımlanmış `7.2.0` etiketinin checksum anlamını bozardı).
-> Tur tanımı: `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §3.1 → "🔒 TUR TANIMI".
+**Breaking-change:** HAYIR (MINOR) — **iki bağımsız ölçümle** doğrulandı:
+`tools/breaking_change_detector.py --old v7.2.0 --new .` → *45 değişiklik, **0 breaking***;
+ve dedektörden bağımsız bir tarama (157 dosya; `$defs`/`items`/`oneOf` dahil **her derinlikte**
+enum-değeri silme · `required` ekleme · tip değişimi · dosya silme) → **dördü de 0**.
+İkinci ölçüm bilerek yapıldı: dedektörün iç içe yapılara körlüğü 2026-07-31'de ölçülmüştü,
+dolayısıyla tek başına "0 breaking" çıktısı sürüm kararına dayanak sayılmadı.
+
+> ✅ **Tur kapandı.** `PENDING_REPIN` beyanı `pin_version.py` tarafından silindi;
+> `PENDING_PROPAGATION` **boşaltıldı** (yayılım yapıldı — aşağıya bakın).
+> Tur tanımı: `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §3.1 → "🔒 TUR TANIMI";
+> tören: `docs/checklists/SDLC_GATES.md` §3G.
+
+### C8 töreninde yapılan yayılım (SD7 — `PENDING_PROPAGATION` boşaltıldı)
+
+Vendored kopyalar kanoniğin **dar runtime alt-kümesidir** (I-4), bu yüzden dosya
+kopyalanmadı — yalnız beyanda adı geçen alanlar taşındı, vendored idiom
+(`additionalProperties: false`) korundu:
+
+- **edge** `interface/contracts/schemas/edge/calibrated_dataset_manifest.v1.schema.json`
+  ← `raw_frames` (C3′ / KG-0.c seçilmiş ham kareler)
+- **worker** `interface/contracts/expert_review_queue.v1.schema.json`
+  ← 8 denetim alanı (`audit_sample`, `audit_stratum`, `audit_selection_rate`,
+  `audit_rotation_key`, `audit_bucket`, `tile_id`, `consensus_participation`,
+  `spot_check_suppressed`) + `escalation_reason` enum'una additive `AUDIT_SAMPLE`
+  + 5 dallı `allOf` ölçüm-bütünlüğü bloğu (D12–D15: anti-anchoring · i.i.d. bağımsızlık ·
+  denetim satırı bütünlüğü)
+
+### Bu turda kapanan kararlar (eylem planı §14.7)
+
+- **D16-b2** — ikili normatif gövde **49 → 0**; kanonik metin `docs/TARLAANALIZ_SSOT_v1_2_0.txt`,
+  `ssot/kr_registry.md` navigasyon + kapsam dizinine indirildi (gövdesi orada kalan tek istisna:
+  KR-088/089/090/091). Üç gövde fiilen yanlıştı (KR-083 kaldırılmış rol adı · KR-027 donmuş başlık ·
+  KR-000 "DJI" ifadesi) — ikinci gövdenin sessizce çürüdüğünün kanıtı.
+- **D4-b** — vendored parite kapısı **karşı tarafta** koşar (PAT yok; bu depo PUBLIC, kardeşler PRIVATE).
+- **SD8** — 14 geriye dönük annotated tag + `2.0.2` için kayıt notu (release commit'i belirlenemiyor).
+  I-2 artık tarihsel olarak da tutuyor.
+- **0.h / K3** — veri yönetişimi: üç veri kategorisi KR-090 saklama tablosuna süre + silme yolu +
+  gerekçe ile yazıldı; kural `tests/test_data_governance.py` ile zorlanıyor.
+- **E13 → C6** — kalibre paket manifestine yazılacak değer **`ABSOLUTE`** (panel zorunlu + motor
+  Pix4Dfields). `DLS2_RELATIVE` reddedildi: DLS2 bir MicaSense donanımıdır ve irradyans **yöntemi**
+  ayrı eksendir. ⇒ C6'nın koşullu MINOR bump'ı **iptal**, contract değişikliği gerekmedi.
 
 ### C0 — `calibrated_dataset_manifest.v1` iki-form ayrımı makine-okunur hâle getirildi
 

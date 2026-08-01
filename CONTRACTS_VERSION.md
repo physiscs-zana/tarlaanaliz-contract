@@ -1,24 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.2.0
+## Version: 7.3.0
 
-**Release Date:** 2026-07-14T09:25:31.730700Z  
+**Release Date:** 2026-08-01T04:39:56.257141Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `5d3c204d0cad6946939c90c9778c9d1d9df3e69b78207ee8ce638ac3bd494c02`  
-**Checksum State:** PENDING_REPIN — tur `feat/contract-tur1` sürüyor
-
-> **PENDING_REPIN ne demek (2026-07-31, KADEME 0/D1+D5):** Bu tur boyunca `schemas/`+`enums/`
-> ağacı değişti ama agrega checksum **bilerek** yeniden pinlenmedi — ara re-pin, yayımlanmış
-> `v7.2.0` etiketinin checksum anlamını bozar. Tek re-pin noktası **C8 release törenidir**.
->
-> Bu satır **makine-okunur bir beyandır** ve iki kapı tarafından okunur:
-> * `.github/workflows/contract_validation.yml` → `verify-checksums` işi: uyuşmazlık
->   **beyan edilmişse** uyarı verip geçer, **beyan edilmemişse BUILD'İ DÜŞÜRÜR**.
-> * `tests/test_pin_version.py::test_real_repo_checksum_verifies` → `xfail(strict=True)`.
->
-> **Kendini temizler:** `tools/pin_version.py` bu dosyayı baştan üretir, yani C8'de re-pin
-> yapıldığı anda bu satır kaybolur ve iki kapı da otomatik olarak sertleşir. C8'den önce
-> elle silmek = kapıyı yalan söyletmek (`docs/checklists/SDLC_GATES.md` §3A).
+**Contracts Checksum (SHA-256):** `13c0ab5eb6b36085886688acfa7daa9ccca0524ef15e5991cd850182fbd5d59c`
 
 ---
 
@@ -65,9 +51,9 @@ Individual file hashes for verification:
 ### Enums
 
 - `enums/analysis_type.enum.v1.json`  
-  `42634dde0ffa878d2e880eca45f2892a37845778196bbcee05d1d684f2ad4b45`
+  `7f470beebd06c02049c2d8fe182ab9d6f62e58f11be34442368f3054d965c3f1`
 - `enums/calibration_type.enum.v1.json`  
-  `35c85add630b2631ed2f4749a045f258955db11f255ef081822c9654b27c70b8`
+  `f09cc785f49dcae44ea131e9abfcf0a3dbf83ab3b9f0febe31a1ecd186a1bfe6`
 - `enums/crop_type.enum.v1.json`  
   `34babfb9245ca3999bfef7f06846c8835592acbf0cd2804c6167df8bd9451194`
 - `enums/dataset_status.enum.v1.json`  
@@ -95,7 +81,7 @@ Individual file hashes for verification:
 - `enums/quarantine_decision.enum.v1.json`  
   `641b5a9e766f7e91837695954d1d0b45aeca6bfbe67356f12a0a65f762fa91c0`
 - `enums/report_phase.enum.v1.json`  
-  `a0f74cd5200ebf9cb7860473b331997e0faca3a404ff932d6cf868ecbdd2b8e8`
+  `1769ebc86fdcfbd4343951e21a01d6df872981a907eef7af8bcfdd90d0175cb2`
 - `enums/role.enum.v1.json`  
   `c978f07a112deabb74c62ba229599d4946a9fa3e2a9bb14162accc802d490c22`
 - `enums/scan_stage.enum.v1.json`  
@@ -146,9 +132,9 @@ Individual file hashes for verification:
 ### Edge Schemas
 
 - `schemas/edge/attestation_record.v1.schema.json`  
-  `fab5bddcbcedfdac410f9bc9d9ae9714174630db6e24056c3cc95185f0dbd2e3`
+  `dfcc65d709746107eceb67f943dcb60a13a900008e959f0f38df197d6cc1b95b`
 - `schemas/edge/calibrated_dataset_manifest.v1.schema.json`  
-  `5490dabf9c14bae4b87640636d111f91ff00f58e20e4f1458cc6de8fe484e81f`
+  `03ae7288dc97c830f2eead1e862a236e575b2bd4ef1163afa99ec826c24421ab`
 - `schemas/edge/calibration_result.v1.schema.json`  
   `cf67bfa0642dc24e0745ed4fd32cf12c1190206e36684a06c7127d3c816c58be`
 - `schemas/edge/dataset_manifest.v1.schema.json`  
@@ -156,9 +142,9 @@ Individual file hashes for verification:
 - `schemas/edge/edge_metadata.v1.schema.json`  
   `d081229b4092d67d1a38e61b994a8d4a83010d695c6b0769c3e31ac80312f851`
 - `schemas/edge/evidence_bundle_ref.v1.schema.json`  
-  `7c2f17fca155d8c37047c165c021b8daa5f725aa8719663d15a6ede62f20f3fd`
+  `d83cf9d60e935955dc9dd5d2f2cd97b42c4b84954c2602a0be50f270e972f751`
 - `schemas/edge/intake_manifest.v1.schema.json`  
-  `ed700c63fe9f6bdad2196a8d481fb7fb1e83b6fae3130ee9e1b59092eab4b865`
+  `e484bf6e4570c1d818b09e0d60588dfa003de778c3e8c076ef1d29101a055838`
 - `schemas/edge/qc_report.v1.schema.json`  
   `4193e9c6d73ddd98bf62ba5b2ea034263cb9a86b69f6c549e7d77ed5bc93d219`
 - `schemas/edge/quarantine_event.v1.schema.json`  
@@ -168,11 +154,11 @@ Individual file hashes for verification:
 - `schemas/edge/transfer_batch.v1.schema.json`  
   `3dcc72d3097dad67d3216641b1d2bdecb44e6bfacb763c5fe3893cc21beb8472`
 - `schemas/edge/upload_receipt.v1.schema.json`  
-  `dafd4c505bbc6703b9a400d278635f09f5eb86f2ffacce9606763145108d0eab`
+  `93823aeb5abd686f9c751f57767f7524a7e295bcdf0f5de3aa49e54a69146fb1`
 - `schemas/edge/verification_report.v1.schema.json`  
   `aa84f86d4ca03b515af8fc551ab66197f46e6dd532f6b48601f591e2be197d42`
 - `schemas/edge/worker_result.v1.schema.json`  
-  `8e0b4a7f3c030e19d53dc5064666e16f5f458b501ebd9611e8912b628b95e5a2`
+  `08cf7cd62cbc037cf93c43a078ce1a97e12be44a946afd87b12aa8eb6a5cce67`
 
 ### Worker Schemas
 
@@ -181,26 +167,26 @@ Individual file hashes for verification:
 - `schemas/worker/analysis_result.v1.schema.json`  
   `93e29920defea258e902b9351a1ccf86c06fda526e196a6654a6e36d9d981bd5`
 - `schemas/worker/calibrated_dataset.v1.schema.json`  
-  `31d201316f59f0c438ebd2018dff5a662441beb072ff148f79f8ce45e7d8de88`
+  `a2e628b8ef996d8bdb828ef623a378aba9c43337b083351e0b137a312092618a`
 - `schemas/worker/calibration_metadata.v1.schema.json`  
-  `fce8bfc0957adc3fc7de86a2e88fb40790b9f05c50a3ed5e2103c8783031aac2`
+  `17eadba25d2478d84c447b01ace7de92aa868004fabf463ce67b092650ae6d32`
 - `schemas/worker/expert_feedback.v1.schema.json`  
-  `c0c2a1103fbec11e10d649d0cc8233f82f32f1caef3fcf51df54d149ba16123f`
+  `94e04216bd9af373ce6c0f237c26d38c6822950e097510c0f6193143be11d41d`
 - `schemas/worker/expert_labeling_card.v1.schema.json`  
   `8c320cb4c34fdfcf14c9c33be39d91445735251e347bc16cf9671ce8dba43c51`
 - `schemas/worker/expert_review_queue.v1.schema.json`  
-  `047d7a6612ad81db82da86b89e9e7fdf703724909803aa88d07eb080ecf2af8c`
+  `4e0c3fa64109b062576fd1071dda57d7aac465ea51976f64acd1f57972815c1b`
 - `schemas/worker/thermal_analysis_result.v1.schema.json`  
   `c7b013adce00fa5618214865d869f1f85d68dad83786b21d27f9ea019c8de212`
 
 ### Events
 
 - `schemas/events/analysis_completed.v1.schema.json`  
-  `6f093470ce2644ffff3bb1e05c9148a2650723e7f4420dcddd81f228006a4db6`
+  `a17eaa5f0b3fbb63deb4381b8f0c7edbb77c6e835c21b3a8bdeeb11c56282825`
 - `schemas/events/analysis_preliminary_ready.v1.schema.json`  
-  `7d8a8a4b5764c54417c4a32dbf591749a962bb4e3902f22b9997245a6d50c4d0`
+  `5b7f108edbfea216b8c08d0c41ab63d41a9fbbdc3399d53a9de76fb9eac5200b`
 - `schemas/events/analysis_review_requested.v1.schema.json`  
-  `c1e4d6f2a7866bed9d2fde61b43108892570c4ecb9b5b74033dae1570e46a35b`
+  `8e08b503e0b25c866f2e8cbede96b39f3beb77490d82c6d78410db443706c687`
 - `schemas/events/dataset_analyzed.v1.schema.json`  
   `13be86abb9d3be607d1779a02a42fa34742a37254f23bbf687475560c9410ed2`
 - `schemas/events/dataset_calibrated.v1.schema.json`  
@@ -222,16 +208,16 @@ Individual file hashes for verification:
 - `schemas/events/expert_review_decided.v1.schema.json`  
   `5496b4abba4d63a9e047551fffba34ff340ec08e07de99668849e2096a39f62b`
 - `schemas/events/field_created.v1.schema.json`  
-  `9fb0649f1d2e214553f4afc4148cf3ebf6358e9f9dcb0effd83188f0370e1035`
+  `9773227dca0ef028f3d77abd9c248dee6438cd7e781d6db626f81a449d9b04c1`
 - `schemas/events/field_health_changed.v1.schema.json`  
-  `46e9405d4137f863ce2e1260ccc73a18bf5df77dd29d6222963a7765195ceeaa`
+  `48763d4b3b27eecf711d28b78f465032d3042a474e3d04681ddcd72644460c3d`
 - `schemas/events/mission_assigned.v1.schema.json`  
   `6a3d4a6cb0b286cfa4f35fa8cab41a8d5fe04c410c90f8bb83a59cdeee77f2c3`
 
 ### Platform
 
 - `schemas/platform/calibrated_dataset_manifest.v1.schema.json`  
-  `40e1656e914b9c420007fd109c128828c0710d3a7a730dfd58f1edec5a77d3fc`
+  `1e2dd31c5f2716bf2c1a264913ac6a18d5512c93c2648f18f52c8fc92c8a7725`
 - `schemas/platform/calibration_result.v1.schema.json`  
   `c51b377e0aa6922d0b86f4cf9076093d66fc4c13a747f44da3f7059c40a73038`
 - `schemas/platform/evidence_bundle_ref.v1.schema.json`  
@@ -271,11 +257,17 @@ Individual file hashes for verification:
 - `api/platform_internal.v1.yaml`  
   `f253f4b68be11f4a1f65416827a6482106017a63c940c39e46eb90e69232cbb7`
 - `api/platform_public.v1.yaml`  
-  `840e42906cdff3f096bc1f03b004ebd35e538b97c93371f7268fe5741980dca1`
+  `3ce301229ce2d79b03315f8bd41676bed46d0d0e53cde68e765bacb86e7e2e68`
 
 ---
 
 ## Changelog
+
+### v7.3.0 (2026-08-01)
+
+**Breaking:** NO
+
+Version pinned automatically.
 
 ### v7.2.0 (2026-07-14)
 
@@ -377,7 +369,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("5d3c204d0cad6946939c90c9778c9d1d9df3e69b78207ee8ce638ac3bd494c02"), "Contracts checksum mismatch!"
+assert verify_contracts("13c0ab5eb6b36085886688acfa7daa9ccca0524ef15e5991cd850182fbd5d59c"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -390,7 +382,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("5d3c204d0cad6946939c90c9778c9d1d9df3e69b78207ee8ce638ac3bd494c02"), "Contracts checksum mismatch!");
+assert(verifyContracts("13c0ab5eb6b36085886688acfa7daa9ccca0524ef15e5991cd850182fbd5d59c"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -441,4 +433,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-07-14T09:25:31.730700Z
+**Last Updated:** 2026-08-01T04:39:56.257141Z
