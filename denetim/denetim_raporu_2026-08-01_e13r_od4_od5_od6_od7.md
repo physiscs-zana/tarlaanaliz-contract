@@ -138,6 +138,68 @@ yazılmadı → release commit'i ölçülemez; `docs/versioning_policy.md` §Rel
 
 ---
 
+## 4b. ÖD-9 · ÖD-10 — iki varsayım ölçüldü, **ikisi de daraldı**
+
+### ÖD-9: kodlamasız dosya okuma dört depoda
+
+Yöntem: grep değil **AST** (1.631 `.py`). `open()` / `Path.open()` / `read_text` /
+`write_text` çağrılarında ikili mod yoksa `encoding=` var mı?
+
+| Depo | `src|tools|scripts` altında gerçek üye |
+|---|---|
+| contract | **0** |
+| edge | **0** |
+| platform | **0** |
+| worker | **12** (`contract_validator.py:233` · `cold_storage_manager.py:263,293` · `ssl_pretrain.py:2131` + 8 `scripts/`) |
+
+⇒ Sınıf **worker'a özgü**; W11 kapsamı doğruydu, listesi eksikti/fazlaydı:
+
+* **yanlış pozitif:** `map_renderer.py:262,288` — rasterio `MemoryFile.open()`, `encoding` almaz.
+* **kod değil:** `safe_path.py:19` bir **docstring örneği** (yine de yanlış kalıbı öğretiyor).
+
+> 🔴 **Ölçüm aracının kendi hatası da yakalandı:** builtin `open(dosya, mod)` ile
+> `Path.open(mod)` imzaları farklıdır (mod 2. ↔ 1. konum). İlk sürüm `p.open("rb")`'yi
+> — hem de bir **checksum aracında** (`compute_contracts_sha256.py:33`) — "kodlamasız
+> metin okuma" diye raporladı. **Önce aracı doğrula, sonra sayıyı.**
+
+### ÖD-10: vendored prose şişmesi
+
+| Ölçüm | Sonuç |
+|---|---|
+| Kanoniğinden **fazla** prose taşıyan vendored dosya | **0 / 16** |
+| Vendored toplam prose | 37.336 karakter |
+| Kanonik toplam prose | 71.490 karakter (vendored ≈ **%52**) |
+| Vendored non-ASCII | 379 karakter (245'i `analysis_type.enum`'un Türkçe **görünen adları** = veri) |
+
+⇒ *"13 dosya hâlâ şişkin"* varsayımı **çürüdü**; kırpma fiilen yapılıyor. Kalan risk
+yükte değil **okuyucuda** (kodlamasız `open()` → **W11**). Yine de olayın tam şekli
+yasaklandı: `test_vendored_prose_does_not_exceed_canonical` (16 çift).
+
+---
+
+## 4c. ÖD-11 · ÖD-12 · ÖD-13 · ÖD-15 · ÖD-16 — kapılar gördüğünü iddia ettiği yüzeyi ölçsün
+
+| # | Ölçüm | Yapılan |
+|---|---|---|
+| **ÖD-11** | işaretçi bölümleri ≤1366 · gerçek gövdeler ≥1483 karakter (temiz boşluk) | damgalı bölüm için **1500** karakter tavanı + "işaretçi bir hedef göstermeli" |
+| **ÖD-12** | 51 KR gövdesi, toplam **117.738** karakter; 4'ü gövdesiz (bölüm başlığı) | her gövdeye asgari uzunluk + toplam hacim tabanı; 4 başlık **beyanlı** |
+| **ÖD-13** | `validate.py` 96 dosya tarıyordu, `dist/` kapsam dışıydı | kapsam **164 dosya**; yayın kopyası kaynağının PII kapsamını **devralır**; `--check` artık **yetim** dosya arar |
+| **ÖD-15** | SD8 iki yerde iki farklı cevap veriyordu | karar §3G'de tek gövde; üstteki blok tarihsel kayda çevrildi |
+| **ÖD-16** | `--old v7.2.0` gerçekten düşüyordu | dedektör **git ref** kabul ediyor; CHANGELOG'daki her `--old` argümanı test ile çözülebilirlik açısından zorlanıyor |
+
+### 🔴 Bu turun iki metodoloji dersi (ikisi de kendi kapımda yakalandı)
+
+1. **Uygulanmayan mutasyon yeşil verir ve kapıyı kör sandırır.** Matris/`validate.py`
+   CRLF satır sonu kullanıyor, mutasyon desenleri `\n` ile yazılmıştı → **hiç eşleşmedi**.
+   Artık mutasyon script'leri *"mutasyon gerçekten uygulandı mı"* kontrolüyle koşuyor.
+2. **Kapının kendi yardımcısı kör olabilir.** `_ssot_bodies()` yalnız *"daha uzunsa yaz"*
+   diyordu; **boş gövdeler sözlüğe hiç girmiyordu**, yani gövdesi silinmiş bir KR
+   "boş gövde" kapısının görüş alanı dışındaydı. KR-000 mutasyonu bunu ortaya çıkardı.
+
+**Mutasyon toplamı (bu rapor):** E13-R **8/8** · ÖD-11/12 **4/4** · ÖD-13/16 **5/5**.
+
+---
+
 ## 5. Kapı durumu
 
 | Ölçüm | Sonuç |

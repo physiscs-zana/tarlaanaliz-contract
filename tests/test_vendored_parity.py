@@ -203,6 +203,25 @@ def _enums_by_pointer(doc: Any) -> dict[str, set]:
     return found
 
 
+#: Prose sayılan anahtarlar (ÖD-10). Doğrulamaya girmezler; taşınmaları yükü şişirir.
+PROSE_KEYS = ("description", "$comment", "why", "note", "notes")
+
+
+def _prose_chars(doc: Any) -> int:
+    """Belgedeki prose (açıklama) karakter toplamı."""
+    total = 0
+    if isinstance(doc, dict):
+        for key, value in doc.items():
+            if key in PROSE_KEYS and isinstance(value, str):
+                total += len(value)
+            else:
+                total += _prose_chars(value)
+    elif isinstance(doc, list):
+        for value in doc:
+            total += _prose_chars(value)
+    return total
+
+
 def _field_name(pointer: str) -> str:
     """`/$defs/EdgeForm/properties/calibration_type` → `calibration_type`.
 
@@ -653,6 +672,35 @@ class TestSubsetPairsMayOmitButNotContradict:
         assert not extra, (
             f"{Path(canonical).name}: vendored kopyada kanoniğin HİÇBİR formunda olmayan "
             f"alan(lar): {extra} — AK-4 sapması."
+        )
+
+
+class TestVendoredCopiesStayLean:
+    """ÖD-10 — vendored kopya kanoniğin DAR alt kümesidir; prose de kırpılır.
+
+    NEDEN (C8, 2026-08-01): kanonikten vendored'a **12 KB prose** taşındı ve worker'da
+    **45 test** Windows cp1254 altında kırıldı. Tetikleyici düzeltildi ama *"16 dosyanın
+    13'ü hâlâ şişkin olabilir"* varsayımı ölçülmemişti.
+
+    **ÖLÇÜLDÜ (2026-08-01) — varsayım büyük ölçüde ÇÜRÜDÜ:** hiçbir vendored dosya
+    kanoniğinden fazla prose taşımıyor (0/16); vendored toplam prose 37.336 karakter,
+    kanonik 71.490 (≈%52). Kalan risk yükte değil **okuyucuda**: kodlamasız `open()`
+    (worker `contract_validator.py:233` — **W11**, hâlâ açık).
+
+    Bu kapı olayın tam şeklini yasaklar: kanonik prose'u toptan vendored'a taşımak.
+    """
+
+    @pytest.mark.parametrize(
+        ("canonical", "vendored"), MIRROR_PAIRS + SUBSET_PAIRS, ids=IDS + SUBSET_IDS
+    )
+    def test_vendored_prose_does_not_exceed_canonical(self, canonical: str, vendored: str) -> None:
+        cj, vj = _pair(canonical, vendored)
+        canonical_prose, vendored_prose = _prose_chars(cj), _prose_chars(vj)
+        assert vendored_prose <= canonical_prose, (
+            f"{Path(canonical).name}: vendored kopya kanonikten FAZLA prose taşıyor "
+            f"({vendored_prose} > {canonical_prose}). I-4 gereği vendored dar alt kümedir; "
+            "prose işaretçiye indirilir. C8'de bu kural çiğnendiğinde 45 test cp1254'te "
+            "kırılmıştı."
         )
 
 
