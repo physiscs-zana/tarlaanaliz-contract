@@ -595,6 +595,44 @@ kar_payı     = max(0, net_taban) × kar_payı_oranı (%)
 - Uzman karar formatı (özet): `confirmed | corrected | rejected | needs_more_expert`
 - Uzman geri bildirimi `training_grade` ile etiketlenir: `enum A|B|C|D|REJECT`; ayrıca `grade_reason` alanı tutulur (max 200 karakter)
 
+### Eskalasyon Tetikleyicileri (Katman 2 — güven formülünden BAĞIMSIZ sinyaller)
+
+Aşağıdaki koşullardan **biri** yeterlidir; sonuç uzman kuyruğuna yönlendirilir. Bu sinyaller `final_confidence` formülünün İÇİNE girmez, ayrı değerlendirilir (iki katmanlı güven mimarisi).
+
+1. `final_confidence < dynamic_threshold[crop][analysis_type]` — dinamik eşik (KARAR-13)
+2. `agreement_score < 0.6` — DualHead (çift başlı model) çelişkisi
+3. OOD (dağılım-dışı) sinyali: `cosine_sim < 0.3` (L2/FAISS) **veya** `atlas_confidence < 0.3` (L1 hash atlası zayıf/bayat kayıt). İki sinyal **bağımsız** kontrol edilir — tek alanda birleştirilirse L1 yolu sessizce eskalasyon üretmeyi bırakır.
+4. `epistemic_uncertainty > 0.4` — MC-Dropout yüksek model belirsizliği
+5. `expert_verdict == "needs_more_expert"` — döngü yeniden tetiklenmesi (aktif öğrenme bütünlüğü)
+6. `quarantine_caution` — FD ailesi (`flavescence_doree` / `esca_or_fd`) `TR_KARANTINA` tahmini **güvenden bağımsız** DAİMA uzmana gider; asla otomatik `FULL_REPORT` olamaz (PCR yer-doğrulaması ister)
+
+### Dinamik Eşik (KARAR-13)
+
+- Kaynak: `config/dynamic_thresholds.yaml` (crop × analysis_type); `threshold_adjuster.py` günceller, elle değiştirilmez
+- `global.floor = 0.80` — mutlak alt sınır; ayarlayıcı altına inemez, düşük yapılandırma değerleri çalışma anında bu tabana clamp edilir
+- `global.initial_threshold = 0.80` — geri bildirim birikmeden önceki başlangıç eşiği
+- `COTTON.disease = 0.82` — ilk 6 hafta yükseltilmiş eşik (YAML anahtarı küçük harf `cotton`; tel üzerindeki kanonik ürün adı `COTTON` — `crop_type.enum.v1`)
+- Guardrails: `max_adjustment_delta = 0.05` (tek turda maksimum değişim) · `min_feedback_count = 50` · `adjustment_interval_days = 7`
+- Pilot kipi (ADR-006, Haziran–Eylül 2026): `TARLAANALIZ_PILOT_MODE=true` ile `pilot_mode_overrides` devreye girer (floor 0.50); pilot bitince env değişkeni kaldırılır ve olgun eşikler geri döner
+
+> ⚠️ Bu sayılar **ölçülerek yazılmıştır, kopyalanmamıştır**; makine-okunur kanonik kaynak `config/dynamic_thresholds.yaml`'dır. Değer değiştirirken önce YAML, sonra bu liste güncellenir — ters sırada yapılırsa metin bayatlar (D16/AR1).
+
+### Fail-Closed Sonuç Kademeleri (Worker `ResultMode` ↔ Platform `EscalationLevel`)
+
+| final_confidence | Worker ResultMode | Platform EscalationLevel | Eskalasyon |
+|---|---|---|---|
+| ≥ dynamic_threshold | `FULL_REPORT` | `NONE` | Yok |
+| 0.45 – dynamic_threshold | `PARTIAL_REPORT` (NDVI + anomali gönderilir, **tanı gönderilmez**) | `STANDARD` | Evet |
+| 0.25 – 0.45 | `INDICES_ONLY` (yalnız NDVI/NDRE haritası, tanı saklanır) | `PRIORITY` | Evet |
+| < 0.25 | `NO_RESULT` (hiçbir şey gönderilmez) | `CRITICAL` | ACİL |
+
+Her durumda tam sonuç WORM (silinemez) denetim kaydına yazılır; NDVI/NDRE haritaları `PARTIAL_REPORT` ve `INDICES_ONLY` kademelerinde her zaman paylaşılır.
+
+### Sorumluluk Ayrımı (Worker ↔ Platform)
+
+- **Worker:** tetikleyicileri değerlendirir, `ResultMode` belirler, eskalasyon paketi üretir — pakette `field_id` **YOKTUR** (**[KR-071]**)
+- **Platform:** paketi alır, `EscalationLevel` belirler, uzman atar; worker'ın `escalation_reasons` değerlerini şiddet yükseltici (severity booster) olarak kullanır — OOD/epistemic sinyalleri seviyeyi yükseltir
+
 ### Konsensüs Yayın Kapısı (zorunlu — düşük-güvenle sınırlı değil)
 - AI analizi **her başarılı sonuç için** uzman onayından geçmeden çiftçiye yayınlanmaz; görev `PENDING_REVIEW`'da tutulur (yalnız düşük-güven değil, tüm sonuçlar)
 - Yayın kararı **tek noktada** verilir; terminal durumlar (`DONE` + dataset `DERIVED_PUBLISHED`) **yalnız** bu kapıdan set edilebilir — HTTP PATCH ve repo update doğrudan set'i reddeder (409)
@@ -688,8 +726,13 @@ Arpa (10-15), Patates (7-10), Mercimek (10-15), Elma (10-15),
 
 [ZORUNLU] Her uçuşun başında ve sonunda CRP (kalibrasyon paneli) radyometrik kalibrasyonu yapılır (KR-018/KR-082 hard-gate); DLS (ışık sensörü) tek başına yeterli değildir. Uçuş parametresi türetimi bu kalibrasyon zorunluluğunu ortadan kaldırmaz.
 
+[ZORUNLU] Sezon takvimi erişimi, KMZ uçuş planıyla **aynı sahiplik/atama kontrolüne** tabidir (IDOR — yetkisiz doğrudan nesne erişimi önleme): yalnız görevin sahibi çiftçi, göreve **güncel atanmış** pilot veya admin okuyabilir. Yetkisiz erişim `403`, kapsam dışı ürün `404`, biçimsiz `mission_id` `422` döner.
+
 ### Kanıt / Artefact
 - `data/seasonal_flight_calendar.json` — 5 aktif ürün × haftalık satırlar (week, date_start, date_end, bbch, stage_label_tr, priority_target_tr, altitude_m, speed_ms, critical)
+- Contract şeması: `schemas/core/seasonal_flight_calendar.v1.schema.json` (SeasonalFlightCalendar)
+- Uygulama yüzeyi (platform): `seasonal_flight_calendar.py` (değer nesnesi), `seasonal_flight_planner.py` (servis), `seasonal_flight_calendar_loader.py` (yükleyici)
+- Taşınan tipler: `WeeklyFlightDTO`, `SeasonWeekDTO`, `SeasonFlightScheduleDTO`
 - `docs/domain/tarama_protokolu_v1.6.txt` §10 — türetimin kanonik kaynak belgesi (GSD/limitler §2, §11.1–11.2)
 - Görev yanıtı: `GET /pilots/me/missions` → `weekly_flight{}` alanı; `GET /missions/{id}/season-flight-schedule` → tam sezon tablosu
 - `flight-route.kmz` — pilota inen uçuş planında Y/v gömülü
@@ -698,18 +741,22 @@ Arpa (10-15), Patates (7-10), Mercimek (10-15), Elma (10-15),
 - `FLIGHT.PARAMS_RESOLVED` — crop_type + mission_date → hafta/evre + (Y, v) çözüldü (correlation_id)
 - `FLIGHT.PARAMS_FALLBACK` — haftalık takvimde eşleşme yok → phenology profili/güvenli varsayılan kullanıldı
 - `FLIGHT.KMZ_EMITTED` — KMZ uçuş planı çözülen parametrelerle üretildi
+- Takvim yükleyici olayları: `SEASONAL_CALENDAR_MISSING` (dosya bulunamadı) · `SEASONAL_CALENDAR_READ_FAILED` (okuma/JSON hatası) · `SEASONAL_CALENDAR_PARSE_SKIP` (bir ürünün satırları geçersiz, o ürün atlandı) · `SEASONAL_CALENDAR_LOADED` (kaç ürün yüklendi)
 
 ### Hata Modları
 - `mission_date` takvim penceresi dışında (sezon öncesi/sonrası) → en yakın sınır haftasına snap edilir; log `FLIGHT.PARAMS_FALLBACK`; pilota "sezon dışı, en yakın hafta gösteriliyor" bilgi notu
 - Ürün 5 aktif ürün dışında (arşiv) → haftalık takvim uygulanmaz; evre-bazlı `phenology_flight_profiles.json` fallback; yoksa parametre önerilmez, KMZ güvenli varsayılana düşer ve bunu loglar
-- Türetilen (Y, v) fiziksel sınırı (H/v ≥ 3,9 veya ≤ 120 m) ihlal ederse → değer reddedilir, en yakın geçerli değere clamp edilir + `FLIGHT.PARAMS_RESOLVED` uyarı bayrağı
+- Türetilen (Y, v) fiziksel sınırı (H/v ≥ 3,9 veya ≤ 120 m AGL) ihlal ederse → **fail-closed**: değer nesnesi kurulumunda hata yükseltilir (`SeasonalFlightCalendarError`) ve yükleyici o **ürünü atlar** (`SEASONAL_CALENDAR_PARSE_SKIP`), diğer ürünler yüklenmeye devam eder. Sınır ihlali **clamp EDİLMEZ** — geçersiz bir uçuş parametresini sessizce geçerli bir değere çekmek, mevzuat/sensör sınırını kâğıt üzerinde sağlanmış gösterir.
+- Takvim dosyası bulunamaz/okunamaz/parse edilemez → cache **set edilmez** (boş sonuç geçici döner), bir sonraki çağrı yeniden dener; böylece geçici bir IO hatası kalıcı bozuk-cache'e (negatif cache zehirlenmesi) dönüşmez
 
 ### Test / Kabul Kriterleri
 - 5 aktif ürün için, sezon içi bir `mission_date` verildiğinde doğru hafta + (Y, v) döner (sınır tarihleri dahil: pencere başı/sonu)
+- Somut altın örnek: `COTTON` Hafta-11 (`06-22`..`06-28`) → `altitude_m=35`, `speed_ms=5`, `critical=true`
 - Kritik hafta (★) sorgusunda `critical=true` döner
 - Sezon dışı tarih → en yakın hafta + fallback log
 - Arşiv ürün → haftalık takvim uygulanmaz, fallback devreye girer
 - Türetilen tüm satırlarda H/v ≥ 3,9 ve altitude ≤ 120 m (regresyon testi tüm takvim satırlarını tarar)
+- Kapsam dışı bitkide `GET /missions/{id}/season-flight-schedule` → `404`; sahip/atanmış pilot/admin olmayan kullanıcı → `403`
 - Pilot ekranında o hafta öne çıkar + tam sezon tablosu açılır; KMZ indirildiğinde Y/v doğru gömülüdür
 
 ### Disclaimer (Karar Desteği — Katı Kural Değil)
@@ -1451,6 +1498,7 @@ Her Dataset için aşağıdaki artefact’ler üretilecek ve ilişkilendirilecek
 - `scan_report_center.json` (AV2)  
 - `verification_report.json` (manifest’teki hash’ler ile merkezin hesapladığı hash’ler karşılaştırması)  
 - `calibration_result.json` + `qc_report.json` (kalibrasyon + kalite kanıtı)
+- `evidence_bundle_ref` — kanıt paketi **referansı**: yukarıdaki artefact'ları tek bir referansta toplar. Platform sonuçlarında **yalnız bu referans** taşınır, kanıt belgelerinin kendisi değil (`schemas/datasets/evidence_bundle_ref.v1` dataset-katmanı toplaması; edge-tarafı tek-tek biçim için `schemas/edge/evidence_bundle_ref.v1`).
 
 **Kurcalama ispatı (tamper proof):** Edge manifest’i ile merkezde hesaplanan hash’ler uyuşmazsa → `REJECTED_QUARANTINE` + kanıt.
 
