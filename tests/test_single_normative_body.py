@@ -76,6 +76,30 @@ MIN_REGISTRY_HEADINGS = 54
 #: Bir bölümün "gövde değil, işaretçi" olduğunu söyleyen makine-okunur damga.
 POINTER_MARK = "TÜRETİLMİŞ İŞARETÇİ"
 
+# --- ÖD-11 / ÖD-12 (2026-08-01) — damga ve başlık SAYMAK yetmiyor ------------
+# ÖD-11: kapı bir bölümü "işaretçi" saymak için yalnız DAMGAYA bakıyordu → damga dururken
+#        altına çelişkili bir normatif gövde yazılabilirdi ve kapı yeşil kalırdı.
+# ÖD-12: "göç taşımadır, silme değil" kapısı BAŞLIK sayıyordu → bir KR'nin normatif gövdesi
+#        silinip başlığı bırakılsa sayı değişmezdi.
+#
+# Eşikler ÖLÇÜLDÜ (2026-08-01), tahmin edilmedi:
+#   damgalı (işaretçi) bölümler : min 286 · p50 340 · **max 1366** (KR-093)
+#   damgasız (gerçek gövde)     : **min 1483** · p50 1885 · max 3935
+# İki küme arasında temiz bir boşluk var; sınır oraya konur.
+MAX_POINTER_SECTION_CHARS = 1500
+
+#: SSOT metnindeki normatif gövdelerin toplam hacmi (2026-08-01 ölçümü: 117.738 karakter).
+#: Kütlesel silmeyi yakalar; küçük düzenlemeler için ~%10 pay bırakıldı.
+MIN_SSOT_BODY_CHARS = 105_000
+
+#: Gövdesi OLMAYAN ama meşru KR başlıkları — bunlar bölüm/başlık girişleridir, kural değil
+#: (ölçüldü: dördü de hemen ardından başka bir başlık geliyor). Yeni bir KR bu listeye
+#: eklenmeden gövdesiz kalamaz.
+SSOT_STRUCTURAL_HEADINGS = ("KR-010", "KR-012", "KR-020", "KR-060")
+
+#: Bir KR gövdesi için anlamlı asgari uzunluk (ölçüldü: en kısa gerçek gövde KR-026 = 170).
+MIN_KR_BODY_CHARS = 120
+
 
 def _registry_sections() -> dict[str, str]:
     """`ssot/kr_registry.md` → {KR kimliği: bölüm metni}."""
@@ -111,6 +135,35 @@ def _dual_body_krs() -> set[str]:
     return _ssot_defined_krs() & _registry_body_krs()
 
 
+def _ssot_bodies() -> dict[str, str]:
+    """SSOT metni → {KR kimliği: başlığının ALTINDAKİ gövde}.
+
+    ÖD-12 için gerekli: "kaç KR tanımlı" sorusu başlık sayar, "gövde duruyor mu" sorusu
+    İÇERİK ister. Birleşik başlıklarda (`## [KR-018 / KR-082]`) gövde her iki kimliğe de
+    yazılır — ikisi de o metinle tanımlıdır.
+    """
+    lines = SSOT_TEXT.read_text(encoding="utf-8").splitlines()
+    heads: list[tuple[int, list[str]]] = []
+    for index, line in enumerate(lines):
+        stripped = line.lstrip()
+        if stripped.startswith("#") and re.search(r"KR-\d{3}", stripped):
+            heads.append((index, sorted(set(re.findall(r"KR-\d{3}", stripped)))))
+
+    bodies: dict[str, str] = {}
+    for position, (start, krs) in enumerate(heads):
+        end = heads[position + 1][0] if position + 1 < len(heads) else len(lines)
+        body = "\n".join(lines[start + 1:end]).strip()
+        for kr in krs:
+            # ⚠️ `setdefault` ŞART: boş gövde de sözlüğe girmeli. İlk yazımda yalnız
+            #    "daha uzunsa yaz" vardı ve boş gövdeler sözlüğe HİÇ girmiyordu → gövdesi
+            #    silinmiş bir KR, "boş gövde" kapısının görüş alanı DIŞINDA kalıyordu.
+            #    Mutasyonla yakalandı (KR-000 gövdesi silindi, kapı yeşil kaldı).
+            bodies.setdefault(kr, "")
+            if len(body) > len(bodies[kr]):
+                bodies[kr] = body
+    return bodies
+
+
 class TestDualBodyDebtIsFrozen:
     def test_debt_does_not_grow(self) -> None:
         dual = _dual_body_krs()
@@ -134,6 +187,74 @@ class TestDualBodyDebtIsFrozen:
             f"toplam tanımlı KR {len(total)} < {MIN_TOTAL_DEFINED_KRS}. Bir KR tanımı "
             "kaybolmuş: göç sırasında gövde, kanonik metne yazılmadan registry'den "
             "silinmiş olabilir."
+        )
+
+    def test_migration_did_not_empty_the_bodies(self) -> None:
+        """🔴 ÖD-12 — BAŞLIK saymak silmeyi göremez; İÇERİK ölçülür.
+
+        Yukarıdaki test KR *kimliklerini* sayar. Bir KR'nin normatif gövdesi silinip
+        başlığı bırakılsaydı sayı değişmez, kapı yeşil kalırdı — "göç taşımadır" iddiası
+        ölçülmemiş olurdu. Burada iki şey ölçülür: her gövdenin anlamlı uzunlukta olması
+        ve toplam normatif hacmin çökmemesi.
+        """
+        bodies = _ssot_bodies()
+        empty = sorted(
+            kr for kr, body in bodies.items()
+            if len(body) < MIN_KR_BODY_CHARS and kr not in SSOT_STRUCTURAL_HEADINGS
+        )
+        assert not empty, (
+            f"SSOT metninde başlığı olup gövdesi (neredeyse) BOŞ olan KR(ler): {empty}. "
+            "Göç sırasında gövde silinmiş olabilir. Gerçekten bir bölüm başlığıysa "
+            "SSOT_STRUCTURAL_HEADINGS'e gerekçesiyle eklenir — sessizce boş kalamaz."
+        )
+
+        volume = sum(len(body) for body in bodies.values())
+        assert volume >= MIN_SSOT_BODY_CHARS, (
+            f"toplam normatif gövde hacmi {volume} < {MIN_SSOT_BODY_CHARS} karakter "
+            "(2026-08-01 ölçümü: 117.738). Kütlesel bir silme olmuş olabilir; başlık "
+            "sayısı bunu göstermez."
+        )
+
+    @pytest.mark.parametrize("kr", SSOT_STRUCTURAL_HEADINGS)
+    def test_structural_heading_declaration_is_not_stale(self, kr: str) -> None:
+        """Bölüm başlığı gövde kazandıysa beyan SİLİNMELİ — liste yalan söylememeli."""
+        body = _ssot_bodies().get(kr, "")
+        assert len(body) < MIN_KR_BODY_CHARS, (
+            f"{kr} artık {len(body)} karakterlik bir gövde taşıyor ama hâlâ "
+            "SSOT_STRUCTURAL_HEADINGS'te 'gövdesiz başlık' olarak beyanlı. Beyanı kaldırın."
+        )
+
+    def test_pointer_sections_stay_pointers(self) -> None:
+        """🔴 ÖD-11 — damga bir MUAFİYET değildir: altına gövde yazılamaz.
+
+        Kapı bir bölümü "işaretçi" saymak için yalnız damgaya bakıyordu. Damga dururken
+        altına kanonik metinle **çelişen** bir normatif gövde yazmak mümkündü ve
+        `_registry_body_krs()` onu görmezdi — ikili gövde sayısı 0 kalırdı.
+
+        Ölçülmüş ayrım: işaretçiler ≤ 1366 karakter, gerçek gövdeler ≥ 1483.
+        """
+        oversized = {
+            kr: len(body)
+            for kr, body in _registry_sections().items()
+            if POINTER_MARK in body and len(body) > MAX_POINTER_SECTION_CHARS
+        }
+        assert not oversized, (
+            f"`{POINTER_MARK}` damgası taşıyan bölüm(ler) gövde boyutuna ulaşmış: "
+            f"{oversized}. Damga, altına normatif gövde yazmak için bir muafiyet değildir; "
+            "kural kanonik metinde yaşar, burada yalnız işaretçi durur (D16-b2). Bölüm "
+            "gerçekten büyümesi gerekiyorsa bu eşik BİLİNÇLİ olarak yükseltilir."
+        )
+
+    def test_pointer_sections_actually_point_somewhere(self) -> None:
+        """İşaretçi bir HEDEF göstermeli — yoksa 'gövde yok' demekten ibarettir."""
+        blind = [
+            kr
+            for kr, body in _registry_sections().items()
+            if POINTER_MARK in body and "TARLAANALIZ_SSOT" not in body
+        ]
+        assert not blind, (
+            f"İşaretçi damgası taşıyıp hedef göstermeyen bölüm(ler): {blind}. "
+            "Okuyucu kuralın nerede yaşadığını bulamazsa göç yarım kalmıştır."
         )
 
     def test_registry_keeps_navigation_headings(self) -> None:
