@@ -705,9 +705,15 @@ class TestVendoredCopiesStayLean:
 class TestVendoredAheadDebtIsBounded:
     """Borç listesi bir MAZERET değil, ÖLÇÜLEN ve KÜÇÜLEN bir listedir."""
 
-    #: 2026-08-01 ÖLÇÜMÜ (tahmin değil): EGE ×2 pointer · meyve ağaçları ×4 değer ·
-    #: küçük harf crop_type ×5 değer, İKİ dosyada (worker_result + intake_manifest.sorties).
-    #: Toplam 4 dosya girişi / 5 pointer / 16 değer.
+    #: 2026-08-01 ÖLÇÜMÜ (tahmin değil, E16 kapandıktan SONRAKİ hâl): `expert_labeling_card`
+    #: EGE ×2 pointer = 2 değer · `expert_review_queue` meyve ağaçları ×1 pointer = 4 değer.
+    #: Toplam **2 dosya girişi / 3 pointer / 6 değer**. (E16 ile silinen iki küçük-harf
+    #: crop_type girişi — `worker_result` + `intake_manifest.sorties`, 10 değer — eşiği
+    #: 16'dan 6'ya indirdi.)
+    #: ⚠️ Kalan 6 değerin ikisi de **W14 ile beyan edilmiş EKSEN FARKI**dır (bkz.
+    #: `W14_DECISION`), yani bu sayı bugün 0'a inmez — düşmesi ürün/bölge siparişe
+    #: açılırsa TEL genişletilerek olur. Eşik yine de tavandır: yeni bir sapma
+    #: eklenemez, çünkü mevcut iki beyan 6'nın tamamını doldurur.
     MEASURED_DEBT_VALUES = 6
 
     def test_debt_does_not_grow(self) -> None:

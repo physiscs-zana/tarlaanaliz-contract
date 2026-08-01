@@ -2073,6 +2073,19 @@ Ayrıca worker `W2` (ölçek motor başına: ODM 0-1 / Metashape 32768) aynı ka
 > §14.8 (ÖD-1…ÖD-16) **kapandı**; W14 · E16 · SD9 · SD10 · SD11 kararları **verildi ve uygulandı**.
 > Aşağıdaki sıra **yürürlüktedir**: bir kalem burada yoksa yapılmaz; yapılacaksa önce buraya yazılır.
 
+### 🔬 ÖZ-DENETİM (2026-08-02) — önceki oturumun işi ölçüldü
+Kanıt: `denetim/denetim_raporu_2026-08-02_ozdenetim_onceki_oturum.md` (elle ölçüm, ajan turu değil).
+**Kapanış beyanlarının 7'si de yeniden üretildi ve tuttu** (süit 1227/2 · validate 164/0 · dist 68
+yetimsiz · dört depo temiz+senkron · 0 açık PR · master CI 5/5 yeşil · dedektör 9 değişiklik/0 breaking).
+
+| # | Bulgu | Durum |
+|---|---|---|
+| 🔴 **Ö1** | **CI, yerelde kırmızı olan `ee4aed7`'i YEŞİL geçirdi.** Kırılan test contract CI'ında **atlanan** 134 testin içindeydi (kardeş depo okuyor). ⇒ Bu depoda CI, kardeş-bağımlı kapılar için **otoriter değildir**; süitin %11'ini koşmaz. Yerelde 20 sn'de yeniden üretilir: `git clone --local . <boş dizin>` → `pytest` → CI'ın çıktısı birebir (`1093 passed, 134 skipped`) | ölçüldü · kalıcı çözümü **E17/W10** |
+| 🟠 **Ö2** | **E17/W10 kapsamı bir dosya eksikti** — yalnız `test_vendored_parity.py` (132 atlama) sayılıyordu, `test_c11_sorties_absorption.py` (2 atlama) sayılmıyordu. Eski hâliyle uygulansaydı o 2 test **hiçbir CI'da** koşmayacaktı | ✅ kalem metni düzeltildi (SIRA 3) |
+| 🟠 **Ö3** | **Atlama kapısı dosyaya bakmıyordu:** eşleşme yalnız gerekçe dizesineydi → C11 dosyası, parite süiti için yazılmış beyanın altına **adı geçmeden** sığındı; beyanın notu da bayattı (47 → gerçek 134) | ✅ beyan `(gerekçe, dosya, not)` oldu; **mutasyon kırmızı** (beyansız dosya → exit 1), kontrol yeşil |
+| 🟡 **Ö4·Ö5·Ö6** | **Karar koda yazıldı, çevresindeki metin eski dünyayı anlatmaya devam etti** (3 örnek): §14.9'un *"3 beyan açık"*ı (gerçek **2**) · `MEASURED_DEBT_VALUES` yorumu (*"16 değer"*, gerçek **6**) · C11 docstring'i (*"E16 açık"*, gerçek **kapandı** — altındaki test tersini iddia ediyor) | ✅ üçü de düzeltildi |
+| 🔵 **Ö7** | W14'ün **kalıcı** beyanı, *"kalıcı olamaz · yalnız küçülür"* diyen `KNOWN_VENDORED_AHEAD` içinde duruyor. Bugün delik değil (6 değerin 6'sı dolu, yeni sapmaya yer yok) ama sayaç 0'a inemez ve yapının metni yanlış | ⬜ **C8 SONRASI**: kalıcı beyanları `DECLARED_NARROWER_DEFS` benzeri ayrı yapıya taşı |
+
 ### 🥇 SIRA 1 — **C8 töreni: TUR 2'yi kapat (v7.4.0)**
 Tur açık kaldıkça `PENDING_REPIN` beyanı iki xfail'i canlı tutuyor ve **üç depo checksum'ı
 doğrulanamıyor**. Turun taşıdığı içerik: `S5 · C6b/S2 · S4 · S6 · S7` + **ÖD-1** (edge kalibre
@@ -2082,12 +2095,13 @@ enum) + **ÖD-2** (`analysis_job` `$defs`) + **E13-R** (türetme bloğu) + **SD9
 **Sıralı adımlar (SDLC_GATES §3G ile birebir):**
 1. `python tools/breaking_change_detector.py --old v7.3.0 --new .` → **0 breaking** bekleniyor
    (artık git ref kabul ediyor — ÖD-16). İkinci bağımsız ölçüm: elle diff (`required`/enum/tip).
-2. `PENDING_PROPAGATION`'ı **BOŞALT** — bugün 3 beyan açık:
+2. `PENDING_PROPAGATION`'ı **BOŞALT** — bugün **2** beyan açık *(ölçüldü 2026-08-02; bu satır
+   önce "3" diyordu ve üçüncüsü `analysis_job` idi — o beyan `527c174`'te **zaten silinmişti**,
+   §14.9 yazılırken bayat kopyalandı. Öz-denetim bulgusu Ö4)*:
    * edge `calibrated_dataset_manifest`: `calibration_type` ←`PANEL_ABSOLUTE` · `raw_frames[].band`
      ←`RGB` · `qc_report.flags` ← 5 değerlik sözlük *(edge PR gerekir)*
    * worker `calibration_metadata`: `calibration_method` *(okuyan kod yok — S4; ya okuma kodu
      yazılır ya beyan gerekçesi tazelenir)*
-   * worker `analysis_job` `$defs/CalibrationMetadata` *(W13'te **yapıldı**; beyanı sil)*
 3. `python tools/pin_version.py --minor` → `CONTRACTS_VERSION.md` + **`info.version` üçü birden**
    otomatik yazılır (SD9). `PENDING_REPIN` satırı **kendini siler** → üç kapı sertleşir.
 4. `git tag -a v7.4.0 <release commit>` + push (**I-2**: `objecttype=tag`, `git describe` temiz).
@@ -2103,7 +2117,7 @@ kullanıcı onayı gerekir — CLAUDE.md kuralı.)
 ### 🥉 SIRA 3 — kardeş depo kuyruğu (bağımsız, paralel yapılabilir)
 | # | Depo | İş | Neden şimdi |
 |---|---|---|---|
-| **E17 / W10** | edge · worker | Vendored parite kapısını **kardeş CI'da** koştur (D4-b uygulaması) | Kapı bu turda 16 dosyaya genişledi ve **5 gerçek sapma** buldu; kardeş CI'da koşmadıkça sapma yalnız yerel diskte görünür |
+| **E17 / W10** | edge · worker | Kardeş-bağımlı **İKİ** kapıyı kardeş CI'da koştur (D4-b uygulaması): `tests/test_vendored_parity.py` **+ `tests/test_c11_sorties_absorption.py`** | Kapı bu turda 16 dosyaya genişledi ve **5 gerçek sapma** buldu; kardeş CI'da koşmadıkça sapma yalnız yerel diskte görünür. 🔴 **Kapsam 2026-08-02'de düzeltildi (Ö2):** kalem yalnız parite dosyasını sayıyordu, ama contract CI'ında atlanan 134 testin **2'si C11 dosyasındandır** — kalem eski hâliyle uygulansaydı o 2 test **hiçbir CI'da** koşmayacaktı. Tam da orada yaşandı: `ee4aed7` yerelde kırmızıyken CI'ı **yeşil** geçti (Ö1) |
 | **E15** | edge | `qc_report_writer`: `min(...,1.0)` kırpması + `except → 0.0` sessiz yolu **fail-loud** | G1/KR-065 ödeme hesabına giriyor |
 | **W8** | worker | Denetim satırı emisyonu (`tile_id`, π_h, rotation, bucket, `confidence_score: 0`) | Sampler bunları zaten hesaplıyor; M1/M3 ölçüm temeli |
 | **P15 · P16** | platform | `spectral_tier.py:51` → `LCI` · konsensüs yolu `EXCLUDED` saymamalı | AK-1 · M2 |

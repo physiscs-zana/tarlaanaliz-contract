@@ -13,9 +13,18 @@ NEDEN (2026-07-31 denetimi, bulgu E2):
     D10/E2 kilidi: C11, **C8 release töreninden ÖNCE** girmeli — aksi hâlde sürüm,
     tüketicisinin fiilen ürettiği belgeyi reddeden bir sözleşmeyi dondurur.
 
-⚠️ BİLİNÇLİ SAPMA (E16): edge `crop_type`'ı KÜÇÜK harf yazıyor. Absorpsiyon KANONİK
-biçimle (BÜYÜK harf) yapıldı; eşlemeyi edge C8'de yapacak. Gerekçe: kanonik şemaların
-10'unda 10'u büyük harf; iki vocabulary kanoniğe taşınmaz.
+✅ E16 KAPANDI (2026-08-01, edge PR #50) — bu blok eskiden *"BİLİNÇLİ SAPMA: edge
+`crop_type`'ı KÜÇÜK harf yazıyor, eşlemeyi edge C8'de yapacak"* diyordu. Karar
+(koordinatör): **edge sınırda normalize eder** — `_canonical_crop()` `strip().upper()`
+uyguluyor, iki vendored enum kanonik 8 ürüne çekildi. Absorpsiyon zaten KANONİK biçimle
+(BÜYÜK harf) yapılmıştı; artık edge'in gerçek çıktısı düzeltme olmadan kanoniği geçiyor
+ve bunu `test_crop_case_gap_is_closed` ölçüyor (kapanış geri alınırsa kırmızı döner).
+
+⚠️ KAPSAM UYARISI (2026-08-01 öz-denetimi, bulgu Ö1/Ö2): bu dosya **kardeş depoyu okur**
+→ bu deponun CI'ında 2 test ATLANIR. Ölçüldü: CI run 30710485267 `1093 passed, 134
+skipped`; 134'ün 2'si buradan. Yani buradaki kırmızı **contract CI'ında görünmez** —
+ee4aed7 tam bu yüzden yeşil CI ile push edildi. Kapı kardeş depo CI'ında koşmalı
+(E17/W10, `test_vendored_parity.py` ile **birlikte**) ve C8 töreninde YEREL koşum şart.
 """
 
 from __future__ import annotations

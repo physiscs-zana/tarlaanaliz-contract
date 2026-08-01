@@ -11,9 +11,10 @@ NEDEN (2026-07-31, 10-disiplin denetimi):
     Sonuç: kapı **yeşil** görünüyordu ama koruduğunu iddia ettiği şeyi hiç ölçmemişti.
 
 Bu dosyanın iki kuralı:
-    1. **Beyan edilmemiş atlama = HATA.** Bir test atlanacaksa gerekçesi aşağıdaki
-       ALLOWED_SKIP_REASONS listesinde YAZILI olmalı. Yeni bir atlama gerekçesi
-       (ör. "pyyaml yok") sessizce yeşile dönüşemez; oturumu düşürür.
+    1. **Beyan edilmemiş atlama = HATA.** Bir test atlanacaksa hem gerekçesi hem
+       **DOSYASI** aşağıdaki ALLOWED_SKIP_REASONS listesinde YAZILI olmalı. Yeni bir
+       atlama gerekçesi (ör. "pyyaml yok") ya beyanlı bir gerekçeyi yeni bir dosyada
+       kullanmak sessizce yeşile dönüşemez; oturumu düşürür.
     2. **`release_gate` deselect edilemez.** Tur içi "beklenen kırmızı"yı
        `-m "not release_gate"` ile gizlemek, kırmızıyı çözmek değil saklamaktır.
 """
@@ -25,22 +26,34 @@ from typing import Any
 import pytest
 
 
-# Atlanmasına İZİN VERİLEN gerekçeler (alt dize eşleşmesi). Her giriş bir taahhüttür:
-# "bu atlama biliniyor, gerekçesi şu ve nerede koştuğu belli".
-ALLOWED_SKIP_REASONS: tuple[tuple[str, str], ...] = (
+# Atlanmasına İZİN VERİLEN gerekçeler. Her giriş bir taahhüttür: "bu atlama biliniyor,
+# gerekçesi şu, HANGİ DOSYADA olduğu yazılı ve nerede koştuğu belli".
+#
+# ⚠️ 2026-08-01 öz-denetiminde ölçülen kusur (Ö2/Ö3): eşleşme yalnız GEREKÇE dizesine
+# bakıyordu, dosyaya bakmıyordu. Sonuç: `test_c11_sorties_absorption.py` aynı gerekçeyle
+# atlamaya başladı ve **hiç adı geçmeden** bu beyanın altına sığındı. Beyan yalnız parite
+# süitini anlatıyordu; kapsam sessizce genişledi. Beyan artık dosyayı da kapsar — kapsam
+# dışı bir dosya aynı gerekçeyi kullanırsa oturum DÜŞER.
+ALLOWED_SKIP_REASONS: tuple[tuple[str, tuple[str, ...], str], ...] = (
     (
         "kardeş depo yok",
-        "Vendored parite süiti (tests/test_vendored_parity.py) kardeş depoları okur; bu "
-        "deponun Actions'ında yalnız kendisi checkout edilir → 47 test atlanır (ölçüm "
-        "2026-08-01: 972 passed, 47 skipped). D4-b KARARI: kapı bu depoda değil KARŞI "
-        "TARAFTA koşar — bu depo PUBLIC, kardeşlerin üçü de PRIVATE, dolayısıyla kardeş "
-        "CI'ı burayı sırsız çekebilir ama tersi private anahtarı public Actions'a koyardı. "
-        "Kardeş depo bu test dosyasını olduğu gibi koşar (E17/W10). Ayrıca C8 release "
-        "töreninde YEREL koşum zorunludur (SDLC_GATES §3C).",
+        ("tests/test_vendored_parity.py", "tests/test_c11_sorties_absorption.py"),
+        "Bu iki süit kardeş depoları okur; bu deponun Actions'ında yalnız kendisi checkout "
+        "edilir → CI'da atlanırlar. D4-b KARARI: kapı bu depoda değil KARŞI TARAFTA koşar — "
+        "bu depo PUBLIC, kardeşlerin üçü de PRIVATE, dolayısıyla kardeş CI'ı burayı sırsız "
+        "çekebilir ama tersi private anahtarı public Actions'a koyardı. Kardeş depo bu "
+        "dosyaları olduğu gibi koşar (E17/W10 — **ikisini birden**, bkz. aşağıdaki ölçüm). "
+        "Ayrıca C8 release töreninde YEREL koşum zorunludur (SDLC_GATES §3C).",
     ),
 )
 
-_ALLOWED_PATTERNS: tuple[str, ...] = tuple(pattern for pattern, _note in ALLOWED_SKIP_REASONS)
+#: 2026-08-01 CI ÖLÇÜMÜ (run 30710485267, commit 20e541f) — sayı değil **oran** beyanıdır:
+#: `1093 passed, 134 skipped, 2 xfailed`; yerelde (kardeş depolar diskte) `1227 passed,
+#: 0 skipped`. Yani 1227'nin **134'ü (%11) bu deponun CI'ında görünmez**. Dağılım:
+#: `test_vendored_parity.py` 132 · `test_c11_sorties_absorption.py` 2.
+#: 🔴 Öz-denetim bulgusu Ö1: ee4aed7 YERELDE kırmızıydı ama CI'ı YEŞİL geçti — kırılan test
+#: tam bu 2'nin içindeydi. Bu depoda CI, kardeş-bağımlı kapılar için otoriter DEĞİLDİR.
+SIBLING_DEPENDENT_FILES: tuple[str, ...] = ALLOWED_SKIP_REASONS[0][1]
 
 
 def _reason_of(report: Any) -> str:
@@ -50,8 +63,15 @@ def _reason_of(report: Any) -> str:
     return str(longrepr) if longrepr is not None else "<gerekçesiz>"
 
 
-def _is_declared(reason: str) -> bool:
-    return any(pattern in reason for pattern in _ALLOWED_PATTERNS)
+def _file_of(report: Any) -> str:
+    return str(getattr(report, "nodeid", "") or "").split("::")[0].replace("\\", "/")
+
+
+def _is_declared(reason: str, file: str) -> bool:
+    return any(
+        pattern in reason and any(file.endswith(allowed) for allowed in files)
+        for pattern, files, _note in ALLOWED_SKIP_REASONS
+    )
 
 
 def pytest_configure(config: Any) -> None:
@@ -78,24 +98,26 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
         reporter.write_line("SKIP BÜTÇESİ: 0 atlanan test.", green=True)
         return
 
-    counts: dict[str, int] = {}
+    counts: dict[tuple[str, str], int] = {}
     for report in skipped:
-        reason = _reason_of(report)
-        counts[reason] = counts.get(reason, 0) + 1
+        key = (_file_of(report), _reason_of(report))
+        counts[key] = counts.get(key, 0) + 1
 
-    undeclared = {reason: n for reason, n in counts.items() if not _is_declared(reason)}
+    undeclared = {key: n for key, n in counts.items() if not _is_declared(key[1], key[0])}
 
     reporter.write_line("")
     reporter.write_line(f"SKIP BÜTÇESİ: {len(skipped)} test atlandı")
-    for reason, number in sorted(counts.items(), key=lambda kv: -kv[1]):
-        state = "BEYAN EDİLMEMİŞ" if reason in undeclared else "beyanlı"
-        reporter.write_line(f"  [{state}] {number}x {reason}")
+    for (file, reason), number in sorted(counts.items(), key=lambda kv: -kv[1]):
+        state = "BEYAN EDİLMEMİŞ" if (file, reason) in undeclared else "beyanlı"
+        reporter.write_line(f"  [{state}] {number}x {file} — {reason}")
 
     if undeclared:
         reporter.write_line(
-            "ATLAMA KAPISI DÜŞTÜ — yukarıdaki gerekçeler tests/conftest.py "
+            "ATLAMA KAPISI DÜŞTÜ — yukarıdaki (dosya, gerekçe) çiftleri tests/conftest.py "
             "ALLOWED_SKIP_REASONS listesinde yok. Sessiz atlama yeşil sayılmaz: ya eksik "
-            "bağımlılığı kurun ya atlamayı gerekçesiyle beyan edin.",
+            "bağımlılığı kurun, ya atlamayı gerekçesiyle beyan edin, ya da beyanın DOSYA "
+            "kapsamını genişletin (kapsam genişletmek bir karardır — E17/W10 gibi bir "
+            "kardeş-CI kalemi doğurur).",
             red=True,
         )
         session.exitstatus = 1
