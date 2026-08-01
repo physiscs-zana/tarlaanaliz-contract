@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -108,6 +109,135 @@ class TestOrphanPublicationFilesAreCaught:
         assert orphans == ["worker/ghost.v1.schema.json"], (
             "Kaynağı silinen bir şema yayın ağacında yaşamaya devam ederse hava-boşluklu "
             "M1 onu geçerli sözleşme sanar; `--write` onu silmez."
+        )
+
+
+class TestOpenApiVersionTracksTheContractSet:
+    """SD9 (2026-08-01, koordinatör onaylı) — `info.version` **set sürümünü** izler.
+
+    ÖLÇÜLEN SORUN: üç spec de ilk commit'ten beri `1.0.0`'daydı; `api/` içeriği ise
+    sürümler arasında değişiyor (v7.2.0→v7.3.0: D18-b) ve **checksum kapsamında**.
+    Spec'ten istemci üreten bir tüketici hangi sözleşmeye baktığını `info.version`'dan
+    anlayamıyordu.
+
+    KARARIN DAYANAĞI (ölçüm, tahmin değil):
+      * OpenAPI 3.1: *"The version of the OpenAPI Document (distinct from the OpenAPI
+        Specification version or the version of the API being described)"* — alan
+        **REQUIRED**, SemVer zorunlu değil. Bu depoda belge **set** olarak yayımlanır
+        (I-1: üç depoda aynı sürüm dizesi) ⇒ setin sürümü belgenin sürümüdür.
+      * *"API MAJOR hattını gösteriyor"* savunması düştü: hat zaten `servers.url`
+        (`…/v1`) ve dosya adında (`*.v1.yaml`) yazılı.
+      * Alanı okuyan tüketici **yok** (dört depoda 0 eşleşme) ⇒ geçiş kimseyi kırmaz.
+
+    Elle yazılmaz: `tools/pin_version.py → sync_openapi_versions()` C8'de yazar.
+    """
+
+    @staticmethod
+    def _contract_version() -> str:
+        text = (ROOT / "CONTRACTS_VERSION.md").read_text(encoding="utf-8")
+        match = re.search(r"^#{0,2}\s*\**Version:\**\s*v?(\d+\.\d+\.\d+)", text, re.M)
+        assert match, "CONTRACTS_VERSION.md sürüm başlığı okunamadı"
+        return match.group(1)
+
+    @pytest.mark.parametrize(
+        "spec_name",
+        ["platform_public.v1.yaml", "platform_internal.v1.yaml", "edge_local.v1.yaml"],
+    )
+    def test_info_version_equals_contract_version(self, spec_name: str) -> None:
+        yaml = pytest.importorskip("yaml", reason="pyyaml yok")
+        doc = yaml.safe_load((ROOT / "api" / spec_name).read_text(encoding="utf-8"))
+        assert str(doc["info"]["version"]) == self._contract_version(), (
+            f"{spec_name}: `info.version` = {doc['info']['version']!r}, set sürümü ise "
+            f"{self._contract_version()!r}. Bu alan ELLE yazılmaz — C8 töreninde "
+            "`tools/pin_version.py` yazar (SD9). Elle tutulan sürüm sayısı bayatlıyor: "
+            "bu oturumda iki kez ölçüldü (SD8 nüfusu · platform main.py log sabitleri)."
+        )
+
+    def test_api_line_is_still_expressed_where_it_belongs(self) -> None:
+        """`info.version` set sürümünü aldıysa, API HATTI hâlâ görünür olmalı."""
+        yaml = pytest.importorskip("yaml", reason="pyyaml yok")
+        doc = yaml.safe_load((ROOT / "api" / "platform_public.v1.yaml").read_text(encoding="utf-8"))
+        urls = [server["url"] for server in doc.get("servers", [])]
+        assert any(url.rstrip("/").endswith("/v1") for url in urls), (
+            f"API hattı `servers.url`'den kaybolmuş ({urls}). SD9 kararı 'hat zaten "
+            "servers.url + dosya adında yazılı' ölçümüne dayanıyordu; o dayanak giderse "
+            "karar yeniden açılmalıdır."
+        )
+
+
+class TestApiReferencesResolve:
+    """SD10 — `api/` ağacındaki her `$ref` HEDEFE varmalı (araçtan bağımsız kapı).
+
+    NEDEN PYTHON TARAFINDA DA VAR: sarkan referansı bulan şey redocly'ydi, ama o kapı
+    npm + ağ ister ve bu depoda spectral'ın **çöktüğü** ölçüldü. Bir sözleşme deposunda
+    *"referans hedefe varıyor mu"* sorusu araç kurulumuna bağlı olamaz — bu yüzden aynı
+    değişmez pytest süitinde de zorlanıyor.
+
+    Ölçülen kusur (2026-08-01): `api/platform_public.v1.yaml` ödeme uçlarında iki kez
+    `./components/schemas.yaml#/components/schemas/PaymentIntent`'e `$ref` veriyordu;
+    o bileşen **yoktu**. İstemci üreticisi bu uçlar için bozuk tip üretir.
+    """
+
+    @staticmethod
+    def _resolve(doc: object, pointer: str):
+        node = doc
+        for token in [t for t in pointer.split("/") if t]:
+            token = token.replace("~1", "/").replace("~0", "~")
+            if isinstance(node, dict) and token in node:
+                node = node[token]
+            elif isinstance(node, list) and token.isdigit() and int(token) < len(node):
+                node = node[int(token)]
+            else:
+                return None, False
+        return node, True
+
+    def test_every_api_ref_resolves(self) -> None:
+        yaml = pytest.importorskip("yaml", reason="pyyaml yok")
+        api_dir = ROOT / "api"
+        cache: dict[Path, object] = {
+            path: yaml.safe_load(path.read_text(encoding="utf-8"))
+            for path in sorted(api_dir.rglob("*.yaml"))
+        }
+
+        problems: list[str] = []
+
+        def walk(node: object, source: Path, path: str) -> None:
+            if isinstance(node, dict):
+                ref = node.get("$ref")
+                if isinstance(ref, str):
+                    file_part, _, ptr = ref.partition("#")
+                    target: object = cache[source]
+                    if file_part:
+                        target_path = (source.parent / file_part).resolve()
+                        if target_path.suffix in {".yaml", ".yml"}:
+                            target = cache.get(target_path)
+                            if target is None and target_path.exists():
+                                target = yaml.safe_load(target_path.read_text(encoding="utf-8"))
+                        elif target_path.suffix == ".json":
+                            target = (
+                                json.loads(target_path.read_text(encoding="utf-8"))
+                                if target_path.exists()
+                                else None
+                            )
+                        if target is None:
+                            problems.append(f"{source.name}{path} → {ref} (DOSYA YOK)")
+                            return
+                    value, ok = self._resolve(target, ptr) if ptr else (target, True)
+                    if not ok or value is None:
+                        problems.append(f"{source.name}{path} → {ref} (HEDEF YOK)")
+                for key, value in node.items():
+                    walk(value, source, f"{path}.{key}")
+            elif isinstance(node, list):
+                for index, value in enumerate(node):
+                    walk(value, source, f"{path}[{index}]")
+
+        for path, doc in cache.items():
+            walk(doc, path, "")
+
+        assert not problems, (
+            "OpenAPI ağacında SARKAN referans(lar):\n  " + "\n  ".join(problems) + "\n"
+            "Sarkan `$ref` sessiz bir kusurdur: doğrulama araçları çöker ya da atlar, "
+            "istemci üreticisi bozuk tip üretir."
         )
 
 

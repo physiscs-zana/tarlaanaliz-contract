@@ -103,6 +103,40 @@ uyuşmazsa bu iki indeks sessizce bozulur **ve NDVI'nin doğru görünmesi hatay
   yapılırsa alan ölü taşınır → bir sonraki C8'e bırakıldı, sessizce değil **beyanla**.
   Worker'ın okuma yarısı ayrı kalem: **W12**.
 
+### SD9 + SD10 — OpenAPI yüzeyi: donmuş sürüm dizesi + **hiçbir kural koşmayan** lint kapısı
+
+**SD9 (karar, koordinatör onaylı):** üç spec'in `info.version`'ı **set sürümünü izliyor**
+(`1.0.0` → `7.3.0`). Dayanak ölçüldü: OpenAPI 3.1 alanı *"the version of the OpenAPI
+**Document**"* diye tanımlıyor ve bu depoda belge **set** olarak yayımlanıyor (I-1);
+"API MAJOR hattı" savunması düştü (hat zaten `servers.url` `…/v1` + dosya adında);
+alanı okuyan tüketici **yok** (dört depoda 0 eşleşme). Alan **elle yazılmaz** —
+`tools/pin_version.py → sync_openapi_versions()` C8'de yazar, kapı ölçer.
+
+**SD10 (kapı yalanı):** `Lint OpenAPI Specs` adımı **hiçbir kural koşmuyordu** ve daima
+"pass" gösteriyordu — `spectral lint` **ruleset'siz** çağrılıyordu (*"No ruleset has been
+found"*), üstüne `|| echo` ve `continue-on-error: true`. Kurallar koşturulunca **25 hata +
+63 uyarı** çıktı ve **üçü gerçek kusurdu**:
+
+| Kusur | Etkisi |
+|---|---|
+| `api/components/responses.yaml` → `nullable: true` | **OAS 3.0** anahtarı; 3.1'de kaldırıldı → sessizce yok sayılıyordu, istemci `next_cursor`'ı **zorunlu string** sanıyordu |
+| `api/edge_local.v1.yaml` → `/batches/{batch_id}/scan` | yol parametresi **hiç tanımlı değildi** → üretilen istemci imzası parametresiz kalır |
+| `api/platform_public.v1.yaml` ödeme uçları | **var olmayan** `PaymentIntent` bileşenine iki **sarkan `$ref`** (KR-033) |
+
+#### Changed
+- CI adımı **redocly**'ye çevrildi (spectral bu ağaçta `spectral:oas` ile **çöküyor**:
+  *"Cannot read properties of null (reading 'enum')"* — kanonik JSON Şemalara giden göreli
+  `$ref` zincirini çözemiyor). Susturucular **kaldırıldı**.
+- `.redocly.yaml` — yapısal kurallar `error`; `operationId` (39) ve `4XX` (19) eksikleri
+  **görünür `warn`** olarak bırakıldı (ratchet sırası yazılı).
+- `.redocly.lint-ignore.yaml` — **elle** yazıldı, yalnız tek sınıf: kanonik şemaların
+  `notes`/`metadata` anahtarları (23 ihlal / 12 dosya) → **SD11**. `--generate-ignore-file`
+  toptan 85 bulguyu susturacaktı; kapıyı yeniden kör edeceği için kullanılmadı.
+
+#### Added
+- `tests/test_publication_tree_gates.py` → **araçtan bağımsız `$ref` kapısı** (npm/ağ
+  gerekmez) + SD9 sürüm kapısı. **4/4 mutasyon** kırmızı.
+
 ### ÖD-9 … ÖD-16 — kapılar gördüğünü iddia ettikleri yüzeyi ölçsün (şema değişikliği YOK)
 
 **ÖD-9 (dört depo tarandı, AST):** kodlamasız dosya okuma sınıfı **worker'a özgü** —

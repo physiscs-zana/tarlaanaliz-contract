@@ -424,11 +424,41 @@ git submodule update --remote
         # Write to file
         with open(self.contracts_file, 'w', encoding='utf-8') as f:
             f.write(content)
-        
+
         print(f"✅ Version {version_str} pinned successfully")
         print(f"   File: {self.contracts_file}")
-        
+
+        for spec in self.sync_openapi_versions(version_str):
+            print(f"   OpenAPI info.version → {version_str}: {spec}")
+
         return True
+
+    def sync_openapi_versions(self, version_str: str) -> list:
+        """SD9 — OpenAPI belgelerinin `info.version`'ı **set sürümünü** izler.
+
+        NEDEN (ölçüldü 2026-08-01): üç spec de ilk commit'ten beri `1.0.0`'daydı, oysa
+        `api/` içeriği sürümler arasında değişiyor ve **checksum kapsamında** (bkz.
+        `compute_all_hashes`). OpenAPI 3.1 bu alanı *"the version of the OpenAPI
+        Document"* diye tanımlar — bu depoda belge, **set** olarak yayımlanır (I-1: üç
+        depoda aynı sürüm dizesi), dolayısıyla setin sürümü belgenin sürümüdür.
+
+        *"API MAJOR hattını gösterir"* savunması ölçümle düştü: hat zaten iki yerde
+        yazılı — `servers.url` (`…/v1`) ve dosya adı (`*.v1.yaml`).
+
+        **Elle yazılmaz:** bu oturumda iki kez görüldü ki elle tutulan sürüm sayısı
+        bayatlıyor (SD8 nüfusu · platform `main.py` log sabitleri). C8 töreni bu
+        fonksiyonu çağırır; kapı `tests/test_publication_tree_gates.py` ölçer.
+        """
+        pattern = re.compile(r"^(\s*version:\s*)\S+\s*$", re.M)
+        updated = []
+        for spec in sorted(self.api_dir.glob("*.yaml")):
+            text = spec.read_text(encoding="utf-8")
+            head, sep, rest = text.partition("\npaths:")
+            new_head, count = pattern.subn(rf"\g<1>{version_str}", head, count=1)
+            if count and new_head != head:
+                spec.write_text(new_head + sep + rest, encoding="utf-8")
+                updated.append(spec.name)
+        return updated
 
 
 def main():

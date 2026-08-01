@@ -306,13 +306,26 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install Spectral
-        run: npm install -g @stoplight/spectral-cli
-
-      - name: Lint OpenAPI specs
+      # 🔴 SD10 (2026-08-01) — BU ADIM HİÇBİR KURAL KOŞMUYORDU, YİNE DE "pass" GÖSTERİYORDU.
+      # Üç katman üst üste: ① `spectral lint` ruleset'siz çağrılıyordu ve araç
+      # "No ruleset has been found" deyip çıkıyordu (sıfır kural) ② `|| echo` kabuğu
+      # daima 0 yapıyordu ③ `continue-on-error: true` işi düşürmüyordu.
+      # Kurallar gerçekten koşturulunca **25 hata + 63 uyarı** çıktı; üçü gerçek kusurdu:
+      # `nullable` (OAS 3.0 kalıntısı, 3.1'de sessizce yok sayılıyor) · tanımsız yol
+      # parametresi (`/batches/{batch_id}/scan`) · **var olmayan** `PaymentIntent`
+      # bileşenine sarkan `$ref` (ödeme uçları, KR-033). Üçü de düzeltildi.
+      #
+      # Araç: spectral DEĞİL **redocly** — spectral bu depoda `spectral:oas` ile çöküyor
+      # ("Cannot read properties of null (reading 'enum')"): kanonik JSON Şemalara giden
+      # göreli `$ref` zincirini çözemiyor. Redocly zaten `package.json → openapi:validate`
+      # ile bu deponun ilan ettiği araç ve aynı ağacı sorunsuz çözüyor.
+      # Yapılandırma + beyanlı istisnalar: `.redocly.yaml` · `.redocly.lint-ignore.yaml`.
+      - name: Lint OpenAPI specs (redocly — SUSTURUCU YOK)
         run: |
-          spectral lint api/**/*.yaml --fail-severity=warn || echo "OpenAPI linting completed"
-        continue-on-error: true
+          npx --yes @redocly/cli@1 lint \
+            api/platform_public.v1.yaml \
+            api/platform_internal.v1.yaml \
+            api/edge_local.v1.yaml
 
   check-forbidden-fields:
     name: Check for Forbidden Fields

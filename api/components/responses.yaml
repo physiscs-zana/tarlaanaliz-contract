@@ -335,8 +335,12 @@ components:
           type: boolean
           example: false
         next_cursor:
-          type: string
-          nullable: true
+          # SD10 (2026-08-01): `nullable: true` bir **OpenAPI 3.0** anahtarıdır ve 3.1'de
+          # KALDIRILDI (3.1 Schema Object'i JSON Schema 2020-12'dir; boşluk `type` dizisiyle
+          # ifade edilir). Bu dosya `openapi: 3.1.0` beyan ediyor, yani anahtar SESSİZCE
+          # yok sayılıyordu: istemci üreticileri alanı **zorunlu string** sanıyordu.
+          # Hiçbir kapı görmedi — OpenAPI lint adımı ruleset'siz + iki susturucuyla koşuyordu.
+          type: [string, "null"]
           example: cursor_abc123
       required:
         - page

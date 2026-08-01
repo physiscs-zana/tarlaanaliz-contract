@@ -1,0 +1,60 @@
+# BEYAN EDİLMİŞ İSTİSNALAR — SD10 (2026-08-01)
+#
+# ⚠️ Bu dosya `--generate-ignore-file` ile TOPTAN üretilmedi. Otomatik üretim 85 bulguyu
+# birden susturuyordu (39 `operationId`, 19 `4XX` uyarısı dâhil) — yani kapıyı yeniden
+# kör edecekti. Burada YALNIZ tek bir sınıf var ve gerekçesi yazılı:
+#
+# SINIF: kanonik JSON Şema/enum belgeleri üst düzeyde `notes` ve `metadata` anahtarları
+#        taşır (bu deponun konvansiyonu; ör. `analysis_type.enum.v1 → metadata.bandRequirements`
+#        KR-018 bant kapısının kaynağıdır). OpenAPI 3.1'de Schema Object'in uzantı
+#        mekanizması `x-` önekidir ("This object MAY be extended with Specification
+#        Extensions"), bu yüzden redocly `struct` kuralı bare `notes`/`metadata`'yı
+#        reddediyor. Şemalar OpenAPI'ye `$ref` ile giriyor, dolayısıyla ihlal orada görünüyor.
+#
+# NEDEN ŞİMDİ DÜZELTİLMEDİ (ölçüldü): `notes`/`metadata` → `x-notes`/`x-metadata` göçü
+#        12 kanonik dosyayı ve **onları okuyan tüketicileri** etkiler (metadata bloğu
+#        bant gereksinimlerini taşıyor). Tek satırlık bir düzeltme değil; kendi turunu
+#        ister. Plan kalemi: **SD11**.
+#
+# 🔒 KURAL: bu liste YALNIZ küçülür. Yeni bir `struct` ihlali buraya eklenerek geçirilemez —
+#        ya şema düzeltilir ya SD11 turu açılır.
+enums/analysis_type.enum.v1.json:
+  struct:
+    - '#/metadata'
+    - '#/notes'
+enums/crop_type.enum.v1.json:
+  struct:
+    - '#/metadata'
+    - '#/notes'
+enums/mission_status.enum.v1.json:
+  struct:
+    - '#/metadata'
+    - '#/notes'
+enums/threat_type.enum.v1.json:
+  struct:
+    - '#/metadata'
+    - '#/notes'
+schemas/core/field.v1.schema.json:
+  struct:
+    - '#/notes'
+schemas/edge/edge_metadata.v1.schema.json:
+  struct:
+    - '#/notes'
+schemas/events/analysis_completed.v1.schema.json:
+  struct:
+    - '#/notes'
+schemas/events/field_created.v1.schema.json:
+  struct:
+    - '#/notes'
+schemas/events/mission_assigned.v1.schema.json:
+  struct:
+    - '#/notes'
+schemas/platform/pricing.v1.schema.json:
+  struct:
+    - '#/notes'
+schemas/worker/analysis_job.v1.schema.json:
+  struct:
+    - '#/notes'
+schemas/worker/analysis_result.v1.schema.json:
+  struct:
+    - '#/notes'
