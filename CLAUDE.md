@@ -108,31 +108,45 @@ The validator (`tools/validate.py`) and CI workflow check for these automaticall
 
 Business rules are referenced as `KR-NNN` throughout the codebase.
 
-**Canonical KR sources — there are TWO and they OVERLAP.**
+**Canonical KR sources — TWO files, but only ONE holds bodies.**
 
 ⚠️ **Do not trust a number written here — run the generator.** Counts in this file went
 stale twice and caused two real misdiagnoses (see the note below). The authoritative
 answer is whatever this command prints *today*:
 
 ```bash
-python -c "import sys; sys.path.insert(0,'tests'); from test_kr_reference_integrity import _ssot_defined_krs as s, _registry_defined_krs as r, _collect_kr_refs as x; a,b=s(),r(); print(f'SSOT text {len(a)} | registry {len(b)} | union {len(a|b)} | BOTH {len(a&b)} | referenced by schemas {len(x())}')"
+python -c "import sys; sys.path.insert(0,'tests'); from test_kr_reference_integrity import _ssot_defined_krs as s, _registry_defined_krs as r, _collect_kr_refs as x; from test_single_normative_body import _registry_body_krs as rb, _dual_body_krs as d; a,b=s(),r(); print(f'SSOT text {len(a)} | registry headings {len(b)} | registry BODIES {len(rb())} | union {len(a|b)} | DUAL BODIES {len(d())} | referenced by schemas {len(x())}')"
 ```
+
+> 🔴 **Read `DUAL BODIES`, not the heading intersection.** A pointer still carries a
+> heading, so "defined in both files" counts ~50 and means nothing. The number that
+> matters — how many KRs have a normative *body* in two places — must stay **0**.
+> Mixing these two up is what made the D16-b gate green while it was blind (2026-07-31).
 
 | File | Role | Heading forms it uses |
 |---|---|---|
 | `docs/TARLAANALIZ_SSOT_v1_2_0.txt` | Full KR corpus; **byte-identical with the platform copy** (aligned 2026-07-31) — the cross-repo artifact | `## [KR-019]`, combined `## [KR-018 / KR-082]`, typo `## # [KR-033]`, bracket-less `### KR-017` |
-| `ssot/kr_registry.md` | Contract-only registry; 8-section normative bodies (Amaç/MUST/Kanıt/Audit/…) | `### KR-070`, `## KR-088` |
+| `ssot/kr_registry.md` | **Navigation + scope index — NOT a body store** (since 2026-08-01/D16-b2). Each KR heading carries a `TÜRETİLMİŞ İŞARETÇİ` stamp pointing at the SSOT text, plus `Applies to` / `Kaynaklar` (which the SSOT text does **not** carry: measured 0 matches). **Exception:** `KR-088/089/090/091` still hold their bodies here — they are undefined in the SSOT text | `### KR-070`, `## KR-088` |
 
 The extractor in `tests/test_kr_reference_integrity.py` recognises **all four heading
 forms at any heading level**; use it rather than writing a new regex.
 
-🔴 **Known problem — a KR body must not live in two places.** The measurement above shows
-a large intersection: those KRs have a normative body in **both** files, and they have
-already drifted at least once (audit finding AR1: KR-093's two bodies disagree on content
-*and* status mapping). `tests/test_single_normative_body.py` freezes this debt so it can
-only shrink; which file stays normative is a coordinator decision tracked as **D16** in
-`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §14.4. Until it lands: treat the union as
-canonical and cite the registry body when the two disagree.
+✅ **D16 landed (2026-08-01, D16-b2): a KR body lives in exactly ONE place.** The dual-body
+count went **49 → 0**; `docs/TARLAANALIZ_SSOT_v1_2_0.txt` is the single normative text and
+**it wins on conflict**. The gate `tests/test_single_normative_body.py` now runs in *forbid*
+mode (`KNOWN_DUAL_BODY_COUNT = 0`), not debt-freeze.
+
+The migration was **not** mechanical, and the reason matters: of the 49 registry bodies,
+41 were derived summaries, 6 were strict subsets of the SSOT text, and only 2 (`KR-019`,
+`KR-092`) plus one clause of `KR-072` carried real content — those were moved by hand.
+**Three bodies were actively wrong**, which is exactly the AR1 failure mode: `KR-083` still
+named a retired role (*İl Operatörü*, successor `DISTRICT_REP` in live code), `KR-027`'s
+title was frozen at "Abonelik Planlayıcı", and `KR-000` said "DJI" under a drone-agnostic
+architecture. A second body does not stay in sync — it rots quietly.
+
+Rule going forward: **a KR's rule changes in the SSOT text first**, then the registry
+heading (title/scope) follows. Writing a normative body back under a registry heading turns
+the gate red.
 
 > ⚠️ Two earlier versions of this section were wrong and both caused real misdiagnoses:
 > it first claimed `ssot/kr_registry.md` was *the* canonical source, then that the registry
@@ -144,17 +158,9 @@ A KR referenced via `x-kr-ref` must be defined in **at least one** of the two;
 extractor there recognises **all four heading forms** at any heading level.
 
 Where the data-layer KR bodies actually live (measured, do not guess):
-`KR-092`/`KR-093` → SSOT text **and** registry · `KR-088`/`KR-091` → registry only
-(the SSOT text mentions them in a single cross-reference line, which is **not** a definition).
-
-> ⚠️ Two earlier versions of this section were wrong and both caused real misdiagnoses:
-> it first claimed `ssot/kr_registry.md` was *the* canonical source, then that the registry
-> holds "only 6 of ~49, complementary". Measurement says otherwise: the registry holds **54**
-> definitions and the two sources are **largely nested**, not complementary.
-> ⏳ **Open item:** "the same KR must not have a normative body in two places" is a real
-> problem (audit finding AR1/AR3) but it is a **decision**, not a rename — tracked as **D16**
-> in `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §14.4. Until that decision lands, treat the
-> union as canonical and cite the registry body when the two disagree.
+`KR-092`/`KR-093` → **SSOT text only** (registry holds pointers) · `KR-088`/`KR-091` →
+**registry only** (the SSOT text mentions them in a single cross-reference line, which is
+**not** a definition — so pointerising them would erase the rule).
 
 Key KRs for this repo:
 - **KR-050**: PII minimization (no email/TCKN/OTP)

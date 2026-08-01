@@ -1,4 +1,25 @@
-# TarlaAnaliz SSOT — KR Registry (Kanonik)
+# TarlaAnaliz SSOT — KR Registry (Navigasyon + Kapsam Dizini)
+
+> 🔗 **BU DOSYA NORMATİF GÖVDE TAŞIMAZ (2026-08-01, D16-b2).**
+> Her KR'nin **tek** normatif metni `docs/TARLAANALIZ_SSOT_v1_2_0.txt`'tedir; burada
+> yalnız **başlık + `Applies to` + `Kaynaklar`** durur ve her başlık kanonik metne
+> işaret eder. Çelişkide **kanonik metin kazanır**.
+>
+> **İstisna — gövdesi BURADA yaşayan 4 KR:** `KR-088`, `KR-089`, `KR-090`, `KR-091`.
+> Bunlar SSOT metninde tanımlı **değildir** (ölçüldü); orada yalnız tek satırlık bir
+> çapraz-atıfla anılırlar. Tanımları buradan silinirse tamamen kaybolur.
+>
+> **Neden (ölçümle, tahminle değil):** D16-b2 turunda 49 gövdenin tamamı ölçüldü —
+> hiçbiri kanonik metne normatif madde eklemiyordu; **41'i türetilmiş özet**, 6'sı
+> kanonik metnin **alt kümesi**, 2'si (`KR-019`, `KR-092`) gerçek içerik taşıyordu ve
+> o içerik kanonik metne **taşındı** (artı `KR-072`'nin `evidence_bundle_ref` maddesi).
+> Dahası **üç gövde fiilen yanlıştı**: `KR-083` kaldırılmış rol adını (*İl Operatörü*)
+> tek başına taşıyordu — canlı kodda halefi `DISTRICT_REP`; `KR-027` başlığı
+> "Abonelik Planlayıcı"da donmuştu; `KR-000` "DJI entegrasyonu" diyordu (mimari
+> drone-agnostik). İkili gövdenin sessizce bayatladığının kanıtı budur (AR1).
+>
+> Kural: bir KR'nin kuralı **önce kanonik metinde** değişir, sonra buraya yansır.
+> Kapı: `tests/test_single_normative_body.py` — yeni ikili gövde CI'da kırmızıya döner.
 
 > **Versiyon notu (2026-02-24 — sync with SSOT v1.2.0):**  
 > - KR-015 başlığı drone-agnostik olarak güncellendi  
@@ -11,7 +32,7 @@
 
 ## KR Domain Paketleri İndeksi (Navigasyon)
 
-**KR Şablonu (Kanonik):**
+**KR Şablonu (Kanonik) — kanonik metinde bir KR gövdesi yazılırken izlenen 8 bölüm:**
 1) Amaç
 2) Kapsam / Applies-to
 3) Zorunluluklar (MUST) — test edilebilir maddeler
@@ -21,7 +42,8 @@
 7) Test / Kabul Kriterleri (E2E senaryolar)
 8) Cross-refs (ilgili KR’ler)
 
-**Not:** Bu bölüm sadece navigasyon içindir. Asıl normatif metin her KR başlığının altındadır.
+**Not:** Bu bölüm de, altındaki KR başlıkları da **yalnız navigasyon** içindir. Normatif
+metin `docs/TARLAANALIZ_SSOT_v1_2_0.txt`'tedir (istisna: KR-088/089/090/091 — yukarı bak).
 
 ### A) Security & Isolation
 - KR-070 — Worker Isolation & Egress Policy
@@ -114,922 +136,483 @@
 
 ## KR detayları
 
-### KR-000
+### KR-000 Bu doküman seti nasıl okunur?
 
-**Başlık:** Bu doküman seti nasıl okunur?  
-**Applies to:** contracts, edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK, DEV
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-000] Bu doküman seti nasıl okunur?`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**Normatif özet:** Saha adımları ve DJI entegrasyon ayrıntıları ayrı bir SOP dokümanında tutulur
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK, DEV
 
 ---
-### KR-001
 
-**Başlık:** Proje Özeti  
-**Applies to:** contracts, edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK
+### KR-001 Proje Özeti
 
-**Normatif özet:** *Amaç:** Çiftçilerin ürün kaybını erken uyarı ile azaltmak ve dönüm bazlı analiz hizmeti satmak. Başlangıç bölgesi GAP, ardından Türkiye geneline ölçekleme.
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-001] Proje Özeti`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-002
-
-**Başlık:** Harita Katmanı Anlamları (Renk + Desen)  
-**Applies to:** contracts, edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK, DEV
-
-**Normatif özet:** | Katman | Renk | Desen |
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-010
-
-**Başlık:** Web (PWA) - Genel  
-**Applies to:** platform  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** 
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-011
-
-**Başlık:** Kullanıcı Rolleri ve Temel Yaklaşım  
-**Applies to:** edge-kiosk, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** | Rol | Sorumluluk |
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-012
-
-**Başlık:** İş Planlaması  
-**Applies to:** platform  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** 
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-013
-
-**Başlık:** Çiftçi Üyeliği ve Tarla Yönetimi  
-**Applies to:** platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** *Üyelik:** PWA veya web üzerinden üye olunur. İl, ilçe, ad, soyad ve telefon numarası alınır; üye olunca kendi sayfasına yönlendirilir.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-014
-
-**Başlık:** Kooperatif/Üretici Birliği Üyeliği ve İşleyiş  
-**Applies to:** platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** *Doğrulama:** Hesap 'Onay Bekliyor' açılır. Evrak kontrolü sonrası Merkez yönetim 'Aktif' yapar; eksik evrak varsa aktif edilemez.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-015
-
-**Başlık:** Drone Pilotları (Desteklenen Drone/Sensör Kombinasyonları ile Uçuş)  
-**Applies to:** edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** **Üyelik/Kayıt:** İl, ilçe, ad soyad, telefon; drone modeli ve seri numarası; hizmet verdiği mahalle/köy listesi (başlangıçta opsiyonel). Drone seri numarası doğrulama referansıdır. Desteklenen drone/sensör kombinasyonları drone_registry.yaml'a kayıtlı olmalıdır (DJI Mavic 3M birincil/önerilen; DJI M350 RTK+Sentera 6X, WingtraOne Gen II+MicaSense RedEdge-P, Parrot Anafi USA+Sequoia+, AgEagle eBee X+Altum-PT desteklenir). Bkz. KR-034 (DJI risk planı).
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-016
-
-**Başlık:** Drone - Tarla - Bitki Eşleştirme Politikası (Routing)  
-**Applies to:** worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** *Amaç:** Veri setini doğru FieldID ve o tarihte geçerli bitki türü ile eşleştirip doğru bitki-özel YZ modelini otomatik seçmek.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-017
-
-**Başlık:** YZ Modeli ile Analiz (Şemsiye Kural)  
-**Applies to:** contracts, edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:**
-- AnalysisJob semantiği: `FieldID + CropType + MissionID (varsa)`; **PII yok**.
-- Edge tarafında model çalıştırılmaz (model theft riski).
-- Worker inbound kapalıdır; job **pull/poll** ile kuyruktan alınır; sonuçlar **tek yönlü** yayınlanır.
-- KR-017, aşağıdaki KR’lerle operasyonel olarak ayrıştırılır:
-  - [KR-070] Worker izolasyonu + egress allowlist (network policy)
-  - [KR-071] One-way data flow + allowlist Ingress’te + mTLS cihaz kimliği
-  - [KR-072] Dataset lifecycle + chain-of-custody (manifest/hash/signature/verification)
-  - [KR-073] Untrusted file handling + AV1/AV2 + sandbox + quarantine
-- Kalibrasyon hard gate: [KR-018 / KR-082] sağlanmadan job çalışmaz.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md`
-- Platform: bkz. `platform_ssot.md`
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md`
-- Worker: bkz. `worker_ssot.md`
-
----
-### KR-018
-
-**Başlık:** Tam Radyometrik Kalibrasyon Zorunluluğu (Radiometric Calibration: ışık/sensör etkilerini düzeltme)  
-**Applies to:** contracts, edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK, DEV
-
-**Normatif özet:** Model eğitimi (training: modelin öğrenmesi) ve saha sonuçları arasında tutarlılık (training-serving parity: eğitim/çalıştırma aynı dağılım).
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-019
-
-**Başlık:** Expert Portal (Uzman İnceleme)
-**Applies to:** platform, worker
-**Kaynaklar:** SSOT, KANONIK, DEV
-
-**Normatif özet:** Uzman portalı, modelin düşük güven verdiği veya çelişkili durumlarda manuel inceleme için kullanılır (**PII görünmez**)
-
-**5 Eskalasyon Tetikleyicisi (BİRİ yeterli):**
-1. `final_confidence < dynamic_threshold[crop][analysis_type]` — dinamik eşik (KARAR-13)
-2. `agreement_score < 0.6` — DualHead çelişkisi
-3. `cosine_sim < 0.3` — OOD tespiti (FAISS embedding store)
-4. `epistemic_uncertainty > 0.4` — MC-Dropout yüksek model belirsizliği
-5. `expert_verdict == "needs_more_expert"` — döngü re-trigger (aktif öğrenme bütünlüğü)
-
-**Dinamik Threshold (KARAR-13):**
-- Kaynak: `config/dynamic_thresholds.yaml` (crop × analysis_type bazlı)
-- `global_floor = 0.80` — mutlak alt sınır, threshold_adjuster.py aşağı inemez
-- `initial_threshold = 0.75` — 50 feedback öncesi tüm crop'lar
-- `pamuk.disease = 0.82` — özel: ilk 6 hafta (Türkiye MS verisi sıfır)
-- `max_adjustment_delta = ±0.05` — tek güncellemede maksimum değişim
-- `min_feedback_count = 50` — güncelleme için minimum feedback
-
-**Fail-Closed Seviyeler (Worker → Platform hizalı):**
-
-| Confidence Aralığı | Worker ResultMode | Platform EscalationLevel | Eskalasyon |
-|---------------------|-------------------|--------------------------|------------|
-| ≥ dynamic_threshold | FULL_REPORT | NONE | Yok |
-| 0.45 – dynamic_threshold | PARTIAL_REPORT | STANDARD | Evet |
-| 0.25 – 0.45 | INDICES_ONLY | PRIORITY | Evet |
-| < 0.25 | NO_RESULT | CRITICAL | ACİL |
-
-**Sorumluluk ayrımı:**
-- **Worker:** 5 tetikleyiciyi değerlendirir, ResultMode belirler, eskalasyon paketi üretir (field_id YOK — KR-071)
-- **Platform:** Eskalasyon paketini alır, EscalationLevel belirler, expert atar. Worker'ın escalation_reasons'ını severity booster olarak kullanır (OOD/epistemic → seviye yükseltme).
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-020
-
-**Başlık:** Ücretlendirme  
-**Applies to:** platform  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** 
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-021
-
-**Başlık:** Genel Prensip  
-**Applies to:** platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** Ücretler bitki türü ve analiz seçeneğine göre: tek seferlik analiz veya **Sezonluk Paket**
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-022
-
-**Başlık:** Fiyat Yönetimi Politikası  
-**Applies to:** platform  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** Fiyatlar uygulamada serbest **yazılmaz**; tek kaynak **PriceBook** (Fiyat Kataloğu)
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-023
-
-**Başlık:** Örnek Fiyat Kurgusu (Pamuk)  
-**Applies to:** platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** | Seçenek | Liste Fiyat | İlk Yıl / Abonelik Kurgusu |
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-024
-
-**Başlık:** Önerilen Tarama Periyodu (Gün)  
-**Applies to:** platform  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** | Bitki | Önerilen Periyot (gün) |
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-025
-
-**Başlık:** Analiz İçeriği (Hizmet Kapsamı)  
-**Applies to:** worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** *Temel İlke:** Sistem ilaçlama kararı **vermez**; yalnızca tespit, risk skoru ve erken uyarı sağlar.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-026
-
-**Başlık:** Sunum Biçimi  
-**Applies to:** platform  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** Harita katmanları (ısı haritası / grid / zonlama)
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-027
-
-**Başlık:** Abonelik Planlayıcı (Subscription Scheduler)  
-**Applies to:** platform, worker  
-**Kaynaklar:** SSOT, DEV
-
-**Normatif özet:** **Amaç:** **Sezonluk Paket** seçen kullanıcılar için otomatik, periyodik Mission üretimi.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-028
-
-**Başlık:** Mission Yaşam Döngüsü ve SLA Alanları  
-**Applies to:** platform, worker  
-**Kaynaklar:** SSOT, DEV
-
-**Normatif özet:** **Mission Tanımı:** Bir tarlanın belirli bir tarihte yapılacak tek analiz görevi. Tek seferlik talepten veya **Sezonluk Paket**'ten oluşabilir.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-029
-
-**Başlık:** YZ Eğitim Geri Bildirimi (Training Feedback Loop)  
-**Applies to:** contracts, platform, worker  
-**Kaynaklar:** SSOT, DEV
-
-**Normatif özet:** *Amaç:** Uzman düzeltmelerini YZ modeline geri beslemek ve model iyileştirmesi yapmak.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-030
-
-**Başlık:** Notlar, Sınırlar ve Uyum  
-**Applies to:** edge-kiosk, worker  
-**Kaynaklar:** SSOT, KANONIK, DEV
-
-**Normatif özet:** **Drone standardı:** Drone-agnostik mimari. Desteklenen modeller drone_registry.yaml'a kayıtlı olmalıdır (DJI Mavic 3M birincil/önerilen; M350 RTK+Sentera 6X, WingtraOne Gen II+MicaSense RedEdge-P, Parrot Anafi USA+Sequoia+, AgEagle eBee X+Altum-PT). Bkz. KR-034 (DJI risk planı). KVKK: PII ile operasyon verisi ayrıdır. Model çıktısı karar değildir.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-031
-
-**Başlık:** Pilot Hakediş ve Ödeme Politikası  
-**Applies to:** platform  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** Pilotlar, bir ay içinde **ONAYLANMIŞ** görevlerde taradıkları alan üzerinden hakediş kazanır
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-032
-
-**Başlık:** Training Export Standardı  
-**Applies to:** contracts, platform, worker  
-**Kaynaklar:** SSOT, KANONIK, DEV
-
-**Normatif özet:** *Amaç:** Uzman feedback'lerini standart formatta export ederek model eğitim pipeline'ına aktarmak.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-033
-
-**Başlık:** Ödeme ve Manuel Onay (Müşteri Tahsilat Akışı)
-**Applies to:** contracts, platform, worker
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** **Amaç:** Tek seferlik Mission veya **Sezonluk Paket Subscription** taleplerinde tahsilat standartlaştırma. Durum: `PAYMENT_PENDING`→`PAID`/`REJECTED`/`CANCELLED`; `PAID`→`REFUNDED`. Otomatik expire yoktur. IBAN dekont uygulama içi yüklenir; e-posta kanal değildir. Tüm geçişler `PaymentStateMachine` üzerinden — bypass yasaktır.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-040
-
-**Başlık:** Güvenlik Kabul Kriterleri/Test Checklist (SDLC Entegrasyonu)  
-**Applies to:** contracts, edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** **Amaç:** Savunma-derinliği (defense-in-depth) güvenlik yaklaşımını, ölçülebilir kabul kriterlerine ve SDLC kapılarına (PR/CI/Release/Ops) bağlamak. PR/CI/Release/Ops kapıları tüm bileşenleri (contracts, edge-kiosk, platform, worker) kapsar; yalnızca platform değildir.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-041
-
-**Başlık:** SDLC Kapıları (Gate) - Zorunlu Kontroller  
-**Applies to:** contracts, edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** Contracts pinleme: CONTRACTS_VERSION (SemVer) + CONTRACTS_SHA256 zorunlu; değişiklikte breaking-change kontrolü
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-042
-
-**Başlık:** Kabul Kriterleri Matrisi  
-**Applies to:** edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** | Güvenlik Katmanı | Kabul Kriteri (DoD) | Test Kanıtı | SDLC Gate |
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-043
-
-**Başlık:** Test Checklist (Senaryo Bazlı)  
-**Applies to:** contracts, edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** | Senaryo | Adımlar (özet) | Beklenen Sonuç | Kanıt/Artefakt |
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-050
-
-**Başlık:** Kimlik Doğrulama ve Üyelik Akışı (Sade Model)
-**Applies to:** contracts, worker
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** Kimlik bilgisi olarak yalnızca **Telefon Numarası** kullanılır (E-posta ve TCKN **toplanmaz**)
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-060
-
-**Başlık:** Ürün/Teknik Spesifikasyondan Normatif  
-**Applies to:** platform  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** 
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-061
-
-**Başlık:** Amaç ve Sabit Çerçeve  
-**Applies to:** platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** Drone-agnostik mimari. DJI Mavic 3M birincil/önerilen; desteklenen diğer modeller drone_registry.yaml'a kayıtlıdır. Bkz. KR-001 (radyometri notu) ve KR-034 (DJI bağımsızlık planı).
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-062
-
-**Başlık:** Tasarım İlkeleri  
-**Applies to:** edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** 1. **Tek kaynak gerçek:** API ve veri modeli. Web (PWA) iş kuralı kopyalamaz.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-063
-
-**Başlık:** Roller ve Yetkiler (RBAC)  
-**Applies to:** edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** | Rol Kodu | Kısa Tanım | Özet Yetki |
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-064
-
-**Başlık:** Harita Katman Standardı (Layer Registry)  
-**Applies to:** platform  
-**Kaynaklar:** SSOT, KANONIK, DEV
-
-**Normatif özet:** Katmanlar web (PWA) arayüzünde aynı Layer Registry üzerinden tanımlanır. Renk + desen/ikon + opaklık + öncelik tutarlı olmalıdır.
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-065
-
-**Başlık:** Pilot Hakediş Doğrulama (Expected vs Observed)  
-**Applies to:** platform  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** **Expected Area:** FieldBoundary veya Mission flightplan sınırı (m²)
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-066
-
-**Başlık:** Güvenlik ve KVKK  
-**Applies to:** edge-kiosk, platform  
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif özet:** PII ayrı veri alanında tutulur; raporlama ve KPI katmanı pseudonymous kimliklerle çalışır
-
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
-
----
-### KR-070
-
-**Başlık:** YZ Analiz İzolasyonu (Worker Isolation & Egress Policy)
-**Kapsam / Applies-to:** worker
-
-**1) Amaç**
-- (Kanonik) Güvenlik ve veri akışı kuralını test edilebilir hale getirmek.
-
-**2) Zorunluluklar (MUST)**
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif kurallar (Hard):**
-1) Worker **inbound kapalıdır** (deny-by-default). “ingest/upload” HTTP endpoint’i **yoktur**.  
-2) Worker job’ı **pull/poll** ile alır (queue/dispatch). Platform→Worker push **yok**.  
-3) Worker egress **allowlist** ile sınırlıdır:  
-   - Object Storage (S3-uyumlu) → **read-only**  
-   - Queue/Dispatch → **consume-only**  
-   - Observability → **append-only**  
-   - Internet → **DENY**  
-4) Worker job çalıştırmadan önce **precondition** doğrular:  
-   - `CALIBRATED` kanıtı (**[KR-018]**)  
-   - manifest/hash/(varsa signature) + AV raporları + verification (**[KR-072]**, **[KR-073]**)  
-5) Ops erişimi: bastion + MFA + JIT; yönetim portları public internete açılmaz.
-
-**Network Policy Matrix:**
-- Platform → Worker: **DENY**
-- Web/PWA → Worker: **DENY**
-- Worker → Storage/Queue/Results/Observability: **ALLOW (outbound only, mTLS)**
-- Worker → Internet: **DENY**
-
-**Audit/WORM olayları (minimum):**
-- `SECURITY.DENY`, `JOB.REJECT`, `DATASET.REJECTED_QUARANTINE`
-
-**SDLC Gate / Test (minimum):**
-- Policy deny test (platform→worker TCP)  
-- Calibrated yok → job reject  
-- Hash mismatch → quarantine  
-- Contracts CI validate + breaking-change detector (**[KR-081]**)
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
 
 ---
 
-**4) Kanıt / Artefact**
-- Üretilen raporlar/manifestler/sertifikalar ve referanslar (KR-072/KR-073 ile).
+### KR-002 Harita Katmanı Anlamları (Renk + Desen)
 
-**5) Audit / Log**
-- SECURITY.DENY / JOB.REJECT / HASH.MISMATCH vb. olaylar; correlation_id zorunlu.
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-002] Harita Katmanı Anlamları (Renk + Desen)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**6) Hata Modları / Quarantine**
-- Şüpheli/tamper/malware → REJECTED_QUARANTINE; işlem durur ve kanıt üretilir.
-
-**7) Test / Kabul Kriterleri**
-- Negatif testler: inbound denemeleri reddedilir; eksik kanıtla job reddedilir; hash mismatch yakalanır.
-
-**8) Cross-refs**
-- KR-017 (şemsiye), KR-018 (kalibrasyon), KR-070..KR-073 (akış/kanıt).
-
----
-### KR-071
-
-**Başlık:** Tek Yönlü Veri Akışı + Allowlist Yerleşimi (One-way Data Flow)
-**Kapsam / Applies-to:** edge-kiosk, platform, worker
-
-**1) Amaç**
-- (Kanonik) Güvenlik ve veri akışı kuralını test edilebilir hale getirmek.
-
-**2) Zorunluluklar (MUST)**
-**Kaynaklar:** SSOT, KANONIK
-
-**Kanonik akış (Hard):**
-1) EdgeKiosk → Platform/Ingress: HTTPS 443 + **mTLS cihaz kimliği** (client cert).  
-2) Platform: ham veriyi public API’de servis etmez; storage + queue üzerinden orkestrasyon yapar.  
-3) Worker: queue/storage’dan **pull** eder; analiz eder.  
-4) Worker → Platform: sadece **türev sonuç** (AnalysisResult/layers) yazar.  
-5) Web/PWA: sadece sonuç okur; ham veri **yok**.
-
-**Allowlist yerleşimi:**
-- IP allowlist **kimlik değildir** (dinamik IP/CGNAT).  
-- Allowlist yalnızca **Ingress kapısında** ikincil katmandır. Ana kontrol **mTLS**’tir.
-
-**SDLC Test (minimum):**
-- allowlist dışı IP → deny + audit  
-- sertifikasız istek → deny + audit  
-- worker’a direct HTTP → deny (policy)
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK, DEV
 
 ---
 
-**4) Kanıt / Artefact**
-- Üretilen raporlar/manifestler/sertifikalar ve referanslar (KR-072/KR-073 ile).
+### KR-010 Web (PWA) - Genel
 
-**5) Audit / Log**
-- SECURITY.DENY / JOB.REJECT / HASH.MISMATCH vb. olaylar; correlation_id zorunlu.
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-010] Web (PWA) - Genel`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**6) Hata Modları / Quarantine**
-- Şüpheli/tamper/malware → REJECTED_QUARANTINE; işlem durur ve kanıt üretilir.
-
-**7) Test / Kabul Kriterleri**
-- Negatif testler: inbound denemeleri reddedilir; eksik kanıtla job reddedilir; hash mismatch yakalanır.
-
-**8) Cross-refs**
-- KR-017 (şemsiye), KR-018 (kalibrasyon), KR-070..KR-073 (akış/kanıt).
-
----
-### KR-072
-
-**Başlık:** Dataset Lifecycle + Kanıt Zinciri (Chain of Custody) — Contract-First
-**Kapsam / Applies-to:** contracts, edge-kiosk, platform, worker
-
-**1) Amaç**
-- (Kanonik) Güvenlik ve veri akışı kuralını test edilebilir hale getirmek.
-
-**2) Zorunluluklar (MUST)**
-**Kaynaklar:** SSOT, KANONIK
-
-**Dataset durumları (minimum):**
-`RAW_INGESTED` → `RAW_SCANNED_EDGE_OK` → `RAW_HASH_SEALED` → `CALIBRATED` (**[KR-018]**) →  
-`CALIBRATED_SCANNED_CENTER_OK` → `DISPATCHED_TO_WORKER` → `ANALYZED` → `DERIVED_PUBLISHED` → `ARCHIVED`  
-Hata/şüphe: `REJECTED_QUARANTINE`
-
-**Zorunlu kanıt artefact’leri:**
-- `dataset_manifest.json` + `manifest.sha256` + (opsiyonel) `signature.sig`
-- `scan_report_edge.json` (AV1)
-- `scan_report_center.json` (AV2)
-- `verification_report.json` (hash match/mismatch)
-- `calibration_result.json` + `qc_report.json`
-- `evidence_bundle_ref` (platform sonuçlarında sadece referans)
-
-**Hard gate:**
-- Hash mismatch / AV fail / QC fail → `REJECTED_QUARANTINE`
-- `CALIBRATED_SCANNED_CENTER_OK` olmadan Worker job kabul etmez.
-
-**Contract-first:**
-- Şemalar `tarlaanaliz-contracts` altında JSON Schema + örnekler + CI doğrulama (**[KR-081]**)
+**Applies to:** platform · **Kaynaklar:** SSOT, KANONIK
 
 ---
 
-**4) Kanıt / Artefact**
-- Üretilen raporlar/manifestler/sertifikalar ve referanslar (KR-072/KR-073 ile).
+### KR-011 Kullanıcı Rolleri ve Temel Yaklaşım
 
-**5) Audit / Log**
-- SECURITY.DENY / JOB.REJECT / HASH.MISMATCH vb. olaylar; correlation_id zorunlu.
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-011] Kullanıcı Rolleri ve Temel Yaklaşım`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**6) Hata Modları / Quarantine**
-- Şüpheli/tamper/malware → REJECTED_QUARANTINE; işlem durur ve kanıt üretilir.
-
-**7) Test / Kabul Kriterleri**
-- Negatif testler: inbound denemeleri reddedilir; eksik kanıtla job reddedilir; hash mismatch yakalanır.
-
-**8) Cross-refs**
-- KR-017 (şemsiye), KR-018 (kalibrasyon), KR-070..KR-073 (akış/kanıt).
-
----
-### KR-073
-
-**Başlık:** Untrusted File Handling + AV1/AV2 + Sandbox Dönüştürme
-**Kapsam / Applies-to:** contracts, edge-kiosk, platform, worker
-
-**1) Amaç**
-- (Kanonik) Güvenlik ve veri akışı kuralını test edilebilir hale getirmek.
-
-**2) Zorunluluklar (MUST)**
-**Kaynaklar:** SSOT, KANONIK
-
-**Normatif kurallar (Hard):**
-- Ham dosyalar (TIFF/JPEG/RAW vb.) **untrusted input** kabul edilir. Parse/convert işlemleri sandbox’ta yapılır.
-- **AV1 EdgeKiosk** + **AV2 Merkez Security Gateway** zorunludur.
-- AV/verification olmadan dataset bir sonraki duruma geçemez (**[KR-072]**).
-- Güvenli türev (tiles/COG/thumbnail) üretimi merkezde sandbox işçisinde yapılır; platform public ham servis etmez.
-
-**Quarantine:**
-- AV fail / hash mismatch / QC fail → `REJECTED_QUARANTINE` + audit.
-
-**SDLC Test (minimum):**
-- (Lab) EICAR tetiklemesi  
-- AV1 PASS ama AV2 FAIL → quarantine  
-- Sandbox crash olmadan kontrollü hata
+**Applies to:** edge-kiosk, worker · **Kaynaklar:** SSOT, KANONIK
 
 ---
 
-**4) Kanıt / Artefact**
-- Üretilen raporlar/manifestler/sertifikalar ve referanslar (KR-072/KR-073 ile).
+### KR-012 İş Planlaması
 
-**5) Audit / Log**
-- SECURITY.DENY / JOB.REJECT / HASH.MISMATCH vb. olaylar; correlation_id zorunlu.
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-012] İş Planlaması`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**6) Hata Modları / Quarantine**
-- Şüpheli/tamper/malware → REJECTED_QUARANTINE; işlem durur ve kanıt üretilir.
-
-**7) Test / Kabul Kriterleri**
-- Negatif testler: inbound denemeleri reddedilir; eksik kanıtla job reddedilir; hash mismatch yakalanır.
-
-**8) Cross-refs**
-- KR-017 (şemsiye), KR-018 (kalibrasyon), KR-070..KR-073 (akış/kanıt).
+**Applies to:** platform · **Kaynaklar:** SSOT, KANONIK
 
 ---
-### KR-080
 
-**Başlık:** Ana İş Akışları için Teknik Kurallar  
-**Applies to:** contracts, edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK
+### KR-013 Çiftçi Üyeliği ve Tarla Yönetimi
 
-**Normatif özet:** Bu bölüm; ana iş akışlarının iş planı anlatısında zaten bulunan kısımlarını tekrar etmez. Sadece teknik spesifikasyonda eklenen/sertleştirilen kuralları listeler.
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-013] Çiftçi Üyeliği ve Tarla Yönetimi`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
+**Applies to:** platform, worker · **Kaynaklar:** SSOT, KANONIK
 
 ---
-### KR-081
 
-**Başlık:** Kontrat Şemaları (Contract-First) — Kanonik JSON Schema  
-**Applies to:** contracts, edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK, DEV
+### KR-014 Kooperatif/Üretici Birliği Üyeliği ve İşleyiş
 
-**Normatif özet:** *Amaç:** "olmalı" seviyesinden çıkıp, kodlamadan önce ortak dilin **makine-doğrulanabilir** (machine-verifiable) hale gelmesi.
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-014] Kooperatif/Üretici Birliği Üyeliği ve İşleyiş`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
+**Applies to:** platform, worker · **Kaynaklar:** SSOT, KANONIK
 
 ---
-### KR-082
 
-**Başlık:** RADIOMETRY / Radyometrik Kalibrasyon (Uyumluluk Etiketi)  
-**Applies to:** contracts, edge-kiosk, platform, worker  
-**Kaynaklar:** SSOT, KANONIK, DEV
+### KR-015 Drone Pilotları (Desteklenen Drone/Sensör Kombinasyonları ile Uçuş)
 
-**Normatif özet:** Bu madde, **[KR-018] Tam Radyometrik Kalibrasyon Zorunluluğu** ile **aynı zorunluluğu** “KR-082” etiketiyle de referanslayabilmek için eklenmiştir.
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-015] Drone Pilotları (Desteklenen Drone/Sensör Kombinasyonları ile Uçuş)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
+**Applies to:** edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
 
 ---
-### KR-083
 
-**Başlık:** İl Operatörü
-**Applies to:** platform
-**Kaynaklar:** SSOT, KANONIK, DEV
+### KR-016 Drone - Tarla - Bitki Eşleştirme Politikası (Routing)
 
-**Normatif özet:** *Rol Kodu:** ProvinceOperator
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-016] Drone - Tarla - Bitki Eşleştirme Politikası (Routing)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**Component dokümanları:**
-- Contracts: bkz. `contracts_ssot.md` (bu KR contracts kapsamındaysa)
-- Platform: bkz. `platform_ssot.md` (bu KR platform kapsamındaysa)
-- Edge-Kiosk: bkz. `edgekiosk_ssot.md` (bu KR edge-kiosk kapsamındaysa)
-- Worker: bkz. `worker_ssot.md` (bu KR worker kapsamındaysa)
+**Applies to:** worker · **Kaynaklar:** SSOT, KANONIK
 
 ---
-### KR-084
 
-**Başlık:** Termal Veri İşleme ve Sulama Stresi Analizi (Thermal Pipeline)
-**Applies to:** contracts, worker, platform (rapor katmanı)
-**Kaynaklar:** SSOT, KANONIK
+### KR-017 YZ Modeli ile Analiz (Şemsiye Kural)
 
-**1) Amaç**
-- Termal bant (LWIR 8–14 μm) mevcut olduğunda sulama stresi, su yönetimi ve erken dönem bitki sağlığı sorunlarını görünür bantlardan önce tespit etmek; termal bant yoksa analiz akışını etkilememek (graceful degradation).
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-017] YZ Modeli ile Analiz (Kanonik: İzolasyon + Tek Yönlü Akış + Job Semantiği)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**2) Zorunluluklar (MUST)**
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
 
-1) Termal pipeline yalnızca `intake_manifest.available_bands[]` içinde `LWIR` bant tanımı varsa etkinleşir. Termal bant yoksa bu KR'nin hiçbir kuralı uygulanmaz.
-2) Termal kalibrasyon gereksinimleri sensör tipine göre belirlenir:
-   - **Altum-PT (FLIR Boson 320×256):** Fabrika radyometrik kalibrasyon sertifikası + Pix4Dfields termal kalibrasyon pipeline'ı.
-   - **Sentera 6X Thermal (FLIR Boson 640):** Fabrika radyometrik kalibrasyon + ILS düzeltmesi.
-3) Termal kalibrasyon kanıtı `calibration_result.json` içinde `thermal_calibration` bölümünde tutulur.
-4) Worker termal analiz çıktıları: Canopy sıcaklık haritası (°C), CWSI (0.0–1.0), canopy-soil sıcaklık deltası, sulama etkinliği göstergesi.
-5) Termal katmanlar `THERMAL_STRESS` LayerCode ile raporda sunulur (bkz. KR-064).
-6) Termal verinin çözünürlüğü MS'den düşüktür; Worker termal katmanı MS çözünürlüğüne yeniden örnekler.
+---
 
-**4) Kanıt / Artefact**
-- `calibration_result.json` → `thermal_calibration{}` bölümü
-- `thermal_analysis_result.json` (CWSI haritası + canopy temp + delta)
-- `qc_report.json` → `thermal_qc{}` (sıcaklık aralığı makul mü, sensör drift var mı)
+### KR-018 Tam Radyometrik Kalibrasyon Zorunluluğu (Radiometric Calibration: ışık/sensör etkilerini düzeltme)
 
-**5) Audit / Log**
-- `THERMAL.PIPELINE_ACTIVATED`, `THERMAL.CALIBRATION_VERIFIED`, `THERMAL.QC_PASS/WARN/FAIL`, `THERMAL.RESULT_PUBLISHED`
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-018 / KR-082] RADIOMETRY - Tam Radyometrik Kalibrasyon Zorunluluğu + Spektral Kapasite Algılama (Radiometric Calibration + Spectral Capability Detection)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
-**6) Hata Modları / Quarantine**
-- Termal kalibrasyon kanıtı eksik/geçersiz → `THERMAL.QC_FAIL` → termal pipeline devre dışı, MS pipeline normal devam
-- Sıcaklık değerleri fiziksel olarak anlamsız aralıkta (< -20°C veya > 70°C) → `THERMAL.QC_WARN` → admin inceleme
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK, DEV
 
-**7) Test / Kabul Kriterleri**
-- Termal bant olmayan manifest ile job → termal pipeline etkinleşmez
-- Termal bant + kalibrasyon kanıtı eksik → `THERMAL.QC_FAIL` + termal katman üretilmez
-- Termal bant + kalibrasyon OK → CWSI haritası + canopy temp katmanı üretilir
-- CWSI değerleri 0.0–1.0 aralığında
+---
 
-**8) Cross-refs**
-- KR-018/KR-082 (spektral kapasite), KR-017 (şemsiye), KR-072 (dataset lifecycle), KR-064 (layer registry)
+### KR-019 Expert Portal (Uzman İnceleme)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-019] Expert Portal + Konsensüs Yayın Kapısı (Uzman İnceleme)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform, worker · **Kaynaklar:** SSOT, KANONIK, DEV
+
+---
+
+### KR-020 Ücretlendirme
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-020] Ücretlendirme`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-021 Genel Prensip
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-021] Genel Prensip`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-022 Fiyat Yönetimi Politikası
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-022] Fiyat Yönetimi Politikası`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-023 Örnek Fiyat Kurgusu (Pamuk)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-023] Örnek Fiyat Kurgusu (Pamuk)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-024 Önerilen Tarama Periyodu (Gün)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-024] Önerilen Tarama Periyodu (Gün)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-025 Analiz İçeriği (Hizmet Kapsamı)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-025] Analiz İçeriği (Hizmet Kapsamı)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-026 Sunum Biçimi
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-026] Sunum Biçimi`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-027 Abonelik Planlayıcı (Subscription Scheduler)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-027] Sezonluk Paket Planlayıcı (Subscription Scheduler)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform, worker · **Kaynaklar:** SSOT, DEV
+
+---
+
+### KR-028 Mission Yaşam Döngüsü ve SLA Alanları
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-028] Mission Yaşam Döngüsü ve SLA Alanları`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform, worker · **Kaynaklar:** SSOT, DEV
+
+---
+
+### KR-029 YZ Eğitim Geri Bildirimi (Training Feedback Loop)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-029] YZ Eğitim Geri Bildirimi (Training Feedback Loop)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, platform, worker · **Kaynaklar:** SSOT, DEV
+
+---
+
+### KR-030 Notlar, Sınırlar ve Uyum
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-030] Notlar, Sınırlar ve Uyum`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** edge-kiosk, worker · **Kaynaklar:** SSOT, KANONIK, DEV
+
+---
+
+### KR-031 Pilot Hakediş ve Ödeme Politikası
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-031] Pilot Hakediş ve Ödeme Politikası`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-032 Training Export Standardı
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-032] Training Export Standardı`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, platform, worker · **Kaynaklar:** SSOT, KANONIK, DEV
+
+---
+
+### KR-033 Ödeme ve Manuel Onay (Müşteri Tahsilat Akışı)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## # [KR-033] Ödeme ve Manuel Onay (Müşteri Tahsilat Akışı)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-040 Güvenlik Kabul Kriterleri/Test Checklist (SDLC Entegrasyonu)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-040] Güvenlik Kabul Kriterleri/Test Checklist (SDLC Entegrasyonu)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-041 SDLC Kapıları (Gate) - Zorunlu Kontroller
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-041] SDLC Kapıları (Gate) - Zorunlu Kontroller`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-042 Kabul Kriterleri Matrisi
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-042] Kabul Kriterleri Matrisi`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-043 Test Checklist (Senaryo Bazlı)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-043] Test Checklist (Senaryo Bazlı)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-050 Kimlik Doğrulama ve Üyelik Akışı (Sade Model)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-050] Kimlik Doğrulama ve Üyelik Akışı (Sade Model)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-060 Ürün/Teknik Spesifikasyondan Normatif
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-060] Ürün/Teknik Spesifikasyondan Normatif`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-061 Amaç ve Sabit Çerçeve
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-061] Amaç ve Sabit Çerçeve`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-062 Tasarım İlkeleri
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-062] Tasarım İlkeleri`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-063 Roller ve Yetkiler (RBAC)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-063] Roller ve Yetkiler (RBAC)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-064 Harita Katman Standardı (Layer Registry)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-064] Harita Katman Standardı (Layer Registry)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform · **Kaynaklar:** SSOT, KANONIK, DEV
+
+---
+
+### KR-065 Pilot Hakediş Doğrulama (Expected vs Observed)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-065] Pilot Hakediş Doğrulama (Expected vs Observed)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-066 Güvenlik ve KVKK
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-066] Güvenlik ve KVKK`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** edge-kiosk, platform · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-070 YZ Analiz İzolasyonu (Worker Isolation & Egress Policy)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-070] YZ Analiz İzolasyonu (Worker Isolation & Egress Policy)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-071 Tek Yönlü Veri Akışı + Allowlist Yerleşimi (One-way Data Flow)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-071] Tek Yönlü Veri Akışı (One-way data flow) + Allowlist Yerleşimi`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-072 Dataset Lifecycle + Kanıt Zinciri (Chain of Custody) — Contract-First
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-072] Dataset Lifecycle (Veri Yaşam Döngüsü) + Kanıt Zinciri (Chain of Custody) — Contract-First`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-073 Untrusted File Handling + AV1/AV2 + Sandbox Dönüştürme
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-073] Untrusted File Handling + Malware (AV1/AV2) + Güvenli Dönüştürme`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-080 Ana İş Akışları için Teknik Kurallar
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-080] Ana İş Akışları için Teknik Kurallar`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK
+
+---
+
+### KR-081 Kontrat Şemaları (Contract-First) — Kanonik JSON Schema
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-081] Kontrat Şemaları (Contract-First) — Kanonik JSON Schema`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK, DEV
+
+---
+
+### KR-082 RADIOMETRY / Radyometrik Kalibrasyon (Uyumluluk Etiketi)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-018 / KR-082] RADIOMETRY - Tam Radyometrik Kalibrasyon Zorunluluğu + Spektral Kapasite Algılama (Radiometric Calibration + Spectral Capability Detection)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, edge-kiosk, platform, worker · **Kaynaklar:** SSOT, KANONIK, DEV
+
+---
+
+### KR-083 İl Operatörü
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-083] İlçe Temsilcisi`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** platform · **Kaynaklar:** SSOT, KANONIK, DEV
+
+---
+
+### KR-084 Termal Veri İşleme ve Sulama Stresi Analizi (Thermal Pipeline)
+
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-084] Termal Veri İşleme ve Sulama Stresi Analizi (Thermal Pipeline)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
+
+**Applies to:** contracts, worker, platform (rapor katmanı) · **Kaynaklar:** SSOT, KANONIK
 
 ---
 
@@ -1133,6 +716,42 @@ Verilerin yaşam döngüsünü yöneterek DB boyutu ve S3 depolama maliyetini ko
 7) analysis_results silmeden ÖNCE timeseries'te karşılığının varlığı doğrulanır.
 8) İlk çalıştırma dry_run() modunda yapılır (silmeden rapor).
 
+**Sözleşmeye 2026-07/08 turunda giren veri kategorileri (0.h kararı — K2/K3):**
+
+9) **Öncelik bölgesi poligonları + ön faz görselleri** (`analysis_priority_zones`,
+   `x-preliminary-content`; taşıyıcılar: `report_phase.enum.v1`,
+   `analysis_preliminary_ready.v1`). **Süre: analiz sonucuyla AYNI (730 gün).**
+   Gerekçe: bunlar analiz çıktısının bir görünümüdür, bağımsız bir varlık değil —
+   ayrı bir saklama ömrü vermek, silinmiş bir analizin konumsal izini geride bırakırdı.
+   Silme yolu: `analysis_results` kaydıyla birlikte (aynı işlem). Hukuki sebep:
+   sözleşmenin ifası (hizmet teslimi).
+
+10) **Seçilmiş ham kareler** (`raw_frames`; taşıyıcılar: edge + platform
+    `calibrated_dataset_manifest.v1`). **Süre: 180 gün (en kısa kademe).**
+    Gerekçe: ham kare, çiftçinin parselinin **en yüksek çözünürlüklü** ve en kolay
+    yeniden kimliklendirilebilir verisidir; üstelik **komşu parseli de görebilir**
+    (üçüncü kişi verisi — bkz. madde 12). KR-050 veri minimizasyonu ilkesi gereği
+    şüphede **az sakla**: türev katmanlar (COG/tile) zaten üretilmiş olur ve analiz
+    değeri korunur. ⚠️ Bu süre KVKK aydınlatma metniyle birlikte **kesinleşir**;
+    uzatma isteniyorsa gerekçesi bu tabloya yazılır. Silme yolu: dataset yaşam
+    döngüsünde `ARCHIVED` sonrası nesne silme (KR-072). Kapsam notu: kareler **hem**
+    M1'deki yerel edge diskinde **hem** merkezde bulunabilir — süre **her ikisi** için
+    geçerlidir, yalnız merkez için değil.
+
+11) **Denetim örneklemi etiketleri** (`audit_sample`; taşıyıcı:
+    `schemas/worker/expert_review_queue.v1.schema.json`).
+    **Süre: ASLA silinmez — ama ölçüm alanları dışındaki içerik 730 günde budanır.**
+    Gerekçe: denetim satırı bir **ölçüm kaydıdır** (uzman doğruluğu/kalibrasyonu);
+    silinirse geçmiş model kalite iddiaları doğrulanamaz hâle gelir. Ancak satırın
+    taşıdığı görsel/konumsal yük ölçüm için gerekli değildir → `tile_id` + sonuç
+    alanları kalır, ek içerik analiz sonucu ömrüne (730 gün) tabidir.
+
+12) **Üçüncü kişi verisi:** komşu parsele taşan görüntü/izdüşüm **taşınmaz**. Ölçüldü
+    (2026-08-01): tekil kare izdüşümü sözleşmede **yok** (C7 Tur 2'ye ertelendi), ama
+    `raw_frames` seçilmiş kareleri listeler ve bir kare komşu parseli **görebilir** —
+    `sees_patch_ids` yalnız hedef yamaları işaretler, kare kırpma (crop) garantisi
+    sözleşmede **yoktur**. Bu boşluk plan kalemi **0.h-a** olarak açıktır.
+
 **4) Kanıt / Artefact**
 - `config/retention_policy.yaml`
 - `retention_service.py`
@@ -1196,48 +815,11 @@ Verilerin yaşam döngüsünü yöneterek DB boyutu ve S3 depolama maliyetini ko
 
 ---
 
-## KR-092 — Fenolojik/Sezonluk Uçuş Parametreleri (İrtifa & Hız)
+### KR-092 Fenolojik/Sezonluk Uçuş Parametreleri (İrtifa & Hız)
 
-> **Versiyon notu (2026-07-05):** Yeni KR — sezonluk (haftalık) uçuş parametreleri; tarama protokolü v1.6 §10'dan türetilir. Kanonik normatif metin platform SSOT'undadır (`docs/TARLAANALIZ_SSOT_v1_2_0.txt` KR-092); burada contract yüzeyi referanslanır, çoğaltılmaz.
-
-**1) Amaç**
-Bir görevin uçuş yüksekliği (Y) ve hızı (v) değerlerini bitki türü + sezon haftasına (fenolojik evre) göre türetmek; hedef GSD tutturularak analiz kalitesini sabitlemek. Sonuç pilota ekranda o hafta öne çıkarılıp tam sezon tablosuyla ve KMZ uçuş planına gömülü olarak teslim edilir.
-
-**2) Kapsam / Applies-to:** platform, worker, edge-kiosk, contracts
-
-**3) Zorunluluklar (MUST)**
-1) 5 aktif GAP ürünü (COTTON/CORN/RICE/GRAPE/PISTACHIO; CORN kanonik, MAIZE legacy alias — crop_type aliases CORN↔MAIZE) için **tek yetkili kaynak** haftalık sezon takvimidir (`data/seasonal_flight_calendar.json`); bu ürünlerde haftalık takvim, evre-bazlı fenoloji fallback'inden (`data/phenology_flight_profiles.json`) önceliklidir.
-2) Çözüm anahtarı `crop_type` + `mission_date` → bölgesel haftalık pencere (MM-DD) → (bbch, altitude_m, speed_ms, critical); yeni DB "ekim tarihi" alanı eklenmez.
-3) Fiziksel/mevzuat sınırları fail-closed doğrulanır: RGB GSD=H/37,2 · ÇS GSD=H/21,7, **H/v ≥ 3,9**, **≤ 120 m AGL** (SHGM), güneş açısı > 30°.
-4) Görev tarihi sezona düşmezse en yakın sınır haftasına snap edilir (matched=false); kapsam dışı bitkide haftalık DTO None döner (çağıran fenoloji/varsayılana düşer).
-5) CRP radyometrik kalibrasyonu her uçuş başı+sonu zorunludur (KR-018/082 hard-gate); karar desteğidir, sistem ilaçlama kararı vermez (KR-025).
-
-**4) Kanıt / Artefact**
-- Veri: `data/seasonal_flight_calendar.json` (kanonik haftalık takvim)
-- Contract şeması: `schemas/core/seasonal_flight_calendar.v1.schema.json` (bu repo; SeasonalFlightCalendar)
-- Domain: `seasonal_flight_calendar.py` (VO), `seasonal_flight_planner.py` (servis), `seasonal_flight_calendar_loader.py` (loader)
-- DTO/Contract: `WeeklyFlightDTO`, `SeasonWeekDTO`, `SeasonFlightScheduleDTO`
-- API: `GET /missions/{id}/season-flight-schedule`, `weekly_flight` alanı (mission + pilot mission response), `GET /missions/{id}/flight-route.kmz` (Y/v gömülü)
-
-**5) Audit / Log**
-- Loader olayları: `SEASONAL_CALENDAR_MISSING` / `READ_FAILED` / `PARSE_SKIP` / `LOADED`
-- Snap/fallback notu DTO içinde taşınır (`FLIGHT.PARAMS_FALLBACK`)
-
-**6) Hata Modları**
-- Takvim dosyası yok/bozuk → ilgili ürün atlanır (parse-skip), diğer ürünler yüklenir; negatif cache zehirlenmesi önlenir.
-- Fiziksel sınır ihlali (Y>120 veya H/v<3,9) → VO kurulumunda `SeasonalFlightCalendarError` (fail-closed).
-- Kapsam dışı bitki → 404 (season-flight-schedule) veya `weekly_flight=None` (mission response).
-- IDOR: sezon takvimi erişimi KMZ ile aynı sahiplik/atama kontrolüne tabidir (farmer sahip / atanmış pilot / admin).
-
-**7) Test / Kabul Kriterleri**
-- COTTON Hafta-11 (06-22..06-28) → altitude_m=35, speed_ms=5, critical=true.
-- Sezon dışı tarih → en yakın haftaya snap (matched=false).
-- 5 GAP ürününde KMZ Y/v takvimden gelir (varsayılan 50/5 override edilir); kapsam dışı bitkide fenoloji fallback.
-- Kapsam dışı bitkide `GET /season-flight-schedule` → 404.
-- Yetkisiz kullanıcı (sahip/atanmış pilot/admin değil) → 403.
-
-**8) Cross-refs**
-- KR-024 (fenoloji fallback), KR-016 (uçuş rotası/KMZ), KR-018 (kalibrasyon hard-gate), KR-082 (kalibrasyon sertifikası), KR-025 (karar desteği sınırı), KR-015 (pilot planlama)
+> 🔗 **TÜRETİLMİŞ İŞARETÇİ — normatif gövde BURADA DEĞİL (2026-08-01, D16-b2).**
+> Kanonik metin: `docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `## [KR-092] Fenolojik/Sezonluk Uçuş Parametreleri (İrtifa & Hız)`
+> Çelişkide **o kazanır**; bu başlık yalnız navigasyon + kapsam bilgisi taşır.
 
 ---
 

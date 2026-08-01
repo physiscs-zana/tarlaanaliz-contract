@@ -18,9 +18,26 @@ Neden bu test var (2026-07-31 denetimi):
     expert_review_queue). Kapının kendisi eksik düzeltmeyi bulmuş oldu.
 
 Kapsam notu:
-    Bu test **kardeş depoları** okur. CI'da kardeş depo yoksa test ATLANIR (skip) — worker
-    drift dedektörüyle aynı desen. Atlanması "geçti" anlamına gelmez; yerel çalıştırmada
-    ve çapraz-repo turlarında (C8) koşar.
+    Bu test **kardeş depoları** okur. Bu deponun CI'ında kardeş depo checkout edilmez →
+    47 test ATLANIR (2026-08-01 ölçümü: `972 passed, 47 skipped, 2 xfailed`).
+
+    **D4-b kararı (2026-08-01) — kapı KARŞI TARAFTA koşar, burada değil.** Ölçüldü:
+    bu depo **PUBLIC**, kardeş depoların üçü de (`tarlaanaliz-platform`,
+    `tarlaanaliz_worker`, `tarlaanaliz_edgekiosk`) **PRIVATE**. Yani "contract CI'ına
+    PAT verip kardeşleri çekmek", private depo anahtarını **public** bir deponun
+    Actions ortamına koymak demektir — sır yüzeyini yanlış yöne açar. Ters yön ise
+    bedava: kardeş depo CI'ı bu **public** depoyu `GITHUB_TOKEN` ile, ek sır olmadan
+    checkout edebilir.
+
+    Yön ayrıca **daha doğru**: vendored kopyayı değiştiren PR kardeş depoda açılır,
+    sapma orada ve **üretildiği anda** yakalanır. Bu depodan bakıldığında görülen şey
+    kardeş depo `main`'idir — açık PR'daki sapmayı zaten göremez.
+
+    ⇒ Kardeş depo CI'ı bu dosyayı **olduğu gibi** koşar (E17/W10): kendi checkout'unu
+    `<workspace>/<depo-adı>/`, bu depoyu `<workspace>/tarlaanaliz-contract/` altına alır
+    ve `pytest tests/test_vendored_parity.py` çağırır. Test ikinci kez yazılmaz — tek
+    kaynak burasıdır (kardeş depoya kopyalanan bir kapı, D16'nın kapattığı ikili-gövde
+    hatasının test hâli olurdu).
 
     ⚠️ **Kapsam SINIRI:** yalnız açıklamasında parite iddiası taşıyan **9 şema** izlenir.
     `intake_manifest.v1` bu listede **DEĞİLDİR** — kanonik biçim `oneOf[PlatformForm, EdgeForm]`,

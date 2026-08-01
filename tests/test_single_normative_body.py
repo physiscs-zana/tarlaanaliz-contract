@@ -44,12 +44,34 @@ from test_kr_reference_integrity import (  # noqa: E402
 )
 
 
-#: İKİ kaynakta birden **GÖVDESİ** olan KR sayısı (bilinen borç).
-#: 2026-07-31: 50 ölçüldü → KR-093 göçüyle **49**. Bu sayı YALNIZ KÜÇÜLEBİLİR.
-KNOWN_DUAL_BODY_COUNT = 49
+#: İKİ kaynakta birden **GÖVDESİ** olan KR sayısı.
+#: 2026-07-31: 50 ölçüldü → KR-093 göçüyle 49 → **2026-08-01/D16-b2 ile 0**.
+#: Borç kapandı; kapı artık "dondurma" değil **YASAK** kipinde. Yükseltilemez.
+KNOWN_DUAL_BODY_COUNT = 0
 
 #: Göçü TAMAMLANMIŞ KR'ler: registry'de yalnız işaretçi, gövde SSOT metninde.
-MIGRATED = ("KR-093",)
+#: D16-b (KR-093) + D16-b2 (kalan 49).
+MIGRATED = (
+    "KR-000", "KR-001", "KR-002", "KR-010", "KR-011", "KR-012", "KR-013", "KR-014",
+    "KR-015", "KR-016", "KR-017", "KR-018", "KR-019", "KR-020", "KR-021", "KR-022",
+    "KR-023", "KR-024", "KR-025", "KR-026", "KR-027", "KR-028", "KR-029", "KR-030",
+    "KR-031", "KR-032", "KR-033", "KR-040", "KR-041", "KR-042", "KR-043", "KR-050",
+    "KR-060", "KR-061", "KR-062", "KR-063", "KR-064", "KR-065", "KR-066", "KR-070",
+    "KR-071", "KR-072", "KR-073", "KR-080", "KR-081", "KR-082", "KR-083", "KR-084",
+    "KR-092", "KR-093",
+)
+
+#: Gövdesi registry'de KALAN KR'ler — SSOT metninde tanımlı DEĞİLLER (ölçüldü:
+#: orada yalnız tek satırlık çapraz-atıfla anılırlar). Bunlara işaretçi konulamaz;
+#: konulursa tanım tamamen kaybolur. Kapı bu ayrımı korur.
+REGISTRY_ONLY_BODIES = ("KR-088", "KR-089", "KR-090", "KR-091")
+
+#: D16-b2 öncesi ölçülen toplam tanım sayısı (SSOT ∪ registry). Göç bir TAŞIMA'dır,
+#: silme değil — bu sayı düşerse bir KR tanımı yok olmuş demektir.
+MIN_TOTAL_DEFINED_KRS = 55
+
+#: Registry'nin navigasyon değeri: her KR bir başlıkla listelenir (işaretçi de başlıktır).
+MIN_REGISTRY_HEADINGS = 54
 
 #: Bir bölümün "gövde değil, işaretçi" olduğunu söyleyen makine-okunur damga.
 POINTER_MARK = "TÜRETİLMİŞ İŞARETÇİ"
@@ -93,19 +115,48 @@ class TestDualBodyDebtIsFrozen:
     def test_debt_does_not_grow(self) -> None:
         dual = _dual_body_krs()
         assert len(dual) <= KNOWN_DUAL_BODY_COUNT, (
-            f"ikili gövde sayısı {len(dual)} — dondurulan borç {KNOWN_DUAL_BODY_COUNT}. "
-            "Yeni bir KR iki normatif gövdeyle tanımlanmış: aynı kural iki yerde yazılırsa "
-            "biri sessizce bayatlar (AR1'in tam olarak yaşandığı senaryo). Gövdeyi TEK "
-            "kaynakta tutun, diğerine işaretçi koyun."
+            f"ikili gövde: {sorted(dual)} — izin verilen {KNOWN_DUAL_BODY_COUNT}. "
+            "Bir KR iki normatif gövdeyle tanımlanmış: aynı kural iki yerde yazılırsa "
+            "biri sessizce bayatlar (AR1'in tam olarak yaşandığı senaryo — D16-b2'de "
+            "KR-083 kaldırılmış bir rol adını taşırken bulundu). Gövdeyi TEK kaynakta "
+            "tutun, diğerine `TÜRETİLMİŞ İŞARETÇİ` damgalı bir işaretçi koyun."
         )
 
-    def test_debt_shrinks_are_recorded(self) -> None:
-        """Borç azaldıysa sayacı güncelleyin — kapı gevşek kalmasın."""
-        dual = _dual_body_krs()
-        assert len(dual) >= KNOWN_DUAL_BODY_COUNT - 5, (
-            f"ikili gövde sayısı {len(dual)}'e düşmüş (dondurulan {KNOWN_DUAL_BODY_COUNT}). "
-            "Göç ilerlemiş: KNOWN_DUAL_BODY_COUNT'ü güncelleyin ki kapı yeni borcu yine "
-            "yakalasın."
+    def test_migration_did_not_delete_definitions(self) -> None:
+        """Göç TAŞIMA'dır, silme değil — toplam tanım sayısı düşemez.
+
+        Bu kapı olmadan D16-b2 sessizce bir felakete dönüşebilirdi: 49 gövdeyi
+        işaretçiye çevirmek, gövdesi YALNIZ registry'de olan bir KR'ye uygulanırsa
+        o tanım hiçbir yerde kalmaz. (Ölçüldü: 4 KR tam olarak bu durumdaydı.)
+        """
+        total = _ssot_defined_krs() | _registry_defined_krs()
+        assert len(total) >= MIN_TOTAL_DEFINED_KRS, (
+            f"toplam tanımlı KR {len(total)} < {MIN_TOTAL_DEFINED_KRS}. Bir KR tanımı "
+            "kaybolmuş: göç sırasında gövde, kanonik metne yazılmadan registry'den "
+            "silinmiş olabilir."
+        )
+
+    def test_registry_keeps_navigation_headings(self) -> None:
+        """İşaretçiye dönüşen KR registry'den KAYBOLMAZ — başlığı kalır."""
+        headings = _registry_sections()
+        assert len(headings) >= MIN_REGISTRY_HEADINGS, (
+            f"registry başlık sayısı {len(headings)} < {MIN_REGISTRY_HEADINGS}. "
+            "İşaretçi dönüşümü başlığı da silmiş; registry navigasyon değerini kaybeder."
+        )
+
+    @pytest.mark.parametrize("kr", REGISTRY_ONLY_BODIES)
+    def test_registry_only_bodies_are_not_pointerised(self, kr: str) -> None:
+        """SSOT metninde tanımı OLMAYAN KR'ye işaretçi konulamaz — tanım yok olur."""
+        section = _registry_sections().get(kr, "")
+        assert section, f"{kr} registry'den kaybolmuş — gövdesi YALNIZ burada yaşıyordu"
+        assert POINTER_MARK not in section, (
+            f"{kr} işaretçiye çevrilmiş, ama SSOT metninde tanımı YOK — işaretçi "
+            "hiçbir yere işaret etmiyor ve normatif gövde tamamen kaybolmuş. Önce "
+            "gövdeyi kanonik metne taşıyın, sonra işaretçi koyun."
+        )
+        assert kr not in _ssot_defined_krs(), (
+            f"{kr} artık SSOT metninde de tanımlı — ikili gövde geri gelmiş. "
+            "REGISTRY_ONLY_BODIES listesinden çıkarıp göçünü tamamlayın."
         )
 
     @pytest.mark.parametrize("kr", MIGRATED)
@@ -125,17 +176,56 @@ class TestDualBodyDebtIsFrozen:
         )
 
     def test_migration_preserved_the_registry_only_musts(self) -> None:
-        """Göç KAYIPSIZ olmalı: registry'ye özgü iki MUST maddesi SSOT metnine geçti mi?"""
+        """Göç KAYIPSIZ olmalı: registry'ye özgü MUST maddeleri SSOT metnine geçti mi?
+
+        Her girdi, göç sırasında registry'de VAR / SSOT metninde YOK ölçülen bir
+        maddedir. Biri düşerse göç değil silme yapılmış demektir.
+        """
         ssot = SSOT_TEXT.read_text(encoding="utf-8")
         for needle, what in (
+            # D16-b — KR-093
             ("Aşama A tespit DEĞİLDİR", "Y-D: öncelik bölgesi tespit değildir kuralı"),
             ("yeni faz EKLENMEZ", "ADR-007 §2: yeni mission state/faz eklenmez kuralı"),
             ("analysis_priority_zones", "Aşama A içerik kaynağı"),
+            # D16-b2 — KR-019 (eskalasyon katmanı)
+            ("atlas_confidence", "KR-019 tetikleyici 3'ün ikinci (L1 atlas) sinyali"),
+            ("quarantine_caution", "KR-019 tetikleyici 6 — FD ailesi karantina kaydı"),
+            ("dynamic_thresholds.yaml", "KR-019 dinamik eşiğin makine-okunur kaynağı"),
+            ("PARTIAL_REPORT", "KR-019 fail-closed kademe adı"),
+            ("EscalationLevel", "KR-019 platform tarafı eskalasyon seviyesi"),
+            # D16-b2 — KR-092 (takvim yükleyici + yetki)
+            ("SEASONAL_CALENDAR_PARSE_SKIP", "KR-092 yükleyici parse-skip olayı"),
+            ("SeasonalFlightCalendarError", "KR-092 fail-closed hata tipi"),
+            ("WeeklyFlightDTO", "KR-092 taşınan tip adı"),
+            ("negatif cache zehirlenmesi", "KR-092 cache davranışı kuralı"),
+            # D16-b2 — KR-072
+            ("evidence_bundle_ref", "KR-072 kanıt paketi referansı (3 şema ona atıf yapar)"),
         ):
             assert needle in ssot, (
                 f"göçte KAYIP: {what} SSOT metninde bulunamadı ({needle!r}). Göç, gövdeyi "
                 "taşımak demektir; silmek değil."
             )
+
+    def test_kr092_limit_violation_is_fail_closed_not_clamped(self) -> None:
+        """🔴 Bu kapı GERÇEK bir çelişkiden doğdu (2026-08-01/D16-b2).
+
+        SSOT metni KR-092'de *"en yakın geçerli değere clamp edilir"* diyordu; registry
+        gövdesi ise *"reddedilir → SeasonalFlightCalendarError (fail-closed)"*. İkisi
+        aynı anda doğru olamaz. Kod ölçüldü ve registry haklı çıktı:
+        `seasonal_flight_calendar.py` H/v < 3,9 veya irtifa > 120 m'de **hata yükseltiyor**,
+        yükleyici o ürünü atlıyor. Metin düzeltildi.
+
+        Neden kapı: "clamp" davranışı, SHGM irtifa sınırı ve sensör tetik aralığı gibi
+        FİZİKSEL/MEVZUAT sınırlarını kâğıt üzerinde sağlanmış gösterirdi — sessiz uyumsuzluk.
+        """
+        ssot = SSOT_TEXT.read_text(encoding="utf-8")
+        assert "clamp EDİLMEZ" in ssot, (
+            "KR-092 sınır ihlali davranışı fail-closed olarak yazılmalı. Metin yine "
+            "'clamp edilir' diyorsa, kodla (SeasonalFlightCalendarError) çelişir."
+        )
+        assert "en yakın geçerli değere clamp edilir" not in ssot, (
+            "KR-092'nin eski, kodla ÇELİŞEN 'clamp edilir' ifadesi geri gelmiş."
+        )
 
 
 class TestUndefinedQuantitiesAreDeclared:
