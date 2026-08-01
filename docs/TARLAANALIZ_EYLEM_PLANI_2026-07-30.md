@@ -2122,16 +2122,40 @@ kullanıcı onayı gerekir — CLAUDE.md kuralı.)
 | **W8** | worker | Denetim satırı emisyonu (`tile_id`, π_h, rotation, bucket, `confidence_score: 0`) | Sampler bunları zaten hesaplıyor; M1/M3 ölçüm temeli |
 | **P15 · P16** | platform | `spectral_tier.py:51` → `LCI` · konsensüs yolu `EXCLUDED` saymamalı | AK-1 · M2 |
 | **C8-a** | contract | `tools/propagate_vendored.py` — yayılımı elle yapmayı bırak | C8'de üçüncü kez elle yapılacak; ilk denemede 45 test kırılmıştı |
+| 🆕 **E18** | edge | `calibration_pipeline._read_calibration_type`: `except (OSError, ValueError) → None` sessiz yolu **fail-loud** + üç yorumu düzelt | **E15 ile aynı sınıf, aynı turda çözülmeli.** ÖD-0'da ölçüldü: okunamayan kalibre manifest → edge alanı **sessizce atlar** → platform `NONE` türetir → worker KR-018/082 işi reddeder; operatör *"kalibrasyon reddedildi"* görür, gerçek sebep **okunamayan dosya**dır. Üç yorum (`:450` · `:282` · `manifest_writer.py:224`) hâlâ *"platform PANEL_ABSOLUTE varsayar"* diyor — **P14 o ağı 2026-08-01'de kaldırdı**; yanlış değişmez, alanın atlanmasına karar veren `if`'in tam üstünde öğretiliyor |
+| 🆕 **P19** | platform | `_derive_calibration_type` 2. adımı (`CalibrationRecord.calibration_manifest`) **ölü** — ya besle ya kaldır | Ölçüldü: `src/`+`tests/`+`scripts/`+`alembic/` içinde o alana **hiç değer atanmıyor** (kolon hep NULL). Docstring 3 kaynak sayıyor, gerçekte **1 kaynak + fail-closed** var → E18'in etkisini büyütüyor (tek kaynak sessizce kaybolunca yakalayacak yedek yok) |
+| 🆕 **W15** | worker | `calibration_input_parser.py:3` docstring'i *"Reads calibration_method"* diyor; fonksiyon **`calibration_type`** okuyor | Küçük ama **yanıltıcı**: S4 beyanı *"okuyan kod yok"* gerekçesine dayanıyor; bir sonraki oturum `calibration_method` diye grep atınca bu satırı bulup yanlış sonuca varır |
 
 ### 🔶 SIRA 4 — **MAJOR TURU (v8.0.0)** — TUR 2 kapanmadan AÇILMAZ
 Sıra: **AK-11 önce** (dedektör `FIELD_MADE_REQUIRED` için `x-compat-accepted` tanımıyor) →
 tek migration guide → `--major --breaking` → üç depo re-pin. İçerik: **S3** (`DLS2_RELATIVE`
-yeniden adlandırma/kaldırma) · **S7-b** (`raw_frames[].band` → `required`) · **K1** (`{tenant}`).
+yeniden adlandırma/kaldırma) · **S7-b** (`raw_frames[].band` → `required`) · **K1** (`{tenant}`)
+· 🆕 **DEP-1** (ÖD-0'da ölçüldü): penceresi **dolmuş** iki deprecation — `schemas/platform/
+payment_intent.v1.schema.json` (v2 kanonik, migration guide yazılı) ve `enums/payment_status.
+enum.v1.json` (`x-deprecated.since: 6.2.0`, `removal_plan` *"gelecek bir MAJOR"* diyor; arada
+7.0/7.1/7.2/7.3 geçti). Beyanları düzgün, ama v8.0.0 içerik listesinde **yoklardı**.
 
-### 📌 Denetim borcu (kapanmadı)
-**ÖD-0** — `sürüm-riski` lensi hiç koşmadı; `v7.3.0`'ın yayımlanmış içeriği ↔ CHANGELOG örtüşmesi
-ve migration-guide gereksinimi denetlenmedi. **C8'den ÖNCE** tek başına koşturulmalı (bu turda
-üç sorusu elle ölçüldü, ama lens turu yapılmadı).
+### 📌 Denetim borcu — ✅ **ÖD-0 KAPANDI (2026-08-02)**
+`sürüm-riski` lensi **koşturuldu** (elle, 9 soru). Kanıt:
+`denetim/denetim_raporu_2026-08-02_od0_surum_riski_lensi.md`.
+
+**Temiz çıkanlar:** MINOR kararı **iki bağımsız ölçümle** doğrulandı (dedektör 9/0 + dedektörün
+kodunu hiç kullanmayan düzleştirilmiş tarama, 89 dosya / 0 — araç **3/3 mutasyonla** görür
+kanıtlandı) · migration guide gerekmiyor (MINOR) · I-2 **22/22 annotated** · `x-normalization`
+"manual review" bayrağı zaten incelenmiş ve yazılı · **re-pin penceresi güvenli**: v7.4.0'ın
+getirdiği alanların **canlı üreticisi yok** (platform `calibration_method`/`reflectance_scale`
+**0**; edge `PANEL_ABSOLUTE`/`RGB` eşleşmeleri yalnız yorum ve PIL renk kipi).
+
+**Lensin bulup kapattığı:**
+* 🔴 **Yayın kapısı boşluğu** — `pin_version.py` sürümü yazar ama `## [Unreleased]` başlığını
+  **çevirmez**; hiçbir kapı ölçmüyordu ⇒ sürüm notları "Unreleased" etiketiyle yayımlanabilirdi
+  (worker CI'ında bu kapı **var**, SSOT deposunda yoktu). Kapı yazıldı (`release_gate`,
+  başlık + **gövde**), **2/2 mutasyon** kırmızı.
+* 🔴 **CHANGELOG turun ORTASINI anlatıyordu** — 3 cümle bayattı (`analysis_job` beyanı W13'te
+  silinmişti · borç "16 değer" → **6** · E16 "küçük harf" → kapandı) ve turun son üç kararı
+  (W13 · W14 · SD11) hiç yazılmamıştı. C8 bunları `[7.4.0]` altında **yayımlayacaktı**. Düzeltildi.
+
+**Lensin bulup kardeş depolara yazdığı (aşağıda SIRA 3):** **E18** · **P19** · **W15**.
 
 ---
 

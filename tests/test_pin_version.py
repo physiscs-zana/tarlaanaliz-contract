@@ -181,3 +181,60 @@ def test_real_repo_checksum_verifies() -> None:
     assert match, "pinned checksum not found in CONTRACTS_VERSION.md"
     actual = p.compute_contracts_checksum(p.collect_file_hashes())
     assert actual == match.group(1)
+
+
+# --- ÖD-0 (sürüm-riski lensi, 2026-08-02) -------------------------------------
+# BULGU: yayımlanan sürümün CHANGELOG bölümü olduğunu **hiçbir kapı ölçmüyordu.**
+# `pin_version.py` yalnız CONTRACTS_VERSION.md'yi yazar; CHANGELOG.md'deki
+# `## [Unreleased]` başlığını `## [X.Y.Z]`'ye çevirmek ELLE yapılan bir adımdır ve
+# unutulursa **her kapı yeşil kalır** — sürüm, notları hâlâ "Unreleased" etiketli
+# olarak yayımlanır. Asimetri ölçüldü: worker deposunun CI'ında CHANGELOG kapısı VAR,
+# SSOT deposunda YOKTU.
+#
+# Kapı tur içinde de anlamlıdır: CONTRACTS_VERSION.md bir önceki yayımlanmış sürümü
+# gösterdiği sürece o sürümün bölümü aranır. C8'de `--minor` 7.4.0 yazınca kapı
+# KIRMIZIYA döner ve `[Unreleased]` başlığını çevirmeyi ZORLAR.
+
+
+def _released_version() -> str:
+    """Yayımlanan sürüm — kanonik okuyucudan (yeni regex yazılmaz, D16 dersi)."""
+    import sys
+
+    sys.path.insert(0, str(_TOOL.parent))
+    from read_contracts_version import read_version  # type: ignore[import-not-found]
+
+    repo = _TOOL.parents[1]
+    return read_version((repo / "CONTRACTS_VERSION.md").read_text(encoding="utf-8")).lstrip("v")
+
+
+@pytest.mark.release_gate
+def test_changelog_has_a_section_for_the_pinned_version() -> None:
+    version = _released_version()
+    changelog = (_TOOL.parents[1] / "CHANGELOG.md").read_text(encoding="utf-8")
+    headings = re.findall(r"^##\s*\[([^\]]+)\]", changelog, re.MULTILINE)
+    assert version in headings, (
+        f"CONTRACTS_VERSION.md `{version}` diyor ama CHANGELOG.md'de `## [{version}]` "
+        f"bölümü YOK (bulunan başlıklar: {headings[:6]}). C8 töreninde `pin_version.py` "
+        "sürümü yazar ama CHANGELOG başlığını ÇEVİRMEZ — `## [Unreleased]` satırını "
+        f"`## [{version}] - <tarih>` yapın, yoksa sürüm notları 'Unreleased' etiketiyle "
+        "yayımlanır."
+    )
+
+
+@pytest.mark.release_gate
+def test_pinned_version_section_is_not_empty() -> None:
+    """Başlık ATMAK yetmez: bölümün gövdesi olmalı (ÖD-12'nin dersi, başlık ≠ gövde)."""
+    version = _released_version()
+    changelog = (_TOOL.parents[1] / "CHANGELOG.md").read_text(encoding="utf-8")
+    match = re.search(
+        rf"^##\s*\[{re.escape(version)}\][^\n]*\n(.*?)(?=^##\s*\[|\Z)",
+        changelog,
+        re.MULTILINE | re.DOTALL,
+    )
+    assert match, f"`## [{version}]` bölümü bulunamadı"
+    body = match.group(1).strip()
+    assert len(body) >= 200, (
+        f"`## [{version}]` bölümünün gövdesi {len(body)} karakter — boş başlık kapıyı "
+        "geçemez. Sürüm ne taşıyorsa adıyla yazılmalı (yayımlanmış içerik ↔ CHANGELOG "
+        "örtüşmesi, ÖD-0)."
+    )

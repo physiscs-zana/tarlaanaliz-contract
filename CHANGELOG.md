@@ -280,12 +280,30 @@ değeri şemadan silinse kapılar yeşil kalırdı. Her iki dosya artık **iki y
 - **Yeni beyanlar (`PENDING_PROPAGATION`, enum ekseni ilk kez):** edge kalibre manifestte
   `calibration_type` (+`PANEL_ABSOLUTE`) · `raw_frames[].band` (+`RGB`, **S7 yayılmamıştı**) ·
   `qc_report.flags` (D7 sözlüğü — vendored tarafta alan hâlâ **kısıtsız string**) · worker
-  `analysis_job` `$defs/CalibrationMetadata` (ÖD-2'nin worker yarısı — W-kalemi).
-- **YENİ borç kaydı (`KNOWN_VENDORED_AHEAD`, 4 dosya / 5 pointer / 16 değer):** ÖD-8 ile
-  **ilk kez ölçülen** ters yön sapmaları — worker `expert_labeling_card` ve
-  `expert_review_queue` kanoniğin GAP-only kapsam kararıyla (`2d77024`) çıkardığı `EGE` ve
-  meyve ağaçlarını (APPLE/CHERRY/FIG/PEACH) hâlâ kabul ediyor; edge `worker_result` ve
-  `intake_manifest.sorties[]` crop sözlüğü **küçük harf** (AK-7/E16). Liste yalnız **küçülür**.
+  `calibration_metadata.v1` → `calibration_method` (S4; okuyan kod yok, C8'e bırakıldı).
+  ⚠️ Dördüncü bir beyan (worker `analysis_job` `$defs/CalibrationMetadata`) tur ortasında
+  açıldı ve **aynı tur içinde kapandı** (W13) → beyan `527c174`'te silindi. Tur kapanışında
+  açık beyan sayısı **2**.
+- **Borç kaydı (`KNOWN_VENDORED_AHEAD`) — tur boyunca 16 → 6 değere DÜŞTÜ:** ÖD-8 ile
+  **ilk kez ölçülen** ters yön sapmaları dört dosyada / 5 pointer'da / 16 değerdeydi.
+  E16 kapanınca (edge sınırda `strip().upper()` normalize ediyor, edge PR #50) edge
+  `worker_result` ve `intake_manifest.sorties[]` küçük-harf girişleri **silindi** → bugün
+  **2 dosya / 3 pointer / 6 değer**. Kalan altısı worker `expert_labeling_card` (`EGE`) ve
+  `expert_review_queue` (APPLE/CHERRY/FIG/PEACH); bunlar **W14 kararıyla borç olmaktan
+  çıkıp beyan edilmiş EKSEN FARKI oldu** (worker-içi 12 ürün/7 bölge araştırma ekseni ↔
+  tel-üstü GAP 8/9 ekseni bilerek ayrı; yeniden açılma koşulu makine-okunur:
+  ürün siparişe açılırsa **tel önce genişletilir**). Liste yalnız **küçülür**.
+- **SD11 kararı:** kanonik şemalardaki üst düzey `notes` / `metadata` anahtarları
+  **kanonikte KALIR**; `x-notes`/`x-metadata` göçü YAPILMAZ (dört ölçümlü gerekçe: bu
+  dosyalar önce JSON Schema belgesidir · göç her okuyucuyu kırar — `metadata.bandRequirements`
+  KR-018 bant kapısının kaynağı · sıfır davranış kazancı · istisna dar). 23 redocly `struct`
+  bulgusu **beyanlı** susturuldu ve istisna listesi **kapıya bağlandı**: `struct` dışında
+  kural, `notes`/`metadata` dışında pointer eklenemez, liste büyüyemez.
+- **Yayın kapısı (ÖD-0, 2026-08-02):** `tests/test_pin_version.py` artık
+  `CONTRACTS_VERSION.md` sürümünün **CHANGELOG'da bir bölümü** olduğunu ve o bölümün
+  **gövdeli** olduğunu zorluyor (`release_gate`). Ölçülen boşluk: `pin_version.py` sürümü
+  yazar ama `## [Unreleased]` başlığını çevirmez; unutulursa tüm kapılar yeşil kalır ve
+  sürüm notları "Unreleased" etiketiyle yayımlanırdı. **2/2 mutasyon** kırmızı.
 
 ---
 
