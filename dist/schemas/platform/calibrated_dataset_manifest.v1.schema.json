@@ -37,7 +37,7 @@
         "scaled_int",
         "unknown"
       ],
-      "description": "Yansıma ölçeği (reflectance scale): çıktının sayısal ölçeği."
+      "description": "Yansıma ölçeği (reflectance scale): paketin VARSAYILAN sayısal ölçeği. S6 (2026-08-01): bu alan artık paketin tamamını DEĞİL, ölçek bildirmeyen çıktıları tarif eder — çıktı başına ölçek `outputs[].reflectance_scale` ile yazılır ve bunu ezer. `outputs[]` heterojendir (DSM metre · CWSI birimsiz · 8-bit ORTHO), tek ölçek yetmez."
     },
     "outputs": {
       "type": "array",
@@ -141,6 +141,16 @@
             "LWIR"
           ],
           "description": "Tek-bant raster çıktısı için spektral bant. Çok-bantlı/indeks çıktılarda alan BULUNMAZ. Vocabulary intake_manifest.available_bands ile aynıdır."
+        },
+        "reflectance_scale": {
+          "type": "string",
+          "enum": [
+            "reflectance_0_1",
+            "reflectance_0_100",
+            "scaled_int",
+            "unknown"
+          ],
+          "description": "S6 (2026-08-01): BU ÇIKTININ ölçeği. Paket düzeyindeki `reflectance_scale` artık bir VARSAYILANDIR; burada yazılan onu ezer.\n\n**Neden gerekti — ölçüldü:** `outputs[]` heterojendir (bantlar · ortomozaik · indeksler) ve tek bir paket-düzeyi ölçek hepsini tarif EDEMEZ: DSM metre cinsindendir, CWSI birimsiz 0–1'dir, 8-bit ORTHO görselleştirme çıktısıdır. Tek ölçek dayatmak, tüketiciyi ya yanlış bölmeye ya da ölçeği yok saymaya zorlar.\n\nSözlük paket düzeyiyle ve `worker/calibration_metadata.scale` ile AYNIDIR."
         }
       },
       "unevaluatedProperties": false

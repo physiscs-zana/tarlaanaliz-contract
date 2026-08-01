@@ -128,18 +128,24 @@ def _pair(canonical_rel: str, vendored_rel: str) -> tuple[dict, dict]:
 # ── YENİ TUR (v7.3.0 sonrası) ────────────────────────────────────────────────
 PENDING_PROPAGATION: dict[str, dict] = {
     "calibration_metadata.v1.schema.json": {
-        "properties": {"scale"},
+        # ✅ `scale` (S5) beyandan ÇIKTI: worker W12 turunda hem okuma kodunu yazdı hem
+        #    alanı vendor'ladı. Yayılımı C8'e bırakma kararı W12'de DEĞİŞTİ ve sebebi
+        #    ölçüldü: vendored şema `additionalProperties: false` olduğu için, alan
+        #    olmadan ölçek taşıyan GERÇEK bir belge reddedilirdi — yani sözleşme yarısı
+        #    ile kod yarısı ayrı turlara bölünemezdi.
+        "properties": {"calibration_method"},
         "required": set(),
         "why": (
-            "S5 (2026-08-01) — reflektans ölçeği. Ölçüldü: alan bugüne kadar YALNIZ platform "
-            "şemalarındaydı; worker'ın vendor'ladığı 8 sözleşmenin hiçbirinde yoktu, bu yüzden "
-            "worker ölçeği TÜM FİLO için tek global env'den okuyor "
-            "(`src/shared/config.py:236` → 10000.0). Worker kodu düzeltmeyi kendisi tarif "
-            "ediyor: 'per-job reflectance_scale'i calibration_metadata sözleşmesine ekleyip "
-            "okumak' (`pipeline.py:2358`). Bu girdi o düzeltmenin SÖZLEŞME yarısıdır; "
-            "worker'ın OKUMA yarısı ayrı bir kalem (W12) ve E13 kararıyla motor artık belli "
-            "(Pix4Dfields). ⚠️ Yayılım, worker okuma kodu hazır olmadan yapılırsa alan ölü "
-            "taşınır — bu yüzden bir sonraki C8'e bırakıldı, sessizce değil BEYANLA."
+            "S4 (2026-08-01) — kalibrasyon MEKANİZMASI. Ölçüldü: `calibration_method` alanı "
+            "platform/edge/datasets/events şemalarında VARDI ama worker'ın gördüğü yolda "
+            "YOKTU; worker `ABSOLUTE` ile `PANEL_ABSOLUTE`'u ayırt edebiliyor ama hangi "
+            "mekanizmayla (panel / irradyans / ampirik çizgi) kalibre edildiğini bilemiyordu "
+            "— S5 ile birebir aynı desen. Sözlük `datasets/calibration_certificate.v1` ve "
+            "`edge/calibration_result.v1` ile aynıdır (yeni ad icat edilmedi).\n\n"
+            "⚠️ Yayılım C8'e bırakıldı çünkü S5'ten FARKLI olarak worker'da bu alanı OKUYAN "
+            "bir tüketici henüz yok: K-3 fine-tuning uygunluğu bugün `calibration_type`'tan "
+            "türetiliyor. Alanı okuyacak kod yazılmadan vendor'lamak ölü alan taşımaktır. "
+            "Okuma tarafı ayrı kalem olarak plana yazıldı."
         ),
     },
 }

@@ -171,9 +171,10 @@
               "RED",
               "RED_EDGE",
               "NIR",
-              "LWIR"
+              "LWIR",
+              "RGB"
             ],
-            "description": "Tek-bant ham kare için spektral bant. RGB kompozit karede alan BULUNMAZ. Vocabulary intake_manifest.available_bands ile aynıdır."
+            "description": "Ham karenin spektral içeriği. **S7 (2026-08-01) — YARIM ÇÖZÜLDÜ, kalanı MAJOR:**\n\n`RGB` değeri eklendi: bir RGB kompozit kare artık AÇIKÇA işaretlenebilir. Önceden bunu ifade etmenin tek yolu alanı BOŞ BIRAKMAKTI ve bu, yokluğun **iki ayrı şeyi** kodlaması demekti — (a) bu bir RGB kompozittir (b) bant bilinmiyor/yazılmadı. Tüketici ikisini ayırt edemiyordu.\n\n🔴 **KALAN YARIM:** alan hâlâ OPSİYONEL, yani yokluk hâlâ belirsizdir. Zorunlu kılmak `FIELD_MADE_REQUIRED` = **MAJOR**'dır ve bu turun sürüm penceresi MINOR'dır. Üstelik ölçüldü (2026-08-01): `tools/breaking_change_detector.py` `x-compat-accepted` beyanını kısıt daraltmalarında (pattern/maxLength/enum) tanıyor ama `FIELD_MADE_REQUIRED` yolunda **hiç kontrol etmiyor** (satır 615-630) — yani 'üretici yok, ölçüldü' gerekçesi bu değişiklik tipinde beyanla geçirilemiyor. İki iş plana yazıldı: **S7-b** (zorunluluk, MAJOR pencere) ve **AK-11** (dedektör beyan desteğindeki tutarsızlık).\n\n⚠️ Üretici (E11 kare seçici) yazılana kadar boş bırakılan alan pratikte doğmaz; üretici bu alanı DAİMA yazacak şekilde yazılmalıdır.\n\nVocabulary `intake_manifest.available_bands` ile aynıdır; `RGB` yalnız burada geçerlidir (kompozit bir BANT değil, bir kare TÜRÜDÜR — kanonik bant sözlüğüne sızdırılmadı)."
           }
         },
         "required": [

@@ -111,8 +111,27 @@ class TestBandVocabularyIsShared:
         assert bands == _canonical_bands()
 
     def test_raw_frame_band_matches_canonical(self) -> None:
+        """Ham kare `band`'i = kanonik bantlar **+ `RGB`** (S7, 2026-08-01).
+
+        `RGB` bir SPEKTRAL BANT DEĞİLDİR — bir kare TÜRÜDÜR ve bu yüzden kanonik
+        `available_bands` sözlüğüne eklenmedi. Yalnız bu alanda geçerlidir, çünkü S7'nin
+        çözdüğü sorun tam olarak buydu: alan opsiyonelken `band` YOKLUĞU iki ayrı şeyi
+        kodluyordu — (a) bu bir RGB kompozittir (b) bant bilinmiyor. Tüketici ayırt
+        edemiyordu. Ayrımı taşıyacak bir değer gerekiyordu ve o değer bir "bant" olmadığı
+        için kanonik sözlüğe SIZDIRILMADI.
+        """
         frames = _load(EDGE_FORM)["properties"]["raw_frames"]["items"]
-        assert set(frames["properties"]["band"]["enum"]) == _canonical_bands()
+        band_enum = set(frames["properties"]["band"]["enum"])
+        assert band_enum == _canonical_bands() | {"RGB"}, (
+            "ham kare band sözlüğü kanonik bantlar + RGB olmalı. Fazladan bir değer "
+            "eklendiyse: bu alan kendi sözlüğünü uyduramaz (AK-7 dersi). RGB eksikse: "
+            "S7 geri alınmış demektir — `band` yokluğu yine iki anlama gelir."
+        )
+        assert "RGB" not in _canonical_bands(), (
+            "`RGB` kanonik `available_bands` sözlüğüne sızmış. RGB bir kare TÜRÜDÜR, "
+            "spektral bant değildir; oraya girerse sensör kapasitesi hesapları bozulur "
+            "(KR-018 bant kapısı 4-bant minimumunu RGB ile sağlanmış sanabilir)."
+        )
 
 
 class TestCalibrationTypeUsesCanonicalName:
@@ -210,17 +229,36 @@ class TestCalibrationTypeUsesCanonicalName:
             "alt-küme kaydı ile şema enum'u ayrışmış — biri NONE taşıyor diğeri taşımıyor"
         )
 
-    def test_edge_calibrated_subset_stays_narrow_for_now(self) -> None:
-        """Edge tarafı bilinçli olarak DAR kalıyor (C6b/E13'e bırakıldı).
+    def test_edge_calibrated_subset_matches_the_c6b_decision(self) -> None:
+        """C6b KARARI VERİLDİ (2026-08-01) — kısmi hizalama, iki dışlama gerekçeli.
 
-        Edge, kalibrasyon başarısızsa `calibrated_dataset_manifest` ÜRETMEZ
-        (`calibrated_validator` CHECK 2 dört alt alanı zorunlu tutar), yani orada
-        NONE'a ihtiyaç yoktur. Alt-küme BİLEŞİMİ (DLS2_RELATIVE vb.) E13 kararına
-        bağlıdır — bu test o kapsamın sessizce genişlemesini engeller.
+        Bu test eskiden alt-kümeyi `{ABSOLUTE, RELATIVE}`'te donduruyordu ve mesajı
+        *"bu C6b/E13 kararıdır, sessizce yapılamaz"* idi. Karar artık verildi; test onu
+        **kodluyor**, dondurmuyor.
+
+        **Eklendi — `PANEL_ABSOLUTE`:** `edge/intake_manifest` bu değeri zaten kabul
+        ediyordu. Kalibre manifestte yazılamaması, bir paketin intake'te panel bildirip
+        aynı istasyonun ikinci belgesinde AYNI değeri yazamaması demekti (S2). Additive,
+        üretici yok (ölçüldü: edge/src'de yalnız yorumlarda geçiyor).
+
+        **Dışarıda — `NONE`:** edge kalibrasyon başarısızsa manifest hiç üretmez
+        (`calibrated_validator` CHECK 2). D8'in gerekçesi geçerli.
+
+        **Dışarıda — `DLS2_RELATIVE`:** E13 kararı bu değeri kalibre paket yüzeyinden
+        reddetti (DLS2 = MicaSense donanım adı; irradyans yöntemi ayrı eksen). İlk C6b
+        denemesinde alt-küme intake ile TAM hizalandı ve `tests/test_calibration_type_axis.py`
+        bunu kırmızıya çevirdi — iki kararın çelişmesini kapı engelledi. Kalan tutarsızlık
+        bilinçlidir ve **S3**'e (MAJOR pencere) bağlıdır.
         """
         subsets = _load(CALIBRATION_ENUM)["x-context-subsets"]
-        assert set(subsets["edge/calibrated_dataset_manifest"]) == {"ABSOLUTE", "RELATIVE"}, (
-            "edge alt-kümesi değişmiş — bu C6b/E13 kararıdır, sessizce yapılamaz"
+        assert set(subsets["edge/calibrated_dataset_manifest"]) == {
+            "ABSOLUTE",
+            "RELATIVE",
+            "PANEL_ABSOLUTE",
+        }, (
+            "edge kalibre alt-kümesi C6b kararından sapmış. `NONE` eklendiyse: edge zaten "
+            "başarısız kalibrasyonda manifest üretmiyor. `DLS2_RELATIVE` eklendiyse: E13 "
+            "kararına aykırı (bkz. test_calibration_type_axis.py)."
         )
 
 
@@ -290,9 +328,21 @@ class TestRawFramesOwnership:
         `{frame_id, relative_path}` idi; Ç7 kararından sonra bir karenin listede
         bulunmasının TEK meşru gerekçesi "işaretli bir yamayı görüyor olması"dır
         (KG-0.c). Gerekçesiz kare = gereksiz veri = HC-02/KVKK yüzeyi.
+
+        🔴 2026-08-01/S7: `band` BU KÜMEYE GİRMEDİ ve bu bilinçli. Alanı zorunlu kılmak
+        `FIELD_MADE_REQUIRED` = MAJOR'dır; bu turun penceresi MINOR. Üstelik ölçüldü ki
+        dedektör `x-compat-accepted` beyanını bu değişiklik tipinde **kontrol etmiyor**
+        (`breaking_change_detector.py:615-630`), yani "üretici yok" gerekçesi beyanla
+        geçirilemiyor. S7'nin MINOR yarısı yapıldı (`band` enum'una `RGB` eklendi → kompozit
+        AÇIKÇA işaretlenebilir); zorunluluk **S7-b** olarak MAJOR penceresine, dedektör
+        tutarsızlığı **AK-11** olarak plana yazıldı.
         """
         item = _load(EDGE_FORM)["properties"]["raw_frames"]["items"]
-        assert set(item["required"]) == {"frame_id", "relative_path", "sees_patch_ids"}
+        assert set(item["required"]) == {"frame_id", "relative_path", "sees_patch_ids"}, (
+            "`sees_patch_ids` düşerse gerekçesiz kare aktarımı serbest kalır (Ç7). "
+            "`band` EKLENDİYSE: bu MAJOR bir daraltmadır (S7-b) — sürüm penceresi kararı "
+            "olmadan yapılamaz."
+        )
 
     def test_form_role_owns_raw_frames(self) -> None:
         assert "raw_frames" in _load(EDGE_FORM)["x-form-role"]["owns"]

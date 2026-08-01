@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-07-31
+**Son güncelleme:** 2026-08-01
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,51 @@
 
 ---
 
-## 0.B EN GÜNCEL OTURUM (2026-07-31, ikinci oturum) — **KADEME 0→5 + öz-denetim**
+## 0.A EN GÜNCEL OTURUM (2026-08-01) — **§14.7 tamamı + C8 töreni + TUR 2 açılışı**
+
+> ### 🔚 OTURUM KAPANIŞ ÖZETİ
+>
+> **`v7.3.0` YAYIMLANDI** (annotated tag, C8 release töreni). §14.7'nin **yedi kalemi de** kapandı.
+>
+> | Depo | Sürüm / Pin | Değişmez |
+> |---|---|---|
+> | contract | `7.3.0` · tag `v7.3.0` · 19 tag | I-2 ✅ (`objecttype=tag`, `describe` temiz) |
+> | platform | `7.3.0` · submodule `a8cf512` | I-3 ✅ (checksum **vendor**, `13c0ab5e…`) |
+> | worker | `v7.3.0` · öz-hash | I-4 ✅ |
+> | edge | yerel `1.4.0` · upstream ref `7.3.0` | hash bloğu yeniden üretildi |
+>
+> **Kapanan kararlar:** D16-b2 (ikili gövde **49→0**) · D4-b (parite kapısı **karşı tarafta**, PAT yok)
+> · SD8 (**14 retro-tag** + `2.0.2` kayıt notu) · 0.h/K3 (veri yönetişimi + saklama) · E13 (**`ABSOLUTE`**)
+> · C8 töreni · S5 + W12 (per-job reflektans ölçeği) · C6b/S2 · S4 · S6 · S7 (yarım).
+>
+> **⚠️ AÇIK TUR:** `CONTRACTS_VERSION.md` → `**Checksum State:** PENDING_REPIN` (TUR 2).
+> Bu tur `S5 · C6b/S2 · S4 · S6 · S7` taşıyor ve **bir sonraki C8 töreninde** kapatılır.
+> Tur içi **beklenen** iki xfail: checksum + `PENDING_PROPAGATION`.
+>
+> **🔴 BU OTURUMDA KENDİ KAPILARIM BENİ 5 KEZ YAKALADI** (hepsi düzeltildi — kapılar çalışıyor):
+> 1. **C6b ↔ E13 çelişkisi:** alt-kümeyi intake ile *tam* hizaladım, `DLS2_RELATIVE`'i aynı gün
+>    reddettiğim yüzeye soktum → `test_calibration_type_axis.py` kırmızı.
+> 2. **Vendored'a 12 KB prose taşıdım** (I-4 ihlali) → worker'da **45 test** cp1254'te kırıldı.
+>    Kök neden ikiydi: benim prose taşımam + `contract_validator.py:233` kodlamasız `open()` (**W11**).
+> 3. **Platform kod sabiti:** `main.py:183` `ContractsVersionPin("7.2.0")` unutulmuştu → KR-041 drift
+>    kapısı yakaladı.
+> 4. **Edge CI'ında sürüm hardcode** (`grep -q "CONTRACTS_VERSION=1.3.0"`) → kapı sayı yerine **biçim**
+>    zorlar hâle getirildi, mutasyonla doğrulandı.
+> 5. **W12'de MagicMock sahte job'lar:** `_load_bands` artık `calibration_metadata` okuyor → CI'da
+>    `AttributeError`/`ValueError` seli. **Yerelde görünmedi** (rasterio yok) — CI otoriter.
+>
+> **Ölçüm disiplini:** MAJOR/MINOR kararı **iki bağımsız** ölçümle verildi — dedektör (0 breaking)
+> **+** dedektörden bağımsız derinlik taraması (157 dosya, `$defs`/`items`/`oneOf` dahil). Dedektörün
+> `FIELD_MADE_REQUIRED` için `x-compat-accepted` beyanını **hiç kontrol etmediği** ölçüldü (**AK-11**).
+>
+> **📌 SONRAKİ OTURUM:** eylem planı **§14.7** (sıralı iş listesi) + yeni **🔶 MAJOR TURU (`v8.0.0`)**
+> bölümü. Sıradaki mantıklı işler: **W11** (worker kodlama kusuru, 5 üye) · **C8-a** (vendored yayılım
+> aracı — bu turda elle yapıldı, aynı hata tekrarlanabilir) · **AK-11** (dedektör tutarsızlığı, S7-b'nin
+> doğrudan engeli) · kardeş depo kalemleri **E15/E16/E17 · P14/P15/P16 · W8/W10**.
+
+---
+
+## 0.B ÖNCEKİ OTURUM (2026-07-31, ikinci oturum) — **KADEME 0→5 + öz-denetim**
 
 > ### 🔚 OTURUM KAPANIŞ ÖZETİ
 > **Yapılan:** eylem planı §14'ün **beş kademesi** (KADEME 0,1,2,3 tam · 4 kısmi · 5 kısmi) +

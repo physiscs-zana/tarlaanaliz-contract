@@ -51,7 +51,8 @@
     ],
     "edge/calibrated_dataset_manifest": [
       "ABSOLUTE",
-      "RELATIVE"
+      "RELATIVE",
+      "PANEL_ABSOLUTE"
     ],
     "worker/analysis_job,worker/calibration_metadata,worker/calibrated_dataset": [
       "ABSOLUTE",
@@ -83,6 +84,7 @@
   ],
   "notes": {
     "breaking_change_policy": "Adding a new calibration_type value is non-breaking (MINOR). Removing or renaming is breaking (MAJOR) and requires a migration guide.",
-    "usage": "Kalibrasyon tipi alanları (calibration_type, expert_labeling_card.calibration_assumed) bu kanonik vocabulary'ye atıf yapar. Şemalar bağlam-bazlı alt-kümeyi inline tutar; bu dosya değer anlamları + normalizasyon eşlemesinin SSOT'udur."
+    "usage": "Kalibrasyon tipi alanları (calibration_type, expert_labeling_card.calibration_assumed) bu kanonik vocabulary'ye atıf yapar. Şemalar bağlam-bazlı alt-kümeyi inline tutar; bu dosya değer anlamları + normalizasyon eşlemesinin SSOT'udur.",
+    "c6b_subset_alignment": "C6b/S2 (2026-08-01): `edge/calibrated_dataset_manifest` alt-kümesi `[ABSOLUTE, RELATIVE]` idi; `edge/intake_manifest` ise dört değer kabul ediyordu. Bu, bir paketin intake'te `PANEL_ABSOLUTE` bildirip kalibre manifestte AYNI değeri YAZAMAMASI demekti — aynı istasyonun iki belgesi arasında sessiz bir daralma. `PANEL_ABSOLUTE` eklendi (additive → MINOR; ölçüldü: edge/src'de üretici YOK, yalnız yorumlarda geçiyor).\n\n⚠️ İKİ DEĞER BİLEREK DIŞARIDA — ve gerekçeleri FARKLI:\n• `NONE`: edge kalibrasyon başarısızsa manifest hiç üretmez (`calibrated_validator` CHECK 2). D8'in dar bıraktığı şey buydu; o gerekçe geçerli.\n• `DLS2_RELATIVE`: **E13 kararı** (2026-08-01) bu değeri kalibre paket yüzeyinden reddetti — DLS2 bir MicaSense donanım adıdır (M3M'nin güneş sensörü DLS2 DEĞİLDİR) ve irradyans YÖNTEMİ ayrı eksendir (`x-separate-axis`). Bu yüzden C6b hizalaması TAM değil KISMİ yapıldı. İlk denemede tam hizalama yapıldı ve `tests/test_calibration_type_axis.py` onu kırmızıya çevirdi — kapı iki kararın çelişmesini engelledi.\n\n⇒ Kalan tutarsızlık (`DLS2_RELATIVE` intake'te var, kalibre yüzeyde yok) BİLİNÇLİDİR ve **S3** kalemine bağlıdır: adın kendisi satıcıya özgüdür ve değiştirilmesi enum yeniden adlandırma = MAJOR sürüm penceresi ister."
   }
 }
