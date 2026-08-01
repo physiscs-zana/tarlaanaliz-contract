@@ -297,6 +297,14 @@ git describe --tags HEAD                                                      # 
 - [ ] Etiket push edildi (`git ls-remote --tags origin | grep vX.Y.Z`)
 - [ ] Üç tüketici deposunda sürüm dizesi hizalandı (I-1) ve platform submodule pini bu **etiketli commit**
 
-⛔ **Bilinen eksik (koordinatör kararı bekliyor — §14.6/SD8):** etiketsiz 16 tarihsel sürüm.
-Karar verilmeden I-2 "tarihsel olarak da tutuyor" diye raporlanamaz; bugün yalnız
-**v6.1.0 · v7.0.1 · v7.1.0 · v7.2.0** annotated'tır.
+✅ **SD8 KAPANDI (2026-08-01) — I-2 artık tarihsel olarak da tutuyor.** Eski not
+*"etiketsiz 16 tarihsel sürüm"* diyordu; ölçüm **15** buldu (CHANGELOG 19 sürüm, depoda 4 tag).
+**14'üne** geriye dönük annotated tag atıldı; release commit'i **ölçümle** bulundu
+(`CONTRACTS_VERSION.md`'ye `## Version: X.Y.Z` satırının eklendiği commit — `git log -S`), ve
+yöntem halihazırda etiketli **4 sürümde 4/4 doğrulandı**. Her tag mesajında *retro olduğu*,
+gerçek yayın tarihi ve yöntem yazılıdır.
+
+🔴 **Tek istisna — `2.0.2` etiketlenmedi ve etiketlenmeyecek:** CHANGELOG'da girdisi var ama
+`CONTRACTS_VERSION.md`'ye hiç `## Version: 2.0.2` yazılmamış → release commit'i belirlenemiyor.
+Uydurulmuş bir commit'e tag atmak, sürüm kilidi hiç olmamış bir sürümü varmış gibi gösterirdi.
+Kayıt: `docs/versioning_policy.md` §Release.
