@@ -30,9 +30,13 @@ import pytest
 ALLOWED_SKIP_REASONS: tuple[tuple[str, str], ...] = (
     (
         "kardeş depo yok",
-        "Vendored parite süiti (tests/test_vendored_parity.py) kardeş depoları okur; "
-        "GitHub Actions'ta yalnız bu depo checkout edilir. Bu kapı C8 release töreninde "
-        "YEREL olarak koşar ve SDLC_GATES §3C'de zorunludur.",
+        "Vendored parite süiti (tests/test_vendored_parity.py) kardeş depoları okur; bu "
+        "deponun Actions'ında yalnız kendisi checkout edilir → 47 test atlanır (ölçüm "
+        "2026-08-01: 972 passed, 47 skipped). D4-b KARARI: kapı bu depoda değil KARŞI "
+        "TARAFTA koşar — bu depo PUBLIC, kardeşlerin üçü de PRIVATE, dolayısıyla kardeş "
+        "CI'ı burayı sırsız çekebilir ama tersi private anahtarı public Actions'a koyardı. "
+        "Kardeş depo bu test dosyasını olduğu gibi koşar (E17/W10). Ayrıca C8 release "
+        "töreninde YEREL koşum zorunludur (SDLC_GATES §3C).",
     ),
 )
 
