@@ -95,7 +95,14 @@
 >   doğrulamadan önce normalize edecek? *(`worker_result.v1` edge `src/`'de hiç kullanılmıyor —
 >   o dosyanın daraltılması risksiz ve ayrı bir küçük adım.)*
 >
-> ### 🔴 SONRAKİ OTURUM — ÜÇ AÇIK KARAR (kod değil, KARAR bekliyor)
+> ### ✅ ÜÇ KARAR DA VERİLDİ VE UYGULANDI (oturum kapanışında)
+> | # | Karar | Uygulama |
+> |---|---|---|
+> | **W14** | *"Cherry worker'da kalsın, platformda gerekmiyor"* (koordinatör) | İki `KNOWN_VENDORED_AHEAD` girişi **borç** olmaktan çıkıp **beyan edilmiş eksen farkı** oldu (`W14_DECISION`); yeniden açılma koşulu makine-okunur yazıldı: ürün siparişe açılırsa **tel önce genişletilir** |
+> | **E16** | *"Edge normalize et"* (koordinatör) | edge **PR #50 MERGED** — `_canonical_crop()` sınırda `strip().upper()`, iki vendored enum kanonik 8 ürüne çekildi, CONTRACTS_SHA256 yenilendi, 9 testlik yeni kapı. ⚠️ **P1 kilidi açıldı** |
+> | **SD11** | *"Karar sende"* → **`notes`/`metadata` kanonikte KALIR, `x-` göçü YAPILMAZ** | 4 ölçümlü gerekçe (JSON Schema belgesi · göç her okuyucuyu kırar · sıfır davranış kazancı · istisna dar) + **istisna listesi kapıya bağlandı**: `struct` dışında kural / `notes`-`metadata` dışında pointer eklenemez, liste büyüyemez |
+>
+> ### 🔴 ESKİ HÂLİ (tarihsel kayıt) — üç açık karar
 > | # | Soru | Neden tek taraflı kapatılmadı |
 > |---|---|---|
 > | **W14** | Worker-içi 12-ürün / 7-bölge ekseni **wire** şemalarına (`expert_review_queue`, `expert_labeling_card`) sızmış. Kanonik absorbe mi etsin · şemalar worker-içi mi ilan edilsin · vendored mi daraltılsın? | Üretilmiş 4 kart seti + `bulk_approval_suggester` + testler etkileniyor. ⚠️ İlk taslağımda *"kiraz sipariş edilebiliyor"* yazmıştım — **YANLIŞTI**, düzeltildi: KG-0.d-EK 2026-07-31'de kod-teyitli kapandı (CHERRY çift kapılı kapalı) ve `crop_type.py:50-68` **dört kümenin bilerek farklı** olduğunu yazıyor |
