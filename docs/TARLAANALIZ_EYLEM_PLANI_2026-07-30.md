@@ -2068,6 +2068,59 @@ Ayrıca worker `W2` (ölçek motor başına: ODM 0-1 / Metashape 32768) aynı ka
 
 ---
 
+## 14.9 ▶️ SONRAKİ OTURUM — **"DEVAM ET" DENİNCE BURADAN BAŞLA** (2026-08-01 kapanışında yazıldı)
+
+> §14.8 (ÖD-1…ÖD-16) **kapandı**; W14 · E16 · SD9 · SD10 · SD11 kararları **verildi ve uygulandı**.
+> Aşağıdaki sıra **yürürlüktedir**: bir kalem burada yoksa yapılmaz; yapılacaksa önce buraya yazılır.
+
+### 🥇 SIRA 1 — **C8 töreni: TUR 2'yi kapat (v7.4.0)**
+Tur açık kaldıkça `PENDING_REPIN` beyanı iki xfail'i canlı tutuyor ve **üç depo checksum'ı
+doğrulanamıyor**. Turun taşıdığı içerik: `S5 · C6b/S2 · S4 · S6 · S7` + **ÖD-1** (edge kalibre
+enum) + **ÖD-2** (`analysis_job` `$defs`) + **E13-R** (türetme bloğu) + **SD9** (`info.version`)
++ **SD10** (OpenAPI düzeltmeleri).
+
+**Sıralı adımlar (SDLC_GATES §3G ile birebir):**
+1. `python tools/breaking_change_detector.py --old v7.3.0 --new .` → **0 breaking** bekleniyor
+   (artık git ref kabul ediyor — ÖD-16). İkinci bağımsız ölçüm: elle diff (`required`/enum/tip).
+2. `PENDING_PROPAGATION`'ı **BOŞALT** — bugün 3 beyan açık:
+   * edge `calibrated_dataset_manifest`: `calibration_type` ←`PANEL_ABSOLUTE` · `raw_frames[].band`
+     ←`RGB` · `qc_report.flags` ← 5 değerlik sözlük *(edge PR gerekir)*
+   * worker `calibration_metadata`: `calibration_method` *(okuyan kod yok — S4; ya okuma kodu
+     yazılır ya beyan gerekçesi tazelenir)*
+   * worker `analysis_job` `$defs/CalibrationMetadata` *(W13'te **yapıldı**; beyanı sil)*
+3. `python tools/pin_version.py --minor` → `CONTRACTS_VERSION.md` + **`info.version` üçü birden**
+   otomatik yazılır (SD9). `PENDING_REPIN` satırı **kendini siler** → üç kapı sertleşir.
+4. `git tag -a v7.4.0 <release commit>` + push (**I-2**: `objecttype=tag`, `git describe` temiz).
+5. Üç depo re-pin: platform submodule → etiketli commit · worker `compute_contracts_hash.py
+   --update --version v7.4.0` · edge upstream ref. **I-1** üç depoda aynı dizeyi göstermeli.
+6. Worker `denetim/scale_wire_devir_spec_2026_08_01.md` **silinir** (uzlaşma koşulu bu turdu).
+
+### 🥈 SIRA 2 — **P1 açılabilir (kilit kalktı)**
+E16 ile edge çıktısı kanonik sözlüğü konuşuyor → platform `enforce=True` artık edge'i kırmaz.
+Plan bunu *"E16'dan SONRA"* diye kilitlemişti; kilit **açıldı**. (Platform deposu; commit için
+kullanıcı onayı gerekir — CLAUDE.md kuralı.)
+
+### 🥉 SIRA 3 — kardeş depo kuyruğu (bağımsız, paralel yapılabilir)
+| # | Depo | İş | Neden şimdi |
+|---|---|---|---|
+| **E17 / W10** | edge · worker | Vendored parite kapısını **kardeş CI'da** koştur (D4-b uygulaması) | Kapı bu turda 16 dosyaya genişledi ve **5 gerçek sapma** buldu; kardeş CI'da koşmadıkça sapma yalnız yerel diskte görünür |
+| **E15** | edge | `qc_report_writer`: `min(...,1.0)` kırpması + `except → 0.0` sessiz yolu **fail-loud** | G1/KR-065 ödeme hesabına giriyor |
+| **W8** | worker | Denetim satırı emisyonu (`tile_id`, π_h, rotation, bucket, `confidence_score: 0`) | Sampler bunları zaten hesaplıyor; M1/M3 ölçüm temeli |
+| **P15 · P16** | platform | `spectral_tier.py:51` → `LCI` · konsensüs yolu `EXCLUDED` saymamalı | AK-1 · M2 |
+| **C8-a** | contract | `tools/propagate_vendored.py` — yayılımı elle yapmayı bırak | C8'de üçüncü kez elle yapılacak; ilk denemede 45 test kırılmıştı |
+
+### 🔶 SIRA 4 — **MAJOR TURU (v8.0.0)** — TUR 2 kapanmadan AÇILMAZ
+Sıra: **AK-11 önce** (dedektör `FIELD_MADE_REQUIRED` için `x-compat-accepted` tanımıyor) →
+tek migration guide → `--major --breaking` → üç depo re-pin. İçerik: **S3** (`DLS2_RELATIVE`
+yeniden adlandırma/kaldırma) · **S7-b** (`raw_frames[].band` → `required`) · **K1** (`{tenant}`).
+
+### 📌 Denetim borcu (kapanmadı)
+**ÖD-0** — `sürüm-riski` lensi hiç koşmadı; `v7.3.0`'ın yayımlanmış içeriği ↔ CHANGELOG örtüşmesi
+ve migration-guide gereksinimi denetlenmedi. **C8'den ÖNCE** tek başına koşturulmalı (bu turda
+üç sorusu elle ölçüldü, ama lens turu yapılmadı).
+
+---
+
 ## 14.8 🔬 ÖZ-DENETİM SONRASI SIRALI İŞ LİSTESİ (2026-08-01 · **SONRAKİ OTURUM BURADAN BAŞLAR**)
 
 > Kaynak: `denetim/denetim_raporu_2026-08-01_ozdenetim_6lens.md` (6 lens · 51 ham bulgu).

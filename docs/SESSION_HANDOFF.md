@@ -104,7 +104,10 @@
 >
 > **Kanıt arşivi:** `denetim/denetim_raporu_2026-08-01_od1_od2_od3_od8.md` ·
 > `denetim/denetim_raporu_2026-08-01_e13r_od4_od5_od6_od7.md`.
-> **📌 Giriş noktası değişmedi:** eylem planı **§14.8** (kapananlar ✅) + **🔶 MAJOR TURU** (S3 · S7-b · K1).
+> **📌 SONRAKİ OTURUMUN GİRİŞ NOKTASI: eylem planı → yeni `§14.9` ("DEVAM ET DENİNCE BURADAN BAŞLA").**
+> Sıra: ① **C8 töreni / TUR 2 kapanışı (v7.4.0)** — 6 adımı yazılı ② **P1 kilidi açıldı** (E16 sayesinde)
+> ③ kardeş depo kuyruğu (E17/W10 · E15 · W8 · P15/P16 · C8-a) ④ **MAJOR TURU** (AK-11 önce).
+> Denetim borcu: **ÖD-0** (sürüm-riski lensi hiç koşmadı) — C8'den ÖNCE.
 
 ---
 
