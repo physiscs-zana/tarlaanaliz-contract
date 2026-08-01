@@ -1851,7 +1851,7 @@ release checklist'ine (§3G) girer.
 | ⬜ **S5** | `scale_factor` — reflektans ölçeği taşınmıyor; **EVI/SAVI'yi sessizce bozar, NDVI gizler** (NDVI orandır → ölçekten bağımsız; EVI'nin `+1`/`6R−7.5B` ve SAVI'nin `+L` toplama sabitleri ölçeğe DUYARLIDIR). Ölçüldü: alan yalnız `schemas/platform/calibration_result.v1.schema.json:69`'da var, indeks üretim yoluna **bağlı değil** | ⬜ | **E13** (hangi motor → hangi ölçek) kararına bağlı; plan bunu "E13'ün hemen ardından ilk sırada" diye işaretlemiş |
 | ⬜ **C6b · S3/S4/S6/S7** | Kalibrasyon alt-küme bileşimi, satıcı adları, paket-düzeyi tek `reflectance_scale`, RGB kare ayrımı | ⬜ | **E13** kararı |
 | ⬜ **K1** | `{tenant}` opaklaştırma | ⬜ | **MAJOR** — bu tur MINOR; sürüm penceresi kararı |
-| ⬜ **K3** | Saklama politikası MUST'ları | ⬜ | **D16-c**'ye bağlandı (KR-093 gövdesi tek yerde toplandı, MUST'lar oraya yazılacak) |
+| ✅ **K3** | Saklama politikası MUST'ları | ✅ | **KAPANDI (2026-08-01, 0.h ile).** D16-c beklenmedi: KR-090 gövdesi zaten registry'de yaşıyor (D16-b2 ölçümü — SSOT metninde 0 kez geçiyor), MUST 9-12 oraya yazıldı ve `test_data_governance.py` ile zorlandı |
 | ⬜ **P1** | Çalışma zamanı zorlaması (Pydantic + `enforce=True`) | ⬜ | **platform deposu** · ⚠️ **SIRA KİLİDİ:** edge ürün sözlüğü hizalanmadan (E16) açılırsa edge çıktısı runtime'da reddedilir |
 | ⬜ **A5/A6 · A7** | Fenoloji eşlemesi · kanopi maskesi | ⬜ | **Agronomi kararı** — kaynak Bakanlık/TAGEM/dergipark düzeyinde teyit ister |
 | ⬜ **Ç2 · Ç4 adım 2-3 · S12** | Yayın politikası `n≥5` · portal/v2 · `DTM`/`POINT_CLOUD` | ⬜ | Ç4 → v2 penceresi · S12 → §12 motor kararı |
@@ -1875,7 +1875,46 @@ release checklist'ine (§3G) girer.
 > 4. **Üçüncü kişi verisi:** komşu parsele taşan görüntü/izdüşüm **taşınmaz** (Ç7/D7 ile
 >    kare izdüşümü zaten kaldırıldı; kural genel hâle getirilir).
 >
-> **Onay:** ⬜ koordinatör · **Uygulama:** D16-c ile aynı turda (KR-090 + KR-093 gövdesi).
+> **Onay:** ✅ **ONAYLANDI (2026-08-01)** — dört madde de kabul, **ikisi düzeltilerek.**
+> Uygulama D16-c'yi beklemedi: KR-090 gövdesi zaten registry'de yaşıyor (D16-b2'de
+> ölçüldü — SSOT metninde **0** kez geçiyor), yani satırlar bugün yazılabilirdi.
+>
+> **Madde 1 — kabul, UYGULANDI.** Üç kategorinin sözleşmede taşındığı doğrulandı ve
+> KR-090'a **madde 9/10/11** olarak süre + silme yolu + gerekçe ile yazıldı:
+> öncelik bölgesi/ön faz görselleri → **730 gün** (analiz sonucuyla aynı; ayrı ömür
+> verilseydi silinmiş bir analizin konumsal izi geride kalırdı) · seçilmiş ham kareler →
+> **180 gün** (en kısa kademe; ham kare en yüksek çözünürlüklü ve en kolay yeniden
+> kimliklendirilebilir veridir, KR-050 minimizasyonu gereği şüphede az sakla — süre
+> KVKK aydınlatma metniyle kesinleşir) · denetim örneklemi → **ASLA silinmez**, ama
+> ölçüm dışı içerik 730 günde budanır (satır bir ölçüm kaydıdır; silinirse geçmiş model
+> kalite iddiaları doğrulanamaz hâle gelir). Kural artık **zorlanıyor**:
+> `tests/test_data_governance.py` (11 test).
+>
+> **Madde 2 — kabul, değişiklik yok.** Rıza metni ürün kararıdır; kapsamı KR-090'daki
+> kategori listesinden türetilir. Contract'ta doğrudan zorlanamaz, kaynak olarak durur.
+>
+> **🔴 Madde 3 (n≥5) — kabul ama DURUMU DÜZELTİLDİ: bugün uygulanamaz.** Ölçüldü:
+> `n>=5` / `k_anonym` / `aggregation_threshold` benzeri hiçbir ifade `enums/`,
+> `schemas/`, `ssot/` ya da SSOT metninde **yok (0 eşleşme)** — çünkü toplulaştırma
+> yüzeyi henüz sözleşmede yok. Onaylanmış ama hiçbir yere yazılamayan bir kural, D16'da
+> kapatılan *"prose var, zorlanabilirlik yok"* sınıfının aynısı olurdu. ⇒ Madde 3
+> **ileriye dönük taahhüt** olarak kabul edildi ve **Ç2**'ye bağlı kaldı: toplulaştırma
+> yüzeyi doğduğu turda `n≥5` aynı turda yazılır.
+>
+> **Madde 4 — kabul, UYGULANDI + bir boşluk ADIYLA açıldı.** Ölçüldü: tekil kare
+> izdüşümü sözleşmede **yok** (C7 Tur 2'ye ertelendi), yani kural bugün ihlal
+> edilmiyor. Ama `raw_frames` seçilmiş kareleri listeler ve bir kare **komşu parseli
+> görebilir**: `sees_patch_ids` yalnız hedef yamaları işaretler, kare **kırpma (crop)
+> garantisi sözleşmede yoktur**. Kural KR-090 madde 12 olarak yazıldı, boşluk **0.h-a**
+> adıyla açıldı — adsız boşluk, kapanmış boşluktan ayırt edilemez.
+>
+> **⚠️ Kapı bir mutasyonda KÖR bulundu ve düzeltildi.** İlk sürüm üç kategoriyi de aynı
+> sanıp `key in json.dumps(şema)` diyordu. `raw_frames` property'si şemadan silindiğinde
+> kapı **yeşil kaldı**. İki kök neden, ikisi de gerçek kusur: ① `raw_frames` edge
+> şemasında iki kez geçiyor (biri property, biri alan-sahipliği listesi elemanı) ②
+> platform `calibrated_dataset_manifest` `raw_frames`'i **taşımıyor**, yalnız
+> açıklamasında ondan bahsediyor — taşıyıcı listesi yanlıştı. Kapı artık `properties`/
+> `$defs` **anahtarlarına** bakıyor; 5/5 mutasyon kırmızı döndü.
 
 
 P1 çalışma zamanı zorlaması (platform: Pydantic + `enforce=True`) · K1 `{tenant}` opaklaştırma (**MAJOR**) ·
@@ -1933,7 +1972,8 @@ A7 kanopi maskesi · A5/A6 fenoloji eşlemesi · §12 motor kararı sonrası `DT
 | ⬜ **2d** 🟡 | **`sync_kr_corpus.py` araç sınırı ölçüldü:** araç "hedefte olup kaynakta olmayan satır" görünce `DIVERGENT` deyip dokunmuyor — bu koruma doğru, ama bir satır **düzeltildiğinde** de tetikleniyor. Bu turda tam olarak bu oldu: iki hedef `DIVERGENT` göründü, tek fark **eski `clamp` satırıydı** (yani kayıp değil, senkron bekleyen güncelleme). Araç "kaybolacak içerik" ile "üzerine yazılacak eski sürüm" ayrımını yapmıyor | Ayrım, satır-bazlı değil **blok-bazlı** eşleştirme ister (tasarım kararı) | `tools/sync_kr_corpus.py` — kullanırken çıktı elle yorumlanmalı |
 | ✅ **3** | **D4-b KARARI VERİLDİ — kapı karşı tarafta koşar, PAT yok.** Gerekçe ve ölçüm §14.4/D4-b satırında. Contract tarafı bu turda yapıldı (skip beyanı + docstring gerçeği yansıtıyor); **uygulama kardeş depolarda: E17 (edge) · W10 (worker)**. Kalan boşluk **D4-b2** olarak açık ve yazılı | ⬜→✅ | `tests/conftest.py`, `tests/test_vendored_parity.py` |
 | ✅ **4** | **SD8 KARARI VERİLDİ — 14 retro-tag + 1 kayıt notu (ikisi birden, "ya/ya da" değil).** Ölçüm önce sayıyı düzeltti: **16 değil 15** etiketsiz sürüm (CHANGELOG 19 sürüm, depoda 4 tag). **Kararı açan bulgu:** release commit'i tahminle değil **ölçümle** bulunabiliyor — `CONTRACTS_VERSION.md`'ye `## Version: X.Y.Z` satırının eklendiği commit (`git log -S`). Yöntem, halihazırda etiketli **4 sürümde 4/4 doğrulandı** (v6.1.0→dc21802, v7.0.1→3aa5fa2, v7.1.0→58899e2, v7.2.0→02845fb — dördünde de mevcut tag ile ölçüm aynı commit'i verdi). Doğrulanmamış yöntemle tag atmak doğrulanamaz kanıt üretirdi. **Yan etki ölçüldü: YOK** — `contract_validation.yml` yalnız `branches: [master]` + `pull_request` dinler, `on: push: tags:` yok, release oluşturan adım yok. 🔴 **`2.0.2` ETİKETLENMEDİ:** CHANGELOG'da girdisi var ama `CONTRACTS_VERSION.md`'ye hiç `## Version: 2.0.2` yazılmamış → release commit'i belirlenemiyor; uydurma tag, kilidi olmayan bir sürümü varmış gibi gösterirdi. Kayıt notu `docs/versioning_policy.md` §Release'e düşüldü | ⬜→✅ | 14 annotated tag (her mesajda *retro olduğu* + gerçek yayın tarihi + yöntem yazılı) · doğrulama: 14/14 `git describe` **temiz**, 0 bulanık; 18 tag'in tamamı annotated · ⏳ **push onay bekliyor** |
-| **5** | **0.h onayı** (K2 veri yönetişimi taslağı §14.5) | Üç yeni veri kategorisi sözleşmeye girdi, KR-090 saklama tablosunda yok (K3) | koordinatör |
+| ✅ **5** | **0.h ONAYLANDI + UYGULANDI — K3 de kapandı.** Dört madde de kabul, ikisi düzeltilerek (gerekçeler §14.5 taslak bloğunda). Üç veri kategorisi KR-090'a **madde 9/10/11** olarak süre + silme yolu + gerekçe ile yazıldı; üçüncü kişi kuralı madde 12. Kural **zorlanıyor**: `tests/test_data_governance.py` (11 test, 5/5 mutasyon kırmızı). 🔴 Madde 3 (`n≥5`) **bugün uygulanamaz** — toplulaştırma yüzeyi sözleşmede yok (0 eşleşme, ölçüldü) → ileriye dönük taahhüt, **Ç2**'ye bağlı | ⬜→✅ | `ssot/kr_registry.md` KR-090 · `tests/test_data_governance.py` |
+| ⬜ **0.h-a** 🟡 | **`raw_frames` kırpma (crop) garantisi YOK.** 0.h madde 4 komşu parsele taşan veriyi yasaklıyor; ölçüldü ki tekil kare izdüşümü sözleşmede yok (C7 Tur 2) ama seçilmiş ham kare komşu parseli **görebilir** — `sees_patch_ids` yalnız hedef yamaları işaretler, karenin parsel sınırına kırpıldığına dair bir alan/kural yok. Seçenekler: (i) `raw_frames[]`'e kırpma beyanı alanı (`cropped_to_parcel: bool` + kırpma kaynağı), (ii) edge tarafında kırpmayı zorunlu kılıp kanıtı QC raporuna yazmak, (iii) ham kare aktarımını parsel-içi yamalarla sınırlamak | Kare seçici **E11** ile aynı yüzey — E11 C8'den önce merge EDİLMEZ (D10-E4 kilidi), bu yüzden kalem ona bağlı | KR-090 madde 12 · `test_data_governance.py::TestThirdPartyDataRuleIsRecorded` |
 | **6** | **C6 kararı** = **E13** (RELATIVE mi DLS2_RELATIVE mi) | C6 koşullu MINOR; E13 kararı C6'dan ÖNCE gelir | edge ölçümü |
 | **7** | **C8 TÖRENİ** — `pin_version` → annotated tag → 3 depo pin | `SDLC_GATES §3G`; ön koşul: 1-6 kapanmış olmalı | bu depo + 3 depo |
 

@@ -716,6 +716,42 @@ Verilerin yaşam döngüsünü yöneterek DB boyutu ve S3 depolama maliyetini ko
 7) analysis_results silmeden ÖNCE timeseries'te karşılığının varlığı doğrulanır.
 8) İlk çalıştırma dry_run() modunda yapılır (silmeden rapor).
 
+**Sözleşmeye 2026-07/08 turunda giren veri kategorileri (0.h kararı — K2/K3):**
+
+9) **Öncelik bölgesi poligonları + ön faz görselleri** (`analysis_priority_zones`,
+   `x-preliminary-content`; taşıyıcılar: `report_phase.enum.v1`,
+   `analysis_preliminary_ready.v1`). **Süre: analiz sonucuyla AYNI (730 gün).**
+   Gerekçe: bunlar analiz çıktısının bir görünümüdür, bağımsız bir varlık değil —
+   ayrı bir saklama ömrü vermek, silinmiş bir analizin konumsal izini geride bırakırdı.
+   Silme yolu: `analysis_results` kaydıyla birlikte (aynı işlem). Hukuki sebep:
+   sözleşmenin ifası (hizmet teslimi).
+
+10) **Seçilmiş ham kareler** (`raw_frames`; taşıyıcılar: edge + platform
+    `calibrated_dataset_manifest.v1`). **Süre: 180 gün (en kısa kademe).**
+    Gerekçe: ham kare, çiftçinin parselinin **en yüksek çözünürlüklü** ve en kolay
+    yeniden kimliklendirilebilir verisidir; üstelik **komşu parseli de görebilir**
+    (üçüncü kişi verisi — bkz. madde 12). KR-050 veri minimizasyonu ilkesi gereği
+    şüphede **az sakla**: türev katmanlar (COG/tile) zaten üretilmiş olur ve analiz
+    değeri korunur. ⚠️ Bu süre KVKK aydınlatma metniyle birlikte **kesinleşir**;
+    uzatma isteniyorsa gerekçesi bu tabloya yazılır. Silme yolu: dataset yaşam
+    döngüsünde `ARCHIVED` sonrası nesne silme (KR-072). Kapsam notu: kareler **hem**
+    M1'deki yerel edge diskinde **hem** merkezde bulunabilir — süre **her ikisi** için
+    geçerlidir, yalnız merkez için değil.
+
+11) **Denetim örneklemi etiketleri** (`audit_sample`; taşıyıcı:
+    `schemas/worker/expert_review_queue.v1.schema.json`).
+    **Süre: ASLA silinmez — ama ölçüm alanları dışındaki içerik 730 günde budanır.**
+    Gerekçe: denetim satırı bir **ölçüm kaydıdır** (uzman doğruluğu/kalibrasyonu);
+    silinirse geçmiş model kalite iddiaları doğrulanamaz hâle gelir. Ancak satırın
+    taşıdığı görsel/konumsal yük ölçüm için gerekli değildir → `tile_id` + sonuç
+    alanları kalır, ek içerik analiz sonucu ömrüne (730 gün) tabidir.
+
+12) **Üçüncü kişi verisi:** komşu parsele taşan görüntü/izdüşüm **taşınmaz**. Ölçüldü
+    (2026-08-01): tekil kare izdüşümü sözleşmede **yok** (C7 Tur 2'ye ertelendi), ama
+    `raw_frames` seçilmiş kareleri listeler ve bir kare komşu parseli **görebilir** —
+    `sees_patch_ids` yalnız hedef yamaları işaretler, kare kırpma (crop) garantisi
+    sözleşmede **yoktur**. Bu boşluk plan kalemi **0.h-a** olarak açıktır.
+
 **4) Kanıt / Artefact**
 - `config/retention_policy.yaml`
 - `retention_service.py`
