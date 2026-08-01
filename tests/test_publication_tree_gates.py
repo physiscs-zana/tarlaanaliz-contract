@@ -291,3 +291,70 @@ class TestPublishedGeneratorRuns:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
+
+
+class TestDeclaredLintExceptionsStayNarrow:
+    """SD11 KARARI (2026-08-01) — `notes`/`metadata` kanonikte KALIR; `x-` göçü YAPILMAZ.
+
+    KARARIN KANITI (dördü de ölçüldü):
+      ① Bu dosyalar **önce JSON Schema belgesidir** (`$schema: draft 2020-12`) ve üç depoda
+         doğrudan validator'lara veriliyor. JSON Schema bilinmeyen anahtarları **açıkça
+         tolere eder** (annotation'dır). `x-` öneki ise **OpenAPI**'nin uzantı
+         konvansiyonudur — kural, gömüldüğü yerde geçerlidir, kaynağında değil.
+      ② Yeniden adlandırma **her okuyucuyu kırar**: `metadata.bandRequirements` KR-018 bant
+         kapısının kaynağıdır ve worker `analysis_type.enum.v1`'i `metadata` ile
+         **vendor'lar** → göç = 12 kanonik dosya + vendored kopyalar + dört depodaki
+         okuyucular + KR-041/CONTRACTS_SHA256 pinleri. Tam bir çapraz-repo turu.
+      ③ Kazanç **sıfır davranış**: bu anahtarlar hiçbir doğrulama kararını etkilemez;
+         yalnız redocly'nin `struct` kuralı gömme yerinde şikâyet ediyor.
+      ④ İstisna **dar, ölçülü ve kapılı**: 23 giriş, TEK sınıf; `struct` kuralı geri kalan
+         her yapısal hatayı yakalamaya devam ediyor (bugün 3 gerçek kusur buldu).
+
+    BU KAPI NE KORUR: istisna listesi bir **kaçış deliğine** dönüşmesin. Yalnız `struct`
+    kuralı ve yalnız `notes`/`metadata` pointer'ları listelenebilir; başka bir kural ya da
+    başka bir pointer eklenirse kırmızı döner (yani "susturarak geçirme" mümkün değil).
+    """
+
+    IGNORE_FILE = ROOT / ".redocly.lint-ignore.yaml"
+    ALLOWED_POINTERS = {"#/notes", "#/metadata"}
+
+    def _ignore(self) -> dict:
+        yaml = pytest.importorskip("yaml", reason="pyyaml yok")
+        return yaml.safe_load(self.IGNORE_FILE.read_text(encoding="utf-8")) or {}
+
+    def test_only_struct_rule_is_ignored(self) -> None:
+        offenders = {
+            path: sorted(set(rules) - {"struct"})
+            for path, rules in self._ignore().items()
+            if isinstance(rules, dict) and set(rules) - {"struct"}
+        }
+        assert not offenders, (
+            f"İstisna listesine `struct` DIŞINDA kural eklenmiş: {offenders}. "
+            "SD11 kararı yalnız `notes`/`metadata` anahtar sınıfını kapsar; başka bir "
+            "bulguyu susturmak kapıyı yeniden kör eder."
+        )
+
+    def test_only_notes_and_metadata_pointers_are_ignored(self) -> None:
+        offenders = {
+            path: sorted(set(pointers) - self.ALLOWED_POINTERS)
+            for path, rules in self._ignore().items()
+            if isinstance(rules, dict)
+            for _rule, pointers in rules.items()
+            if set(pointers) - self.ALLOWED_POINTERS
+        }
+        assert not offenders, (
+            f"İstisna listesinde `notes`/`metadata` dışında pointer var: {offenders}. "
+            "Kararın kapsamı budur; genişletmek ayrı bir karar gerektirir."
+        )
+
+    def test_exception_list_does_not_grow(self) -> None:
+        total = sum(
+            len(pointers)
+            for rules in self._ignore().values()
+            if isinstance(rules, dict)
+            for pointers in rules.values()
+        )
+        assert total <= 23, (
+            f"İstisna sayısı {total} > 23 (2026-08-01 ölçümü). Liste yalnız KÜÇÜLÜR: yeni bir "
+            "`struct` ihlali buraya eklenerek geçirilemez — ya şema düzeltilir ya karar yeniden açılır."
+        )
