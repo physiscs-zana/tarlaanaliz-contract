@@ -97,6 +97,19 @@
           }
         }
       ]
+    },
+    "calibration_method": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "REFLECTANCE_PANEL",
+        "DLS_IRRADIANCE",
+        "EMPIRICAL_LINE",
+        null
+      ],
+      "description": "S4 (2026-08-01): kalibrasyonun NASIL yapıldığı — `calibration_type` ile AYRI EKSEN (enum `calibration_type.enum.v1` → `x-separate-axis`: \"Bunlar sensör-tipine özgüdür ve calibration_type ile birleştirilmez\"). Sözlük `datasets/calibration_certificate.v1` ve `edge/calibration_result.v1` ile BİREBİR AYNIDIR (yeni ad icat edilmedi).\n\n**Neden eklendi — ölçüldü:** mekanizma alanı platform/edge/datasets/events şemalarında VARDI ama worker'ın gördüğü yolda YOKTU. Worker `ABSOLUTE` ile `PANEL_ABSOLUTE`'u ayırt edebiliyor ama hangi mekanizmayla kalibre edildiğini bilemiyordu — S5 ile birebir aynı desen (alan var, worker'ın yüzeyinde yok).\n\nK-3/KR-018 bağlamı: fine-tuning uygunluğu bugün `calibration_type`'tan türetiliyor; mekanizma bilgisi o kararı DOĞRULANABİLİR kılar (panel mi, irradyans mı, ampirik çizgi mi). `null` = bildirilmedi (bugünkü fiili durum)."
     }
   },
   "x-normalization": {

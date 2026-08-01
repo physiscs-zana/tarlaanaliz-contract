@@ -152,6 +152,9 @@ class TestSeesPatchIds:
             "frame_id": "DJI_0001",
             "relative_path": "frames/DJI_0001.TIF",
             "sees_patch_ids": [patch_id],
+            # S7 (2026-08-01): `band` artık zorunlu. Bu test `patch_id` DESENİNİ ölçüyor;
+            # kare geçerli olmalı ki tek değişken patch_id kalsın.
+            "band": "RGB",
         }])
         assert (not _errors(doc)) is valid
 

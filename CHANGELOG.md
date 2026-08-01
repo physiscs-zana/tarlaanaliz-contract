@@ -14,6 +14,49 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 > (agrega checksum bilerek re-pin edilmez — ara re-pin, yayımlanmış `v7.3.0` etiketinin
 > checksum anlamını bozar). Beyan: `CONTRACTS_VERSION.md` → `**Checksum State:** PENDING_REPIN`.
 
+### C6b/S2 · S4 · S6 · S7 — E13 ile engeli kalkan dört kalem (hepsi MINOR)
+
+**C6b/S2 — kalibrasyon alt-küme bileşimi.** `edge/calibrated_dataset_manifest` alt-kümesi
+`[ABSOLUTE, RELATIVE]` idi; `edge/intake_manifest` ise dört değer kabul ediyordu. Yani bir
+paket intake'te `PANEL_ABSOLUTE` bildirip **aynı istasyonun ikinci belgesinde** aynı değeri
+yazamıyordu. `PANEL_ABSOLUTE` eklendi (üretici yok — ölçüldü: edge/src'de yalnız yorumlarda
+geçiyor). **İki değer bilerek dışarıda, gerekçeleri farklı:** `NONE` (edge kalibrasyon
+başarısızsa manifest hiç üretmez — D8) · `DLS2_RELATIVE` (**E13 kararı** onu kalibre paket
+yüzeyinden reddetti).
+
+> 🔴 İlk denemede alt-küme intake ile **tam** hizalandı ve `tests/test_calibration_type_axis.py`
+> bunu kırmızıya çevirdi — aynı gün verilen iki kararın (C6b ve E13) çelişmesini kapı
+> engelledi. Hizalama kısmi yapıldı; kalan tutarsızlık **S3**'e (MAJOR) bağlı ve yazılı.
+
+**S4 — kalibrasyon mekanizması worker'ın gördüğü yola.** `calibration_method` alanı
+platform/edge/datasets/events şemalarında **vardı** ama worker'ın yüzeyinde **yoktu** — S5 ile
+birebir aynı desen. `worker/calibration_metadata.v1`'e eklendi; sözlük
+`datasets/calibration_certificate.v1` ve `edge/calibration_result.v1` ile aynı
+(`REFLECTANCE_PANEL` / `DLS_IRRADIANCE` / `EMPIRICAL_LINE`). Worker artık `ABSOLUTE` ile
+`PANEL_ABSOLUTE`'u ayırt etmenin ötesinde *hangi mekanizmayla* kalibre edildiğini de görebilir
+(K-3 fine-tuning uygunluğunu **doğrulanabilir** kılar).
+
+**S6 — çıktı başına reflektans ölçeği.** `outputs[]` heterojendir (DSM metre · CWSI birimsiz ·
+8-bit ORTHO) ve tek bir paket-düzeyi ölçek hepsini tarif edemez. `$defs.file_artifact`'a
+opsiyonel `reflectance_scale` eklendi; paket düzeyindeki alan artık **varsayılan** olarak
+tanımlı ve çıktı-düzeyi onu ezer.
+
+**S7 — RGB kompozit kare (YARIM çözüldü, kalanı MAJOR).** `raw_frames[].band` enum'una `RGB`
+eklendi: kompozit kare artık **açıkça** işaretlenebilir. Önceden bunu ifade etmenin tek yolu
+alanı boş bırakmaktı ve bu, yokluğun **iki ayrı şeyi** kodlaması demekti (RGB kompozit /
+bant bilinmiyor).
+
+> 🔴 **Kalan yarım — S7-b:** alan hâlâ opsiyonel, yani yokluk hâlâ belirsiz. Zorunlu kılmak
+> `FIELD_MADE_REQUIRED` = **MAJOR** ve bu tur MINOR. Üstelik **ölçüldü**:
+> `tools/breaking_change_detector.py` `x-compat-accepted` beyanını kısıt daraltmalarında
+> (pattern/maxLength/enum) tanıyor ama `FIELD_MADE_REQUIRED` yolunda **hiç kontrol etmiyor**
+> (satır 615-630) — "üretici yok, ölçüldü" gerekçesi bu tipte beyanla geçirilemiyor. Dedektör
+> tutarsızlığı **AK-11** olarak plana yazıldı.
+
+⚠️ `RGB` kanonik `available_bands` sözlüğüne **sızdırılmadı**: bir kare TÜRÜDÜR, spektral bant
+değildir. Oraya girseydi KR-018 bant kapısı 4-bant minimumunu RGB ile sağlanmış sanabilirdi.
+Kapı: `test_calibrated_manifest_fields.py::test_raw_frame_band_matches_canonical`.
+
 ### S5 — reflektans ölçeği worker sözleşmesine eklendi (`worker/calibration_metadata.v1`)
 
 **Tip:** MINOR (opsiyonel `scale` bloğu; `required` değişmedi).
