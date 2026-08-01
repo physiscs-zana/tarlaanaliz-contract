@@ -28,12 +28,12 @@
 > koşmadı). Üstüne **bir karar geri alındı** (E13 → **E13-R**, koordinatör onayı) ve
 > denetimin görmediği **beş yeni sapma** ölçümle bulundu.
 >
-> | Depo | Durum |
+> | Depo | Durum (oturum kapanışı) |
 > |---|---|
-> | contract | PR **#25 MERGED** (9/9 yeşil) · PR **#26 AÇIK** (E13-R + ÖD-4/6/7/9…16) |
-> | worker | PR **#187 MERGED** (W13 — 3/3 yeşil) · KR-041 hash `f1447fb6…` → `66747d4a…` |
-> | platform | **DOKUNULMADI** (o deponun CLAUDE.md'si "commit yalnız açık istekle" diyor) → **P17** yazıldı |
-> | edge | dokunulmadı → **E16-b** yazıldı |
+> | contract | PR **#25 MERGED** (9/9) · PR **#26 MERGED** (9/9 — E13-R + ÖD-4/6/7/9…16 + SD9/SD10) |
+> | worker | PR **#187 MERGED** (W13 — 3/3) · PR **#188 MERGED** (W11 — 6/6) · KR-041 hash `f1447fb6…` → `66747d4a…` |
+> | platform | PR **#351 AÇIK** (P14 + P17) — kullanıcı **commit onayı verdi**; CI'da 5/6 pass, backend testleri koşuyordu |
+> | edge | dokunulmadı — **E16 ölçüldü, üretici kararı bekliyor** (aşağıda) |
 >
 > **🔄 E13 GERİ ALINDI — kararın kendisi ölçümle çürüdü.** E13 kalibre pakete filo-geneli
 > sabit `ABSOLUTE` yazıyordu; üç kanonik kaynak da tersini söylüyordu (matris
@@ -76,6 +76,35 @@
 >
 > **I-2 tamamlandı:** ÖD-7'de nüfus **biçimden bağımsız** yeniden ölçüldü (19→**22** sürüm);
 > `v2.0.1 · v2.1.0 · v4.1.2` retro-tag'leri atıldı ve **push edildi** → **22/22**.
+>
+> ### 🔚 OTURUM KAPANIŞI — son üç iş (yukarıdaki tablodan SONRA yapıldı)
+> * **W11 (worker PR #188, merged):** kodlamasız metin okuma sınıfı kapatıldı
+>   (`contract_validator.py:233` · `cold_storage_manager.py:263,293` · `ssl_pretrain.py:2131`
+>   · `safe_path.py` docstring örneği) + **AST tabanlı** kalıcı kapı
+>   (`tests/contract/test_text_io_encoding_gate.py`; kendi kapsamını da ölçüyor).
+> * **P14 + P17 (platform PR #351):** fail-open `CALIBRATED → PANEL_ABSOLUTE` **kaldırıldı**
+>   (E13-R sonrası kritik: tek kalan "göreli veriyi mutlak etiketle worker'a gönderme" yoluydu)
+>   + `main.py` log sabitleri pin nesnesinden okunuyor. İki test fixture'ının **fail-open
+>   davranışı ürettiği** ortaya çıktı ve düzeltildi; 48 kombinasyonluk regresyon eklendi.
+>   Kapı: ruff temiz · BOUND OK · `APP_ENV=test pytest --cov` **0 FAILED**, coverage **%83.43**.
+> * **E16 ölçüldü — tek taraflı yapılamaz:** küçük harf ürün sözlüğü edge `src/` ve `config/`'te
+>   **YOK** (config zaten BÜYÜK harf; `threshold_loader.py:50` `.upper()` ile normalize ediyor);
+>   yalnız **iki vendored şemada** + fixture'larda yaşıyor. **Ama** `sorties[].crop_type` bir
+>   **GİRDİ** sözleşmesidir ve değerini **görev planı** üretir → enum'u daraltmak küçük harf yazan
+>   bir görev dosyasını **reddeder** (kart REJECTED). Karar: üretici mi BÜYÜK harfe geçecek, edge mi
+>   doğrulamadan önce normalize edecek? *(`worker_result.v1` edge `src/`'de hiç kullanılmıyor —
+>   o dosyanın daraltılması risksiz ve ayrı bir küçük adım.)*
+>
+> ### 🔴 SONRAKİ OTURUM — ÜÇ AÇIK KARAR (kod değil, KARAR bekliyor)
+> | # | Soru | Neden tek taraflı kapatılmadı |
+> |---|---|---|
+> | **W14** | Worker-içi 12-ürün / 7-bölge ekseni **wire** şemalarına (`expert_review_queue`, `expert_labeling_card`) sızmış. Kanonik absorbe mi etsin · şemalar worker-içi mi ilan edilsin · vendored mi daraltılsın? | Üretilmiş 4 kart seti + `bulk_approval_suggester` + testler etkileniyor. ⚠️ İlk taslağımda *"kiraz sipariş edilebiliyor"* yazmıştım — **YANLIŞTI**, düzeltildi: KG-0.d-EK 2026-07-31'de kod-teyitli kapandı (CHERRY çift kapılı kapalı) ve `crop_type.py:50-68` **dört kümenin bilerek farklı** olduğunu yazıyor |
+> | **E16** | Girdi sözleşmesindeki enum daraltması (yukarıda) | Saha kartı reddi riski; üretici kararı |
+> | **SD11** | Kanonik şemalardaki `notes`/`metadata` → `x-notes`/`x-metadata` göçü (OpenAPI uzantı konvansiyonu). Bugün **23 `struct` bulgusu beyanlı** olarak susturuldu (`.redocly.lint-ignore.yaml`, gerekçesi yazılı) | 12 kanonik dosya + onları **okuyan** tüketiciler (ör. `metadata.bandRequirements` KR-018 bant kapısının kaynağı) |
+>
+> **Kanıt arşivi:** `denetim/denetim_raporu_2026-08-01_od1_od2_od3_od8.md` ·
+> `denetim/denetim_raporu_2026-08-01_e13r_od4_od5_od6_od7.md`.
+> **📌 Giriş noktası değişmedi:** eylem planı **§14.8** (kapananlar ✅) + **🔶 MAJOR TURU** (S3 · S7-b · K1).
 
 ---
 
