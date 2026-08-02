@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-01 (ikinci oturum — §14.8 + E13-R)
+**Son güncelleme:** 2026-08-02 (gece turu — öz-denetim + ÖD-0 + C8 / `v7.4.0` yayımlandı)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,66 @@
 
 ---
 
-## 0.A EN GÜNCEL OTURUM (2026-08-01, **ikinci oturum**) — **§14.8'in tamamı + E13 geri alındı**
+## 0.A EN GÜNCEL OTURUM (2026-08-01 gecesi → 2026-08-02) — **öz-denetim + ÖD-0 + `v7.4.0` YAYIMLANDI**
+
+> ### 🔚 OTURUM KAPANIŞ ÖZETİ
+>
+> **TUR 2 KAPANDI.** `v7.4.0` annotated tag ile yayımlandı, dört depo hizalı, açık PR yok.
+>
+> | Depo | Sürüm / Pin | Değişmez |
+> |---|---|---|
+> | contract | `7.4.0` · tag `v7.4.0` · **23 tag** · checksum `c7b8d46e…` | I-2 ✅ (`objecttype=tag`, `describe` temiz) |
+> | platform | `7.4.0` · submodule `eb28b74` (PR **#352**) | I-3 ✅ (96/96 per-dosya hash) |
+> | worker | `v7.4.0` · öz-hash `bb66e1bc…` (PR **#189**, **#190**) | I-4 ✅ · I-5 ✅ (devir spesi uzlaştı, silindi) |
+> | edge | yerel `1.5.0` · upstream `7.4.0` (PR **#51**) | hash 8/8 |
+>
+> **Oturumun üç işi:** ① önceki oturumun **öz-denetimi** ② denetim borcu **ÖD-0** (`sürüm-riski`
+> lensi) ③ **C8 töreni** (6/6 adım).
+>
+> ### 🔴 ÜÇ KÖK BULGU (üçü de aynı sınıf: *yeşil görünen ama ölçmeyen yüzey*)
+> 1. **CI, yerelde kırmızı olan commit'i yeşil geçirdi.** `ee4aed7`'in CI koşusu `success`
+>    döndü; kırılan test contract CI'ında **atlanan 134 testin** içindeydi (kardeş depo okuyor).
+>    ⇒ Bu depoda CI, kardeş-bağımlı kapılar için **otoriter değildir**; süitin %11'ini koşmaz.
+>    **Yerelde 20 saniyede yeniden üretilebiliyor:** `git clone --local . <boş dizin>` + `pytest`
+>    → CI çıktısı birebir (`1093 passed, 134 skipped`). Push öncesi bu koşulmalı.
+> 2. **Atlama kapısı dosyaya bakmıyordu** — yalnız gerekçe dizesine bakıyordu, bu yüzden ikinci
+>    bir dosya beyanın altına **adı geçmeden** sığındı (beyanın notu da bayattı: 47 → 134).
+>    Beyan artık `(gerekçe, dosya, not)` üçlüsü; mutasyon kırmızı.
+> 3. **Release aracının kendisi bozuktu.** `pin_version.py` agrega checksum'ı yazdıktan **sonra**
+>    `api/*.yaml`'ı senkronluyordu; o dosyalar checksum kümesinin **içinde** → pin doğduğu anda
+>    bayat, `--verify` anında kırmızı. v7.3.0'da görünmemişti çünkü `info.version` o tur
+>    değişmemişti. Sıra düzeltildi + regresyon kapısı (mutasyonla doğrulandı).
+>
+> ### 📋 ÖD-0 (`sürüm-riski` lensi) — 9 soru, elle koşturuldu
+> Temiz: MINOR **iki bağımsız ölçümle** (dedektör 9/0 + dedektörün kodunu hiç kullanmayan
+> düzleştirilmiş tarama 89 dosya/0; ikinci araç 3/3 mutasyonla doğrulandı) · migration guide
+> gerekmiyor · I-2 22/22 → **23/23** · re-pin penceresi **güvenli** (yeni alanların canlı
+> üreticisi yok, ölçüldü). Kapatılan: **yayın kapısı boşluğu** (`pin_version` sürümü yazar ama
+> `## [Unreleased]` başlığını çevirmez, hiçbir kapı ölçmüyordu → 2 `release_gate` testi) +
+> CHANGELOG'un turun ortasını anlatan 3 bayat cümlesi.
+>
+> ### 🆕 Kardeş depolara yazılan (SIRA 3 kuyruğunda)
+> **E18** — edge `_read_calibration_type` her okuma hatasını **sessizce** yutup
+> `calibration_type`'ı atlıyor; üç yorumu hâlâ *"platform PANEL_ABSOLUTE varsayar"* diyor ama
+> **P14 o ağı kaldırdı** ⇒ okunamayan dosya → `NONE` → worker sert reddi, **teşhis edilemez**
+> sebeple. E15 ile aynı sınıf. · **P19** — platform `_derive_calibration_type` 2. adımı **ölü**
+> (`calibration_manifest`'e hiçbir yerde değer atanmıyor) ⇒ "3 kaynak" aslında 1 + fail-closed,
+> bu da E18'in etkisini büyütüyor. · **W15** — worker docstring'i okumadığı alanı okuduğunu
+> söylüyor (S4 gerekçesini yanlış yönlendirir). · **DEP-1** — penceresi dolmuş iki deprecation
+> MAJOR turu içeriğine eklendi. · **Ö7** — W14'ün kalıcı beyanı "yalnız küçülür" diyen borç
+> listesinde duruyor (delik değil, taksonomi yanlış; C8 sonrası).
+>
+> **Kanıt arşivi:** `denetim/denetim_raporu_2026-08-01_gece_ozdenetim_onceki_oturum.md` ·
+> `denetim/denetim_raporu_2026-08-01_gece_od0_surum_riski_lensi.md`.
+>
+> **📌 SONRAKİ OTURUMUN GİRİŞ NOKTASI:** eylem planı **§14.9**. Yeni sıra: ① **P1**
+> (platform `enforce=True` — iki kilit de açıldı; platform commit'i **kullanıcı onayı ister**)
+> ② kardeş depo kuyruğu (**E18** ve **P19** öne alınmalı — canlı teşhis riski) · E17/W10 ·
+> E15 · W8 · P15/P16 · C8-a ③ **MAJOR TURU** (kilit kalktı; AK-11 önce).
+
+---
+
+## 0.A′ ÖNCEKİ OTURUM (2026-08-01, **ikinci oturum**) — **§14.8'in tamamı + E13 geri alındı**
 
 > ### 🔚 OTURUM KAPANIŞ ÖZETİ
 >
@@ -118,7 +177,7 @@
 
 ---
 
-## 0.A′ ÖNCEKİ OTURUM (2026-08-01) — **§14.7 tamamı + C8 töreni + TUR 2 açılışı**
+## 0.A″ DAHA ÖNCEKİ OTURUM (2026-08-01) — **§14.7 tamamı + C8 töreni + TUR 2 açılışı**
 
 > ### 🔚 OTURUM KAPANIŞ ÖZETİ
 >

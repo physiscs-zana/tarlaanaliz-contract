@@ -2086,7 +2086,36 @@ yetimsiz · dört depo temiz+senkron · 0 açık PR · master CI 5/5 yeşil · d
 | 🟡 **Ö4·Ö5·Ö6** | **Karar koda yazıldı, çevresindeki metin eski dünyayı anlatmaya devam etti** (3 örnek): §14.9'un *"3 beyan açık"*ı (gerçek **2**) · `MEASURED_DEBT_VALUES` yorumu (*"16 değer"*, gerçek **6**) · C11 docstring'i (*"E16 açık"*, gerçek **kapandı** — altındaki test tersini iddia ediyor) | ✅ üçü de düzeltildi |
 | 🔵 **Ö7** | W14'ün **kalıcı** beyanı, *"kalıcı olamaz · yalnız küçülür"* diyen `KNOWN_VENDORED_AHEAD` içinde duruyor. Bugün delik değil (6 değerin 6'sı dolu, yeni sapmaya yer yok) ama sayaç 0'a inemez ve yapının metni yanlış | ⬜ **C8 SONRASI**: kalıcı beyanları `DECLARED_NARROWER_DEFS` benzeri ayrı yapıya taşı |
 
-### 🥇 SIRA 1 — **C8 töreni: TUR 2'yi kapat (v7.4.0)**
+### ✅ SIRA 1 — **C8 töreni TAMAMLANDI (2026-08-02, v7.4.0 YAYIMLANDI)**
+
+> Altı adımın altısı da koşturuldu. **Beş değişmez ölçüldü ve tuttu:**
+> I-1 `7.4.0 = 7.4.0 = v7.4.0` (edge yerel `1.5.0` / upstream `7.4.0`) · I-2 `objecttype=tag`,
+> `describe` temiz, **23 tag** · I-3 platform submodule `eb28b74` = `v7.4.0^{}`, checksum
+> **96/96** · I-4 worker öz-hash `bb66e1bc…` OK · I-5 devir spesi **uzlaştı ve silindi**.
+>
+> | Adım | Sonuç |
+> |---|---|
+> | 1 · dedektör | **9 değişiklik / 0 breaking** + dedektörden bağımsız düzleştirilmiş tarama (89 dosya) **0 bulgu**; ikinci araç **3/3 mutasyonla** görür kanıtlandı |
+> | 2 · `PENDING_PROPAGATION` **boşaltıldı** | edge #51 (`PANEL_ABSOLUTE` · `RGB` · `qc_report.flags` 5 değerlik) · worker #189 (`calibration_method`). ⚠️ `flags` bir DARALTMADIR; güvenli olduğu **ölçüldü** (`qc_report_writer.py:154-165` tam o beşini yazıyor). S4 beyanının gerekçesi **yön değiştirdi**: alan eksik kaldıkça onu yazan ilk belge worker kapısında reddedilirdi → vendor'lamak ölü alan değil **mayın temizleme** |
+> | 3 · `pin_version --minor` | 7.4.0 + `info.version` üçü birden (SD9). 🔴 **Araçta hata bulundu** (aşağıda) |
+> | 4 · annotated tag | `v7.4.0` atıldı ve push'landı, I-2 ölçümle doğrulandı |
+> | 5 · üç depo re-pin | platform **#352** · worker **#189** · edge **#51** — dördü de CI yeşil, merge edildi |
+> | 6 · devir spesi | worker **#190** — uzlaşma koşulu `git show v7.4.0:<yol>` ile ölçüldü (ileri alan **0**), sonra silindi |
+>
+> 🔴 **Tören release aracının kendisinde bir hata buldu:** `pin_version.py` agrega checksum'ı
+> yazdıktan **sonra** `api/*.yaml`'ı senkronluyordu; o dosyalar checksum kümesinin **içinde**
+> olduğu için pin doğduğu anda bayat oldu (`--verify` anında kırmızı). v7.3.0 turunda
+> görünmemişti: `info.version` o tur `1.0.0`'da kalmış, senkron hiçbir baytı değiştirmemişti.
+> Sıra düzeltildi (senkron → hash → yaz) + regresyon kapısı yazıldı, mutasyonla doğrulandı.
+> **Ders:** bir release adımı, checksum kümesinin içindeki dosyayı değiştiriyorsa **hash'ten
+> önce** koşmalıdır; "ilk kez gerçekten çalışan" bir adım ilk koşuşunda denetlenmelidir.
+>
+> Kapılar: pytest **1232 passed / 0 skip / 0 xfail** · validate **164/0** · dist 68 yetimsiz
+> · `pin_version --verify` ✅ `c7b8d46e…`.
+
+<details><summary>Törenin özgün 6 adımlık tarifi (tarihsel — bir sonraki C8 için)</summary>
+
+#### C8 töreni: TUR kapatma (referans)
 Tur açık kaldıkça `PENDING_REPIN` beyanı iki xfail'i canlı tutuyor ve **üç depo checksum'ı
 doğrulanamıyor**. Turun taşıdığı içerik: `S5 · C6b/S2 · S4 · S6 · S7` + **ÖD-1** (edge kalibre
 enum) + **ÖD-2** (`analysis_job` `$defs`) + **E13-R** (türetme bloğu) + **SD9** (`info.version`)
@@ -2109,7 +2138,15 @@ enum) + **ÖD-2** (`analysis_job` `$defs`) + **E13-R** (türetme bloğu) + **SD9
    --update --version v7.4.0` · edge upstream ref. **I-1** üç depoda aynı dizeyi göstermeli.
 6. Worker `denetim/scale_wire_devir_spec_2026_08_01.md` **silinir** (uzlaşma koşulu bu turdu).
 
-### 🥈 SIRA 2 — **P1 açılabilir (kilit kalktı)**
+</details>
+
+### 🥇 SIRA 1 (YENİ) — **P1: platform `enforce=True`** *(iki kilit de açıldı)*
+E16 ile edge çıktısı kanonik sözlüğü konuşuyor **ve** TUR 2 kapandı → P1'in iki önkoşulu da
+karşılandı. Platform deposu: **commit için kullanıcı onayı gerekir** (platform CLAUDE.md
+*"Commit yalnızca kullanıcı açıkça istediğinde oluşturulur"*). Yöntem bu turda kanıtlandı:
+dal + PR + CI yeşilse merge.
+
+### 🥈 SIRA 2 — ~~P1 açılabilir (kilit kalktı)~~ → **SIRA 1'e taşındı**
 E16 ile edge çıktısı kanonik sözlüğü konuşuyor → platform `enforce=True` artık edge'i kırmaz.
 Plan bunu *"E16'dan SONRA"* diye kilitlemişti; kilit **açıldı**. (Platform deposu; commit için
 kullanıcı onayı gerekir — CLAUDE.md kuralı.)
@@ -2126,7 +2163,7 @@ kullanıcı onayı gerekir — CLAUDE.md kuralı.)
 | 🆕 **P19** | platform | `_derive_calibration_type` 2. adımı (`CalibrationRecord.calibration_manifest`) **ölü** — ya besle ya kaldır | Ölçüldü: `src/`+`tests/`+`scripts/`+`alembic/` içinde o alana **hiç değer atanmıyor** (kolon hep NULL). Docstring 3 kaynak sayıyor, gerçekte **1 kaynak + fail-closed** var → E18'in etkisini büyütüyor (tek kaynak sessizce kaybolunca yakalayacak yedek yok) |
 | 🆕 **W15** | worker | `calibration_input_parser.py:3` docstring'i *"Reads calibration_method"* diyor; fonksiyon **`calibration_type`** okuyor | Küçük ama **yanıltıcı**: S4 beyanı *"okuyan kod yok"* gerekçesine dayanıyor; bir sonraki oturum `calibration_method` diye grep atınca bu satırı bulup yanlış sonuca varır |
 
-### 🔶 SIRA 4 — **MAJOR TURU (v8.0.0)** — TUR 2 kapanmadan AÇILMAZ
+### 🔶 SIRA 4 — **MAJOR TURU (v8.0.0)** — ✅ **kilit KALKTI (TUR 2 kapandı, v7.4.0 yayımlandı)**
 Sıra: **AK-11 önce** (dedektör `FIELD_MADE_REQUIRED` için `x-compat-accepted` tanımıyor) →
 tek migration guide → `--major --breaking` → üç depo re-pin. İçerik: **S3** (`DLS2_RELATIVE`
 yeniden adlandırma/kaldırma) · **S7-b** (`raw_frames[].band` → `required`) · **K1** (`{tenant}`)
