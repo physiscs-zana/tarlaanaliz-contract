@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-02 (gece turu — öz-denetim + ÖD-0 + C8 / `v7.4.0` yayımlandı)
+**Son güncelleme:** 2026-08-02 (otonom tur — SIRA 3 kapandı + AK-11)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,58 @@
 
 ---
 
-## 0.A EN GÜNCEL OTURUM (2026-08-01 gecesi → 2026-08-02) — **öz-denetim + ÖD-0 + `v7.4.0` YAYIMLANDI**
+## 0.A EN GÜNCEL — (2026-08-02, **otonom tur**) — **SIRA 3 KAPANDI + AK-11**
+
+> Kullanıcı uyurken otonom koşuldu. **7 PR, 4 depo, hepsi CI yeşil ve merge edildi:**
+> edge **#52** (E18+E15) · **#53** (E17) · platform **#354** (P15+P19) ·
+> worker **#191** (W15+W8-yarım) · **#192** (W10) · contract **#27** (C8-a) + AK-11 (master).
+>
+> ### Turun şekli: dört kapı **kendi hatamı** gösterdi
+> Bu turun en değerli çıktısı düzeltilen kalemler değil, **kapıların beni yakalaması**:
+> 1. **E17 kapısı ölçütümü çürüttü.** *"Atlama = 0"* yazmıştım; ilk koşuşta
+>    `95 passed, 69 skipped` dedi. Beklentim yanlıştı — parite süiti **iki deponun**
+>    çiftlerini birden kapsıyor, karşı taraf PRIVATE olduğu için meşru atlanıyor.
+>    Ölçüt *"BU depoya ait atlama yok"* + *"hiç test koşmadıysa da kırmızı"* oldu.
+> 2. **C8-a aracı iki kez yakalandı**; ikincisi ciddi: `--check` kusursuz görünürken
+>    **`--apply` hiçbir şey yazmıyordu** (exit 0 ile). Yalnız mutasyonla göründü.
+> 3. **E18'de dört fixture, düzeltilen hatanın ÜZERİNDE duruyordu** — `calibrated.json`
+>    yolunu veriyor ama dosyayı hiç yazmıyorlardı; yalnız sessiz yutma sayesinde
+>    geçiyorlardı. (Aynı ders P14 turunda da çıkmıştı.)
+> 4. **Şema açıklamasına dokunmak** checksum + dist kapılarını kırdı → tek cümlelik prose
+>    bile üç depoyu yeniden pinlemeyi gerektiriyor (ölçüldü, borç plana yazıldı).
+>
+> ### İki kez "yapma" dedim — ve nedenini ölçtüm
+> * **W8 çağrı yeri bağlanmadı.** Publish noktasında elde yalnız **anomali** tile'ları
+>   var; oradan çekiliş örneği **ölçtüğü sonuca koşullar**. Sampler'ın kendi bilimsel
+>   gerekçesi bunu yasaklıyor. **Yanlı çekiliş, hiç çekiliş yapmamaktan kötüdür** —
+>   ölçüm temeli sessizce geçersiz olur ve fark edecek kapı yok. → **W8-b**
+> * **P19'da "kaldır" kararını GERİ ALDIM.** Ölü sandığım dalın **açık bir testi** vardı;
+>   eksik olan kod değil **üretici bağlantısı**. Belirtilmiş davranışı tek taraflı silmek
+>   yerine durum beyan edildi ve **kapıya bağlandı** (iki yönde mutasyon kırmızı).
+>
+> ### Bayat beyan sayacı: bu oturumda **beş**
+> P1'i kilitleyen iki not (`settings.py` + `ingest.py`, drift zaten giderilmişti) ·
+> sampler'ın *"`AUDIT_SAMPLE` enum'da yok"*u (var) · `data_lifecycle_transfer.md` ·
+> W15 docstring'i. Hepsi *"karar uygulandı, çevresindeki metin eski dünyada kaldı"*.
+>
+> ### AK-11 ✅ (SIRA 4'ün ilk adımı)
+> Dedektör artık `FIELD_MADE_REQUIRED` yolunda da beyanı tanıyor. Kusur iki katmanlıydı:
+> tip listede yoktu **ve** o dal `_record()`'u hiç çağırmıyordu. Yeni koşul **açık
+> opt-in** (`"accepts": [...]`) — tek damga aynı düğümdeki daha güçlü iddiayı sessizce
+> kapsamasın. ⇒ **S7-b artık beyanla MINOR turda da kapatılabilir.**
+>
+> ### 📌 SONRAKİ OTURUM — kullanıcı kararı bekleyen yer
+> **SIRA 4'ün geri kalanı (v8.0.0) BİLEREK açılmadı.** İçeriği ürün kararı:
+> **S3** (`DLS2_RELATIVE` yeniden adlandırma/kaldırma) · **S7-b** (`band` → required) ·
+> **K1** (`{tenant}` opaklaştırma) · **DEP-1** (penceresi dolmuş iki deprecation).
+> Bunlar geri alınamaz, kırıcı ve dört depoyu birden ilgilendiriyor.
+> Ayrıca kuyrukta: **W8-b** · **P21** → **P16** · **W8-c** (AL-W1).
+>
+> Dört depo: temiz · senkron · 0 açık PR · I-1 `7.4.0 = 7.4.0 = v7.4.0` · CI 4/4 yeşil.
+
+---
+
+## 0.A′ ÖNCEKİ OTURUM (2026-08-01 gecesi → 2026-08-02) — **öz-denetim + ÖD-0 + `v7.4.0` YAYIMLANDI**
 
 > ### 🔚 OTURUM KAPANIŞ ÖZETİ
 >
@@ -79,7 +130,7 @@
 
 ---
 
-## 0.A′ ÖNCEKİ OTURUM (2026-08-01, **ikinci oturum**) — **§14.8'in tamamı + E13 geri alındı**
+## 0.A″ ÖNCEKİ OTURUM (2026-08-01, **ikinci oturum**) — **§14.8'in tamamı + E13 geri alındı**
 
 > ### 🔚 OTURUM KAPANIŞ ÖZETİ
 >
@@ -177,7 +228,7 @@
 
 ---
 
-## 0.A″ DAHA ÖNCEKİ OTURUM (2026-08-01) — **§14.7 tamamı + C8 töreni + TUR 2 açılışı**
+## 0.A‴ DAHA ÖNCEKİ OTURUM (2026-08-01) — **§14.7 tamamı + C8 töreni + TUR 2 açılışı**
 
 > ### 🔚 OTURUM KAPANIŞ ÖZETİ
 >
