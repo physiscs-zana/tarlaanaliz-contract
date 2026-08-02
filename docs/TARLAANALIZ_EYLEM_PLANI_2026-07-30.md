@@ -2177,7 +2177,33 @@ E16 ile edge çıktısı kanonik sözlüğü konuşuyor → platform `enforce=Tr
 Plan bunu *"E16'dan SONRA"* diye kilitlemişti; kilit **açıldı**. (Platform deposu; commit için
 kullanıcı onayı gerekir — CLAUDE.md kuralı.)
 
-### 🥉 SIRA 3 — kardeş depo kuyruğu (bağımsız, paralel yapılabilir)
+### ✅ SIRA 3 — kardeş depo kuyruğu **KAPANDI** (2026-08-02, otonom tur)
+
+> Beş kalem, altı PR, dört depo — hepsi CI yeşil ve merge edildi:
+> edge **#52** (E18+E15) · **#53** (E17) · platform **#354** (P15+P19) ·
+> worker **#191** (W15+W8) · **#192** (W10) · contract **#27** (C8-a).
+>
+> | # | Sonuç |
+> |---|---|
+> | **E18** ✅ | Sessiz `except` fail-loud oldu. **P14 sessizliğin bedelini değiştirmişti**: eskiden tehlikeli bir *yükseltme*, şimdi **teşhis edilemez bir ret** (okunamayan dosya → `NONE` → worker sert kapısı). Üç bayat yorum düzeltildi. **Mutasyon: 6 test kırmızı.** 🔴 Yan bulgu: dört fixture `calibrated.json` yolunu veriyor ama dosyayı **hiç yazmıyordu** — yani düzeltilen hatanın *üzerinde* duruyorlardı (aynı ders P14 turunda da çıkmıştı) |
+> | **E15** ✅ | *"Ölçemedik"* ile *"kapsama sıfır"* ayrıldı (`CoverageComputationError`); `min(...,1.0)` kırpması artık WORM kaydına ham oranla giriyor. ⚠️ **Ölçüldü: bu sınıfın bugün üretim çağıranı YOK** (yalnız testler) — düzeltme bugünkü bir kaybı durdurmuyor, ilk çağıranda patlayacak mayını temizliyor |
+> | **P15** ✅ | Plan *"tek satır"* diyordu; ölçüm **5 yer** gösterdi (sabit ×1 + `drone_capability_matrix.yaml` ×4, matris **canlı** — `drone_registry_loader` yüklüyor). Beşi de `LCI` |
+> | **P19** ✅ | *"Ya besle ya kaldır"* dendi; **üçüncü cevap** çıktı. Önce kaldırdım, sonra **geri aldım**: davranış açıkça test edilmiş, eksik olan kod değil **üretici bağlantısı**. Durum beyan edildi ve **kapıya bağlandı** (AST tabanlı, iki yönde mutasyon kırmızı) |
+> | **W15** ✅ | Docstring okumadığı alanı okuduğunu söylüyordu — S4 beyanının gerekçesini yanlış yönlendiriyordu |
+> | **W8** ⚠️ | **Yarısı**: builder + 27 test (gerçek vendored şemaya karşı; anti-anchoring kısıtları tek tek sızdırılıp reddedildiği ölçüldü). **Çağrı yeri BİLEREK bağlanmadı → W8-b** (aşağıda) |
+> | **E17 / W10** ✅ | Kardeş CI kapıları kuruldu. 🔴 **Kapı ilk koşuşta kendi ölçütümü çürüttü**: *"atlama = 0"* beklentim yanlıştı (`95 passed, 69 skipped`) — parite süiti iki deponun çiftlerini birden kapsıyor, karşı taraf PRIVATE olduğu için meşru atlanıyor. Ölçüt *"BU depoya ait atlama yok"* + *"hiç test koşmadıysa da kırmızı"* oldu. Edge 95 koşuyor, worker 85 — **birleşim** contract CI'ında görünmeyen 134 testi kapsıyor |
+> | **C8-a** ✅ | Yayılım aracı. 🔴 **Araç kendi mutasyonuyla iki kez yakalandı**: (a) SUBSET çiftlerine 28 **sahte** öneri, (b) `--check` kusursuzken **`--apply` hiçbir şey yazmıyordu** (exit 0 ile). İkincisi yalnız mutasyonla göründü; mutasyon teste çevrildi (11 test) |
+
+### 🆕 SIRA 3'ten DOĞAN kalemler
+| # | Depo | İş | Ölçülmüş gerekçe |
+|---|---|---|---|
+| 🔴 **W8-b** | worker | Denetim satırı emisyonunun **çağrı yerini** bağla — çekiliş `core/services/inference/pipeline.py:~1715`'te (`tiles`/`healthy_tiles`/`anomaly_tiles`) yapılmalı, üç katman boyunca taşınmalı | Publish noktasında elde **yalnız `result.detections`** var (anomali tile'ları). Oradan çekiliş, örneği *"anomali olma"* koşuluna bağlar — sampler'ın kendi bilimsel gerekçesi bunu yasaklıyor (*"selection indicator must be uncorrelated with the quantity being measured"*). **Yanlı çekiliş, hiç çekiliş yapmamaktan kötüdür**: ölçüm temeli sessizce geçersiz olur ve bunu fark edecek kapı yok |
+| ⬜ **P21** | platform | `consensus_participation` alanını **kalıcılaştır** (`ExpertReviewModel` kolonu + worker mesajından okuma) | **P16'nın eksik ortası.** Ölçüldü: kanonik `expert_review_queue.v1` alanı tanımlıyor ✅ · worker yazmıyor (**W8**) · platformda **kolon yok** → konsensüs yolu (`expert_portal._evaluate_publication_gate`) dışlayacak bir şey bulamaz |
+| ⬜ **P16** | platform | Konsensüs yolu `EXCLUDED` satırı saymamalı | 🔒 **W8-b + P21'e bağlı.** Bu turda uygulanamadı — yokluğu ölçüldü, uydurulmadı |
+| ⬜ **W8-c** | worker | `AuditSetSampler` oran tablosunu doldur (bugün boş → hiçbir tile seçilmiyor) | AL-W1; aktivasyon **bilinçli bir ops kararı**, kod hazır |
+
+<details><summary>SIRA 3'ün özgün kuyruğu (tarihsel)</summary>
+
 | # | Depo | İş | Neden şimdi |
 |---|---|---|---|
 | **E17 / W10** | edge · worker | Kardeş-bağımlı **İKİ** kapıyı kardeş CI'da koştur (D4-b uygulaması): `tests/test_vendored_parity.py` **+ `tests/test_c11_sorties_absorption.py`** | Kapı bu turda 16 dosyaya genişledi ve **5 gerçek sapma** buldu; kardeş CI'da koşmadıkça sapma yalnız yerel diskte görünür. 🔴 **Kapsam 2026-08-01 gece'de düzeltildi (Ö2):** kalem yalnız parite dosyasını sayıyordu, ama contract CI'ında atlanan 134 testin **2'si C11 dosyasındandır** — kalem eski hâliyle uygulansaydı o 2 test **hiçbir CI'da** koşmayacaktı. Tam da orada yaşandı: `ee4aed7` yerelde kırmızıyken CI'ı **yeşil** geçti (Ö1) |
@@ -2189,6 +2215,8 @@ kullanıcı onayı gerekir — CLAUDE.md kuralı.)
 | 🆕 **P19** | platform | `_derive_calibration_type` 2. adımı (`CalibrationRecord.calibration_manifest`) **ölü** — ya besle ya kaldır | Ölçüldü: `src/`+`tests/`+`scripts/`+`alembic/` içinde o alana **hiç değer atanmıyor** (kolon hep NULL). Docstring 3 kaynak sayıyor, gerçekte **1 kaynak + fail-closed** var → E18'in etkisini büyütüyor (tek kaynak sessizce kaybolunca yakalayacak yedek yok) |
 | 🆕 **W15** | worker | `calibration_input_parser.py:3` docstring'i *"Reads calibration_method"* diyor; fonksiyon **`calibration_type`** okuyor | Küçük ama **yanıltıcı**: S4 beyanı *"okuyan kod yok"* gerekçesine dayanıyor; bir sonraki oturum `calibration_method` diye grep atınca bu satırı bulup yanlış sonuca varır |
 | 🆕 **P20** | platform | Ingest sözleşme kapısı **ham istek gövdesini değil** Pydantic `model_dump()` çıktısını doğruluyor → modelde tanımsız alanlar doğrulamadan **önce** düşer ve kapı onları hiç görmez | P1 ölçümünde çıktı: `sorties` ve `mission_date` bugün tam olarak böyle düşüyor — **ikisi de C11 ile kanoniğe absorbe edilmişti** ve platform `sorties`'i hiçbir yerde kullanmıyor (0 atıf). Bugün veri kaybı değil (kimse tüketmiyor) ama kapı *"edge'in gönderdiğini doğruluyoruz"* diye okunuyor, oysa **kendi yeniden inşasını** doğruluyor. ÖD-3'ün tam deseni: kapı, koruduğunu iddia ettiği yüzeyi ölçmüyor. Çözüm ya ham gövdeyi de doğrula ya alanları modele ekle — hangisi olacağı ürün kararı (per-sortie ürün atıfı platform entegrasyonunda izlenen bir kalem) |
+
+</details>
 
 ### 🔶 SIRA 4 — **MAJOR TURU (v8.0.0)** — ✅ **kilit KALKTI (TUR 2 kapandı, v7.4.0 yayımlandı)**
 Sıra: **AK-11 önce** (dedektör `FIELD_MADE_REQUIRED` için `x-compat-accepted` tanımıyor) →
