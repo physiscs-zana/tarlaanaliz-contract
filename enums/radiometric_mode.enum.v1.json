@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/enums/radiometric_mode.enum.v1.json",
+  "title": "RadiometricMode",
+  "description": "Fotogrametri motorunun uyguladığı radyometrik işlem kipi — KR-018/KR-082 + KR-034 kanonik. `calibration_type` türetmesinin İKİNCİ girdisidir (birincisi drone `calibration_class`). Bu eksen, kalibrasyonun HANGİ YÖNTEMLE yapıldığını değil, RADYOMETRİK DÜZELTMENİN UYGULANIP UYGULANMADIĞINI söyler; yöntem ekseni ayrıdır (bkz. calibration_type.enum.v1 → x-separate-axis → calibration_method). SSOT Uyum: 1.2.0.",
+  "type": "string",
+  "enum": [
+    "PANEL",
+    "SUN_IRRADIANCE",
+    "RAW_DN"
+  ],
+  "x-enum-descriptions": {
+    "PANEL": "Reflektans paneli kullanılarak radyometrik düzeltme yapıldı. Motor bazlı kısıtlar vardır ve ÜRÜNE ÖZGÜDÜR: Pix4Dfields DJI P4M/M3M için YALNIZ Micasense ve Sentera hedeflerini kabul eder (Parrot paneli açıkça UYUMSUZ); DJI Terra en az 1, en çok 3 panel grubu alır ve her bandın reflektans katsayısı ELLE girilir.",
+    "SUN_IRRADIANCE": "Güneş/ışınım sensörü verisiyle düzeltme yapıldı, reflektans paneli yok. Pix4Dfields'in DJI M3M için uyguladığı kip budur: güneş sensörü verisi EXIF'ten otomatik okunur, ancak üretici sensör YÖNELİMİNİ yayımlamadığı için güneş AÇISI düzeltmesi yapılamaz ve yalnız 'Sun Irradiance' düzeltme tipi uygulanabilir. Bu kipte çıktı reflektansla ORANTILI göreli değerdir, mutlak reflektans DEĞİLDİR.",
+    "RAW_DN": "Radyometrik düzeltme UYGULANMADI. Çıktı ham dijital sayıdır (digital number — sensör sayımı), reflektans değildir. DJI Terra'da 'Radiometric Correction' modülü kapalıyken üretilen çıktı budur. FAIL-CLOSED VARSAYILAN: kip beyan edilmemişse bu değer varsayılır."
+  },
+  "x-fail-closed": {
+    "policy": "Kip BİLDİRİLMEMİŞSE hiçbir kip VARSAYILMAZ; eksik bilgi en güçlü sınıfa değil `RAW_DN`'e yorumlanır ve türetme zincirinde `calibration_type: NONE`'a (KR-018/082 hard reject) çıkar.",
+    "rationale": "Aynı kural `calibration_type.enum.v1 → x-normalization.missing.policy` ile birebir aynıdır. Ham DN'yi kalibre reflektans sanan bir NDVI eşiği, tarlada YANLIŞ agronomik karar üretir."
+  },
+  "x-why-declared-not-detected": {
+    "measured": "2026-08-02 motor araştırması: DJI Terra V5.3.0 çevrimiçi kılavuzunun 302 JS parçası tarandı; `sunlight sensor` | `irradiance` | `sun sensor` | `light compensation` için SIFIR eşleşme. Terra'nın M3M güneş sensörünü otomatik kullanıp kullanmadığı resmi kaynakta HİÇ belgelenmemiştir.",
+    "consequence": "Kip motor çıktısından güvenilir biçimde ÇIKARILAMAZ. Bu yüzden operatör tarafından BEYAN edilir; ölçülemeyeni tahmin etmek yerine beyan ettirmek bu depodaki yerleşik kuraldır.",
+    "producer": "edge — `calibration_gate/engine_adapter.py::read_declaration` (motor çıktı dizinindeki `tarlaanaliz_engine.json`)."
+  },
+  "x-engine-notes": {
+    "description": "Motor-agnostik mimari (KR-034) kapsamında desteklenen motorların bu eksendeki davranışı. Motor kimliği `calibrated_dataset_manifest.v1 → tool_name` / `tool_version` ile taşınır (enum kısıtı YOKTUR — yeni motor sözleşme değişikliği gerektirmez).",
+    "Pix4Dfields": "Her koşulda radyometrik düzeltme uygular; M3M için `SUN_IRRADIANCE`, panel varsa `PANEL`. `RAW_DN` üretmez. Üretici M3M'i 'not fully radiometrically calibrated, only a relative calibration' diye sınıflar.",
+    "DJI Terra": "Radyometrik düzeltme OPSİYONELDİR ('2D Map > Advanced > Radiometric Correction'). Kapalıyken çıktı `RAW_DN`, açıkken `PANEL`. Kılavuz: 'Multispectral images with radiometric correction can be reconstructed to a 2D multispectral map with an output of reflectance.'"
+  },
+  "x-evidence": {
+    "dji_absolute_impossible": "DJI Mavic 3M Image Processing Guide v1.0 (2023.08) Eq. 4-6: NIR_ref = (NIR_camera × pCam_NIR)/(NIR_LS × pLS_NIR) × ρ_NIR. ρ_NIR (kamera ↔ güneş sensörü dönüşüm katsayısı) metaveride YAYIMLANMAZ ⇒ panelsiz MUTLAK reflektans türetilemez; katsayı yalnız oranlı indekslerde (NDVI/NDRE) sadeleşir. Bu, E13-R'nin `relative` kararını üreticinin kendi matematiğiyle doğrular.",
+    "self_normalizing_only": "Panelsiz uçuşta yalnız kendi-normalize olan indeksler anlamlıdır (NDVI, NDRE, GNDVI, BNDVI, LCI, SIPI2, VARI). Mutlak değere bağlı olanlar (ör. TGI) geçersizdir.",
+    "flight_quality_signal": "M3M ham TIFF'lerinde XMP[drone-dji] `LS_status` alanı güneş sensörünün o uçuşta geçerli olup olmadığını taşır: 0 = geçersiz (USB dongle takılı), 1 = geçerli, 2 = geçerli ve telafi ediyor. `SUN_IRRADIANCE` beyanı bu alanla ÇAPRAZ DOĞRULANABİLİR."
+  },
+  "x-kr-ref": [
+    "KR-018",
+    "KR-034",
+    "KR-082"
+  ],
+  "x-ssot-version": "1.2.0",
+  "x-updated": "2026-08-02"
+}

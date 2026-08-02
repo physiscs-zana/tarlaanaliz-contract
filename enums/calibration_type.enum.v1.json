@@ -92,8 +92,28 @@
       "relative": ["ABSOLUTE", "PANEL_ABSOLUTE", "DLS2_RELATIVE"],
       "why": "🔴 Göreli sınıf bir dronun paketine mutlak etiket yazmak ÜÇ zincirî bozar: (1) worker `FINETUNE_ALLOWED_CALIBRATIONS` (`src/core/domain/enums.py:73`) `ABSOLUTE`'u ince ayara UYGUN sayar → K-3'ün *'fine-tuning: SADECE PANEL+DLS2'* kuralı sessizce delinir ve göreli veri model eğitimine girer; (2) platform'un göreli sınıfa ayırdığı **2.0× tolerans** gevşemesi devreye girmez; (3) zaman serisi karşılaştırmaları mutlak tutarlılık varsayar — SSOT `:1014` bunu açıkça reddediyor."
     },
+    "x-radiometric-axis-2026-08-02": {
+      "decision": "AV-3 — türetme **İKİ GİRDİLİDİR**. Drone `calibration_class` tek başına yetmez; motorun uyguladığı radyometrik kip (`radiometric_mode.enum.v1.json`) ikinci girdidir.",
+      "second_source": "radiometric_mode.enum.v1.json — operatör beyanı (edge `calibration_gate/engine_adapter.py::read_declaration`)",
+      "why": "🔴 2026-08-02 motor araştırması ölçtü: **DJI Terra'da radyometrik düzeltme KAPALIYKEN çıktı reflektans değil ham DN'dir** (dijital sayı). Resmi kılavuz: *'Multispectral images with radiometric correction can be reconstructed to a 2D multispectral map with an output of reflectance'* ⇒ düzeltme yoksa çıktı DN'dir. Tek girdili türetmede aynı M3M uçuşu bu kipte işlendiğinde sistem yine `RELATIVE` yazar ve worker'ın NDVI eşikleri **ham DN'e** uygulanırdı. Bu, S1 fail-open bulgusunun birebir aynı sınıfıdır (bkz. `x-normalization.x-superseded-2026-07-31`) — farkı, hatanın platformda değil **edge'de doğuşta** üretilmesi, yani daha erken ve daha sessiz olması.",
+      "table": {
+        "relative|PANEL": "RELATIVE",
+        "relative|SUN_IRRADIANCE": "RELATIVE",
+        "relative|RAW_DN": "NONE",
+        "absolute|PANEL": "ABSOLUTE",
+        "absolute|SUN_IRRADIANCE": "ABSOLUTE",
+        "absolute|RAW_DN": "NONE"
+      },
+      "invariants": [
+        "Tablo TAM olmalıdır: her (calibration_class × radiometric_mode) çifti bir değer üretir; boş göz YOKTUR.",
+        "`RAW_DN` her drone sınıfında `NONE` üretir — fabrika kalibrasyonlu (absolute) sensör bile ham DN'i telafi etmez, çünkü düzeltme hiç uygulanmamıştır.",
+        "Tablonun reflektans kipli gözleri (`PANEL` / `SUN_IRRADIANCE`) yukarıdaki `map.<class>.allowed` kümesinin İÇİNDE olmalıdır — iki blok ayrışamaz.",
+        "`DLS2_RELATIVE` tablonun hiçbir gözünde üretilmez (bkz. `forbidden` + `notes.c6b_subset_alignment`)."
+      ],
+      "consumer_obligation": "edge: `calibration_gate/calibration_type_resolver.py::resolve_calibration_type` bu tabloyu uygular ve enum'u BU dosyadan yükler (hardcode YASAK — ayrışma build'i kırar). `NONE` üretildiğinde kalibre manifest HİÇ ÜRETİLMEZ; paket `REJECTED_QUARANTINE`'a gider."
+    },
     "consumer_obligation": {
-      "edge": "E14 `calibration_result_writer` / `calibrated_validator`: kalibre manifeste yazılacak değeri intake'teki drone modelinden ve matristen TÜRETİR; sabit yazmaz. Matriste olmayan bir drone için değer uydurulmaz — kalibrasyon reddedilir (fail-closed, KR-018).",
+      "edge": "E14 `calibration_result_writer` / `calibrated_validator`: kalibre manifeste yazılacak değeri intake'teki drone modelinden, matristen VE motor radyometrik kip beyanından TÜRETİR (bkz. `x-radiometric-axis-2026-08-02`); sabit yazmaz. Matriste olmayan bir drone için değer uydurulmaz — kalibrasyon reddedilir (fail-closed, KR-018).",
       "platform": "`worker_job_publisher._map_calibration_type` edge'in gönderdiği gerçek tipi olduğu gibi geçirir (G-2). Eksik tip için `NONE` yazılır; **yükseltme YASAKTIR** (bkz. `x-normalization.x-superseded-2026-07-31` / P14).",
       "worker": "Tipi olduğu gibi tüketir; `RELATIVE` ince ayara girmez (K-3), yalnız SSL ön-eğitimine girer."
     },

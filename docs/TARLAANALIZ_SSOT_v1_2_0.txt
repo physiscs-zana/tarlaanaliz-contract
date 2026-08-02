@@ -994,7 +994,7 @@ Takvim değerleri **karar desteğidir**; parsel gözlemi, yerel fenoloji (sıcak
 
 ## [KR-030] Notlar, Sınırlar ve Uyum
 
-- **Drone standardı:** Drone-agnostik mimari; desteklenen drone/sensör kombinasyonları: DJI Mavic 3M (birincil/önerilen; bkz. KR-001 radyometri notu + KR-034), DJI Matrice 350 RTK + Sentera 6X, WingtraOne Gen II + MicaSense RedEdge-P, Parrot Anafi USA + Sequoia+, AgEagle eBee X + Altum-PT. Tüm modeller drone_registry.yaml'a kayıtlı olmalıdır. Kalibrasyon yazılımı: Pix4Dfields (tüm markalar desteklenir).
+- **Drone standardı:** Drone-agnostik mimari; desteklenen drone/sensör kombinasyonları: DJI Mavic 3M (birincil/önerilen; bkz. KR-001 radyometri notu + KR-034), DJI Matrice 350 RTK + Sentera 6X, WingtraOne Gen II + MicaSense RedEdge-P, Parrot Anafi USA + Sequoia+, AgEagle eBee X + Altum-PT. Tüm modeller drone_registry.yaml'a kayıtlı olmalıdır. Kalibrasyon yazılımı **motor-agnostiktir** (bkz. KR-034): desteklenen motorlar **Pix4Dfields** ve **DJI Terra**; motor kimliği `calibrated_dataset_manifest.v1 → tool_name` / `tool_version` ile taşınır ve o alanlar enum kısıtı taşımaz, yani yeni bir motor sözleşme değişikliği gerektirmez.
 - **Spektral bant politikası (v1.2.0):** Minimum **4 multispektral bant** (Green + Red + RedEdge + NIR) zorunludur; 4 banttan az veri kabul edilmez. **5. bant (Blue)** ve **termal bant (LWIR)** opsiyonel zenginleştirmedir — mevcutsa kullanılır, yoksa temel analiz pipeline'ı çalışır (graceful degradation). Bant mevcudiyeti `intake_manifest.available_bands[]` alanından belirlenir; `drone_capability_matrix.yaml` ile çapraz doğrulanır. Bkz. **[KR-018/KR-082]** ve **[KR-084]**.
 - Görüntüler yerel istasyon (M1+M2) üzerinden sisteme alınır; log kayıtları denetim izi oluşturur
 - **KVKK:** PII ile operasyon/raporlama verisi ayrıdır; il operatörü PII görmez
@@ -1010,15 +1010,20 @@ Takvim değerleri **karar desteğidir**; parsel gözlemi, yerel fenoloji (sıcak
 
 **Tetikleyici Koşullar:** İthalat yasağı, tedarik zinciri kesintisi, yasal düzenleme, ihracat kısıtlaması, **veya mevcut DJI M3M stok tükenmesi / yenileme imkânsızlığı**.
 
+**Kritik Teknik Not — Kalibrasyon Motoru Agnostikliği (v1.2.0, 2026-08-02 ölçümü):**
+Kalibrasyon motoru **tekil değildir**; desteklenen motorlar **Pix4Dfields** ve **DJI Terra**'dır ve operatör hangisini kullanacağını uçuş bazında seçebilir. Motor kimliği kalibre manifestte (`tool_name` / `tool_version`) taşınır.
+🔴 **İkisinin de YEREL KOMUT SATIRI (CLI) YOKTUR** — üretici dokümanlarından ölçüldü (Pix4Dfields: doküman merkezi + SSS + sürüm notları 2.8→2.13.2; DJI Terra: V5.3.0 kılavuzunun tamamı). Pix4Dmapper/Pix4Dengine ve TerraAPI **ayrı ürünlerdir**; ilki Enterprise lisans ister, ikincisi buluttur, Haziran 2026'da kapatılmıştır ve tarımsal uygulamaları hiç içermiyordu. M1 air-gap olduğu için bulut yolu zaten kapalıdır. ⇒ **Kalibrasyon adımı operatör tarafından GUI'den yürütülür; edge yazılımı motoru çağırmaz, motorun ÇIKTI DİZİNİNİ okur.** Motoru subprocess ile süren bir tasarım yazılmamalıdır.
+🔴 **Radyometrik düzeltme motorda OPSİYONEL olabilir:** DJI Terra'da "Radiometric Correction" kapalıyken çıktı reflektans değil **ham DN**'dir (dijital sayı). Bu yüzden `calibration_type` türetmesi **iki girdilidir** — drone `calibration_class` × motor `radiometric_mode` (bkz. `enums/radiometric_mode.enum.v1.json` ve `calibration_type.enum.v1.json → x-derivation.x-radiometric-axis-2026-08-02`). Ham DN `calibration_type: NONE`'a, yani KR-018/082 hard reject'e çıkar.
+
 **Kritik Teknik Not — DJI Mavic 3M ve Radyometri:**
-Pix4Dfields ile M3M için üretilen kalibrasyon **görelidir (relative)**; mutlak reflectance yerine, reflectance'a orantılı göreli değerler üretilir. Mutlak radyometrik tutarlılık gerektiren kullanım durumlarında (zaman serisi güvenilirliği, training-serving parity) MicaSense RedEdge-P / Altum-PT veya Sentera 6X sınıfı sensörler tercih edilir. KR-018 hard-gate her iki yolu da kapsar; fark kalibrasyon kalitesidir, geçerlilik kriteri değil.
+Pix4Dfields ile M3M için üretilen kalibrasyon **görelidir (relative)**; mutlak reflectance yerine, reflectance'a orantılı göreli değerler üretilir. Bu, üreticinin kendi matematiğiyle de doğrulanır: DJI Mavic 3M Image Processing Guide v1.0 Eq. 4-6'da kamera↔güneş sensörü dönüşüm katsayısı ρ_NIR metaveride yayımlanmadığı için panelsiz **mutlak** reflektans türetilemez; katsayı yalnız oranlı indekslerde (NDVI/NDRE) sadeleşir. Mutlak radyometrik tutarlılık gerektiren kullanım durumlarında (zaman serisi güvenilirliği, training-serving parity) MicaSense RedEdge-P / Altum-PT veya Sentera 6X sınıfı sensörler tercih edilir. KR-018 hard-gate her iki yolu da kapsar; fark kalibrasyon kalitesidir, geçerlilik kriteri değil.
 
 **[SENARYO A] Minimum Değişiklik / Hızlı Geçiş:**
 
 [ZORUNLU] Senaryo A seçilirse:
 - Platform: DJI dışı RTK'lı multirotor (operasyon rutini korunur)
 - Sensör: Parrot Sequoia+ **veya** MicaSense RedEdge-P (Pix4Dfields "tam radiometric correction" destekli listesinde her ikisi de yer alır)
-- Kalibrasyon akışı: Değişmez — Pix4Dfields → GeoTIFF kanonik çıktı → KR-018 hard-gate manifest
+- Kalibrasyon akışı: Değişmez — desteklenen kalibrasyon motoru (Pix4Dfields **veya** DJI Terra) → GeoTIFF kanonik çıktı → KR-018 hard-gate manifest
 - drone_registry.yaml güncellenir; CropOpsProfile effort_factor gerekirse revize edilir
 - Tüm diğer kanonik kurallar (KR-017, KR-070–073, KR-072) aynen geçerliliğini korur
 

@@ -2247,7 +2247,204 @@ kullanıcı onayı gerekir — CLAUDE.md kuralı.)
 
 ---
 
-## ▶️ SONRAKİ OTURUM — **v8.0.0 TURU: ÖLÇÜLMÜŞ İŞ PLANI** (2026-08-02 gecesinde yazıldı)
+## ▶️ GİRİŞ NOKTASI — **MOTOR-AGNOSTİK KALİBRASYON + v7.5.0 TURU** (2026-08-02, araştırma sonrası)
+
+> **Bu bölüm aşağıdaki "v8.0.0 TURU" bölümünün YERİNE GEÇER.** Gerekçe: 2026-08-02'de
+> yapılan çok dilli motor araştırması (18 ajan, EN+ZH+ES, resmi üretici dokümanı +
+> hakemli kaynak, çürütme turlu) iki temel varsayımı çürüttü. Eski bölüm **tarihsel
+> kayıt** olarak aşağıda duruyor; iş listesi ARTIK BURASIDIR.
+>
+> 🔴 **Bağlam değişti:** Kullanıcının elinde **DJI M3M ile yapılmış ilk uçuşun
+> görüntüleri var** ve demo uçuşları **birkaç gün içinde** başlıyor. Pilot mahsulü
+> `grape` (crop_readiness: stage1/2/3 = pilot, data_status = **strong** — en güçlü mahsul).
+
+### 🔬 ARAŞTIRMA BULGULARI — üç çürütülmüş varsayım
+
+#### AV-1 · İki motorun da YEREL CLI'ı YOK (ölçüldü, 3 dil, 8+ terim)
+
+| | Pix4Dfields | DJI Terra |
+|---|---|---|
+| Yerel CLI / headless | **YOK** — doküman merkezinin 10 bölümü, SSS, sürüm notları 2.8→2.13.2 (son: 2.13.2, 2026-07-13), girdi/çıktı belgesi: sıfır atıf. Yalnız Windows/macOS GUI | **YOK** — V5.3.0 kılavuzunun 70+ sayfası tarandı; `command line`/`CLI`/`API`/`script`/`batch`/`headless` geçen sayfa yok |
+| Programatik yol | **Ayrı ürünlerde:** Pix4D**mapper** CLI (`-c -r`, belgeler Pix4D tarafından *obsolete* işaretli, **Pix4Dengine Server lisansı şart**) · Pix4D**engine** SDK (`pix4dvortex`, Python, Linux/Win — fotogrametri çekirdeği, Fields'ten hiç bahsetmiyor) · Pix4Dengine **Cloud API** (REST, AWS S3) | **TerraAPI** (bulut REST, HMAC-SHA256) — **Haziran 2026'da kapatıldı**; zaten *"real-time 2D/3D, control points, **agricultural applications**, cluster computing"* İÇERMİYORDU (resmi FAQ). Halefi **FlightHub Mapping API** — o da bulut |
+| Air-gap (M1) uyumu | Hayır | Hayır — TerraAPI *"users need upload images to the internet"*, özel kurulum DESTEKLEMİYOR |
+| Lisans kısıtı | Floating; eşzamanlı oturum sınırı paralel otomasyonu kısıtlar | Agriculture sürümü: 2D tarla/meyve ✅ 2D multispektral ✅ · küme ✗ |
+
+> ⚠️ Üçüncü-parti bir pazarlama sitesinin (aidoos.com) *"Pix4Dfields REST API sağlar"*
+> iddiası **YANLIŞ** — Pix4D'nin hiçbir resmi kaynağında yok. Planlamada kullanılmaz.
+>
+> 🔴 **Sonuç: `edge/src/core/services/calibration_gate/pix4d_runner.py` VAR OLMAYAN bir
+> CLI'a subprocess açıyor.** Argüman dizisi (`--project --template --input --headless`) ve
+> çıktı adları (`ortho.tif`/`ndvi.tif`) uydurma. Dosya kendisiyle de çelişiyor:
+> satır 86 *"filenames verified on M1 during smoke test"* diyor, satır 229
+> *"will be smoke-tested on M1 once the CLI is installed"* diyor — M1 hiç alınmadı
+> (KG-0.e), `PIX4D_CLI_PATH=""`. **Bayat beyan sınıfının bir üyesi daha.**
+
+#### AV-2 · İki motorun kalibrasyon çıktısı AYNI ANLAMDA DEĞİL
+
+| Panelsiz M3M | Pix4Dfields | DJI Terra |
+|---|---|---|
+| Güneş sensörü | EXIF'ten **otomatik** okur; *"only the correction type 'Sun Irradiance' can be applied"* (sensör yönelimi üretici tarafından verilmediği için güneş **açısı** düzeltmesi yapılamıyor) | Kılavuzun **302 JS parçası** grep'lendi: `sunlight sensor`\|`irradiance`\|`sun sensor`\|`light compensation` → **0 eşleşme**. Kullanıp kullanmadığı **belgelenmemiş** |
+| Radyometrik düzeltme KAPALI | (her zaman uygular) | 🔴 Çıktı **DN (dijital sayı)** — reflektans değil |
+| Radyometrik düzeltme AÇIK | Panel: yalnız **Micasense + Sentera** uyumlu (**Parrot UYUMSUZ**) | 1–3 panel grubu; her bant katsayısı **elle** girilir, panel sınırı fotoğrafta **elle** işaretlenir |
+| Panelsiz geçerli indeks | Yalnız kendi-normalize olanlar: **NDVI, NDRE, GNDVI, LCI, BNDVI, VARI, SIPI2**. TGI vb. **geçersiz** | Aynı matematik |
+
+**Bağımsız doğrulama:** DJI'nin kendi *Mavic 3M Image Processing Guide v1.0* (2023.08) Eq. 4-6
+matematiksel olarak gösteriyor: `NIR_ref = (NIR_cam × pCam)/(NIR_LS × pLS) × ρ_NIR`; **ρ_NIR
+metaveride YOK** ⇒ panelsiz mutlak reflektans türetilemez, katsayı yalnız oranlı indekslerde
+sadeleşir. Pix4D de M3M'i *"not fully radiometrically calibrated, only a relative calibration"*
+diye sınıflıyor. ⇒ **E13-R'nin `RELATIVE` kararı iki bağımsız üretici kaynağıyla doğrulandı.**
+
+#### 🔴 AV-3 · YENİ DELİK — `calibration_type` türetmesi MOTORU görmüyor
+
+E13-R türetmeyi **yalnız drone'dan** yapıyor (`capabilities[drone_type].calibration_class`).
+Ama AV-2 ölçtü: **aynı M3M uçuşu**, DJI Terra'da *radyometrik düzeltme kapalı* işlenirse
+çıktı **ham DN**'dir. Sistem yine `RELATIVE` yazar → NDVI eşikleri ham DN'e uygulanır →
+tarlada yanlış agronomik karar.
+
+**Bu, S1 fail-open bulgusunun birebir aynı sınıfı** (`x-normalization.x-superseded-2026-07-31`
+neden ham DN'in `PANEL_ABSOLUTE`'a yükselmesinin KRİTİK olduğunu zaten yazıyor) — sadece
+başka kapıdan giriyor. Türetme artık **iki girdili** olmalı:
+
+```
+calibration_type = f(drone_capability_class, engine_radiometric_mode)
+
+  relative + PANEL              → RELATIVE      (panel + göreli sensör)
+  relative + SUN_IRRADIANCE     → RELATIVE      (Pix4Dfields varsayılanı)
+  relative + NONE (ham DN)      → NONE          🔴 HARD REJECT — bugün RELATIVE yazılıyor
+  absolute + PANEL              → ABSOLUTE / PANEL_ABSOLUTE
+  absolute + NONE (ham DN)      → NONE
+```
+
+#### AV-4 · Çıktı yapıları — adaptörün normalize etmesi gerekenler
+
+| | Pix4Dfields | DJI Terra |
+|---|---|---|
+| Kök dizin | Export hedefi (kullanıcı seçer). Veri deposu `C:\Users\<USER>\Pix4Dfields` altındaki **Capture/Data/Log/Temp'e YAZILMAZ** (resmi uyarı: veri kaybı) | `C:/Users/<PC>/Documents/DJI/DJI Terra/<hesap>/<görev>/map/` |
+| Ortomozaik | Export edilen katman adı = **proje adı** (1.12+; 2.12.1'de özel karakterler kaldırıldı) | `result.tif` (RGB) |
+| Bant rasterları | **Tek raster yığını** (Mapper'ın aksine bantları birleştirir) | `result_XXX.tif` — XXX = bant adı |
+| İkili dosya kuralı | 🔴 Her katman **İKİ dosya**: `.tif` (sahte-renkli RGB, sıkıştırılmış, **görüntüleme**) + `.data.tif` (gerçek spektral veri, sıkıştırmasız, **analiz**) | 🔴 İki dizin: `map/index_map/` (**sayısal**, analiz) + `map/index_map_color/` (renkli, *"cannot be directly analyzed"*) |
+| Reflektans haritası | Otomatik değil — Index generator > *Create custom index* ile **bant bant elle** üretilir | Radyometrik düzeltme açıkken otomatik |
+| Rapor | PDF/CSV (`layer-statistics.csv`) | `map_report.json`, `AT/report/sfm_report.json` (**betikle eşik denetimine uygun**) |
+
+> ⚡ **Her iki motorda da yanlış dosyayı okumak sessiz felakettir:** `.tif` yerine
+> `.data.tif`, `index_map` yerine `index_map_color` okunursa sayılar anlamsızdır ama
+> hiçbir kapı bunu yakalamaz. Adaptörün ilk görevi bu ayrımı zorlamaktır.
+
+#### AV-5 · M3M çekim gerçekleri (intake kapısına girecek)
+
+* Her çekim = **1 RGB + 4 multispektral TIFF** (grup başına 5 foto; P4M'de 6 — karıştırılmamalı).
+* 🔴 **Sonek-0 fotoğrafı gerçek-zamanlı NDVI önizlemesi ise yeniden yapılandırma BAŞARISIZ olur.**
+  DJI birebir: *"如果是实时 NDVI 照片而非可见光照片，将无法处理成功"*. Bu bir **intake kapısı** olmalı —
+  bugün yok, ve saha operatörünün kamera ayarına bağlı.
+* XMP `drone-dji` alanları ölçülebilir kalite sinyali taşıyor:
+  `LS_status` → **0** = geçersiz (USB dongle takılı) · **1** = geçerli · **2** = geçerli + telafi ediyor.
+  Ayrıca `Irradiance` (telafili), `SunSensor` (telafisiz), `RawData` (4 bandın hamı),
+  `SunSensorYaw/Pitch/Roll`, `IrradianceGain` (sabit 64).
+  ⇒ **Güneş sensörünün o uçuşta gerçekten çalıştığı ölçülebilir.** Bugün ölçen kapı yok.
+* Ham TIFF'ler vinyetleme/distorsiyon düzeltmesi **UYGULANMADAN** kaydediliyor
+  (`Vignetting Flag` sabit 0); katsayılar metaveride, uygulaması işleme yazılımına ait.
+
+### 🏗️ TASARIM KARARI — **Motor-agnostik ÇIKTI ADAPTÖRÜ** (runner değil)
+
+AV-1 nedeniyle "iki CLI koşucusu, ortak arayüz" tasarımı **imkânsız**. Kullanıcının
+istediği *"ikisini de istediğim zaman ayrı ayrı kullanayım"* hedefi şu şekilde karşılanır:
+
+```
+Operatör (GUI)                    Edge (otomatik)
+─────────────                     ───────────────
+Pix4Dfields VEYA DJI Terra   →    ① motor tespiti (dizin imzasından)
+elle çalıştırır, export eder  →   ② artefakt normalizasyonu (.data.tif / index_map)
+                                  ③ radyometrik kip tespiti (panel / sun-irradiance / DN)
+                                  ④ calibration_type = f(drone_class, radiometric_mode)
+                                  ⑤ calibrated_dataset_manifest.json YAZ
+                                  ⑥ mevcut hard gate (calibrated_validator) devralır
+```
+
+**Neden bu doğru tasarım:** ① GUI adımı zaten kaçınılmaz (iki motorda da) — tasarım tercihi
+değil, ölçülmüş kısıt. ② Adaptör doğal olarak motor-agnostiktir; üçüncü bir motor (Metashape)
+eklemek yeni bir adaptör sınıfıdır. ③ **ENGEL 1'i (kalibre manifest yazıcısı yok) aynı hamlede
+kapatır.** ④ Sözleşme değişikliği GEREKTİRMEZ: `calibrated_dataset_manifest.v1` hem üst düzeyde
+hem `calibration_result` içinde `tool_name` + `tool_version`'ı **zaten zorunlu** tutuyor ve
+**enum kısıtı yok** — motor kimliği için hazır yuva var.
+
+**KR-034 güncellenmeli:** *"Pix4Dfields drone-agnostik (yedek yazılım yok)"* →
+*"Motor-agnostik: desteklenen motorlar Pix4Dfields ve DJI Terra; motor kimliği manifestte
+`tool_name` ile taşınır."*
+
+### ✅ C-1 · C-2 · C-3 KAPANDI (2026-08-02, kullanıcı onayı) — çapraz depo sözlük hizası
+
+> **Neden bu üçü ayrı bir kalem oldu:** motor adaptörünü yazarken `RadiometricMode`
+> kavramını **edge deposunda uydurdum**. Ölçüldü: kanonik sözlükte karşılığı yoktu.
+> Bu, worker CLAUDE.md §2.1'in açık ihlali — *"platform otoriter kaynaktır; tüketici
+> VENDOR'lar, asla kendi uydurmaz"*. Geri alındı.
+
+| # | Yapılan | Kanıt |
+|---|---|---|
+| **C-1** | `enums/radiometric_mode.enum.v1.json` **kanonik** olarak yazıldı (PANEL · SUN_IRRADIANCE · RAW_DN, fail-closed varsayılan + ölçüm kanıtları). `calibration_type.enum.v1.json → x-derivation`'a **`x-radiometric-axis-2026-08-02`** eklendi: 6 gözlü makine-okunur tablo + 4 değişmez | `tests/test_radiometric_axis.py` (11 test) · `validate.py` **164 → 165 dosya / 0 hata** |
+| **C-2** | KR-034 + KR-030 normatif metni **motor-agnostik** yapıldı; ayrıca *"iki motorun da yerel CLI'ı yoktur → motoru subprocess ile süren tasarım yazılmamalıdır"* ve *"radyometrik düzeltme opsiyonel olabilir → ham DN"* notları eklendi | Çapraz-repo SSOT (contract + platform + worker) `sync_kr_corpus.py --check` → **IN_SYNC** (3 hedef). ⚠️ Araç `--apply`'ı bloke etti (satır-kümesi sezgisi "değiştirildi"yi "silindi" sanıyor); birleştirme elle yapıldı ve `git diff` ile **8+/3−, kayıp yok** diye doğrulandı |
+| **C-3** | Edge artık türetme tablosunu **kanonikten YÜKLÜYOR** (hardcode kaldırıldı). İki enum `interface/contracts/enums/`'a vendor'landı; `verify_contracts_hashes.py` kapsamı **8 → 10 artefakt**a genişletildi; contract `test_vendored_parity` MIRROR listesine kaydedildi | Edge **985 passed / 0 failed** · ruff temiz · hash pin OK · contract parite **169 passed** |
+
+**Kapı kanıtı: 8/8 mutasyon KIRMIZI** — ham DN'i reflektans say · tabloda göz sil · kip
+anahtarını yeniden adlandır · tabloyu E13-R `allowed` kümesiyle çeliştir · kanonik enum'a
+beyansız kip ekle · vendored kopyayı ayrıştır (iki yönde) · Python enum'unu ayrıştır.
+Geri yükleme doğrulandı.
+
+**Bu turda üç kapı BENİ yakaladı** (hepsi düzeltildi — kapılar çalışıyor):
+`test_build_profiles_ownership` (yeni modüllere M1/M2 ataması yapmamıştım) ·
+`test_vendored_parity` (vendored dosya ekledim, parite listesine yazmadım — hata mesajı
+ÖD-2 dersini hatırlattı) · `test_all_eight_schemas_pinned` (sabit sayı kilidi; sayıyı
+büyütmek yerine değişmez **üretecin kendisiyle** yeniden yazıldı + boş-glob kapısı eklendi).
+
+**Tur içi beklenen tek kırmızı:** `test_real_repo_checksum_verifies` — agrega checksum
+bayat (dosyalar değişti), C8 töreninde `pin_version.py` ile kapanır. Ayrıca
+`test_detector_accepts_a_git_ref` kırmızı ama **temiz HEAD klonunda da kırmızı** (ölçüldü,
+`git clone --local` yöntemiyle) → yerel Windows kodlama sorunu, bu turdan bağımsız.
+
+### 📋 GÜNCELLENMİŞ İŞ SIRASI
+
+| # | Kalem | Depo | Gerekçe / kanıt |
+|---|---|---|---|
+| **P-1** 🔴 | **Motor adaptör katmanı** — `CalibrationEngineAdapter` protokolü + `Pix4DFieldsAdapter` + `DJITerraAdapter` + normalize `EngineOutput` | edge | AV-1/AV-4. `pix4d_runner.py` **kaldırılır** (var olmayan CLI) |
+| **P-2** 🔴 | **`CalibratedManifestWriter`** — adaptör çıktısından şema-geçerli `calibrated_dataset_manifest.json` üretir | edge | ENGEL 1: bugün **0 yazıcı** var; `_read_calibration_type` bu dosyayı okuyamayınca paket reddediliyor |
+| **P-3** 🔴 | **Radyometrik-kip duyarlı türetme** — `calibration_type = f(drone_class, engine_radiometric_mode)`; ham DN → `NONE` | contract + edge | AV-3. Bugünkü tek-girdili türetme ham DN'i `RELATIVE` sayıyor |
+| **P-4** | **Canlı çağrı noktası** — `build_calibration_pipeline` → API/orkestratör bağlantısı | edge | `pipeline_factory.py` docstring: *"live call site stays gated on hardware"*; `.run()` üretimde **0 çağrı** |
+| **P-5** | **M3M intake kapıları** — sonek-0 NDVI önizleme reddi + `LS_status` okuma + grup bütünlüğü (5 foto) | edge | AV-5. Üçü de bugün ölçülmüyor |
+| **P-6** | **ENGEL 3 ölçümü** — M3M'in sıfır-Blue'sunun `grape_lr_v1` güven skorlarına etkisi | worker | Tek eğitilmiş artefakt `EXTENDED_5BAND`; `feature_extraction.py:164` Blue'yu sıfırlıyor, `StandardScaler` gerçek Blue ile fit'lenmiş |
+| **v7.5.0** | S7-b (`band` zorunlu, `accepts` beyanlı) · **S3-b** (`DLS2_RELATIVE`'i `edge/intake_manifest` alt-kümesinden çıkar) · K1 (opak tenant) · bayat AK-11 cümlesi · **KR-034 metni** | contract | Hepsi ölçülmüş **0 üretici** → beyanlı MINOR. `propagate_vendored.py` + `release_gate` ilk kez geri-alınabilir turda koşar |
+| **Kuyruk** | W8-c (`_DEFAULT_STRATUM_RATE = 0.0`) · W8-b · P21 · P20 · Ö7 | worker/platform | Pilotta denetim örneklemesi ölü olmasın |
+| **v8.0.0** | Yalnız **DEP-1** kaldı | contract | S3 MINOR'a indi, K1 MINOR'a indi, S7-b zaten MINOR ⇒ tek başına tur açtırmaz |
+
+> **S3 kararı ÇÖZÜLDÜ (ölçümle):** `x-derivation.map`'in tamamı iki anahtar
+> (`relative`→`[RELATIVE]`, `absolute`→`[ABSOLUTE, PANEL_ABSOLUTE]`) ⇒ **`DLS2_RELATIVE`
+> matristeki HİÇBİR drone için türetilemez**; `relative` için açıkça `forbidden`.
+> Yalnız dış veri kümesi etiketi olarak yaşıyor (`calibration_input_parser.py:29-31`,
+> Kazakistan buğday seti). **Genel bir ada çevirmek (`IRRADIANCE_RELATIVE`) M3M'i ince
+> ayardan uzak tutan tek engeli kaldırır** — enum'un kendi `forbidden.why` bloğu bu
+> deliğin üç zinciri nasıl bozduğunu zaten yazıyor. ⇒ **Yeniden adlandırma YAPILMAZ.**
+> Yapılacak: değeri "yalnız içe aktarılan veri seti etiketi" diye beyan et + intake
+> alt-kümesinden çıkar (daraltma = `ENUM_CONSTRAINT_ADDED` → `x-compat-accepted` ile MINOR).
+
+### 📌 KULLANICININ ÖLÇMESİ GEREKENLER (araştırmanın kapatamadığı)
+
+Bunlar **kendi kurulumunuzda** ölçülür, kaynaktan öğrenilemez:
+
+1. `pix4dfields.exe -h` / `--help` herhangi bir bayrak kabul ediyor mu? (Resmi belge sessiz;
+   ihtimal düşük ama ölçüm ucuz. Kabul ederse P-1 tasarımı değişmez, sadece opsiyonel bir
+   tetikleyici eklenir.)
+2. Pix4Dfields **export klasöründeki** gerçek dosya adları (proje adı kuralı doğrulanmalı).
+3. DJI Terra hangi lisansta? (Agriculture = 2D multispektral ✅ ama küme ✗)
+4. M3M kartındaki sonek-0 fotoğrafları **görünür ışık mı, gerçek-zamanlı NDVI mi?**
+   (NDVI önizlemesiyse Terra yeniden yapılandırması **başarısız olur** — kamera ayarı.)
+5. Panel var mı? Varsa Micasense/Sentera mı? (Parrot Pix4Dfields'te **uyumsuz**.)
+
+---
+
+## ▶️ (TARİHSEL KAYIT — YERİNE YUKARIDAKİ BÖLÜM GEÇTİ) v8.0.0 TURU: ÖLÇÜLMÜŞ İŞ PLANI (2026-08-02 gecesinde yazıldı)
+
+> ⚠️ **BU BÖLÜM ARTIK İŞ LİSTESİ DEĞİLDİR.** 2026-08-02 motor araştırması S3'ü ve K1'i
+> MINOR'a indirdi, S7-b zaten MINOR'du ⇒ turda yalnız DEP-1 kaldı. Ayrıca ENGEL 1/2/3
+> (kalibre manifest yazıcısı yok · CLI yok · tek eğitilmiş model BLUE bekliyor) bu
+> kalemlerin hepsinden acildir. Güncel sıra yukarıdadır.
 
 > **Bu bölüm sonraki oturumun giriş noktasıdır.** Her kalemin gerekçesi ÖLÇÜLMÜŞTÜR;
 > aşağıdaki sayılar tahmin değil, o gün koşturulan komutların çıktısıdır. Bir kalem
