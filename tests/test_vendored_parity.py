@@ -135,6 +135,18 @@ MIRROR_PAIRS = [
         "enums/analysis_type.enum.v1.json",
         "tarlaanaliz-worker/interface/contracts/analysis_type.enum.v1.json",
     ),
+    # C-3 (2026-08-02) ile eklendi — edge `calibration_type` türetmesini bu iki dosyadan
+    # YÜKLER (hardcode değil). Sözlük tüketici depoda uydurulamaz (worker CLAUDE.md §2.1);
+    # ayrıca edge `scripts/verify_contracts_hashes.py` bunları hash'e de pinler, yani
+    # ayrışma iki bağımsız kapıdan birden kırmızı verir.
+    (
+        "enums/calibration_type.enum.v1.json",
+        "tarlaanaliz-edge/interface/contracts/enums/calibration_type.enum.v1.json",
+    ),
+    (
+        "enums/radiometric_mode.enum.v1.json",
+        "tarlaanaliz-edge/interface/contracts/enums/radiometric_mode.enum.v1.json",
+    ),
 ]
 
 # ── SUBSET: vendored dar alt küme (I-4) — eksiklik normal, ÇELİŞKİ değil ──────

@@ -20,7 +20,76 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-02, **otonom tur**) — **SIRA 3 KAPANDI + AK-11**
+## 0.A EN GÜNCEL — (2026-08-02, **motor araştırması + adaptör turu**)
+
+> ### 🔬 Çok dilli motor araştırması (18 ajan · EN+ZH+ES · çürütme turlu) **İKİ VARSAYIMI ÇÜRÜTTÜ**
+>
+> 1. 🔴 **Pix4Dfields'in de DJI Terra'nın da YEREL CLI'ı YOK.** Pix4Dfields: doküman
+>    merkezinin 10 bölümü + SSS + sürüm notları 2.8→2.13.2 + girdi/çıktı belgesi = sıfır
+>    atıf. DJI Terra: V5.3.0 kılavuzunun 70+ sayfası = sıfır atıf. CLI ayrı ürünlerde
+>    (Pix4Dmapper *obsolete* + Enterprise lisans · Pix4Dengine SDK/Cloud) ya da bulutta
+>    (TerraAPI — **Haziran 2026'da kapatıldı**, zaten *"agricultural applications"*
+>    içermiyordu). ⇒ `edge/…/pix4d_runner.py` **var olmayan bir CLI'a** subprocess açıyordu;
+>    satır 86'daki *"verified on M1 during smoke test"* beyanı **bayat** (M1 hiç alınmadı).
+> 2. 🔴 **Yeni delik AV-3:** `calibration_type` yalnız drone'dan türetiliyor. Ama DJI Terra'da
+>    radyometrik düzeltme **kapalıyken çıktı ham DN'dir**; aynı M3M uçuşu yine `RELATIVE`
+>    etiketlenir ve NDVI eşikleri ham DN'e uygulanır. **S1 fail-open bulgusunun aynı sınıfı.**
+>
+> ✅ **Doğrulanan:** E13-R'nin `RELATIVE` kararı iki bağımsız üretici kaynağıyla teyit edildi
+> (Pix4D: *"not fully radiometrically calibrated, only a relative calibration"* · DJI Image
+> Processing Guide Eq. 4-6: ρ_NIR yayımlanmadığı için panelsiz mutlak reflektans türetilemez).
+>
+> ### ✅ Bu oturumda YAZILAN (edge — commit edilmedi, kullanıcı onayı bekliyor)
+>
+> | Dosya | Ne |
+> |---|---|
+> | `src/core/services/calibration_gate/engine_adapter.py` | **Motor-agnostik çıktı adaptörü** — `Pix4DFieldsAdapter` (`.data.tif` zorunlu, görüntüleme `.tif` reddedilir) · `DJITerraAdapter` (`map/index_map/` okunur, `index_map_color/` reddedilir) · fail-closed motor tespiti · fail-closed radyometrik kip beyanı |
+> | `src/core/services/calibration_gate/calibration_type_resolver.py` | **İki girdili türetme** — `f(drone_class, radiometric_mode)`; **ham DN → `NONE`** (AV-3 kapatıldı) |
+> | `tests/unit/test_engine_adapter.py` · `test_calibration_type_resolver.py` | 34 test, **gerçek dosya sistemiyle** (casus yok) |
+>
+> **Kapı kanıtı: 8/8 mutasyon KIRMIZI** (görüntüleme dosyasını kabul et · renkli indeksi oku ·
+> bant belirtecini sessizce atla · motor belirsizliğini çöz · beyansızı PANEL say · ham DN'i
+> reflektans say · göreliyi ABSOLUTE'a yükselt · bilinmeyen drone sınıfına varsayılan uydur).
+> Geri yükleme doğrulandı. `ruff check src/ tests/` → **All checks passed** (depo geneli).
+>
+> ### 📌 GİRİŞ NOKTASI
+> Eylem planı → **`▶️ GİRİŞ NOKTASI — MOTOR-AGNOSTİK KALİBRASYON + v7.5.0 TURU`**
+> (`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md`). Eski "v8.0.0 TURU" bölümü **tarihsel
+> kayda** çevrildi — S3 ve K1 ölçümle MINOR'a indi, turda yalnız DEP-1 kaldı.
+>
+> ### ✅ C-1 · C-2 · C-3 de bu oturumda KAPANDI (kullanıcı onayı) — çapraz depo sözlük hizası
+>
+> 🔴 **Kendi ihlalimi buldum:** `RadiometricMode` kavramını edge'de **uydurmuştum**;
+> kanonik sözlükte karşılığı yoktu (ölçüldü). worker CLAUDE.md §2.1 ihlali — geri alındı.
+>
+> | # | Yapılan | Depo |
+> |---|---|---|
+> | **C-1** | `enums/radiometric_mode.enum.v1.json` **kanonik** yazıldı · `calibration_type → x-derivation`'a 6 gözlü makine-okunur türetme tablosu (`x-radiometric-axis-2026-08-02`) + 4 değişmez | contract |
+> | **C-2** | KR-034/KR-030 normatif metni motor-agnostik + *"iki motorun da CLI'ı yok, subprocess tasarımı yazılmamalı"* + *"radyometrik düzeltme opsiyonel → ham DN"* notları | contract + platform + worker SSOT (**IN_SYNC**) |
+> | **C-3** | Edge tabloyu **kanonikten yüklüyor** (hardcode kaldırıldı) · 2 enum vendor'landı · hash pin kapsamı **8 → 10** · contract parite MIRROR listesine kaydedildi | edge + contract |
+>
+> **Kapı kanıtı: 8/8 mutasyon KIRMIZI** (bu tur toplam **16/16**). Geri yükleme doğrulandı.
+> Durum: contract **1281 passed**, `validate.py` **165/0** · edge **985 passed**, ruff temiz,
+> hash pin OK.
+>
+> **Bu turda üç kapı BENİ yakaladı** (hepsi düzeltildi): sahiplik (M1/M2 ataması yok) ·
+> vendored parite (dosya ekledim, listeye yazmadım) · hash pin sayı kilidi (sabit `8`;
+> sayıyı büyütmek yerine değişmez **üretecin kendisiyle** yeniden yazıldı + boş-glob kapısı).
+>
+> **Tur içi beklenen kırmızı:** `test_real_repo_checksum_verifies` (agrega checksum bayat →
+> C8'de `pin_version.py` kapatır). `test_detector_accepts_a_git_ref` de kırmızı ama
+> **temiz HEAD klonunda da kırmızı** (`git clone --local` ile ölçüldü) → bu turdan bağımsız.
+>
+> ### ⏭️ SIRADAKİ (P-2…P-6, henüz YAZILMADI)
+> **P-2 `CalibratedManifestWriter` bilerek beklemede:** `observed_footprint_wkt`'yi gerçek
+> raster'dan çıkarmak gerekiyor ve **hiçbir motorun gerçek çıktısı henüz elde yok**. Dosya
+> adlarını ve footprint çıkarımını görmeden yazmak, `pix4d_runner.py`'nin düştüğü hatanın
+> aynısı olurdu. Kullanıcı bir kez Pix4Dfields **veya** DJI Terra koşturup export klasörünü
+> verdiğinde yazılır. P-4/P-5/P-6 planda.
+
+---
+
+## 0.A′ ÖNCEKİ — (2026-08-02, **otonom tur**) — **SIRA 3 KAPANDI + AK-11**
 
 > Kullanıcı uyurken otonom koşuldu. **7 PR, 4 depo, hepsi CI yeşil ve merge edildi:**
 > edge **#52** (E18+E15) · **#53** (E17) · platform **#354** (P15+P19) ·
