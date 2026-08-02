@@ -1,6 +1,6 @@
 # ÖD-0 — `sürüm-riski` lensi (denetim borcu KAPANDI)
 
-**Tarih:** 2026-08-02 · **Yöntem:** elle ölçüm, çok-ajanlı tur **açılmadı** (kullanıcı
+**Tarih:** 2026-08-01 gece · **Yöntem:** elle ölçüm, çok-ajanlı tur **açılmadı** (kullanıcı
 istemedikçe ajan turu açılmıyor) · **Kapsam:** `v7.3.0` → çalışma ağacı, C8 töreni (v7.4.0)
 öncesi · **Tetik:** §14.9 *"Denetim borcu — C8'den ÖNCE"*.
 

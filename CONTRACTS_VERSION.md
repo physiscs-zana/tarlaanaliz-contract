@@ -1,23 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.3.0
+## Version: 7.4.0
 
-**Release Date:** 2026-08-01T04:39:56.257141Z  
+**Release Date:** 2026-08-01T18:15:21.806126Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `13c0ab5eb6b36085886688acfa7daa9ccca0524ef15e5991cd850182fbd5d59c`  
-**Checksum State:** PENDING_REPIN — tur `feat/s5-reflectance-scale` sürüyor
-
-> **PENDING_REPIN ne demek:** Bu tur boyunca `schemas/`+`enums/` ağacı değişti ama agrega
-> checksum **bilerek** yeniden pinlenmedi — ara re-pin, yayımlanmış `v7.3.0` etiketinin
-> checksum anlamını bozar. Tek re-pin noktası **bir sonraki C8 release törenidir**
-> (`docs/checklists/SDLC_GATES.md` §3G).
->
-> **Tur içinde beklenen kırmızı (bu bir arıza DEĞİL):**
-> `tests/test_pin_version.py::test_real_repo_checksum_verifies` → `xfail(strict=True)`.
-> Koşul makine-okunur olarak yukarıdaki satırdan okunur; `pin_version.py` C8'de bu dosyayı
-> baştan üretince beyan **kendini siler** ve üç kapı aynı anda sertleşir.
->
-> **Tur içeriği:** S5 — `worker/calibration_metadata.v1`'e reflektans ölçeği (`scale`) bloğu.
+**Contracts Checksum (SHA-256):** `c7b8d46eba2dcc49395a76e50d86e3b7f32742c1f912d13e60a9c1c9a59949ee`
 
 ---
 
@@ -66,7 +53,7 @@ Individual file hashes for verification:
 - `enums/analysis_type.enum.v1.json`  
   `7f470beebd06c02049c2d8fe182ab9d6f62e58f11be34442368f3054d965c3f1`
 - `enums/calibration_type.enum.v1.json`  
-  `f09cc785f49dcae44ea131e9abfcf0a3dbf83ab3b9f0febe31a1ecd186a1bfe6`
+  `8bde0136593bc443ac6bedeb4e117d88f1dd8c01db56dea90d5cfd935902f28f`
 - `enums/crop_type.enum.v1.json`  
   `34babfb9245ca3999bfef7f06846c8835592acbf0cd2804c6167df8bd9451194`
 - `enums/dataset_status.enum.v1.json`  
@@ -147,7 +134,7 @@ Individual file hashes for verification:
 - `schemas/edge/attestation_record.v1.schema.json`  
   `dfcc65d709746107eceb67f943dcb60a13a900008e959f0f38df197d6cc1b95b`
 - `schemas/edge/calibrated_dataset_manifest.v1.schema.json`  
-  `03ae7288dc97c830f2eead1e862a236e575b2bd4ef1163afa99ec826c24421ab`
+  `848c4a6155fdd139368f5f3345208441bb59d2b5d9ce6f118605edc3074aa83c`
 - `schemas/edge/calibration_result.v1.schema.json`  
   `cf67bfa0642dc24e0745ed4fd32cf12c1190206e36684a06c7127d3c816c58be`
 - `schemas/edge/dataset_manifest.v1.schema.json`  
@@ -176,13 +163,13 @@ Individual file hashes for verification:
 ### Worker Schemas
 
 - `schemas/worker/analysis_job.v1.schema.json`  
-  `0d235742987d438a7cdc256b7f75bc13a348a6d67f198aae8c25cab8c6d535f8`
+  `8d9e43d2ae5c802345d9cbe41f7e4b98a3223e5a7fc6367a7c597a1d5c72ba4c`
 - `schemas/worker/analysis_result.v1.schema.json`  
   `93e29920defea258e902b9351a1ccf86c06fda526e196a6654a6e36d9d981bd5`
 - `schemas/worker/calibrated_dataset.v1.schema.json`  
   `a2e628b8ef996d8bdb828ef623a378aba9c43337b083351e0b137a312092618a`
 - `schemas/worker/calibration_metadata.v1.schema.json`  
-  `17eadba25d2478d84c447b01ace7de92aa868004fabf463ce67b092650ae6d32`
+  `7fbe7303c237bb11302a9c879d091d4da788b4a893ee8c1bebcfb8edf6b90d0c`
 - `schemas/worker/expert_feedback.v1.schema.json`  
   `94e04216bd9af373ce6c0f237c26d38c6822950e097510c0f6193143be11d41d`
 - `schemas/worker/expert_labeling_card.v1.schema.json`  
@@ -230,7 +217,7 @@ Individual file hashes for verification:
 ### Platform
 
 - `schemas/platform/calibrated_dataset_manifest.v1.schema.json`  
-  `1e2dd31c5f2716bf2c1a264913ac6a18d5512c93c2648f18f52c8fc92c8a7725`
+  `f6e7da93614809e762f982af4dffbf9b0d4ee87c1ecabc9df709d0c00c2912d4`
 - `schemas/platform/calibration_result.v1.schema.json`  
   `c51b377e0aa6922d0b86f4cf9076093d66fc4c13a747f44da3f7059c40a73038`
 - `schemas/platform/evidence_bundle_ref.v1.schema.json`  
@@ -257,24 +244,30 @@ Individual file hashes for verification:
 - `api/components/parameters.yaml`  
   `ed7e7fd541e74f323606f17329b0bb9cadf993a9be30eb296ecc553cec1ba26f`
 - `api/components/responses.yaml`  
-  `d7fcd4ce585d77ef9d260ea53c89b3d513d0f9628980ca356aa24b6cc5796308`
+  `13af6e16c4044592bd6720a642905aa493ccddc73334aa4d7bddace65e1b571f`
 - `api/components/schemas.yaml`  
-  `2676ba18722b6410ee5865aef2233831047932a0c0dcfcaa98a233d58a1e8782`
+  `3dcf6fab47cd7718caf71a54d7ca87ab1d26601ca28a6dab91d09c4c4731ed08`
 - `api/components/security_schemes.yaml`  
   `9d45e3181a4b847b617a0553c72458650aa9c3deacf38cbed67c5c12db3e1c79`
 
 ### API Specs
 
 - `api/edge_local.v1.yaml`  
-  `510fac0f988752927353a6ec0fe431fe0098fbec2600074a39ca96103f040ccd`
+  `137a9a4a00ba7debae616da7368d26830b2df11618f79fc386df835c1344bf16`
 - `api/platform_internal.v1.yaml`  
-  `f253f4b68be11f4a1f65416827a6482106017a63c940c39e46eb90e69232cbb7`
+  `0a192d8d385d09db4825bff2a045452ac314cf9c713608cd3f3468fe4d19aafc`
 - `api/platform_public.v1.yaml`  
-  `3ce301229ce2d79b03315f8bd41676bed46d0d0e53cde68e765bacb86e7e2e68`
+  `a3132146a8832a9e8dd6c92ebcca39c6808cbc55c50072eb1fe0f93acf8cdd36`
 
 ---
 
 ## Changelog
+
+### v7.4.0 (2026-08-01)
+
+**Breaking:** NO
+
+TUR 2: S5 (reflektans olcegi) · C6b/S2 (PANEL_ABSOLUTE) · S4 (calibration_method) · S6 (cikti basina olcek) · S7 (RGB kompozit kare) · E13-R (kalibrasyon tipi drone basina turetilir) · OD-1/OD-2 (karar yuzeyi ile dogrulama yuzeyi baglandi) · SD9 (info.version set surumunu izler) · SD10 (OpenAPI lint gercekten kosuyor) · SD11 (notes/metadata kanonikte kalir)
 
 ### v7.3.0 (2026-08-01)
 
@@ -382,7 +375,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("13c0ab5eb6b36085886688acfa7daa9ccca0524ef15e5991cd850182fbd5d59c"), "Contracts checksum mismatch!"
+assert verify_contracts("c7b8d46eba2dcc49395a76e50d86e3b7f32742c1f912d13e60a9c1c9a59949ee"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -395,7 +388,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("13c0ab5eb6b36085886688acfa7daa9ccca0524ef15e5991cd850182fbd5d59c"), "Contracts checksum mismatch!");
+assert(verifyContracts("c7b8d46eba2dcc49395a76e50d86e3b7f32742c1f912d13e60a9c1c9a59949ee"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -446,4 +439,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-08-01T04:39:56.257141Z
+**Last Updated:** 2026-08-01T18:15:21.806126Z

@@ -1,6 +1,6 @@
 # ÖZ-DENETİM — bir önceki oturumun (2026-08-01, dördüncü tur) işi
 
-**Tarih:** 2026-08-02 · **Kapsam:** `ee4aed7 … 20e541f` (5 commit, doğrudan `master`) +
+**Tarih:** 2026-08-01 gece · **Kapsam:** `ee4aed7 … 20e541f` (5 commit, doğrudan `master`) +
 oturumun beyan ettiği kapanış durumu · **Yöntem:** elle ölçüm (ajan turu değil), her iddia
 komutla yeniden üretildi.
 

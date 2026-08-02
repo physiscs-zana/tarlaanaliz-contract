@@ -413,23 +413,30 @@ git submodule update --remote
         
         print(f"📌 Pinning version {version_str}")
         print(f"   Breaking: {is_breaking}")
-        
-        # Generate version file
+
+        # 🔴 SIRA KRİTİK (2026-08-01 gece, v7.4.0 töreninde ölçüldü): OpenAPI senkronu
+        # ÖNCE koşar. `api/*.yaml` dosyaları agrega checksum'ın İÇİNDEDİR; SD9 senkronu
+        # checksum yazıldıktan SONRA koşarsa pin daha doğduğu anda bayat olur —
+        # `--verify` hemen kırmızı verir. Bu C8'de gerçekten yaşandı: SD9 v7.3.0
+        # turunda yazıldı ama `info.version` o tur zaten 1.0.0 kalmıştı, dolayısıyla
+        # senkron hiçbir baytı değiştirmemiş ve hata görünmemişti. Kapı:
+        # `test_pin_version_selfverifies_when_openapi_sync_changes_bytes`.
+        for spec in self.sync_openapi_versions(version_str):
+            print(f"   OpenAPI info.version → {version_str}: {spec}")
+
+        # Generate version file (artık ağaç NİHAİ hâlinde — hash'ler doğru)
         content = self.generate_version_file(
             version=(major, minor, patch),
             is_breaking=is_breaking,
             changelog_entry=changelog
         )
-        
+
         # Write to file
         with open(self.contracts_file, 'w', encoding='utf-8') as f:
             f.write(content)
 
         print(f"✅ Version {version_str} pinned successfully")
         print(f"   File: {self.contracts_file}")
-
-        for spec in self.sync_openapi_versions(version_str):
-            print(f"   OpenAPI info.version → {version_str}: {spec}")
 
         return True
 

@@ -7,12 +7,19 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
-## [Unreleased] — CONTRACT TUR 2 (devam ediyor)
+## [7.4.0] - 2026-08-01 — CONTRACT TUR 2 (C8 ile kapatıldı)
 
-> ⚠️ Bu bölüm **açık bir sürüm turudur.** İçerik tamamlanınca **C8 release töreninde** tek
-> sürüm numarası altında toplanır. **Tur boyunca `pin_version.py --verify` KIRMIZIDIR**
-> (agrega checksum bilerek re-pin edilmez — ara re-pin, yayımlanmış `v7.3.0` etiketinin
-> checksum anlamını bozar). Beyan: `CONTRACTS_VERSION.md` → `**Checksum State:** PENDING_REPIN`.
+> ✅ **TUR 2 KAPANDI.** `PENDING_REPIN` beyanı kalktı, agrega checksum yeniden pinlendi
+> (`c7b8d46e…`), `PENDING_PROPAGATION` **boşaltıldı** (edge + worker vendored kopyalar
+> senkronlandı) ve üç OpenAPI spec'inin `info.version`'ı **7.4.0**'a hizalandı (SD9).
+>
+> 🔴 **Tören sırasında release aracının kendisinde bir hata bulundu ve düzeltildi:**
+> `pin_version.py` agrega checksum'ı yazdıktan **sonra** `api/*.yaml`'ı senkronluyordu;
+> o dosyalar checksum kümesinin **içinde** olduğu için pin doğduğu anda bayat oluyordu
+> (`--verify` hemen kırmızı verdi). v7.3.0 turunda görünmemişti çünkü `info.version` o tur
+> `1.0.0`'da kalmış, senkron hiçbir baytı değiştirmemişti. Sıra düzeltildi
+> (senkron → hash → yaz) ve regresyon kapısı yazıldı
+> (`test_pin_version_selfverifies_when_openapi_sync_changes_bytes`, mutasyonla doğrulandı).
 
 ### C6b/S2 · S4 · S6 · S7 — E13 ile engeli kalkan dört kalem (hepsi MINOR)
 
@@ -299,7 +306,7 @@ değeri şemadan silinse kapılar yeşil kalırdı. Her iki dosya artık **iki y
   KR-018 bant kapısının kaynağı · sıfır davranış kazancı · istisna dar). 23 redocly `struct`
   bulgusu **beyanlı** susturuldu ve istisna listesi **kapıya bağlandı**: `struct` dışında
   kural, `notes`/`metadata` dışında pointer eklenemez, liste büyüyemez.
-- **Yayın kapısı (ÖD-0, 2026-08-02):** `tests/test_pin_version.py` artık
+- **Yayın kapısı (ÖD-0, 2026-08-01 gece):** `tests/test_pin_version.py` artık
   `CONTRACTS_VERSION.md` sürümünün **CHANGELOG'da bir bölümü** olduğunu ve o bölümün
   **gövdeli** olduğunu zorluyor (`release_gate`). Ölçülen boşluk: `pin_version.py` sürümü
   yazar ama `## [Unreleased]` başlığını çevirmez; unutulursa tüm kapılar yeşil kalır ve

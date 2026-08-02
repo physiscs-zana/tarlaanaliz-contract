@@ -141,6 +141,35 @@ def test_pin_version_writes_and_round_trips(tmp_path: Path) -> None:
     assert p.verify_checksums() is True
 
 
+def test_pin_version_selfverifies_when_openapi_sync_changes_bytes(tmp_path: Path) -> None:
+    """🔴 C8 REGRESYONU (2026-08-01 gece, v7.4.0 töreninde canlı yaşandı).
+
+    `api/*.yaml` agrega checksum'ın **içindedir**. SD9 senkronu (`info.version` → set
+    sürümü) checksum yazıldıktan SONRA koşarsa pin **doğduğu anda bayat** olur ve
+    `--verify` hemen kırmızı verir. v7.3.0 turunda görünmedi çünkü `info.version` o tur
+    `1.0.0`'da kaldı → senkron hiçbir baytı değiştirmedi. İlk gerçek senkronda patladı.
+
+    Bu test tam o koşulu kurar: spec'in `info.version`'ı hedef sürümden FARKLI, yani
+    senkron mutlaka bayt değiştirecek. Pin sonrası self-verify TRUE olmalı.
+    """
+    _scaffold(tmp_path)
+    (tmp_path / "schemas" / "core" / "x.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "enums" / "e.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "api" / "svc.v1.yaml").write_text(
+        "openapi: 3.1.0\ninfo:\n  title: Svc\n  version: 1.0.0\npaths: {}\n",
+        encoding="utf-8",
+    )
+    p = VersionPinner(tmp_path)
+    assert p.pin_version(version=(7, 4, 0), changelog="c8") is True
+
+    synced = (tmp_path / "api" / "svc.v1.yaml").read_text(encoding="utf-8")
+    assert "version: 7.4.0" in synced, "önkoşul: senkron gerçekten bayt değiştirmeli"
+    assert p.verify_checksums() is True, (
+        "pin, kendi yazdığı OpenAPI senkronunu checksum'a dâhil etmedi — sıra yanlış: "
+        "sync_openapi_versions(), generate_version_file()'dan ÖNCE koşmalı."
+    )
+
+
 def test_verify_false_when_no_file(tmp_path: Path) -> None:
     assert VersionPinner(tmp_path).verify_checksums() is False
 
@@ -183,7 +212,7 @@ def test_real_repo_checksum_verifies() -> None:
     assert actual == match.group(1)
 
 
-# --- ÖD-0 (sürüm-riski lensi, 2026-08-02) -------------------------------------
+# --- ÖD-0 (sürüm-riski lensi, 2026-08-01 gece) -------------------------------------
 # BULGU: yayımlanan sürümün CHANGELOG bölümü olduğunu **hiçbir kapı ölçmüyordu.**
 # `pin_version.py` yalnız CONTRACTS_VERSION.md'yi yazar; CHANGELOG.md'deki
 # `## [Unreleased]` başlığını `## [X.Y.Z]`'ye çevirmek ELLE yapılan bir adımdır ve

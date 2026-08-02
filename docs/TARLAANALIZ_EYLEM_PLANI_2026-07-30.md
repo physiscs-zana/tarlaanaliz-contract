@@ -2073,8 +2073,8 @@ Ayrıca worker `W2` (ölçek motor başına: ODM 0-1 / Metashape 32768) aynı ka
 > §14.8 (ÖD-1…ÖD-16) **kapandı**; W14 · E16 · SD9 · SD10 · SD11 kararları **verildi ve uygulandı**.
 > Aşağıdaki sıra **yürürlüktedir**: bir kalem burada yoksa yapılmaz; yapılacaksa önce buraya yazılır.
 
-### 🔬 ÖZ-DENETİM (2026-08-02) — önceki oturumun işi ölçüldü
-Kanıt: `denetim/denetim_raporu_2026-08-02_ozdenetim_onceki_oturum.md` (elle ölçüm, ajan turu değil).
+### 🔬 ÖZ-DENETİM (2026-08-01 gece) — önceki oturumun işi ölçüldü
+Kanıt: `denetim/denetim_raporu_2026-08-01_gece_ozdenetim_onceki_oturum.md` (elle ölçüm, ajan turu değil).
 **Kapanış beyanlarının 7'si de yeniden üretildi ve tuttu** (süit 1227/2 · validate 164/0 · dist 68
 yetimsiz · dört depo temiz+senkron · 0 açık PR · master CI 5/5 yeşil · dedektör 9 değişiklik/0 breaking).
 
@@ -2095,7 +2095,7 @@ enum) + **ÖD-2** (`analysis_job` `$defs`) + **E13-R** (türetme bloğu) + **SD9
 **Sıralı adımlar (SDLC_GATES §3G ile birebir):**
 1. `python tools/breaking_change_detector.py --old v7.3.0 --new .` → **0 breaking** bekleniyor
    (artık git ref kabul ediyor — ÖD-16). İkinci bağımsız ölçüm: elle diff (`required`/enum/tip).
-2. `PENDING_PROPAGATION`'ı **BOŞALT** — bugün **2** beyan açık *(ölçüldü 2026-08-02; bu satır
+2. `PENDING_PROPAGATION`'ı **BOŞALT** — bugün **2** beyan açık *(ölçüldü 2026-08-01 gece; bu satır
    önce "3" diyordu ve üçüncüsü `analysis_job` idi — o beyan `527c174`'te **zaten silinmişti**,
    §14.9 yazılırken bayat kopyalandı. Öz-denetim bulgusu Ö4)*:
    * edge `calibrated_dataset_manifest`: `calibration_type` ←`PANEL_ABSOLUTE` · `raw_frames[].band`
@@ -2117,7 +2117,7 @@ kullanıcı onayı gerekir — CLAUDE.md kuralı.)
 ### 🥉 SIRA 3 — kardeş depo kuyruğu (bağımsız, paralel yapılabilir)
 | # | Depo | İş | Neden şimdi |
 |---|---|---|---|
-| **E17 / W10** | edge · worker | Kardeş-bağımlı **İKİ** kapıyı kardeş CI'da koştur (D4-b uygulaması): `tests/test_vendored_parity.py` **+ `tests/test_c11_sorties_absorption.py`** | Kapı bu turda 16 dosyaya genişledi ve **5 gerçek sapma** buldu; kardeş CI'da koşmadıkça sapma yalnız yerel diskte görünür. 🔴 **Kapsam 2026-08-02'de düzeltildi (Ö2):** kalem yalnız parite dosyasını sayıyordu, ama contract CI'ında atlanan 134 testin **2'si C11 dosyasındandır** — kalem eski hâliyle uygulansaydı o 2 test **hiçbir CI'da** koşmayacaktı. Tam da orada yaşandı: `ee4aed7` yerelde kırmızıyken CI'ı **yeşil** geçti (Ö1) |
+| **E17 / W10** | edge · worker | Kardeş-bağımlı **İKİ** kapıyı kardeş CI'da koştur (D4-b uygulaması): `tests/test_vendored_parity.py` **+ `tests/test_c11_sorties_absorption.py`** | Kapı bu turda 16 dosyaya genişledi ve **5 gerçek sapma** buldu; kardeş CI'da koşmadıkça sapma yalnız yerel diskte görünür. 🔴 **Kapsam 2026-08-01 gece'de düzeltildi (Ö2):** kalem yalnız parite dosyasını sayıyordu, ama contract CI'ında atlanan 134 testin **2'si C11 dosyasındandır** — kalem eski hâliyle uygulansaydı o 2 test **hiçbir CI'da** koşmayacaktı. Tam da orada yaşandı: `ee4aed7` yerelde kırmızıyken CI'ı **yeşil** geçti (Ö1) |
 | **E15** | edge | `qc_report_writer`: `min(...,1.0)` kırpması + `except → 0.0` sessiz yolu **fail-loud** | G1/KR-065 ödeme hesabına giriyor |
 | **W8** | worker | Denetim satırı emisyonu (`tile_id`, π_h, rotation, bucket, `confidence_score: 0`) | Sampler bunları zaten hesaplıyor; M1/M3 ölçüm temeli |
 | **P15 · P16** | platform | `spectral_tier.py:51` → `LCI` · konsensüs yolu `EXCLUDED` saymamalı | AK-1 · M2 |
@@ -2135,9 +2135,9 @@ payment_intent.v1.schema.json` (v2 kanonik, migration guide yazılı) ve `enums/
 enum.v1.json` (`x-deprecated.since: 6.2.0`, `removal_plan` *"gelecek bir MAJOR"* diyor; arada
 7.0/7.1/7.2/7.3 geçti). Beyanları düzgün, ama v8.0.0 içerik listesinde **yoklardı**.
 
-### 📌 Denetim borcu — ✅ **ÖD-0 KAPANDI (2026-08-02)**
+### 📌 Denetim borcu — ✅ **ÖD-0 KAPANDI (2026-08-01 gece)**
 `sürüm-riski` lensi **koşturuldu** (elle, 9 soru). Kanıt:
-`denetim/denetim_raporu_2026-08-02_od0_surum_riski_lensi.md`.
+`denetim/denetim_raporu_2026-08-01_gece_od0_surum_riski_lensi.md`.
 
 **Temiz çıkanlar:** MINOR kararı **iki bağımsız ölçümle** doğrulandı (dedektör 9/0 + dedektörün
 kodunu hiç kullanmayan düzleştirilmiş tarama, 89 dosya / 0 — araç **3/3 mutasyonla** görür

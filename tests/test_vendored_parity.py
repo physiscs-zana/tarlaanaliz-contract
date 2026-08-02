@@ -273,62 +273,18 @@ def _strip_annotations(node: Any) -> Any:
 # çevrildi (I-4 — vendored kanoniğin dar alt kümesidir, bayt-özdeşlik beklenmez).
 #
 # ── YENİ TUR (v7.3.0 sonrası) ────────────────────────────────────────────────
-PENDING_PROPAGATION: dict[str, dict] = {
-    "calibration_metadata.v1.schema.json": {
-        # ✅ `scale` (S5) beyandan ÇIKTI: worker W12 turunda hem okuma kodunu yazdı hem
-        #    alanı vendor'ladı. Yayılımı C8'e bırakma kararı W12'de DEĞİŞTİ ve sebebi
-        #    ölçüldü: vendored şema `additionalProperties: false` olduğu için, alan
-        #    olmadan ölçek taşıyan GERÇEK bir belge reddedilirdi — yani sözleşme yarısı
-        #    ile kod yarısı ayrı turlara bölünemezdi.
-        "properties": {"calibration_method"},
-        "required": set(),
-        "enums": {"/properties/calibration_method"},
-        "why": (
-            "S4 (2026-08-01) — kalibrasyon MEKANİZMASI. Ölçüldü: `calibration_method` alanı "
-            "platform/edge/datasets/events şemalarında VARDI ama worker'ın gördüğü yolda "
-            "YOKTU; worker `ABSOLUTE` ile `PANEL_ABSOLUTE`'u ayırt edebiliyor ama hangi "
-            "mekanizmayla (panel / irradyans / ampirik çizgi) kalibre edildiğini bilemiyordu "
-            "— S5 ile birebir aynı desen. Sözlük `datasets/calibration_certificate.v1` ve "
-            "`edge/calibration_result.v1` ile aynıdır (yeni ad icat edilmedi).\n\n"
-            "⚠️ Yayılım C8'e bırakıldı çünkü S5'ten FARKLI olarak worker'da bu alanı OKUYAN "
-            "bir tüketici henüz yok: K-3 fine-tuning uygunluğu bugün `calibration_type`'tan "
-            "türetiliyor. Alanı okuyacak kod yazılmadan vendor'lamak ölü alan taşımaktır. "
-            "Okuma tarafı ayrı kalem olarak plana yazıldı."
-        ),
-    },
-    # ── ÖD-8 ile GÖRÜNÜR OLAN beyanlar: enum ekseni daha önce hiç ölçülmüyordu ──
-    "calibrated_dataset_manifest.v1.schema.json": {
-        "properties": set(),
-        "required": set(),
-        "enums": {
-            "/properties/calibration_result/properties/calibration_type",
-            "/properties/raw_frames/items/properties/band",
-            "/properties/qc_report/properties/flags/items",
-        },
-        "why": (
-            "Üç kanonik daraltma/genişletme edge vendored kopyasına henüz taşınmadı ve "
-            "ÖD-8'e kadar **hiçbir kapı bunu göremiyordu** (parite yalnız üst düzey "
-            "`properties`/`required` ölçüyordu):\n"
-            "• `calibration_type` ← `PANEL_ABSOLUTE` (C6b/S2, 2026-08-01): intake bu değeri "
-            "  zaten kabul ediyordu; kalibre manifestte yazılamaması aynı istasyonun iki "
-            "  belgesi arasında sessiz daralmaydı.\n"
-            "• `raw_frames[].band` ← `RGB` (S7): kompozit kare artık AÇIKÇA işaretlenebilir; "
-            "  vendored kopya hâlâ yokluğu iki anlama gelen eski sözlükte.\n"
-            "• `qc_report.flags` ← 5 değerlik sözlük (D7 `crs_mismatch` dâhil): vendored "
-            "  tarafta alan hâlâ KISITSIZ string; edge yazdığı bayrağı uydurabilir.\n"
-            "Üçü de additive/daraltma ve edge'de üretici yok (ölçüldü) → C8 töreninde yayılır."
-        ),
-    },
-    # ✅ `analysis_job.v1.schema.json` beyanı **SİLİNDİ** (2026-08-01, aynı gün):
-    #    ÖD-2'nin worker yarısı **W13** ile kapandı — vendored `$defs/CalibrationMetadata`
-    #    artık `scale` + `calibration_method` taşıyor (worker PR #187, KR-041 hash
-    #    f1447fb6… → 66747d4a…) ve `job_handler.py:136` ölçek taşıyan işi kabul ediyor.
-    #    Beyan yerinde bırakılsaydı **liste yalan söylerdi**: "kanonik ileri, vendored
-    #    almadı" derken ikisi de aynı yüzeyi taşıyor olurdu. Bayat beyan, gerçek bir
-    #    gecikmeyi gizleyecek gürültüdür — bu yüzden aşağıdaki `defs` bayatlık kapısı
-    #    da bu turda yazıldı (SUBSET çiftlerinde beyanın bayatlığını hiçbir kapı
-    #    ölçmüyordu; bunu ancak elle fark ettim).
-}
+# ✅ C8 (2026-08-01 gece, v7.4.0): BEYAN YİNE BOŞALTILDI — TUR 2'nin yayılımı YAPILDI.
+#   * edge   `calibrated_dataset_manifest.v1` ← `calibration_type`+`PANEL_ABSOLUTE`
+#     (C6b/S2) · `raw_frames[].band`+`RGB` (S7) · `qc_report.flags` → 5 değerlik sözlük
+#     (D7). ⚠️ Üçüncüsü bir DARALTMADIR; güvenli olduğu **ölçülerek** gösterildi:
+#     `qc_report_writer.py:154-165` tam olarak o beş bayrağı yazıyor, altıncısı yok.
+#   * worker `calibration_metadata.v1` ← `calibration_method` (S4).
+#     Beyan *"okuyan kod yok, ölü alan taşıma"* diyordu; ÖD-0'da ölçüm **yönü
+#     değiştirdi**: vendored şema `additionalProperties: false` taşıyor, yani alan
+#     EKSİK kaldığı sürece onu yazan ilk belge worker'ın kapısında REDDEDİLİR (ÖD-2'nin
+#     tam deseni). Alanı KABUL etmek ölü değil, mayın temizlemedir; onu YAZMAK ayrı iş.
+#   * `analysis_job.v1` beyanı zaten `527c174`'te silinmişti (W13).
+PENDING_PROPAGATION: dict[str, dict] = {}
 
 W14_DECISION = (
     "KARAR (koordinator, 2026-08-01): bu degerler WORKER'DA KALIR - platformda gerekmiyor. "
