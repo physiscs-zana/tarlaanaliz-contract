@@ -164,6 +164,22 @@ ACCEPTABLE_TYPES = frozenset({
     ChangeType.PATTERN_TIGHTENED.value,
     ChangeType.ENUM_CONSTRAINT_ADDED.value,
     ChangeType.COMPOSITION_BRANCH_CHANGED.value,
+    # AK-11 (2026-08-02): alanı ZORUNLU kılmak da beyanla indirilebilir hâle geldi.
+    ChangeType.FIELD_MADE_REQUIRED.value,
+})
+
+#: AK-11 — bu tipler için beyanın AÇIKÇA opt-in vermesi gerekir:
+#: `"accepts": ["FIELD_MADE_REQUIRED"]`.
+#:
+#: NEDEN ayrı bir kapı: `x-compat-accepted` düğüme yapıştırılır ve AYNI düğümde birden
+#: fazla değişiklik olabilir. Bir alanın hem `pattern`'ı daraltılıp hem `required`
+#: yapıldığını düşünün: tek bir damga, pattern için yazılmış bir gerekçeyle çok daha
+#: güçlü olan "zorunlu kıldım" iddiasını da sessizce indirirdi. Mevcut beyanlar
+#: `change`'i SERBEST METİN yazıyor (ölçüldü: *"serbest dize → kapalı vocabulary"* vb.),
+#: dolayısıyla tip eşleşmesi metinden çıkarılamaz. Açık liste hem geriye uyumludur
+#: (eski beyanlar daraltmalarda aynen çalışır) hem de güçlü iddiayı GÖRÜNÜR kılar.
+EXPLICIT_OPT_IN_TYPES = frozenset({
+    ChangeType.FIELD_MADE_REQUIRED.value,
 })
 #: Beyan bu alanları taşımak ZORUNDA (boş kaşe olmasın diye; tests ile zorlanır).
 ACCEPTANCE_REQUIRED_FIELDS = ("change", "date", "rationale", "ref")
@@ -391,6 +407,19 @@ class BreakingChangeDetector:
         declaration = node.get(ACCEPTANCE_KEY)
         return declaration if isinstance(declaration, dict) else None
 
+    @staticmethod
+    def _opt_in_satisfied(declaration: Dict, change_type: str) -> bool:
+        """AK-11: güçlü iddialar için beyan AÇIKÇA opt-in vermeli.
+
+        `EXPLICIT_OPT_IN_TYPES` dışındaki tipler eskisi gibi çalışır (geriye uyum).
+        İçindekiler için beyanda `"accepts": ["FIELD_MADE_REQUIRED"]` bulunmalı; aksi
+        hâlde indirme YAPILMAZ ve değişiklik BREAKING kalır.
+        """
+        if change_type not in EXPLICIT_OPT_IN_TYPES:
+            return True
+        accepts = declaration.get("accepts")
+        return isinstance(accepts, list) and change_type in accepts
+
     def _record(self, change: Dict[str, Any], new_node: Dict) -> None:
         """Değişikliği kaydet; beyanlı DARALTMA ise NON_BREAKING'e indir.
 
@@ -401,6 +430,7 @@ class BreakingChangeDetector:
             declaration is not None
             and change['severity'] == 'BREAKING'
             and change['type'] in ACCEPTABLE_TYPES
+            and self._opt_in_satisfied(declaration, change['type'])
         ):
             change = dict(change)
             change['severity'] = 'NON_BREAKING'
@@ -627,13 +657,26 @@ class BreakingChangeDetector:
                 # `properties`de hiç tanımlı olmayan required alanlar da (eski sürüm
                 # bunları SESSİZ atlıyordu) buraya düşer.
                 detail = "Field made required"
-            self.changes.append({
-                'type': ChangeType.FIELD_MADE_REQUIRED.value,
-                'severity': 'BREAKING',
-                'file': schema_path,
-                'field': self._loc(pointer, field),
-                'message': f"{detail}: {self._loc(pointer, field)} in {schema_path}",
-            })
+            # 🔴 AK-11 (2026-08-02): BU YOL `_record`'u HİÇ ÇAĞIRMIYORDU.
+            # Sonuç: `x-compat-accepted` beyanı kısıt daraltmalarında (pattern /
+            # maxLength / enum) tanınıyor ama "alanı zorunlu kıldım"da **hiç**
+            # bakılmıyordu — yani *"üretici yok, ÖLÇÜLDÜ"* gerekçesi bu tipte
+            # beyanla geçirilemiyordu ve S7-b gibi kalemler mekanik olarak MAJOR'a
+            # itiliyordu. Beyan mekanizmasının kendisi tutarsızdı.
+            #
+            # Beyanın taşıyıcısı alanın KENDİ düğümüdür. `properties`de tanımlı
+            # olmayan bir required alan için taşıyıcı yoktur → indirme de yoktur
+            # (doğru: olmayan bir düğüme beyan yapıştırılamaz).
+            self._record(
+                {
+                    'type': ChangeType.FIELD_MADE_REQUIRED.value,
+                    'severity': 'BREAKING',
+                    'file': schema_path,
+                    'field': self._loc(pointer, field),
+                    'message': f"{detail}: {self._loc(pointer, field)} in {schema_path}",
+                },
+                new_props.get(field) if isinstance(new_props.get(field), dict) else {},
+            )
 
         for field in sorted(set(new_props) - set(old_props) - added_required):
             self.changes.append({

@@ -2219,7 +2219,33 @@ kullanıcı onayı gerekir — CLAUDE.md kuralı.)
 </details>
 
 ### 🔶 SIRA 4 — **MAJOR TURU (v8.0.0)** — ✅ **kilit KALKTI (TUR 2 kapandı, v7.4.0 yayımlandı)**
-Sıra: **AK-11 önce** (dedektör `FIELD_MADE_REQUIRED` için `x-compat-accepted` tanımıyor) →
+> ### ✅ AK-11 KAPANDI (2026-08-02) — MAJOR turunun ilk adımı hazır
+> Dedektör artık `FIELD_MADE_REQUIRED` yolunda da `x-compat-accepted` beyanını tanıyor.
+> **Kusur iki katmanlıydı:** tip kabul listesinde yoktu **ve** o dal `_record()`'u hiç
+> çağırmıyordu (doğrudan `self.changes.append`). Yani *"üretici yok, ÖLÇÜLDÜ"* gerekçesi
+> bu değişiklik tipinde geçirilemiyor, kalemler **mekanik olarak** MAJOR'a itiliyordu —
+> beyan mekanizmasının kendisi tutarsızdı.
+>
+> **Yeni koşul — açık opt-in:** beyan `"accepts": ["FIELD_MADE_REQUIRED"]` taşımalı.
+> Gerekçe ölçüldü: `x-compat-accepted` düğüme yapıştırılır ve aynı düğümde birden fazla
+> değişiklik olabilir; mevcut beyanlar `change`'i **serbest metin** yazıyor, dolayısıyla
+> tip eşleşmesi metinden çıkarılamaz. Açık liste olmadan, pattern için yazılmış bir
+> gerekçe *"zorunlu kıldım"*ı da sessizce indirirdi. Eski beyanlar daraltmalarda **aynen**
+> çalışıyor (geriye uyum testli).
+>
+> Kapı: `tests/test_ak11_required_acceptance.py` (8 test). **Mutasyon iki yönde kırmızı:**
+> opt-in kontrolü kaldırılınca 2 test, `_record` bağlantısı geri alınınca 1 test.
+>
+> ⇒ **S7-b artık beyanla MINOR turda da kapatılabilir.** Zorunlu kılma kararının kendisi
+> hâlâ ürün kararıdır ve bu turun içeriğindedir.
+>
+> 📌 **Küçük borç:** `schemas/edge/calibrated_dataset_manifest.v1` → `raw_frames[].band`
+> açıklaması hâlâ *"dedektör … hiç kontrol etmiyor (satır 615-630)"* diyor — artık bayat.
+> Bilerek bu turda düzeltilmedi: yalnız prose değişikliği bile checksum + dist kapılarını
+> kırıyor ve üç depoyu yeniden pinlemeyi gerektiriyor (ölçüldü). **S7-b aynı alana
+> dokunacağı için o turda birlikte düzeltilecek.**
+
+Sıra: **AK-11 önce** ✅ →
 tek migration guide → `--major --breaking` → üç depo re-pin. İçerik: **S3** (`DLS2_RELATIVE`
 yeniden adlandırma/kaldırma) · **S7-b** (`raw_frames[].band` → `required`) · **K1** (`{tenant}`)
 · 🆕 **DEP-1** (ÖD-0'da ölçüldü): penceresi **dolmuş** iki deprecation — `schemas/platform/
