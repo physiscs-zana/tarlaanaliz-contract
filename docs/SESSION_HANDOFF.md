@@ -20,7 +20,70 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-02, **motor araştırması + adaptör turu**)
+## 0.A EN GÜNCEL — (2026-08-02, **motor araştırması + adaptör turu**) — ✅ **KAPANDI, MERGE EDİLDİ**
+
+> ### 🔚 OTURUM KAPANIŞI — dört depo merge edildi, CI 6/6 yeşil
+>
+> | Depo | Dal | Merge commit | PR | Merge sonrası CI |
+> |---|---|---|---|---|
+> | contract | `master` | `d5ef33d` | **#28** | ✅ Contract Validation |
+> | edge | `main` | `fba45a3` | **#54** | ✅ Contracts Gate · ✅ EdgeKiosk CI |
+> | platform | `main` | `f2de26a` | **#355** | ✅ CI/CD Pipeline · ✅ Security Scan |
+> | worker | `master` | `8ad50ae` | **#193** | ✅ Full Test Suite |
+>
+> Dört depo **temiz · senkron · 0 açık PR**. Çapraz-repo SSOT **IN_SYNC** (3 hedef + 2 POINTER_OK).
+>
+> 🔴 **AÇIK TUR — SONRAKİ OTURUM BUNU BİLMELİ:** `CONTRACTS_VERSION.md` →
+> `**Checksum State:** PENDING_REPIN` (**TUR 3**). Agrega checksum bilerek bayat; bu turun
+> içeriği (`radiometric_mode.enum.v1.json` + `x-radiometric-axis-2026-08-02` + KR-034/030
+> motor-agnostik metin) **bir sonraki C8 töreninde** `pin_version.py` ile pinlenecek ve
+> beyan **kendini silecek** → üç kapı aynı anda sertleşir. Beyanı C8'den ÖNCE elle silmek
+> kapıları erken sertleştirir (testler gerçek kırmızıya döner).
+>
+> **Sürüm hedefi:** bu turun içeriği **v7.5.0 (MINOR)** olarak kapanır — dedektör
+> `Detect Breaking Changes: SUCCESS` dedi, kırıcı değişiklik yok. v8.0.0 turunda yalnız
+> **DEP-1** kaldı (S3 ve K1 ölçümle MINOR'a indi), tek başına dört depoyu yeniden
+> pinletmeye değmez.
+>
+> ### 💻 MAKİNE DEĞİŞİKLİĞİ — RTX 3090 makinesinde ilk iş
+>
+> Kullanıcı bu noktada **RTX 3090 masaüstüne** geçti (Latitude 7300 → RTX 3090; bkz.
+> demo donanım profili: 24GB VRAM / 32GB RAM — 32GB tavanı Pix4D ↔ worker'ı **sırayla**
+> çalıştırmayı zorunlu kılıyor, aynı anda değil).
+>
+> ```bash
+> # 1) Dört depoyu da güncelle (hepsi varsayılan dalda, merge edilmiş hâlde)
+> git -C tarlaanaliz-contract checkout master && git -C tarlaanaliz-contract pull
+> git -C tarlaanaliz-edge      checkout main   && git -C tarlaanaliz-edge      pull
+> git -C tarlaanaliz-platform  checkout main   && git -C tarlaanaliz-platform  pull
+> git -C tarlaanaliz-worker    checkout master && git -C tarlaanaliz-worker    pull
+> ```
+>
+> **O makinede yapılacak iki ölçüm** (ikisi de pilotu açan yolda):
+>
+> 1. 🔴 **P-2 girdisi** — M3M görüntülerini **Pix4Dfields ya da DJI Terra** ile bir kez
+>    işle ve **export klasörünü** ver. Dosya adları/dizin yapısı görülmeden kalibre
+>    manifest yazıcısı yazılamaz; yazmak `pix4d_runner.py`'nin düştüğü hatanın tekrarı olur.
+>    ⚠️ Terra kullanılacaksa **radyometrik düzeltmeyi AÇ** — kapalıyken çıktı ham DN'dir ve
+>    yeni kural gereği `calibration_type: NONE` → paket reddedilir.
+> 2. 🔴 **P-6** — `grape_lr_v1` `EXTENDED_5BAND` (10 kanal, BLUE bekliyor); M3M'de BLUE yok
+>    ve `feature_extraction.py:164` onu **sıfırla dolduruyor**. 36 feature'ın 4'ü sabit sıfır
+>    olurken `StandardScaler` gerçek Blue ile fit'lenmiş ⇒ Platt kalibrasyonu (ECE 0.013–0.24)
+>    4-bant girdide **geçerliliğini kanıtlamış değil**. Hata VERMEZ, sessizce bozar — ve o
+>    güven skoru fail-closed rapor kipini (K-10) sürüyor. GPU'lu makine bu ölçüm için doğru yer.
+>
+> **Demo öncesi kullanıcının kendi kontrolü:** kartlardaki **sonek-0 fotoğrafları görünür ışık
+> mı, gerçek-zamanlı NDVI önizlemesi mi?** NDVI önizlemesiyse DJI Terra yeniden yapılandırması
+> **başarısız olur** (DJI: *"如果是实时 NDVI 照片而非可见光照片，将无法处理成功"*). Kamera ayarından geliyor.
+>
+> ### 📌 GİRİŞ NOKTASI (iş listesi)
+> Eylem planı → **`▶️ GİRİŞ NOKTASI — MOTOR-AGNOSTİK KALİBRASYON + v7.5.0 TURU`**
+> (`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md`). Sıra: **P-2 · P-6** → P-4 · P-5 →
+> v7.5.0 turu (S7-b · S3-b · K1) → kuyruk (W8-c · W8-b · P21 · P20 · Ö7).
+
+---
+
+## 0.A (devam) — AYNI OTURUMUN AYRINTISI (2026-08-02, motor araştırması + adaptör turu)
 
 > ### 🔬 Çok dilli motor araştırması (18 ajan · EN+ZH+ES · çürütme turlu) **İKİ VARSAYIMI ÇÜRÜTTÜ**
 >
@@ -39,7 +102,7 @@
 > (Pix4D: *"not fully radiometrically calibrated, only a relative calibration"* · DJI Image
 > Processing Guide Eq. 4-6: ρ_NIR yayımlanmadığı için panelsiz mutlak reflektans türetilemez).
 >
-> ### ✅ Bu oturumda YAZILAN (edge — commit edilmedi, kullanıcı onayı bekliyor)
+> ### ✅ Bu oturumda YAZILAN (edge — PR **#54** ile merge edildi, `fba45a3`)
 >
 > | Dosya | Ne |
 > |---|---|
@@ -89,7 +152,7 @@
 
 ---
 
-## 0.A′ ÖNCEKİ — (2026-08-02, **otonom tur**) — **SIRA 3 KAPANDI + AK-11**
+## 0.A-ÖNCESİ — (2026-08-02, **otonom tur**) — **SIRA 3 KAPANDI + AK-11**
 
 > Kullanıcı uyurken otonom koşuldu. **7 PR, 4 depo, hepsi CI yeşil ve merge edildi:**
 > edge **#52** (E18+E15) · **#53** (E17) · platform **#354** (P15+P19) ·
