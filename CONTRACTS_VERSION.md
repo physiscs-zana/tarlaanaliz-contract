@@ -6,6 +6,15 @@
 **Breaking Change:** NO  
 **Contracts Checksum (SHA-256):** `c7b8d46eba2dcc49395a76e50d86e3b7f32742c1f912d13e60a9c1c9a59949ee`
 
+**Checksum State:** PENDING_REPIN — TUR 3 açık (2026-08-02, motor-agnostik kalibrasyon).
+Tur içeriği: `enums/radiometric_mode.enum.v1.json` (**yeni kanonik enum**) +
+`enums/calibration_type.enum.v1.json → x-derivation.x-radiometric-axis-2026-08-02`
+(iki girdili türetme tablosu) + KR-034/KR-030 normatif metni motor-agnostik.
+Yukarıdaki agrega checksum bu turdan ÖNCEKİ hâli gösterir ve bilerek bayattır;
+bir sonraki C8 töreninde `tools/pin_version.py` dosyayı baştan üretince **bu satır
+kendini siler** ve üç kapı (CI `verify-checksums` · `test_real_repo_checksum_verifies`
+· `test_pending_propagation_is_empty`) aynı anda sertleşir.
+
 ---
 
 ## Version Policy
