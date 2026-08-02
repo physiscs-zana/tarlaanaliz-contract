@@ -2140,11 +2140,37 @@ enum) + **ÖD-2** (`analysis_job` `$defs`) + **E13-R** (türetme bloğu) + **SD9
 
 </details>
 
-### 🥇 SIRA 1 (YENİ) — **P1: platform `enforce=True`** *(iki kilit de açıldı)*
+### ✅ SIRA 1 — **P1 UYGULANDI (2026-08-02): iki bayrak da `True`**
+`worker_result_schema_enforce` **ve** `edge_manifest_schema_enforce` açıldı. Plan tek bayraktan
+söz ediyordu; ölçümde **iki** bayrak ve **üç** doğrulama yüzeyi olduğu görüldü. Önkoşul
+varsayılmadı, her yüzeyin **ret kümesi** ölçüldü:
+
+| Yüzey | `enforce=True` bugün neyi reddeder | Sonuç |
+|---|---|---|
+| `intake_manifest` (edge→platform, 422) | edge'in gerçek fixture'ı Pydantic'ten geçip `model_dump` edildikten sonra kanoniğe karşı **0 hata** | güvenli |
+| `analysis_result` (worker→platform, DLX) | vendored kopya kanonikten **DAHA SIKI** (`required` ⊇ kanonik: +`confidence_score`, +`result_mode`; fazladan enum değeri yok) ⇒ worker'ın ürettiği her belge kanoniği de geçer | güvenli |
+| `expert_review_queue` (worker→platform, DLX) | vendored `crop_type`'ta kanonikte **olmayan 4 değer** (APPLE/CHERRY/FIG/PEACH — W14 ekseni) ⇒ ret kümesi teorik olarak **boş değil** | bugün **ulaşılamaz**: `GAP_OFFERED_CROPS` = {COTTON, CORN, PISTACHIO, RICE, GRAPE}, dördü de yok |
+
+🔴 **İki bayat beyan bulundu ve temizlendi:** `settings.py` ve `ingest.py` engel olarak
+*"Pydantic↔intake_manifest.v1 alan-drift'i (`av_scan_result` string vs object …)"* diyordu;
+o drift **DENETIM-FIX (K-3) turunda zaten giderilmişti**. Yani P1 aylardır **var olmayan bir
+gerekçeyle** kilitliydi. (`docs/architecture/data_lifecycle_transfer.md:195` de aynı bayat
+gerekçeyi tekrarlıyordu — düzeltildi.)
+
+⚠️ **Güvence nerede duruyor:** `expert_review_queue` için tel üstünde değil **platform
+kapısında** (bookable ürün kümesi). W14'ün yeniden açılma koşulu aynen geçerli ve artık
+maliyeti daha yüksek: bu ürünlerden biri siparişe açılırsa **tel önce genişletilmeli**, yoksa
+escalation nack→DLX ile **kaybolur**.
+
+📌 Yeni bulgu **P20** (aşağıda): kapı ham gövdeyi değil `model_dump()` çıktısını doğruluyor.
+
+<details><summary>P1'in özgün kaydı</summary>
+
 E16 ile edge çıktısı kanonik sözlüğü konuşuyor **ve** TUR 2 kapandı → P1'in iki önkoşulu da
 karşılandı. Platform deposu: **commit için kullanıcı onayı gerekir** (platform CLAUDE.md
 *"Commit yalnızca kullanıcı açıkça istediğinde oluşturulur"*). Yöntem bu turda kanıtlandı:
 dal + PR + CI yeşilse merge.
+</details>
 
 ### 🥈 SIRA 2 — ~~P1 açılabilir (kilit kalktı)~~ → **SIRA 1'e taşındı**
 E16 ile edge çıktısı kanonik sözlüğü konuşuyor → platform `enforce=True` artık edge'i kırmaz.
@@ -2162,6 +2188,7 @@ kullanıcı onayı gerekir — CLAUDE.md kuralı.)
 | 🆕 **E18** | edge | `calibration_pipeline._read_calibration_type`: `except (OSError, ValueError) → None` sessiz yolu **fail-loud** + üç yorumu düzelt | **E15 ile aynı sınıf, aynı turda çözülmeli.** ÖD-0'da ölçüldü: okunamayan kalibre manifest → edge alanı **sessizce atlar** → platform `NONE` türetir → worker KR-018/082 işi reddeder; operatör *"kalibrasyon reddedildi"* görür, gerçek sebep **okunamayan dosya**dır. Üç yorum (`:450` · `:282` · `manifest_writer.py:224`) hâlâ *"platform PANEL_ABSOLUTE varsayar"* diyor — **P14 o ağı 2026-08-01'de kaldırdı**; yanlış değişmez, alanın atlanmasına karar veren `if`'in tam üstünde öğretiliyor |
 | 🆕 **P19** | platform | `_derive_calibration_type` 2. adımı (`CalibrationRecord.calibration_manifest`) **ölü** — ya besle ya kaldır | Ölçüldü: `src/`+`tests/`+`scripts/`+`alembic/` içinde o alana **hiç değer atanmıyor** (kolon hep NULL). Docstring 3 kaynak sayıyor, gerçekte **1 kaynak + fail-closed** var → E18'in etkisini büyütüyor (tek kaynak sessizce kaybolunca yakalayacak yedek yok) |
 | 🆕 **W15** | worker | `calibration_input_parser.py:3` docstring'i *"Reads calibration_method"* diyor; fonksiyon **`calibration_type`** okuyor | Küçük ama **yanıltıcı**: S4 beyanı *"okuyan kod yok"* gerekçesine dayanıyor; bir sonraki oturum `calibration_method` diye grep atınca bu satırı bulup yanlış sonuca varır |
+| 🆕 **P20** | platform | Ingest sözleşme kapısı **ham istek gövdesini değil** Pydantic `model_dump()` çıktısını doğruluyor → modelde tanımsız alanlar doğrulamadan **önce** düşer ve kapı onları hiç görmez | P1 ölçümünde çıktı: `sorties` ve `mission_date` bugün tam olarak böyle düşüyor — **ikisi de C11 ile kanoniğe absorbe edilmişti** ve platform `sorties`'i hiçbir yerde kullanmıyor (0 atıf). Bugün veri kaybı değil (kimse tüketmiyor) ama kapı *"edge'in gönderdiğini doğruluyoruz"* diye okunuyor, oysa **kendi yeniden inşasını** doğruluyor. ÖD-3'ün tam deseni: kapı, koruduğunu iddia ettiği yüzeyi ölçmüyor. Çözüm ya ham gövdeyi de doğrula ya alanları modele ekle — hangisi olacağı ürün kararı (per-sortie ürün atıfı platform entegrasyonunda izlenen bir kalem) |
 
 ### 🔶 SIRA 4 — **MAJOR TURU (v8.0.0)** — ✅ **kilit KALKTI (TUR 2 kapandı, v7.4.0 yayımlandı)**
 Sıra: **AK-11 önce** (dedektör `FIELD_MADE_REQUIRED` için `x-compat-accepted` tanımıyor) →
