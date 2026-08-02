@@ -60,12 +60,21 @@
 > opt-in** (`"accepts": [...]`) — tek damga aynı düğümdeki daha güçlü iddiayı sessizce
 > kapsamasın. ⇒ **S7-b artık beyanla MINOR turda da kapatılabilir.**
 >
-> ### 📌 SONRAKİ OTURUM — kullanıcı kararı bekleyen yer
-> **SIRA 4'ün geri kalanı (v8.0.0) BİLEREK açılmadı.** İçeriği ürün kararı:
-> **S3** (`DLS2_RELATIVE` yeniden adlandırma/kaldırma) · **S7-b** (`band` → required) ·
-> **K1** (`{tenant}` opaklaştırma) · **DEP-1** (penceresi dolmuş iki deprecation).
-> Bunlar geri alınamaz, kırıcı ve dört depoyu birden ilgilendiriyor.
-> Ayrıca kuyrukta: **W8-b** · **P21** → **P16** · **W8-c** (AL-W1).
+> ### 📌 SONRAKİ OTURUM — **TEK GİRİŞ NOKTASI**
+> Eylem planı → **`▶️ SONRAKİ OTURUM — v8.0.0 TURU: ÖLÇÜLMÜŞ İŞ PLANI`**
+> (`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md`, §14.9'un sonunda).
+>
+> Orada dört kalemin (**S3 · S7-b · K1 · DEP-1**) her birinin gerekçesi **ölçüm
+> çıktısıyla** yazılı, 9 adımlık tören sırası ve turdan **bağımsız** kuyruk
+> (**W8-b · P21 → P16 · W8-c · Ö7 · P20**) kanıtlarıyla duruyor.
+>
+> 🔴 **Önce kullanıcı kararı:** tur açılacak mı? MAJOR = dört deponun aynı anda yeniden
+> pinlenmesi, geri alınması zor. **Hiçbir kalem CANLI bir arıza değil** — bekleyen şey
+> teknik hazırlık değil **zamanlama**.
+>
+> ⚡ **Turu açmasanız bile yapılabilecek olan:** **S7-b**. AK-11 sayesinde *"üretici yok,
+> ölçüldü"* beyanıyla MINOR turda da kapatılabilir (edge/platform/worker → **0** üretici,
+> ölçüldü). Kuyruktaki beş kalem de MAJOR beklemiyor.
 >
 > Dört depo: temiz · senkron · 0 açık PR · I-1 `7.4.0 = 7.4.0 = v7.4.0` · CI 4/4 yeşil.
 

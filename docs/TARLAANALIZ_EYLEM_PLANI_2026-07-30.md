@@ -2245,13 +2245,110 @@ kullanıcı onayı gerekir — CLAUDE.md kuralı.)
 > kırıyor ve üç depoyu yeniden pinlemeyi gerektiriyor (ölçüldü). **S7-b aynı alana
 > dokunacağı için o turda birlikte düzeltilecek.**
 
-Sıra: **AK-11 önce** ✅ →
-tek migration guide → `--major --breaking` → üç depo re-pin. İçerik: **S3** (`DLS2_RELATIVE`
-yeniden adlandırma/kaldırma) · **S7-b** (`raw_frames[].band` → `required`) · **K1** (`{tenant}`)
-· 🆕 **DEP-1** (ÖD-0'da ölçüldü): penceresi **dolmuş** iki deprecation — `schemas/platform/
-payment_intent.v1.schema.json` (v2 kanonik, migration guide yazılı) ve `enums/payment_status.
-enum.v1.json` (`x-deprecated.since: 6.2.0`, `removal_plan` *"gelecek bir MAJOR"* diyor; arada
-7.0/7.1/7.2/7.3 geçti). Beyanları düzgün, ama v8.0.0 içerik listesinde **yoklardı**.
+---
+
+## ▶️ SONRAKİ OTURUM — **v8.0.0 TURU: ÖLÇÜLMÜŞ İŞ PLANI** (2026-08-02 gecesinde yazıldı)
+
+> **Bu bölüm sonraki oturumun giriş noktasıdır.** Her kalemin gerekçesi ÖLÇÜLMÜŞTÜR;
+> aşağıdaki sayılar tahmin değil, o gün koşturulan komutların çıktısıdır. Bir kalem
+> burada yoksa yapılmaz; yapılacaksa önce buraya yazılır.
+>
+> 🔴 **ÖNCE KULLANICI KARARI:** turun kendisi açılacak mı? MAJOR sürüm dört deponun
+> aynı anda yeniden pinlenmesini gerektirir ve geri alınması zordur. İki seçenek:
+> **(a)** turu şimdi aç (adlar/kısıtlar temizlenir, borçlar kapanır) · **(b)** pilot
+> sonrasına bırak (bugünkü hâl çalışıyor; hiçbir kalem CANLI bir arıza değil).
+> Kalemlerin teknik hazırlığı tamamdır; bekleyen şey **zamanlama kararıdır.**
+
+### 📋 v8.0.0 içeriği — dört kalem, kanıtlarıyla
+
+#### S3 — `DLS2_RELATIVE`: satıcıya özgü ürün adı, genel bir kavramın yerinde
+**Sorun:** "DLS2" bir **MicaSense parçasının adıdır** (SSOT KR-018: *"MicaSense
+RedEdge-P/Altum-PT: DLS2 + reflectance panel"*). M3M'de de güneş sensörü var ama **DLS2
+değil**. Yani genel bir kalibrasyon sınıfına tek bir üreticinin ürün adı verilmiş; başka
+bir sensörle göreli kalibrasyon yapıldığında veri yanlış adla etiketlenir.
+
+**ÖLÇÜM (2026-08-02):**
+| Yer | Geçiş sayısı |
+|---|---|
+| contract `schemas/` + `enums/` | **19** |
+| worker `src/` | **17** |
+| platform `src/` | **2** |
+| edge `src/` | **0** |
+
+**Neden MAJOR:** enum değeri yeniden adlandırma = `ENUM_VALUE_REMOVED` + yeni değer.
+38 canlı atıf. Migration guide + üç tüketici re-pin şart.
+**Karar gerekiyor:** yeniden adlandır mı (`IRRADIANCE_RELATIVE` gibi genel bir ad), yoksa
+tamamen kaldır mı? E13-R zaten değeri kalibre paket yüzeyinden reddetti — ama worker'daki
+17 atıf hâlâ canlı, önce onların ne yaptığı okunmalı.
+
+#### S7-b — `raw_frames[].band` zorunlu değil, bu yüzden boşluk hâlâ belirsiz
+**Sorun:** Alan boşsa iki ayrı şey demek olabiliyor: (a) bu bir RGB kompozit kare,
+(b) bant bilinmiyor/yazılmadı. `RGB` değeri S7'de eklenerek (a) açıkça söylenebilir hâle
+geldi, ama alan **opsiyonel** kaldığı için yokluk hâlâ iki anlamlı.
+
+**ÖLÇÜM (2026-08-02):**
+```
+raw_frames[] required : ['frame_id', 'relative_path', 'sees_patch_ids']   ← band YOK
+band enum             : BLUE GREEN RED RED_EDGE NIR LWIR RGB
+Bu alani YAZAN kod    : edge 0 · platform 0 · worker 0
+```
+**⚡ AK-11 bunu MINOR'a da uygun kıldı:** üretici olmadığı ÖLÇÜLDÜĞÜ için artık
+`"x-compat-accepted": {..., "accepts": ["FIELD_MADE_REQUIRED"]}` beyanıyla MINOR turda da
+kapatılabilir. Yani S7-b **v8.0.0'ı BEKLEMEK ZORUNDA DEĞİL** — turu açmazsanız bile
+yapılabilir.
+⚠️ Bedel yazılı: alan zorunlu olduktan sonra onu yazmayan bir üretici yazılırsa paket
+reddedilir. Üretici (E11 kare seçici) bu alanı **daima** yazacak şekilde yazılmalı.
+📌 Aynı turda: o alanın açıklamasındaki *"dedektör … hiç kontrol etmiyor (satır 615-630)"*
+cümlesi **bayat** — AK-11 kapandı. Aynı alana dokunulduğu için birlikte düzeltilecek.
+
+#### K1 — müşteri kimliği depolama anahtarında açık metin
+**Sorun:** Nesne anahtarı şeması `{tenant}/{dataset_id}/patches/{patch_id}/{ad}`. Yani
+**kimin verisi olduğu yolun içinde yazıyor.** Yol bir log satırına, bir hata mesajına ya da
+bir URL'ye düştüğü anda müşteri kimliği de onunla sızar.
+
+**ÖLÇÜM:** `schemas/edge/intake_manifest.v1.schema.json:324` — güvenlik yapısı zaten
+zorlanıyor (mutlak yol RED · `..` traversal RED · `/patches/` öncesi ≥2 segment) ama
+**tenant kısmı açık metin**.
+
+**Neden MAJOR:** anahtar biçimi değişirse bugüne kadar üretilmiş tüm anahtarlar etkilenir;
+geçiş planı (eski anahtarları okumaya devam etme penceresi) gerekir.
+
+#### DEP-1 — penceresi dolmuş iki ödeme nesnesi
+| Nesne | Beyan | Durum |
+|---|---|---|
+| `enums/payment_status.enum.v1.json` | `deprecated: true`, **`since: 6.2.0`**, `removal_plan: "gelecek bir MAJOR"` | 6.2.0'dan beri **7.0 · 7.1 · 7.2 · 7.3 · 7.4** geçti |
+| `schemas/platform/payment_intent.v1.schema.json` | `deprecated: true`, v2 kanonik, migration guide **yazılı** | tüketiciler v2'ye pinli (beyanda ölçülü) |
+
+**Neden şimdi:** İkisi de düzgün beyan edilmiş, unutulmuş değil — ama v8.0.0 içerik
+listesinde **yoklardı** (ÖD-0'da fark edildi). MAJOR turu zaten açılacaksa, "silinecek"
+diye bekleyenler o turda silinmeli; yoksa bir MAJOR daha beklerler.
+
+### 🔢 Tur açılırsa — adım sırası (C8 töreniyle birebir, MAJOR farklarıyla)
+1. **AK-11** ✅ zaten kapalı.
+2. **S3 kararı** (yeniden adlandır / kaldır) → worker'daki 17 atıf okunup etkisi ölçülür.
+3. Dört kalem uygulanır. S7-b'ye `accepts` beyanı yazılır; `band` açıklamasındaki bayat
+   AK-11 cümlesi aynı düzenlemede temizlenir.
+4. **Tek migration guide** — `docs/migration_guides/` (MAJOR'da politika ŞART koşuyor;
+   `versioning_policy.md:253`).
+5. Dedektör **iki bağımsız ölçümle**: `--old v7.4.0 --new .` + dedektörün kodunu
+   kullanmayan düzleştirilmiş tarama. **Beklenen: breaking VAR** (bu turun amacı bu) —
+   her breaking kalem migration guide'da adıyla geçmeli.
+6. `python tools/pin_version.py --major --breaking` → CHANGELOG `[Unreleased]` başlığı
+   `[8.0.0]`'a çevrilir (yeni `release_gate` bunu zorluyor).
+7. Annotated tag + push → I-2 ölçümle doğrulanır.
+8. **Yayılım artık elle YAPILMAZ:** `python tools/propagate_vendored.py --check` sonra
+   `--apply`. ⚠️ Araç **daraltmaları uygulamaz, raporlar** — her biri için üretici ölçülür.
+9. Üç depo re-pin → I-1/I-3/I-4 ölçülür.
+
+### 📌 Turdan BAĞIMSIZ kuyruk (MAJOR beklemez)
+| # | Depo | İş | Kanıt |
+|---|---|---|---|
+| 🔴 **W8-b** | worker | Denetim çekilişini **doğru popülasyona** bağla | Publish noktasında elde yalnız `result.detections` (**anomali** kareler) var; `AnalysisResult` toplu sayı taşıyor (`tile_count_total/healthy/anomaly`), tam kare listesi **yok**. Oradan çekiliş, örneği ölçtüğü sonuca koşullar. Tam küme `worker/src/core/services/inference/pipeline.py:~1715` (`tiles`/`healthy_tiles`/`anomaly_tiles`) — üç katman taşıma gerekiyor. **Yanlı çekiliş, hiç çekiliş yapmamaktan KÖTÜDÜR** |
+| ⬜ **P21** | platform | `consensus_participation` alanını kalıcılaştır (kolon + worker mesajından okuma) | `expert_review_model.py` içinde alan adı **0 kez** geçiyor |
+| ⬜ **P16** | platform | Konsensüs yolu `EXCLUDED` satırı saymasın | 🔒 W8-b + P21'e bağlı; dışlanacak veri henüz **yok** |
+| ⬜ **W8-c** | worker | Örnekleme oran tablosunu doldur (AL-W1) | `audit_set_sampler.py:70` → `_DEFAULT_STRATUM_RATE = 0.0` ⇒ bugün **hiçbir kare seçilmiyor**. Aktivasyon bilinçli ops kararı: hangi ürün/katman için % kaç |
+| ⬜ **Ö7** | contract | W14'ün **kalıcı** beyanını `KNOWN_VENDORED_AHEAD`'den ayır | O yapı *"kalıcı olamaz · yalnız küçülür"* diyor; bugün delik değil (6 değerin 6'sı dolu) ama sayaç tanımı gereği 0'a inemez |
+| ⬜ **P20** | platform | Ingest kapısı ham gövdeyi de görsün | Doğrulama `model_dump()` çıktısına yapılıyor → modelde tanımsız alanlar doğrulamadan ÖNCE düşüyor. Ölçüldü: `sorties` + `mission_date` böyle düşüyor (ikisi de C11 ile kanoniğe absorbe edilmişti; platform `sorties`'i hiç kullanmıyor) |
 
 ### 📌 Denetim borcu — ✅ **ÖD-0 KAPANDI (2026-08-01 gece)**
 `sürüm-riski` lensi **koşturuldu** (elle, 9 soru). Kanıt:
