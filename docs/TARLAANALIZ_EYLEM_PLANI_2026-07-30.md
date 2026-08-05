@@ -287,6 +287,40 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 
 ---
 
+## 3.6 DEMO GÖRÜNTÜLEME HATTI — kuyruk (`DK`) — 🆕 2026-08-05 dört-disiplinli denetimden
+
+> **Nereden geldi:** 2026-08-05'te çiftçi sonuç akışı ilk kez uçtan uca çalıştırıldı
+> (DJI Terra çıktısı → COG → MinIO → tile ucu → çiftçi haritası) ve tur **dört bağımsız
+> denetçiye** (Kıdemli SWE · QA · Pentest · SDLC) verildi. Demo-öncesi 6 kritik aynı turda
+> kapatıldı (platform PR **#381**, `f761c317`, CI 18/18). Aşağıdakiler **bilerek ertelendi**.
+>
+> 🔴 **Kod ailesi neden `DK`:** `D-1…D-16` ve `W1…W15` bu planda **zaten dolu**
+> (ölçüldü 2026-08-05). Kalemler yerel `SONRAKI_OTURUM_PLANI.txt`'de `D-1…D-13` diye
+> yazılmıştı; **kanonik kod burada `DK-`'dır**, o yerel dosya git ile taşınmaz.
+
+| # | İş | Depo / dosya | Ne zaman |
+|---|---|---|---|
+| **DK-1** 🟠 | **Worker'a GNDVI hizalaması.** Platform `HEALTH`'i `("gndvi","ndvi")` tercih sırasıyla besliyor; worker gndvi COG'unu **hiç üretmiyor** (`_MAPS_BY_RESULT_MODE`'da hiçbir modda yok, `gndvi_url` ataması 0). Demo yolunda manifest **elle** yazıldığı için GNDVI **canlı çalışıyor** — ayrışma yalnız üretim worker yolunda. Kayıt: `open_items_decisions_2026-06.md` **COORDINATE**. Yapılacak: (a) `reporting_agent._MAPS_BY_RESULT_MODE` (b) `map_renderer.RAMP_REGISTRY` renk rampası (c) `IndexMaps.gndvi_url`. **Ardından** platformda tercih sırası **davranış** testi | worker: `reporting_agent.py` · `map_renderer.py` → sonra platform `tile_service_impl.py` | 🔴 **Ekim 2026 sonrası** (kullanıcı kararı) |
+| **DK-2** 🔴 | **`list_summaries` sessiz sonuç kaybı.** SQL `LIMIT` **satır** üzerine (`limit*3`); tekilleştirme + ödeme elemesi o kırpılmış pencerenin İÇİNDE yapılıyor. İki bağımsız kayıp yolu ölçüldü: (a) görev başına >3 sonuç → 60 görev/4 sonuçta 50 yerine **38** (b) düşük ödeme yoğunluğu → 200 görev/1-5 ödenmişte 40 yerine **30**. Çözüm: tekilleştirmeyi SQL'e taşı (`DISTINCT ON`/`row_number()=1`), `LIMIT`'i **görev** üzerine uygula, keyset sayfalama. ⚠️ Düzeltmeyle **aynı turda** (a) ve (b) testleri gelmeli | platform `results_service_impl.py` | demo sonrası ilk sprint |
+| **DK-3** 🟠 | **`sameOriginContract` sunucu-taban bloğu METİN araması.** M-F13 (sessiz varsayılan `?? 'http://backend:8000'`) ve M-F22 (dış alan string birleştirmeyle gizlenir) 325 testlik suite'ten **yeşil geçiyor**. Çözüm: `resolveRequestBase`'i **üretim yolundan** çağır (`@jest-environment node`) — env silinmişken `rejects.toThrow`, env varken fetch'in aldığı URL **literal** doğrulansın. Metin taraması yalnız ikincil lint kalsın | platform `web/src/lib/__tests__/sameOriginContract.test.ts` | demo sonrası ilk sprint |
+| **DK-4** 🟠 | **N+1 sorgu + sıralı S3.** 50 sonuç → **101 DB sorgusu + 50 SIRALI S3 GET** (ölçüldü). Çözüm: `dataset.result_uri`'leri tek `IN(...)` ile çek · boto3 client'ı örnek düzeyinde tembel-önbellekle (emsal: worker `S3ResultArtifactSink._get_client`) · manifest okumalarını `asyncio.gather` ile sınırlı eşzamanlılıkta koştur · `limit`'i query parametresi yap | platform `results_service_impl.py` | demo sonrası |
+| **DK-5** 🟠 | **`get_tile` manifest'i aday başına yeniden çözüyor** — tile başına 4 DB + 2 S3 (gndvi yoksa). Manifest **bir kez** çözülüp adaylar bellekteki `maps` sözlüğünden seçilmeli | platform `tile_service_impl.py` | demo sonrası |
+| **DK-6** 🟠 | **`assert_called_once()` argümansız** — `test_get_tile_success_renders_png:124` argümanları denetlemiyor; rescale tablosunun kullanıldığı ve fallback döngüsünün çalıştığı **ölçülmüyor**. Tek satır: `assert_called_once_with(..., "rdylgn", (0.0, 0.8))` | platform testleri | demo sonrası |
+| **DK-7** 🟠 | **Yutulan `except Exception` + `exc_info` eksikliği.** `tile_service_impl` 363/437/462 · `results_service_impl` 497. Bu turun teşhisi *"except'ler hatayı yuttu"* idi; **yutucu aynen duruyor**. En az `type(err).__name__ + str(err)` loglanmalı | platform | demo sonrası |
+| **DK-8** 🟠 | **`layer_refs` mükerrer kolonu.** Göç sonrası tabloda kalıyor ama ORM ne yazıyor ne okuyor → ölü ikinci kaynak, `available_layers` ile sessizce ayrışır. Çözüm: `COMMENT ON COLUMN` ile **DEPRECATED** işaretle; **düşürme AYRI göç** (geri dönüşü zor — onay gerekir) | platform `alembic/` | demo sonrası |
+| **DK-9** 🟠 | **SSR için `X-Forwarded-For` iletimi.** `INTERNAL_API_ORIGIN` üretime taşındı (2026-08-05) → SSR artık nginx'i atlayıp backend'e **doğrudan** gidiyor; istemci IP'si iletilmediği için tüm SSR istekleri **tek hız-sınırı kovasında** toplanıyor (tek kullanıcı diğerlerini 429'a düşürebilir). Demo tek kullanıcılı olduğu için ertelendi | platform `web` + `nginx` | üretim öncesi **kapı** |
+| **DK-10** 🟠 | **`contracts` deposunda `.gitattributes`.** Bugün bu makinede disk=blob **bayt-özdeş** (ölçüldü: CRLF=0, LF=348) ve KR-042 kapısı 96/96 geçiyor. AMA taze bir klonda sistem `core.autocrlf` devreye girip CRLF üretebilir → kapı orada patlar. Kalıcı çözüm **contract deposunda**: `* text=auto eol=lf` | **contract** (bu depo) | ikinci makine kurulumundan **önce** |
+| **DK-11** 🟠 | **Süreç kapıları kendi kuralını denetlemiyor.** (a) BOUND kapısı yalnız `src/` tarıyor, `alembic/` görmüyor → 2 migration hâlâ BOUND'suz (`2026_07_27`, `2026_07_29`) (b) `CLAUDE.md` pytest komutu CI ile hizalı **değil**: ortam değişkenleri eksik → `exit 2` (13 collection hatası); CI'da `TARLA_ENVIRONMENT=development APP_ENV=development` var (c) `audit_v322_tree.py` kapı değil, drift yalnız raporlanıyor ve yalnız **izlenen** dosyaları tarıyor → yeni dosya hakkında sıfır sinyal (d) I-3 doğrulama komutu **kör**: `git submodule status` alt-modül çalışma ağacı kirliliğini göremez → `git -C contracts diff --quiet` eklenmeli | platform `CLAUDE.md` · `ci.yml` · kök `CLAUDE.md` §3 | demo sonrası |
+| **DK-12** ⬜ | **Ölü kod temizliği (ONAY GEREKİR).** `web/src/components/features/map/MapLayerViewer.tsx` — 60 satır, **0 import**. Mükerrer **DEĞİL** (farklı arayüz, kanonik ağaçta ikisi de onaylı, aynı commit `b565a78a` 2026-02-08). Silmek geri dönüşü zor işlem | platform `web` | onay sonrası |
+| **DK-13** ⬜ | **Yeni `CLAUDE.md` test kuralı önerisi (#12):** *"Faz/rol kapılı bir DTO'ya yeni alan eklerken fixture değeri, alanın GERÇEK üreticisinin çıktı biçimini taşır; nötr yer tutucu kullanılmaz ve kapının her dalında o alana ayrı bir iddia yazılır."* Gerekçe: 2026-08-05'te `summary` sızıntısı **tam da bu boşluktan** geçti | platform `CLAUDE.md` | demo sonrası |
+| **DK-14** 🟠 | **Migration birim testi.** Son iki migration'ın **ikisi de** kendi testiyle gelmişti; bu üçüncüsü gelmedi. Emsal: `tests/unit/test_payment_intent_target_unique_migration.py`. (CI zaten upgrade→downgrade→upgrade zincirini koşuyor) | platform `tests/unit/` | demo sonrası |
+
+> 🔴 **DK-1 için QA kararı (2026-08-05):** tercih sırası davranış testi **şimdi yazılmadı** —
+> üretimde koşmayan bir dala test yazmak **sahte güven** üretir. Test, worker hizalamasıyla
+> **birlikte** gelir.
+
+---
+
 # 4. İŞ AKIŞI (haftalık operasyonel döngü)
 
 ```
@@ -2249,6 +2283,14 @@ kullanıcı onayı gerekir — CLAUDE.md kuralı.)
 
 ## ▶️ GİRİŞ NOKTASI — **MOTOR-AGNOSTİK KALİBRASYON + v7.5.0 TURU** (2026-08-02, araştırma sonrası)
 
+> 🆕 **2026-08-05 EKİ — bu bölüm hâlâ geçerli, ama artık TEK hat değil.** O tarihte
+> **donanım gerektirmeyen** ikinci bir hat ilerledi: çiftçi sonuç akışı uçtan uca
+> çalıştırıldı ve dört-disiplinli denetimin demo-öncesi kritikleri kapatıldı
+> (platform PR #381). Aşağıdaki **P-2 · P-6** hâlâ **donanım/ölçüm kapılıdır** (RTX 3090
+> makinesinde işlenmiş export klasörü + GPU ölçümü ister). Donanım yokken çalışılabilecek
+> yazılım kuyruğu → **§3.6 (`DK-1…DK-14`)**. Sıra kuralı: donanım geldiğinde **P-2/P-6
+> önceliklidir**, çünkü pilotu açan yol odur; §3.6 onu beklemez.
+>
 > **Bu bölüm aşağıdaki "v8.0.0 TURU" bölümünün YERİNE GEÇER.** Gerekçe: 2026-08-02'de
 > yapılan çok dilli motor araştırması (18 ajan, EN+ZH+ES, resmi üretici dokümanı +
 > hakemli kaynak, çürütme turlu) iki temel varsayımı çürüttü. Eski bölüm **tarihsel

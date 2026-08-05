@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-02 (otonom tur — SIRA 3 kapandı + AK-11)
+**Son güncelleme:** 2026-08-05 (demo görüntüleme hattı + dört-disiplinli denetim)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,79 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-02, **motor araştırması + adaptör turu**) — ✅ **KAPANDI, MERGE EDİLDİ**
+## 0.A EN GÜNCEL — (2026-08-05, **demo görüntüleme hattı + dört-disiplinli denetim**) — ✅ **KAPANDI, MERGE EDİLDİ**
+
+> ### 🔚 OTURUM KAPANIŞI — yalnız `tarlaanaliz-platform` değişti, CI 18/18 yeşil
+>
+> | Depo | Dal | Merge commit | PR | Durum |
+> |---|---|---|---|---|
+> | **platform** | `main` | `f761c317` | **#381** | ✅ 18/18 (Alembic Upgrade/Downgrade Smoke + SSOT BOUND Header Guard dahil) |
+> | platform | `main` | `95283e24` | #374 | ✅ (aynı oturumun ilk turu) |
+> | contract · edge · worker | — | — | — | **DOKUNULMADI** — bu tur contract gerektirmedi |
+>
+> ```
+> git -C tarlaanaliz-platform log --oneline -1 origin/main
+>   f761c317 Merge PR #381: dort-disiplinli denetimin demo-oncesi kritikleri
+> git -C tarlaanaliz-platform submodule status contracts
+>   " eb28b74… contracts (v7.4.0)"   ← başında '+/-' YOK → I-3 sağlam
+> ```
+>
+> ⚠️ **Ölçüm notu (yanlış alarma düşmemek için):** `git status` alt-modülü ` M contracts`
+> gösterebilir. 2026-08-05'te ölçüldü: `git -C contracts diff --numstat` **boş**,
+> `git diff --quiet` **exit 0** → içerik farkı YOK, yalnız stat-cache (dosyanın değişiklik
+> zaman damgası tazelenmiş, içeriği değil). Bu, senkron kırıklığı **değildir**.
+>
+> ### ✅ NE BAŞARILDI — çiftçi sonuç akışı ilk kez uçtan uca çalıştı
+>
+> DJI Terra çıktısı (Dicle Ü. denemesi, M3M) elle COG'a çevrilip MinIO'ya yüklendi ve
+> **çiftçi ekranında harita + katman olarak göründü**: `Terra index_map → cog_uret.py →
+> minio_yukle.py (manifest) → demo_veri.py (6 tablo) → RBAC → KR-033 ödeme kapısı →
+> tile ucu → tarayıcı`. Yol boyunca **6 gerçek hata** bulunup kalıcı olarak düzeltildi
+> (SSR göreli URL · `libexpat1` eksiği · `rasterio.Env` yerine `AWSSession` ·
+> `geographic_bounds` API'si · `analysis_results` ORM/şema ayrışması · `next.config.mjs`
+> sessiz üretim varsayılanı — sonuncusu yerel giriş bilgilerini `api.tarlaanaliz.com`'a
+> gönderiyordu).
+>
+> Ardından **dört bağımsız denetçi** (Kıdemli SWE · QA · Pentest · SDLC) turu denetledi,
+> bulgular çapraz tartışmaya sokuldu ve **hepsi ana oturumda bizzat ölçülerek** doğrulandı.
+> Demo-öncesi 6 kritik kalem (A1–A6) kapatıldı:
+>
+> | # | Kapatılan | Kalıcı kazanım |
+> |---|---|---|
+> | **A1** | `.env.yedek-*` hiçbir `.gitignore` kalıbına uymuyordu (21 sır, korumasız) | `.gitignore` genel kalıp + yedek depo ağacı dışına taşındı |
+> | **A2** | `INTERNAL_API_ORIGIN` yalnız `.gitignore`'lu override dosyasındaydı → düzeltme ikinci makineye/üretime taşınmıyordu | `docker-compose.yml` + `.env.example` |
+> | **A3** 🔴 | **ADR-008 regresyonu:** `summary` metni *"(3 bulgu, mod=…)"* taşıyor, ÖN RAPOR'da sızıyordu. Kapının kanonik kolu `detection_gate.py` vardı ama results yolunda **0 çağrı** | `gate_result_summary()` + iki okuma yolu da kapıdan geçiyor (fail-closed) |
+> | **A4** | GNDVI ayrışması kayıtsızdı (I-5 ihlali) | `open_items_decisions_2026-06.md` **COORDINATE** kalemi |
+> | **A5** | Yeni migration'da `BOUND` başlığı yoktu | eklendi |
+> | **A6** | `MapLayerViewer` 73 satır değişti, **hiçbir test import etmiyordu** (3 mutasyon hayatta) | mutasyonla sınanmış jest testi |
+>
+> ### 🔴 SONRAKİ OTURUM BUNU BİLMELİ
+>
+> 1. **Doğrulanmamış tek şey: uçtan uca prova.** Docker kapalıydı; kullanıcı
+>    `docker compose up -d --build backend web` ile provayı **kendisi** yapacak.
+>    Beklenen ekran: ÖN RAPOR bandı · "Tarlanızın Durumu" kutusu (serbest metin **yok** —
+>    A3 kapısı boşaltıyor; canlılık puanı ve açıklamalar **var**) · katmanlar
+>    "Genel Sağlık" + "Azot Stresi" · harita tarlaya odaklı (~20 m ölçek).
+>    **Prova sonucu alınmadan "çalışıyor" denmez.**
+> 2. **Ertelenen 14 kalem eylem planına taşındı** → `TARLAANALIZ_EYLEM_PLANI_2026-07-30.md`
+>    **§3.6**. (Yerel `SONRAKI_OTURUM_PLANI.txt` git'te **değildir**, ikinci makinede yoktur —
+>    kanonik liste §3.6'dır.)
+> 3. **TUR 3 `PENDING_REPIN` hâlâ açık** — aşağıdaki 2026-08-02 bölümü geçerliliğini
+>    koruyor; bu tur contract'a dokunmadığı için beyan da değişmedi.
+> 4. **Demo bağlamı:** ürünü **çiftçi seçer** — pilot mahsul antep fıstığı (`PISTACHIO`),
+>    eğitim veri seti YOK (W7). Bu yüzden demo değeri **tespit** değil, **ölçüm**
+>    (canlılık haritası + zayıf bölge) üzerinden kurulur.
+> 5. **OSAVI kullanılamaz durumda** (ölçüldü): Terra 0.0337 vs formül 0.2639 — **8 kat
+>    sapma**. Kök neden: bantlar ham DN, OSAVI'nin `+0.16` sabiti 0–1 yansıma varsayar.
+>    NDVI/GNDVI/LCI/NDRE formülle **birebir** uyuşuyor. Kalibre uçuş olmadan OSAVI açılmaz.
+>
+> ### 📌 GİRİŞ NOKTASI (iş listesi)
+> Donanım/ölçüm hattı için aşağıdaki 2026-08-02 bölümü (P-2 · P-6) **aynen geçerli**.
+> Yazılım kuyruğu için: eylem planı **§3.6**.
+
+---
+
+## 0.A-1 ÖNCEKİ OTURUM — (2026-08-02, **motor araştırması + adaptör turu**) — ✅ **KAPANDI, MERGE EDİLDİ**
 
 > ### 🔚 OTURUM KAPANIŞI — dört depo merge edildi, CI 6/6 yeşil
 >
