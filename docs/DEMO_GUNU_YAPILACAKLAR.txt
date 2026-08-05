@@ -30,14 +30,14 @@ A. DEMO'DAN ONCE (bir gun kala)
              'DONE' yazmak "TAM RAPOR - Uzman Onayli" bandini bastirir;
              uzman incelemesi YOKKEN bu gercek disi beyandir.
 
-[ ] A3. Tarayicida GOZLE prova
+[ ] A3. Tarayicida son bir kez bak (RUTIN KONTROL - artik "ilk deneme" degil)
         http://localhost:8080/login  ->  giris  ->  sol menu "Sonuclar"
         ->  karta tikla  ->  harita
-        NOT: zincirin tamami 05.08.2026'da KOMUTLA olculdu ve calisiyor
-        (bkz. EK-B). Geriye yalnizca GOZLE dogrulama kaldi: haritanin
-        gercekten cizildigi ve renklerin ayirt edilebildigi. Mapbox anahtari
-        tarayici tarafinda calisir - komutla olculemez.
-        Demo gunu ILK KEZ denemeyin.
+        Zincirin tamami 05.08.2026'da olculdu VE harita gozle dogrulandi
+        (bkz. EK-B). Bu madde artik bir kesif degil, demo sabahi yapilacak
+        RUTIN kontroldur: veri degistiyse (A2) ya da makine/ag degistiyse
+        yeniden bakilir. Bakilacak sey: uydu goruntusu geliyor mu, renk
+        farki ayirt ediliyor mu, olcek ~20 m mi.
 
 [ ] A4. Kalibrasyon panelini cantaya koy
         Neden: 29.07 ucusunda panel cekilmedi; bantlar HAM SAYI (DN) olarak
@@ -113,9 +113,13 @@ C. ISLEME (ofiste / aracta)
 [ ] C4. COG donusumu                              (~10 sn/dosya)
         scratchpad/cog_uret.py     (ndvi + ndre)
         scratchpad/gndvi_ekle.py   (gndvi - HEALTH katmaninin ana kaynagi)
+        scratchpad/rgb_cog.py      (map/result.tif -> rgb.tif, ~30 sn)
+                                   GERCEK GORUNUM icin; 290MB -> 391MB
+                                   4 bandi (RGB+alfa) KORUR, piramit ekler
 
-[ ] C5. MinIO'ya yukle                            (~450 MB)
-        scratchpad/minio_yukle.py
+[ ] C5. MinIO'ya yukle                            (~840 MB)
+        scratchpad/minio_yukle.py  (ndvi + ndre + manifest)
+        scratchpad/rgb_yukle.py    (rgb + manifest'e EKLER, uzerine yazmaz)
 
 [ ] C6. Demo verisi                               (saniyeler)
         scratchpad/demo_veri.py
@@ -143,6 +147,16 @@ GOSTER:
         paylasmama). Kapinin calistigi olculdu: DB 305 karakter -> API ''.
         Cifciye "ozet paragrafi" VAAT ETMEYIN; puan + aciklamalar yeterlidir.
   - Katmanlar: "Genel Saglik" ve "Azot Stresi"
+  - "GERCEK GORUNUM" anahtari (05.08.2026'da eklendi, PR #384)
+    Haritanin ustunde, katman listesinin DISINDA duran ayri bir kutu.
+    Acinca ucus gunu cekilen GERCEK RENKLI fotograf haritaya biner.
+    SUNUM SIRASI ONERISI:
+      1. Once canlilik haritasini goster ve anlat (asil urun bu)
+      2. Sonra "Gercek Gorunum"u AC -> "iste ayni tarlanin o gunku fotografi"
+      3. Kirmizi/sari bolgeyi fotografta goster -> ciftci yerini TANIR
+    NE DEMEYIN: "bu da bir analiz" — degil, fotograftir. Kutuda zaten
+    "Analiz degildir; tarlanizi tanimaniz icindir" yaziyor.
+    Cozunurluk farki iyi bir satis noktasi: uydu ~10 m/piksel, bu 1,6 cm.
 
 SOYLE:
   - "Bu bir ON RAPOR - uzman incelemesi sonrasi kesinlesir"
@@ -303,8 +317,30 @@ Asagidakiler CANLI sistemde komutla dogrulandi (iddia degil, olcum):
     Mutasyonla sinandi: regex genis haline donunce KIRMIZI; import silinince
     pozitif kontrol KIRMIZI. Ikisi de geri alindi, hash birebir ayni.
 
-TEK KALAN: gozle dogrulama - harita GERCEKTEN ciziliyor mu (internetli
-makinede). Zincirin geri kalani olculdu; bu adim Mapbox'in tarayicida
-render etmesine bagli ve komutla olculemez.
+[x] BES INDEKS DEGERLENDIRILDI - karar: RGB EKLENDI, digerleri EKLENMEDI
+    Terra 5 indeks (index_map/) + RGB ortofoto (map/result.tif) uretiyor.
+    Olculdu ve karara baglandi (05.08.2026):
+      GNDVI  -> ZATEN kullaniliyor ("Genel Saglik" katmani)
+      NDRE   -> ZATEN kullaniliyor ("Azot Stresi" katmani)
+      NDVI   -> EKLENMEDI. GNDVI ile AYNI ekseni olcuyor (genel canlilik) ve
+                ayrim skoru daha dusuk: GNDVI 2.50 > NDVI 2.38
+      LCI    -> EKLENMEDI. NDRE ile AYNI ekseni olcuyor (klorofil/azot):
+                NDRE 2.49 > LCI 2.47
+      OSAVI  -> EKLENMEDI. BOZUK: 0.0337 vs beklenen 0.2639 (8 kat sapma).
+                Sebep: formuldeki 0.16 sabiti 0-1 YANSIMA olcegi varsayar,
+                bantlar ise kalibrasyonsuz ham sayi (DN). Panel cekilirse
+                yeniden degerlendirilir.
+      RGB    -> EKLENDI ("Gercek Gorunum", PR #384). Indeks DEGIL, fotograf.
+    NEDEN dordunu birden gostermedik: hepsi benzer yesil-sari-kirmizi harita
+    verir; ciftcinin ilk sorusu "hangisi dogru?" olur. Bu, D bolumundeki
+    Terra renk terslik uyarisiyla AYNI SINIF tuzaktir. RGB farkli kategoridir:
+    yorumlanmaz, bir iddiasi yoktur, yalnizca tanimayi kolaylastirir.
+
+[x] GOZLE DOGRULAMA YAPILDI (kullanici, 05.08.2026): HARITA GORUNDU.
+    Boylece zincirin TAMAMI dogrulanmis oldu:
+      backend (komutla) + arayuz (tarayici gezintisi) + harita (gozle).
+    Demo akisinda dogrulanmamis adim KALMADI.
+    Geriye kalan is kesif degil, HAZIRLIK: A bolumu (gercek ciftci verisi,
+    kalibrasyon paneli, internet teyidi) ve B/C bolumleri (ucus + isleme).
 
 ===============================================================================
