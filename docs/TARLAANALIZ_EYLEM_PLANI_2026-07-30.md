@@ -455,6 +455,45 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > (`reporting_agent._compute_field_metrics` → `message.index_maps_raw["ndvi"]`, NaN-güvenli).
 > AMA fonksiyonun kendi docstring'i girdi olarak *"ortomozaik"* diyor — davet açık.
 >
+> ✅ **DK-24 (yeni, 2026-08-06) — AÇILDI ve AYNI TURDA KAPANDI: göreli (yüzdelik) katman.**
+> **Karar:** mutlak eşik iddiası yerine **sıralama** iddiası — yalnız demo için değil
+> **genel yaklaşım** olarak (kullanıcı kararı, 2026-08-06).
+>
+> **Gerekçe ölçüldü** (Dicle Ü. 29-07 uçuşu, 3.000.000 piksel): bant kazancı değiştiğinde
+> mutlak sayılar oynuyor ama sıralama **hiç** bozulmuyor —
+> ```
+> kazanç NIR/R   mean_ndvi   "zayıf" %      Spearman sıra korelasyonu
+> 1.00 / 1.00      0.264       85.0                1.000000
+> 1.35 / 1.00      0.394       61.8                1.000000   <- eksik düzeltme ~BU
+> 1.00 / 1.35      0.124       91.7                1.000000
+> 0.60 / 1.90     -0.280       99.2                1.000000
+> ```
+> Matematiksel sebebi var: NDVI, NIR/R oranının **monoton** fonksiyonudur; bant kazancı o
+> oranı yalnız ölçekler. Yani *"tarlanın hangi bölgesi daha kötü"* **ham DN'de bile TAM
+> doğrudur** — ÖN RAPOR kararının (KG-0.b-R / Y-D) istediği tam olarak budur.
+>
+> | Katman | Ne yapıldı |
+> |---|---|
+> | worker | `compute_relative_distribution()` — %5/20/50/80/95 kesim noktaları. **Kalibrasyon kapısına TABİ DEĞİL** (bilinçli); istatistik kapısı (min geçerli piksel) korunur |
+> | worker | `_compute_field_metrics` yeniden kuruldu: eskiden `dagilim is None` **metrics'in TAMAMINI** düşürüyordu → kalibre olmayan işte geçerli ölçüm de kayboluyordu. Artık mutlak kısım fail-closed kalır, göreli kısım yayınlanır |
+> | worker | Yük **daima** iki bayrak taşır: `ordering_calibration_invariant: true` · `values_calibration_dependent: true` (KR-025: worker yorumlamaz, geçerlilik bağlamını bildirir) |
+> | platform | `_percentile_rescale()` — renk ölçeği artık **COG'un kendi %2–%98 dilimlerinden**; `_INDEX_RESCALE` yalnız geri düşüş. Veri seti başına bir kez hesaplanıp önbelleğe alınır |
+>
+> 🔴 **Neden sabit tablo yanlıştı:** `_INDEX_RESCALE` değerleri **tek bir uçuşun** (Dicle Ü.)
+> %5–%95 dilimlerinden elle alınmış ve global sabit gibi yazılmıştı. Başka tarlada harita
+> soluklaşır/doyar; kalibre olmayan girdide ise sabit aralık **mutlak bir iddiadır**.
+>
+> **Sözleşme değişmedi** — `Metrics.custom_metrics` zaten `additionalProperties: true`
+> ("Analysis-specific custom metrics"). Sürüm yükseltmesi / yeniden pinleme **gerekmedi**.
+> Testler: worker 14 + platform 11 = **25 test**, **13 mutasyon** (biri ilk turda hayatta
+> kaldı → test ayrıştırıcı hâle getirildi). Platform coverage %83.54, mypy 461 dosya temiz.
+>
+> 📄 **İndeks sayısı ve radyometri araştırması** (2026-08-06, kaynaklı):
+> `docs/M3M_INDEKS_VE_RADYOMETRI_ARASTIRMASI.md` — 4 bantla **58 vejetasyon indeksi**
+> (hesaplandı, alıntılanmadı) · M3M kırmızı kenarı **RE2 (730nm)**, literatürdeki NDRE ise
+> **RE1 (705nm)** için tanımlı → Terra'nın NDRE'si bir **ikame** · DJI'ın kendi kılavuzu
+> **panelsiz** yolu tarif ediyor · üçüncü motor **ODM** ($0, `camera+sun`).
+>
 > 🟠 **DK-23 (yeni, 2026-08-05).** `_overall_health_from_body` değeri **`round(raw, 2)`**
 > ile 2 ondalığa indiriyor; `analysis_results.overall_health_index` kolonu gerçekte
 > **`numeric(4,3)`** (ölçüldü: `information_schema`), ORM'de ise `Numeric(3, 2)` yazıyor.
