@@ -328,6 +328,18 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > için eğitim veri seti yok (`crop_readiness: pistachio → limited`) — model koşsa bile tespit
 > güvenilirliği demo için yeterli olmayabilir. NDVI **ölçümü** veri setinden bağımsızdır.
 >
+> 🆕 **DK-17 (yeni, 2026-08-05 öz-denetim):** `WorkerConfig.s3_endpoint` **ölü alan** —
+> tanımlı ama koda hiç bağlanmamış (`grep -rn s3_endpoint src/` yalnız `config.py`'yi
+> buluyor). Worker çıplak `boto3.client("s3")` çağırıyor, yani endpoint/kimlik `AWS_*`
+> ortam zincirinden gelir. Alan ya kaldırılmalı ya da client kurulumuna bağlanmalı;
+> şimdiki hâli "yapılandırılabilir" yanılsaması üretiyor (compose'a yanlış env
+> yazdırdı — bkz. worker PR #198).
+>
+> 🆕 **DK-18 (yeni, 2026-08-05 öz-denetim):** Artefakt yüklemesi açılacaksa
+> `Dockerfile.gpu`'ya `[s3]` extras **hash-kilitli** eklenmeli. Bugün `boto3` imajda
+> HİÇ yok (hiçbir lock'ta değil) → `enable_result_artifact_upload=true` yapmak açık
+> `RuntimeError` verir. Bilinçli tasarım (ince çekirdek imaj); açmak ayrı bir karar.
+>
 > 🆕 **DK-16 (yeni, 2026-08-05):** `metrics` zinciri **uçtan uca canlı mesajla** doğrulanmadı.
 > Her halka ayrı ayrı mutasyonla test edildi (worker üretim · to_dict serileştirme · platform
 > üç kademeli türetme) ama tek bir gerçek iş mesajıyla baştan sona akış görülmedi.
