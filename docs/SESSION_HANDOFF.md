@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-05 (demo görüntüleme hattı + dört-disiplinli denetim)
+**Son güncelleme:** 2026-08-05 (ikinci oturum — bağlam altyapısı + KR-034 doküman hizası)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,103 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-05, **demo görüntüleme hattı + dört-disiplinli denetim**) — ✅ **KAPANDI, MERGE EDİLDİ**
+## 0.A EN GÜNCEL — (2026-08-05, **ikinci oturum: bağlam altyapısı + KR-034 doküman hizası**) — ✅ **KAPANDI**
+
+> ℹ️ **Aynı günün BİRİNCİ oturumu (demo görüntüleme hattı + dört-disiplinli denetim) hemen
+> aşağıda §0.A-a'dadır ve geçerliliğini KORUR.** Bu oturum onunla paralel/ardışık koştu,
+> farklı alana dokundu (edge + oturum altyapısı); iki bölüm birbirini geçersiz kılmaz.
+>
+> ### 🔚 OTURUM KAPANIŞI
+>
+> Bu oturumun ağırlığı **kod değil bağlam**tı: her oturumda projeyi sıfırdan öğrenme maliyeti
+> kökten kaldırıldı. Depoya inen tek işlevsel değişiklik **edge PR #58**.
+>
+> | Depo | Dal | Durum |
+> |---|---|---|
+> | edge | `main` @ `adf10d0` | ✅ PR **#58** merged + pull edildi · temiz |
+> | contract | `master` | bu devir notu · temiz |
+> | worker | `docs/i5-devir-spec-uzlasma-2026-08-03` | **dokunulmadı** · temiz · upstream ile senkron |
+> | platform | `main` @ `f761c317` | **dokunulmadı** (birinci oturumun alanı) |
+>
+> ### ✅ edge PR #58 — KR-034 motor-agnostik doküman hizası
+>
+> `tarlaanaliz-edge/CLAUDE.md`'de **altı yer** 2026-08-02 turundan sonra eski dünyada kalmıştı;
+> ölçülüp düzeltildi (yalnız doküman, +51/−7): §20 KR-034 satırı *"Pix4Dfields drone-agnostik
+> (yedek yazilim yok)"* → *"Kalibrasyon motoru AGNOSTIK: Pix4Dfields **veya** DJI Terra"* +
+> tablo hücresine sığmayan iki hard kural notu (CLI yok → operatör GUI'den, edge çıktı dizinini
+> okur · `calibration_type` iki girdili → ham DN = `NONE`) · §2 s.26/s.39 · §10 · §11 ·
+> §12 (M3M'in göreliliği **motordan bağımsız bir fizik kısıtı**, Pix4Dfields'e özgü değil).
+>
+> §5'teki 5 `CALIBRATION.PIX4D_*` olayı **bilerek silinmedi** — kodda gerçekten var
+> (`custody_logger.py:104-108`) ve `pix4d_runner.py` yayınlıyor; silmek dokümanı ters yönde
+> yalancı yapardı. Blok `[ESKI YOL]` diye işaretlenip `dosya:satır` dayanaklı durum notu eklendi.
+>
+> ### 🔴 KOD TARAFINDA ÜÇ ÇELİŞKİ — ölçüldü, DOKUNULMADI
+>
+> Üçü de KR-034'ün kanonik metniyle çelişiyor; düzeltmeleri **P-2'ye bağlı** (gerçek motor
+> export klasörü görülmeden yazmak, `pix4d_runner.py`'nin düştüğü hatanın tekrarı olur):
+> 1. `pix4d_runner.py` var olmayan bir CLI'a subprocess açıyor **ve canlı bağlı**
+>    (`pipeline_factory.py:68` → `calibration_pipeline.py:44,72,86`). `cli_path` yoksa
+>    `__init__` `FileNotFoundError` atar (`pix4d_runner.py:113-114`) ⇒ üretimde boru hattı
+>    **hiç kurulamaz**; testler `run_fn` dikişini enjekte ettiği için süit yeşil koşuyor.
+> 2. `engine_adapter.py` **hiç WORM olayı yazmıyor** (`structured_log` çağrısı yok).
+> 3. `resolve_calibration_type()` `src/` içinden **hiç çağrılmıyor** (yalnız testlerden) —
+>    yeni yol yazılmış ama bağlı değil.
+>
+> ⇒ İş kalemi olacaklarsa **eylem planına** yazılmalı; bu dosya iş listesi tutmaz.
+>
+> ### ⛔ ÇÜRÜTÜLEN İDDİA — "push otomatik PR açar" YANLIŞ
+>
+> Dört depoda da push'ta PR açan **hiçbir mekanizma yok** (ölçüldü). Tek
+> `peter-evans/create-pull-request` contract `auto_sync.yml`'de ve o dosya kendi başlığında
+> *"UNCONFIGURED stub … MUST NOT auto-run on push"* diyor; tetiği yalnız `workflow_dispatch`.
+> `git log --all -S "create-pull-request" -- .github/` platform'da **hiç** eşleşmiyor.
+> PR sahipleri: platform 12/12 · contract 10/10 · worker 9/10 hepsi `physiscs-zana`
+> (tek istisna `app/dependabot`). Mükerrer PR gözlemi doğruydu, **sebebi farklı**: iki kez
+> `gh pr create` (#267 19:48:12 → #268 19:49:27, 75 sn arayla).
+> ⇒ Otomatik PR'ı **bekleme**; `gh pr create` öncesi `gh pr list --head <dal>` ile ölç.
+>
+> ### ✅ Alt-modül stat-cache notu BAĞIMSIZ OLARAK DOĞRULANDI
+>
+> §0.A-a'daki uyarı doğru. Bu oturumda tekrar ölçüldü: `git -C tarlaanaliz-platform/contracts
+> status --short` → **96 dosya** `M` gösteriyor, ama `diff --numstat` **boş** ve `diff --quiet`
+> **exit 0** ⇒ **içerik farkı YOK**. (`update-index --refresh` göstergeyi temizlemiyor.)
+> Bu bir senkron kırıklığı değildir; `status` çıktısına bakıp alarm verme.
+>
+> ### 🧹 edge dal temizliği + bir ders
+>
+> `main`'e birleşmiş **23 eski dal** yerelden silindi (güvenli `-d`); bu haftanın 4'ü bırakıldı.
+> Hepsi `origin`'de duruyor (uzakta 36 dal, dokunulmadı) — geri alınabilir.
+> `ci/geotiff-osgeo-coverage` bilerek bırakıldı ve şu ders çıktı: **`git branch --merged`
+> TOPOLOJİYE bakar, İÇERİĞE değil.** O dalın tek farkı (`46e707b`, GDAL `setuptools/wheel`)
+> main'de **zaten var** (`edge_ci.yml:84-90`, yorumlarına kadar aynı); PR #31 merge'inden
+> **2 dk sonra** push edildiği için topolojik olarak yetim kalmış (merge-sync-lag).
+> ⇒ "Birleşmemiş" görünen dalı silmeden önce `git diff main...<dal>` ile gerçek farkı oku.
+>
+> ### 💻 MAKİNE-YEREL ALTYAPI — **git ile TAŞINMAZ**, yeni makinede tekrar kurulur
+>
+> Kapsayıcı klasör git deposu olmadığı için şunlar bu makineye özeldir:
+> `TARLA-ANALİZ/CLAUDE.md` (114 satır: 4-depo haritası · çapraz-repo değişmezleri · çalışma
+> kuralları · giriş noktaları) · 5 × `.claude/settings.json` (`autoMemoryDirectory` → tek hafıza
+> havuzu · `git_token.txt` için `permissions.deny` · `SessionStart` kancası) ·
+> `~/.claude/hooks/tarlaanaliz-oturum-basi.ps1` · `~/.claude/memory/tarlaanaliz/` (42 konu dosyası).
+> **Kurulum adımları kök `CLAUDE.md` §7'de.**
+>
+> Neden gerekliydi: hafıza **5 ayrı kovaya** bölünmüştü (kök 11 · platform 15 · worker 6 ·
+> edge 6 · contract 2) ve hangi klasörden başlatıldığına göre yalnız biri görünüyordu; aynı olgu
+> (sade-dil kuralı, 2026 yaz pilotu) birden çok kovada yeniden öğrenilmişti. Tek havuzda
+> birleştirildi, eski kovalar yedek olarak duruyor.
+>
+> ### 📌 GİRİŞ NOKTASI — DEĞİŞMEDİ
+>
+> Donanım/ölçüm hattı: aşağıdaki 2026-08-02 bölümü (**P-2 · P-6**) aynen geçerli.
+> Yazılım kuyruğu: eylem planı **§3.6**. TUR 3 hâlâ `PENDING_REPIN`;
+> `describe --tags HEAD` → `v7.4.0-13-g3a1da5e` (**beklenen** — sürüm henüz yayımlanmadı,
+> I-2 arızası değil).
+
+---
+
+## 0.A-a ÖNCEKİ TUR (aynı gün, birinci oturum) — (2026-08-05, **demo görüntüleme hattı + dört-disiplinli denetim**) — ✅ **KAPANDI, MERGE EDİLDİ**
 
 > ### 🔚 OTURUM KAPANIŞI — yalnız `tarlaanaliz-platform` değişti, CI 18/18 yeşil
 >
