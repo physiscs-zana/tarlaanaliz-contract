@@ -78,7 +78,7 @@
 > |---|---|---|
 > | **DK-19** | Worker eskalasyon gövdesi `audit_bucket`/`audit_rotation_key`/`audit_selection_rate` alanlarını **açık `null`** yazıyordu; şema opsiyonel ama `null` kabul etmiyor → **kendi vendored şemasını ihlal eden** mesaj. Fixture'lar alanları dolu verdiği için görülmüyordu (**DK-13 boşluğu**) | ✅ kapatıldı — düşürülecek alan **şemadan türetiliyor** |
 > | **DK-20** | **Platform üretim imajında `jsonschema` YOK** → KR-081 kapısı worker'dan gelen her mesaj için **fail-open**. Platform kendi logunda söylüyor: `SCHEMA_VALIDATE_BROKEN ... KR-081 kapısı bu mesaj için ETKİSİZ`. `pyproject.toml` onu **`dev`** grubunda beyan ediyor; `requirements.lock`'ta yok. **DK-18'in platform ikizi** | ✅ kapatıldı — ana bağımlılığa taşındı, lock yenilendi, imaj kuruldu; **pozitif kontrolle** doğrulandı (kasten bozuk mesaj `SCHEMA_INVALID` + DLX, DB'ye değmedi) |
-> | **DK-21** | Terra çıktısı **ham DN** (`radiometricCorrectionSet=False`) → ÖN RAPOR üretilemez | 🔴 **AÇIK — kullanıcı Terra'yı düzeltme AÇIK yeniden koşmalı** |
+> | **DK-21** | Terra çıktısı **ham DN** → ÖN RAPOR üretilemez. ⛔ 2026-08-06: *"Terra'yı düzeltme açık yeniden koş, panel şart değil"* önerisi **ÇÜRÜTÜLDÜ** — Terra'nın Radiometric Correction ekranı (ekran görüntüsüyle ölçüldü) yalnız **kalibrasyon paneli** içindir, panel fotoğrafı sonradan eklenemez. Güneş sensörü verisi ham karelerin XMP'sinde **var** (`Irradiance` G 16078 / NIR 9742) ama Terra onu ayrı bir ekrandan sunmuyor | 🔴 **AÇIK — karar gerekiyor:** yeni uçuş+panel · **Pix4Dfields (panelsiz RELATIVE, SSOT:79)** · ya da Terra'da güneş-sensörü anahtarı aranması |
 >
 > ### 🔍 DEMO SAYILARININ DENETİMİ — hepsi yeniden üretildi
 >
@@ -119,9 +119,10 @@
 >
 > ### 📌 GİRİŞ NOKTASI
 > Yazılım kuyruğu → eylem planı **§3.6 (`DK-1…DK-23`)**.
-> **SIRADAKİ TEK BLOKÖR: DK-21** — Terra'yı radyometrik düzeltme AÇIK yeniden koş
-> (adım adım tarif: [`docs/TERRA_RADYOMETRIK_YENIDEN_KOSUM.md`](TERRA_RADYOMETRIK_YENIDEN_KOSUM.md)).
-> Sonrasında aynı akış `RELATIVE` ile koşar ve ÖN RAPOR makineden çıkar.
+> **SIRADAKİ TEK BLOKÖR: DK-21 — ve artık bir KARAR kalemi, tıklama kalemi değil.**
+> Terra panelsiz uçuşu kurtaramıyor; Pix4Dfields (SSOT:79) kurtarabiliyor. Üç seçenek,
+> ölçümler ve karar akışı: [`docs/TERRA_RADYOMETRIK_YENIDEN_KOSUM.md`](TERRA_RADYOMETRIK_YENIDEN_KOSUM.md).
+> Kalibre veri geldiği anda aynı akış `RELATIVE` ile koşar ve ÖN RAPOR makineden çıkar.
 
 ---
 
