@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-05 (ikinci oturum — bağlam altyapısı + KR-034 doküman hizası)
+**Son güncelleme:** 2026-08-05 (üçüncü oturum — worker GPU ayağa kalktı + ölçüm zinciri)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,117 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-05, **ikinci oturum: bağlam altyapısı + KR-034 doküman hizası**) — ✅ **KAPANDI**
+## 0.A EN GÜNCEL — (2026-08-05, **üçüncü oturum: worker GPU + ölçüm zinciri**) — ✅ **KAPANDI, MERGE EDİLDİ**
+
+> ℹ️ Aynı günün **birinci** turu §0.A-a'da, **ikinci** turu §0.A-b'de; ikisi de geçerliliğini
+> KORUR. Bu tur onlarla paralel/ardışık koştu ve farklı alana dokundu (worker + ölçüm).
+>
+> ### 🔚 OTURUM KAPANIŞI — üç depo merge edildi, 0 açık PR
+>
+> | Depo | Dal | Tepe commit | PR'lar |
+> |---|---|---|---|
+> | **worker** | `master` | `e4aef14` | **#197** |
+> | **platform** | `main` | `7e8efe65` | #382 · #383 · #384 · #385 · #386 · **#387** |
+> | **contract** | `master` | (bu commit) | #30 · #32 · #33 · #34 · #36 |
+>
+> ### 🟢 WORKER İLK KEZ AYAKTA — GPU ÇALIŞIYOR
+>
+> Worker'ın Docker imajı ve konteyneri **yoktu** (ölçüldü: `docker images | grep worker` boş).
+> Artık `tarlaanaliz-worker:gpu` (13.7 GB) var ve konteyner **healthy**:
+>
+> ```
+> GPU        : cuda.is_available()=True · RTX 3090 Ti 25.8 GB · torch 2.12.0+cu130
+>              (gerçek tensör çarpımı koşturuldu — "kurulu" değil ÇALIŞIYOR)
+> KR-041     : "runtime gate OK: contracts hash matches (v7.4.0)"
+> RabbitMQ   : virtual_host=/tarlaanaliz · "Started consuming"
+>              kuyruklar: analysis_jobs · ai.feedback.v1
+> broker     : rabbitmqctl list_queues consumers -> her ikisinde de 1
+> /healthz   : {"status":"ok", critical_rabbitmq_consumer: true, faiss_ready: true}
+> ```
+>
+> Worker **kendi** `docker-compose.yml`'ini aldı; platformun ağına `external: true` ile
+> dışarıdan bağlanır (iki depoyu birbirine bağlamamak + GPU'suz makinede
+> `docker compose up`'ı kırmamak için). Platform ayakta değilse **açık hata** verir.
+>
+> 🔴 **İKİ GERÇEK KUSUR ÇIKTI — ikisi de düzeltildi:**
+>
+> 1. **İmaj hiç build edilememişti.** `--require-hashes` modunda torch 2.12'nin
+>    `setuptools<82` bağımlılığı lock'ta yoktu → build FAIL. Runbook
+>    (`docs/ops/gpu_supply_chain_hash_lock.md`) bunu dürüstçe yazmış: *"tam imaj build'i
+>    bir sonraki gerçek deploy'da teyit edilebilir"*. Teyit yapıldı, kırık çıktı.
+>    `setuptools==81.0.0` hash'leriyle eklendi (65→66 paket, **0 silme**).
+> 2. **Vhost URL-encode edilmemişti.** Broker'daki gerçek ad `/tarlaanaliz` — baştaki
+>    slash **adın parçası**. Ölçüldü: `.../tarlaanaliz` → yanlış ad · `...//tarlaanaliz`
+>    → boş (`NOT_ALLOWED - vhost  not found`) · `.../%2Ftarlaanaliz` → **doğru**.
+>
+> ### 📊 ÖLÇÜM ZİNCİRİ — "canlılık puanı" artık gerçek kaynaktan
+>
+> **Bulunan kusur (ölçüldü):** platform `overall_health_index`'i **tespitlerin**
+> `ndvi_value` ortalamasından türetiyordu; tespit yoksa `confidence_score` yedeğine
+> düşüyordu — **o bir sağlık ölçüsü değil, modelin kendine güvenidir**. ÖN RAPOR'da
+> tespitler KR-019 kapısıyla gizli olduğu için çiftçiye gösterilen puan **hep** o yanlış
+> vekildi. Demo verisindeki `0.264` **elle** hesaplanıp DB'ye yazılmıştı; kod üretemiyordu.
+> Bu fonksiyonun **hiç testi yoktu**.
+>
+> | Katman | Ne yapıldı |
+> |---|---|
+> | worker | `health_distribution.py` — tarla geneli NDVI dağılımı + ortalama (yeni) |
+> | worker | `ReportingAgent._compute_field_metrics` → `ReportResponse.metrics` |
+> | worker | orchestration taşır → `AnalysisResult.to_dict()` → mesajda `metrics` |
+> | contract (vendored) | `analysis_result.v1` → `metrics` + `$defs.Metrics` |
+> | platform | `_overall_health_from_body` **üç kademeli**: tarla geneli → tespit ort. → confidence |
+>
+> **Vendored şema sapma DEĞİL, hizalanma:** `metrics` kanonikte v7.4.0'da zaten vardı;
+> worker'ın dar alt kümesi (I-4) taşımıyordu. Script'le kopyalandı, elle yazılmadı.
+> KR-041 hash `bb66e1bc → d5526486`; **sürüm dizesi SABİT** (I-1). AK-4 devir spesi
+> gerekmez — worker kanoniğe yaklaştı, uzaklaşmadı.
+>
+> ⚠️ **Tek uyarlama (3 yer):** kanonik `unevaluatedProperties` → worker
+> `additionalProperties`. Worker'ın **kayıtsız** `Draft202012Validator`'ı ilkini çözemez;
+> birebir kopya bilinmeyen-alan mührünü **gevşetir**. Bunu ben fark etmedim —
+> `tests/contract/test_worker_runtime_profile_lock.py` kırmızı verip zorladı.
+>
+> ### 🖼️ DEMO EKRANI — "Gerçek Görünüm" + ölçüm sınırları
+>
+> - **RGB ortofoto taban katman** olarak eklendi (`/tiles/{id}/basemap/...` — ayrı uç,
+>   `analysis_type` enum'una **dokunulmadı**; RGB analiz değil fotoğraftır). Açma/kapama
+>   düğmesi katman listesinin **dışında**. Açılınca analiz katmanları geçici gizlenir —
+>   yoksa yarı saydam raster'lar fotoğrafın **%75'ini** kapatıyordu (kullanıcı bildirdi,
+>   opaklık matematiğiyle doğrulandı).
+> - **Mapbox CSS** CDN yerine paketten. İlk deneme (#382) **canlıda işe yaramadı**:
+>   `next.config.mjs`'teki geniş `sideEffects:false` regex'i CSS import'unu tree-shaking
+>   ile atıyordu — build çıktısı **bit bit aynı** kalmıştı. #383 kök nedeni düzeltti
+>   (ölçüm: mapbox CSS kuralı 0 → 107).
+> - Metin sadeleştirildi (140→65 kelime, punto 16px), *"ekinle otu ayırmaz"* maddesi
+>   **kaldırıldı** (kullanıcı kararı: `WEED` katmanı yol haritasında var, o cümle gelecek
+>   yetenekle çelişiyordu). Saha gözleminin bilgisi korundu — "kurumuş ot" sebep listesinde.
+>
+> ### 🔴 SONRAKİ OTURUM BUNU BİLMELİ
+>
+> 1. **Worker çalışıyor ama ÇIKARIM DENENMEDİ.** Kuyruğu tüketiyor; gerçek bir
+>    `analysis_job` mesajıyla uçtan uca akış **koşturulmadı**. Ayrıca **antep fıstığı için
+>    eğitim veri seti yok** (`crop_readiness: pistachio data_status: limited`) — model
+>    koşsa bile tespit güvenilirliği demo için yeterli olmayabilir. NDVI **ölçümü** ise
+>    veri setinden bağımsız, o çalışır.
+> 2. **`metrics` ucu ucuna bağlandı ama canlı mesajla doğrulanmadı** — worker gerçek iş
+>    işleyip `metrics` gönderdiğinde platform kademe 1'i kullanacak. Zincirin her halkası
+>    ayrı ayrı test edildi (mutasyonla), uçtan uca akış değil.
+> 3. **Demoda "YZ" vaadi TAM RAPOR'a aittir.** ÖN RAPOR'da gösterilen şey ölçümdür
+>    (kamera + matematik); ona "YZ analizi" demek ilk teknik soruda güven kaybettirir.
+>    Ekranda YZ iddiası **yok** (ölçüldü) — bu doğru, korunmalı.
+> 4. **Ölçüm-aracı tuzağı — bu turda DÖRT kez yaşandı:** `komut | tail` kalıbında `$?`
+>    **pipe'ın son komutunu** ölçer. Bir kez "tsc=0" yazarken tsc **exit 1**'di; bir kez
+>    arka plan görevi "exit code 0" derken docker build **başarısızdı**. Çıktıyı dosyaya
+>    al, exit kodunu **ayrı** oku.
+>
+> ### 📌 GİRİŞ NOKTASI
+> Donanım/ölçüm hattı → 2026-08-02 bölümü (P-2 · P-6, hâlâ geçerli).
+> Yazılım kuyruğu → eylem planı **§3.6 (`DK-1…DK-14`)**.
+> Saha kontrol listesi → `docs/DEMO_GUNU_YAPILACAKLAR.txt` (EK-B canlı ölçümler).
+
+---
+
+## 0.A-b ÖNCEKİ TUR (aynı gün, ikinci oturum) — (2026-08-05, **bağlam altyapısı + KR-034 doküman hizası**) — ✅ **KAPANDI**
 
 > ℹ️ **Aynı günün BİRİNCİ oturumu (demo görüntüleme hattı + dört-disiplinli denetim) hemen
 > aşağıda §0.A-a'dadır ve geçerliliğini KORUR.** Bu oturum onunla paralel/ardışık koştu,
