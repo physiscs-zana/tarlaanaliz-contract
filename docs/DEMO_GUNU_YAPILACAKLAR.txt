@@ -153,6 +153,10 @@ GOSTER:
     SUNUM SIRASI ONERISI:
       1. Once canlilik haritasini goster ve anlat (asil urun bu)
       2. Sonra "Gercek Gorunum"u AC -> "iste ayni tarlanin o gunku fotografi"
+         NOT: acinca renk katmanlari OTOMATIK kapanir (PR #385). Yoksa yari
+         saydam katmanlar fotografin ustunu %75 boyuyordu — ilk denemede tam
+         bu yasandi. Kutuda "gecici olarak kapatildi" notu cikar; kapatinca
+         katmanlar geri gelir, kutucuk secimi BOZULMAZ.
       3. Kirmizi/sari bolgeyi fotografta goster -> ciftci yerini TANIR
     NE DEMEYIN: "bu da bir analiz" — degil, fotograftir. Kutuda zaten
     "Analiz degildir; tarlanizi tanimaniz icindir" yaziyor.
@@ -162,6 +166,12 @@ SOYLE:
   - "Bu bir ON RAPOR - uzman incelemesi sonrasi kesinlesir"
   - "Haritada renk farki = bitki canliligindaki fark"
   - "Yesil daha canli, sari-kirmizi daha zayif"
+  - !!! "Harita EKINLE OTU AYIRT ETMEZ" !!!  (05.08.2026 saha gozleminden)
+    Olcum canli YESIL DOKUYU olcer. Yesil gorunen alan yabanci ot da olabilir;
+    kirmizi gorunen alan kurumus ot ya da ciplak toprak da. Kullanici ucus
+    yerinde bulundu: sari/kirmizi cikan yerlerde KURUMUS OT vardi.
+    Bunu SOYLEMEZSENIZ ciftci "ekinim zayif" diye anlar. Sayfa artik bunu
+    kendisi de yaziyor ("Harita bitki turunu ayirt etmez" maddesi, PR #385).
   - "Zayif gorunen alanin sebebi sulama, toprak, hastalik ya da anız olabilir;
      sebebi yerinde kontrol gerektirir"
 
