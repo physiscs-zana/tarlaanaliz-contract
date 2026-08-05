@@ -29,7 +29,7 @@
 >
 > | Depo | Dal | Tepe commit | PR'lar |
 > |---|---|---|---|
-> | **worker** | `master` | `e4aef14` | **#197** |
+> | **worker** | `master` | `91df0c5` | **#197** · **#198** (öz-denetim düzeltmeleri) |
 > | **platform** | `main` | `7e8efe65` | #382 · #383 · #384 · #385 · #386 · **#387** |
 > | **contract** | `master` | (bu commit) | #30 · #32 · #33 · #34 · #36 |
 >
@@ -123,9 +123,35 @@
 >    arka plan görevi "exit code 0" derken docker build **başarısızdı**. Çıktıyı dosyaya
 >    al, exit kodunu **ayrı** oku.
 >
+> ### 🔬 OTURUM SONU ÖZ-DENETİM — DÖRT KUSUR BULDU (worker PR #198)
+>
+> Kullanıcı talebiyle kapanıştan önce **katı, ispatlı öz-denetim** koşuldu. Dördü de
+> **"doğrulandı" diye raporlanmış** yerlerdeydi; öz-denetim olmasaydı sessizce kalırdı.
+> Bu artık **kalıcı kural** (`~/.claude/memory/tarlaanaliz/oturum-sonu-oz-denetim.md`).
+>
+> | # | Rapor ne diyordu | Ölçüm ne gösterdi | Düzeltme |
+> |---|---|---|---|
+> | 1 | "S3/MinIO yapılandırıldı" | `s3_endpoint = None` — `TARLAANALIZ_S3_ENDPOINT_URL` **hiç okunmadı** (doğrusu `..._S3_ENDPOINT`); `s3_access_key_id` diye alan **YOK** — worker çıplak `boto3.client("s3")` çağırıyor | `AWS_*` env'lerine geçildi, canlıda doğrulandı |
+> | 2 | "eşikler config'te, hardcode değil" | İzinli kalibrasyon kümesi `enums.py::FINETUNE_ALLOWED_CALIBRATIONS`'ın **elle yazılmış ikinci kopyası**; o dosya "SINGLE SOURCE OF TRUTH" diyor | Config artık yalnız **politika** seçer; küme kanonik enum'dan **türetilir** |
+> | 3 | "fail-closed: kalibrasyon uygunsa üretir" | DJI M3M varsayılanı `RELATIVE` (`enums.py:64` *"DJI default"*) → kapı reddediyordu → **sahadaki her uçuşta** dağılım hiç üretilmezdi | Politika `SSL` (RELATIVE dahil); `NONE` reddi kalır |
+> | 4 | (izi sürerken çıktı) | **`boto3` imajda HİÇ YOK** — hiçbir lock'ta değil, `[s3]` extras'ında ve `Dockerfile.gpu` onu kurmuyor | Bilinçli tasarım; upload bayrağı sabit `"false"`, gerekçe yorumda |
+>
+> **Bulgu 3'ün bedeli sessiz bırakılmadı.** RELATIVE'de sınıf sınırları **yaklaşıktır**;
+> çıktı artık `custom_metrics.absolute_scale_valid` (RELATIVE'de `false`) +
+> `calibration_type` taşıyor. Tüketici "yaklaşık" etiketi basabilir. KR-025: worker
+> yorumlamaz, ölçümün **geçerlilik bağlamını** bildirir. Bayrak `mean_ndvi` None olsa
+> bile **daima** yazılır — yoksa yüzdeler mutlak sanılırdı.
+>
+> **K-3 korundu:** RELATIVE hâlâ fine-tuning'e **girmez**; bu yalnız ölçüm/gösterim
+> yolu (worker CLAUDE.md §15 *"RELATIVE → sadece SSL morfoloji"* — politika adı da o yüzden `SSL`).
+>
+> Kilit: `RELATIVE` `SSL`'de kabul / `FINETUNE`'da red — **ayrıştırma testi**, yani
+> `calibration_policy` gerçekten kümeyi değiştiriyor (no-op ayar değil). M7 mutasyonu
+> (SSL'i dar kümeye bağla) 3 testi kırdı; geri alındı, hash birebir aynı.
+>
 > ### 📌 GİRİŞ NOKTASI
 > Donanım/ölçüm hattı → 2026-08-02 bölümü (P-2 · P-6, hâlâ geçerli).
-> Yazılım kuyruğu → eylem planı **§3.6 (`DK-1…DK-14`)**.
+> Yazılım kuyruğu → eylem planı **§3.6 (`DK-1…DK-18`)**.
 > Saha kontrol listesi → `docs/DEMO_GUNU_YAPILACAKLAR.txt` (EK-B canlı ölçümler).
 
 ---
