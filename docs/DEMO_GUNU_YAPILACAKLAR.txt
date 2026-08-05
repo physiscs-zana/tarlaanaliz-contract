@@ -52,6 +52,21 @@ A. DEMO'DAN ONCE (bir gun kala)
         Anahtar sayfa kaynaginda gorunur (istemci tarafi token - normaldir).
         Demo'da gelistirici konsolunu (F12) ACMAYIN.
 
+[ ] A7. !!! HARITA ICIN INTERNET SART - SUNUM ANINDA BAGLANTIYI TEYIT ET !!!
+        Olculdu 05.08.2026 (agi kapali tarayicida): internet yoksa harita
+        TAMAMEN bos kalir. Sadece uydu arka plani degil, BIZIM urettigimiz
+        NDVI/GNDVI katmani da cizilmez - ekranda "Harita yukleniyor..." yazisi
+        takili kalir.
+        SEBEP: taban harita mapbox://styles/mapbox/satellite-streets-v12
+        adresinden gelir; gelmezse Mapbox'in "load" olayi hic tetiklenmez ve
+        raster katmanlar EKLENMEZ. Agda tek bir .png karo istegi bile gitmez.
+        (CSS bagimliligi 05.08.2026'da kaldirildi - artik pakete gomulu -
+         ama TABAN HARITA bagimliligi surer, o Mapbox sunucusundadir.)
+        KONTROL: sunumdan once tarayicida sonuc sayfasini ac; harita cizildi
+        mi bak. Cizilmiyorsa once internete bak, kodu sucLAMA.
+        YEDEK: baglanti yoksa DJI Terra'nin kendi ekrani calisir - ama D
+        bolumundeki RENK TERSLIGI uyarisini unutma.
+
 -------------------------------------------------------------------------------
 B. UCUS ONCESI (sahada)
 -------------------------------------------------------------------------------
@@ -258,6 +273,22 @@ Asagidakiler CANLI sistemde komutla dogrulandi (iddia degil, olcum):
 
 [x] LISTE SAYFASI /results HTTP 200; ham index anahtari (ndvi/ndre) HTML'de YOK
 
-TEK KALAN: gozle dogrulama (Mapbox tarayicida cizecek - komutla olculemez).
+[x] TARAYICIDA GEZINTI (giris -> menu -> kart -> harita) yapildi:
+      liste sayfasi: "Genel Saglik, Azot Stresi"  <- HAM ndvi/ndre DEGIL,
+                     ciftci diline cevrilmis (layerLabel calisiyor)
+      detay sayfasi: "ON RAPOR - Uzman Onayi Bekliyor" bandi
+                     "Tarlanizin Durumu" kutusu: canlilik %26.4 + aciklamalar
+                     SERBEST OZET METNI YOK (KR-019 kapisi - kasitli)
+                     "Rapor Seviyesi: Temel Rapor (4 bant)"
+                     olcek gostergesi "20 m"  <- harita tarlaya odaklanmis
+[x] HARITA INTERNET BAGIMLILIGI OLCULDU -> A7 maddesi eklendi
+    Agi kapali tarayicida harita bos kaldi; agda tek .png karo istegi yok.
+[x] Mapbox CSS'i CDN yerine PAKETTEN geliyor (gereksiz dis istek kaldirildi)
+    Mutasyonla sinandi: CDN <link> geri konunca test KIRMIZI oldu;
+    pozitif kontrol de ayrica sinandi (tile URL bozulunca kirildi).
+
+TEK KALAN: gozle dogrulama - harita GERCEKTEN ciziliyor mu (internetli
+makinede). Zincirin geri kalani olculdu; bu adim Mapbox'in tarayicida
+render etmesine bagli ve komutla olculemez.
 
 ===============================================================================
