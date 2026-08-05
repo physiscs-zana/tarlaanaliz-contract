@@ -315,6 +315,23 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 | **DK-13** ⬜ | **Yeni `CLAUDE.md` test kuralı önerisi (#12):** *"Faz/rol kapılı bir DTO'ya yeni alan eklerken fixture değeri, alanın GERÇEK üreticisinin çıktı biçimini taşır; nötr yer tutucu kullanılmaz ve kapının her dalında o alana ayrı bir iddia yazılır."* Gerekçe: 2026-08-05'te `summary` sızıntısı **tam da bu boşluktan** geçti | platform `CLAUDE.md` | demo sonrası |
 | **DK-14** 🟠 | **Migration birim testi.** Son iki migration'ın **ikisi de** kendi testiyle gelmişti; bu üçüncüsü gelmedi. Emsal: `tests/unit/test_payment_intent_target_unique_migration.py`. (CI zaten upgrade→downgrade→upgrade zincirini koşuyor) | platform `tests/unit/` | demo sonrası |
 
+> 🟢 **DK-1 BAĞLAMI DEĞİŞTİ (2026-08-05 akşamı, üçüncü tur):** worker artık **ayakta ve GPU
+> çalışıyor** (`tarlaanaliz-worker:gpu`, RTX 3090 Ti, `analysis_jobs` kuyruğunu tüketiyor).
+> Yani DK-1'in "worker devre dışı, demoyu iyileştirmiyor" gerekçesi **artık geçerli değil**;
+> kalemi bloke eden şey yalnızca ekim-sonrası önceliklendirme kararıdır. Aynı turda worker'a
+> **tarla geneli NDVI ölçümü** eklendi (`health_distribution.py` → `metrics.health_distribution`
+> + `custom_metrics.mean_ndvi`) ve platform `overall_health_index`'i o kaynaktan türetiyor
+> (worker PR #197 · platform PR #387). GNDVI **raster üretimi** hâlâ eksik — DK-1 duruyor.
+>
+> 🆕 **DK-15 (yeni, 2026-08-05):** worker uçtan uca **çıkarım denenmedi**. Konteyner kuyruğu
+> tüketiyor ama gerçek bir `analysis_job` mesajıyla akış koşturulmadı. Ayrıca antep fıstığı
+> için eğitim veri seti yok (`crop_readiness: pistachio → limited`) — model koşsa bile tespit
+> güvenilirliği demo için yeterli olmayabilir. NDVI **ölçümü** veri setinden bağımsızdır.
+>
+> 🆕 **DK-16 (yeni, 2026-08-05):** `metrics` zinciri **uçtan uca canlı mesajla** doğrulanmadı.
+> Her halka ayrı ayrı mutasyonla test edildi (worker üretim · to_dict serileştirme · platform
+> üç kademeli türetme) ama tek bir gerçek iş mesajıyla baştan sona akış görülmedi.
+>
 > 🔴 **DK-1 için QA kararı (2026-08-05):** tercih sırası davranış testi **şimdi yazılmadı** —
 > üretimde koşmayan bir dala test yazmak **sahte güven** üretir. Test, worker hizalamasıyla
 > **birlikte** gelir.
