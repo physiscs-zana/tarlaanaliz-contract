@@ -328,17 +328,116 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > için eğitim veri seti yok (`crop_readiness: pistachio → limited`) — model koşsa bile tespit
 > güvenilirliği demo için yeterli olmayabilir. NDVI **ölçümü** veri setinden bağımsızdır.
 >
-> 🆕 **DK-17 (yeni, 2026-08-05 öz-denetim):** `WorkerConfig.s3_endpoint` **ölü alan** —
-> tanımlı ama koda hiç bağlanmamış (`grep -rn s3_endpoint src/` yalnız `config.py`'yi
-> buluyor). Worker çıplak `boto3.client("s3")` çağırıyor, yani endpoint/kimlik `AWS_*`
-> ortam zincirinden gelir. Alan ya kaldırılmalı ya da client kurulumuna bağlanmalı;
-> şimdiki hâli "yapılandırılabilir" yanılsaması üretiyor (compose'a yanlış env
-> yazdırdı — bkz. worker PR #198).
+> > 🟡 **DK-15 YARI KAPANDI (2026-08-05 akşamı).** Worker **ilk kez gerçek bir iş mesajı
+> > işledi** (`job_id=568d8786-c4e7-4c88-97a8-44f26f8af8db`): gerçek DJI/Terra ortomozaiğinden
+> > yığılmış 4-bantlı COG (G/R/RE/NIR, 8558×7638, 618 MB) MinIO'ya yüklendi ve iş kuyruğa
+> > basıldı. Ölçülen zincir: mesaj tüketildi → şema doğrulandı → **KR-018 kapısı çalıştı**
+> > (`"KR-018: Calibration NONE — job rejected"`) → `analysis_results`'a **REJECTED** gövdesi
+> > yayınlandı → `expert_review_queue`'ya eskalasyon yayınlandı → platform köprüsü ikisini de
+> > aldı (`WORKER_BRIDGE.RESULT_RECEIVED status=REJECTED`, `ANALYSIS_FAILED`).
+> > **AÇIK KALAN:** çıkarım (inference) hâlâ koşmadı — girdi ham DN olduğu için kapı
+> > (doğru biçimde) reddetti. Bkz. **DK-21** (Terra radyometrik düzeltme).
+> > ⚠️ Platform tarafında `analysis_results` **satırı yazılmadı**: doğrudan kuyruğa basılan
+> > iş için `analysis_jobs` satırı yoktu → FK ihlali. Bu **koşum düzeneğinin** eksiği,
+> > üretim yolunun değil (üretimde satırı platform kendi açar). Demo satırının üzerine
+> > yazmamak için DB'ye elle kayıt **açılmadı**.
 >
-> 🆕 **DK-18 (yeni, 2026-08-05 öz-denetim):** Artefakt yüklemesi açılacaksa
-> `Dockerfile.gpu`'ya `[s3]` extras **hash-kilitli** eklenmeli. Bugün `boto3` imajda
-> HİÇ yok (hiçbir lock'ta değil) → `enable_result_artifact_upload=true` yapmak açık
-> `RuntimeError` verir. Bilinçli tasarım (ince çekirdek imaj); açmak ayrı bir karar.
+> ✅ **DK-17 KAPANDI (2026-08-05 akşamı — bağımsız denetim + kalıcı çözüm).**
+> İddia **doğrulandı ve KAPSAMI GENİŞLEDİ.** Ölçüm: `git grep s3_endpoint` `src/` içinde
+> yalnız `src/shared/config.py:81`'i buluyordu; üç `boto3.client("s3")` çağrısı
+> (`result_artifact_sink.py` · `s3_export_sink.py` · `adapter_registry.py`) `endpoint_url`
+> **geçmiyordu**. 🔴 **Denetimde çıkan ikinci yol — ilk kalemde YOKTU:** GDAL/rasterio
+> `s3://` **OKUMA** yolu da endpoint'siz kalıyordu ve GDAL 3.12.1 `AWS_ENDPOINT_URL`
+> değişkenini **okumuyor** → istek **gerçek AWS'ye** çıkıyordu. Ölçüm imzası: MinIO
+> *"The Access Key Id ..."*, AWS *"The **AWS** Access Key Id ..."* der; endpoint'siz
+> koşuda dönen mesaj **AWS'ninkiydi** (yani yerel kimlikle imzalanmış bir istek internete
+> gidiyordu). **Çözüm:** eşleme tek kaynağa alındı — `src/shared/s3_endpoint.py`; boto3
+> `endpoint_url` + path-style adresleme alır, GDAL `AWS_S3_ENDPOINT` + `AWS_HTTPS` +
+> `AWS_VIRTUAL_HOSTING` alır; ortam değişkeni adı `WorkerConfig`'ten **türetilir**
+> (elle yazılmaz). Üretim yolundan doğrulandı (konteyner içinde, `AWS_S3_ENDPOINT`
+> ortamda **YOKken**): okuma `8558x7638 EPSG:4326` döndü, yazma MinIO'ya gerçekten
+> düştü. 14 test + **5 mutasyon** (hepsi öldürdü).
+>
+> ✅ **DK-18 KAPANDI (2026-08-05 akşamı).** İddia doğrulandı: `boto3` hiçbir lock'ta
+> yoktu ve konteynerde `import boto3` → `ModuleNotFoundError`. **Kök sorun tek bir ürün
+> kararının İKİ kapıya bağlanmasıydı** — çalışma-zamanı bayrağı *ve* görünmez bir imaj
+> içeriği önkoşulu. **Çözüm:** `requirements-s3.in` + `requirements-s3.lock`
+> (`pip-compile --generate-hashes`, 7 paket tam geçişli) + `Dockerfile.gpu`'da **ayrı
+> katmanda** `--require-hashes` kurulum (torch katmanının build cache'i korunsun diye).
+> Artık bayrak **tek kapıdır**; compose'ta `TARLAANALIZ_ENABLE_RESULT_ARTIFACT_UPLOAD`
+> açıldı. İmaj 13.7 → **13.8 GB**. Drift kilidi: `tests/unit/test_s3_lock_matches_pyproject.py`
+> (kopyalanan lock kümesi == hash-kurulan küme) + **4 mutasyon** (hepsi öldürdü).
+>
+> 🆕 **DK-19 (yeni, 2026-08-05 — İLK GERÇEK İŞ MESAJININ ORTAYA ÇIKARDIĞI) — ✅ KAPANDI.**
+> `asdict(EscalationRequest)` set edilmemiş alanları **açık `null`** olarak yazıyordu;
+> `expert_review_queue.v1`'de `audit_bucket`/`audit_rotation_key`/`audit_selection_rate`
+> **opsiyoneldir ama tipleri `integer`/`string`/`number`'dır** — JSON Schema'da "opsiyonel"
+> = "olmayabilir", "null olabilir" **değil**. Sonuç: iş denetim örneğine seçilmediğinde
+> (yaygın durum) worker **kendi vendored şemasını ihlal eden** bir mesaj yayınlıyordu.
+> Şema `additionalProperties: false` taşıdığı için platform aynası kapıyı sıktığı anda
+> uzman o tile'ı **hiç görmezdi**. Birim testler göremedi çünkü fixture'lar alanları
+> **dolu** veriyordu — **DK-13'ün tarif ettiği boşluğun ta kendisi**. Çözüm:
+> `omit_nulls_schema_disallows()` — hangi alanın düşeceği **şemadan türetilir**, elle
+> liste tutulmaz. 10 test + 5 mutasyon; ilk turda **M13 hayatta kaldı** (worker'daki
+> tesisat test edilmiyordu) → üretim-yolu testi eklenip öldürüldü.
+>
+> ✅ **DK-20 KAPANDI (2026-08-05 akşamı).** `jsonschema>=4.20,<5` + `referencing>=0.30,<1`
+> `dev` grubundan **ana `[project].dependencies`'e taşındı**, `requirements.lock` yeniden
+> üretildi (`uv pip compile --universal --generate-hashes`; +4 paket: jsonschema ·
+> jsonschema-specifications · referencing · rpds-py — **0 paket düştü**), backend imajı
+> kuruldu. Üretim yolundan **iki yönlü** doğrulandı:
+> ```
+> gecerli mesaj : SCHEMA_VALIDATE_BROKEN 0 · SCHEMA_VALIDATE_SKIPPED 0   (kapi kostu)
+> POZITIF KONTROL — kasten bozuk mesaj (confidence_score: "bu-bir-sayi-degil"):
+>   WORKER_BRIDGE.SCHEMA_INVALID ... "'bu-bir-sayi-degil' is not of type 'number'"
+>   WORKER_BRIDGE.RESULT_ERROR ... ValueError: KR-081 contract validation failed -> DLX
+>   analysis_results tablosu: 1 satir (yalniz demo) — bozuk mesaj DB'ye DEGMEDI
+> ```
+> **Düzeltmeden önce aynı mesaj** `SCHEMA_VALIDATE_BROKEN` yazıp **işlenmeye devam
+> ederdi.** Kapı `worker_result_schema_enforce=True` ile fail-closed çalışıyor.
+> Kilit: `tests/unit/test_requirements_lock_consistency.py` (pyproject runtime ⊆ lock).
+>
+> <details><summary>Özgün kalem metni (kayıt için)</summary></details>
+>
+> 🔴 **DK-20 (yeni, 2026-08-05 — AYNI KOŞUDA ÖLÇÜLDÜ) — AÇIK, YÜKSEK ÖNCELİK.**
+> **Platform üretim imajında `jsonschema` KURULU DEĞİL** → KR-081 sözleşme kapısı
+> worker'dan gelen **her mesaj için fail-open**. Platform kendi logunda söylüyor:
+> `WORKER_BRIDGE.SCHEMA_VALIDATE_BROKEN ... KR-081 kapısı bu mesaj için ETKİSİZ`
+> (iki kuyrukta da: `analysis_results` ve `expert_review_queue`). Ölçüm:
+> `docker exec tarlaanaliz-backend python -c "import jsonschema"` → yok ·
+> `pyproject.toml:110` `jsonschema>=4.20,<5` **yalnız `[project.optional-dependencies].dev`
+> grubunda** · `requirements.lock`'ta **hiç yok** · üretim kodu onu çalışma-zamanında
+> import ediyor (`src/application/services/contract_validator_service.py:82`, ImportError
+> dalı `# pragma: no cover`). **DK-18'in platform tarafındaki ikizi:** çalışma-zamanı
+> bağımlılığı test grubunda beyan edilmiş. Çözüm: `jsonschema` + `referencing` ana
+> bağımlılıklara taşınsın, `requirements.lock` yeniden üretilsin, imaj kurulsun.
+>
+> 🔴 **DK-21 (yeni, 2026-08-05) — ÖN RAPOR'U BLOKE EDER.** Elimizdeki tek işlenmiş Terra
+> çıktısı **radyometrik düzeltme KAPALI** koşuldu — ölçüldü (Terra iş kaydı
+> `records/94280574-*.json`): `use_reflectance_calibration=False` ·
+> `use_sun_sensor_per_image=False` · `radiometricCorrectionSet=False`. Yani çıktı **ham
+> DN**'dir; kanonik KR-018/082: *"Worker ham DN veya kalibrasyonu belirsiz veriyi kabul
+> etmez."* Dürüst bir işte `calibration_type: NONE` yazılır ve iş **reddedilir**
+> (koşuldu — DK-15'e bakınız). Yapılacak: aynı 670 fotoğrafla 2D Multispectral **yeniden
+> koşulsun, "Radiometric Correction" AÇIK** (güneş sensörü) → `RELATIVE` → kapı geçer.
+> Terra'nın CLI'ı yok; bu **elle GUI işidir** (~9-15 dk).
+>
+> 🟠 **DK-22 (yeni, 2026-08-05) — GİZLİ RİSK, bugün canlı DEĞİL.** `health_distribution.py`
+> geçerli-piksel filtresi olarak **yalnız `np.isfinite`** kullanıyor; bir raster'ın
+> **beyan edilmiş `nodata`** değerini dikkate almıyor. Terra'nın `index_map/NDVI.tif`'i
+> `nodata=0.0` (sonlu bir nöbetçi değer) taşıyor → o pikseller "NDVI=0 ölçümü" sayılıyor.
+> Büyüklük ölçüldü: aynı raster için `mean_ndvi` **0.1525** (isfinite) ↔ **0.264**
+> (nodata-duyarlı) = **%42 hata**; dağılımda `critical` %64.6 ↔ %38.8. Bugün canlı
+> DEĞİL çünkü üretim çağrısı raster değil **süreç-içi hesaplanmış** diziyi besliyor
+> (`reporting_agent._compute_field_metrics` → `message.index_maps_raw["ndvi"]`, NaN-güvenli).
+> AMA fonksiyonun kendi docstring'i girdi olarak *"ortomozaik"* diyor — davet açık.
+>
+> 🟠 **DK-23 (yeni, 2026-08-05).** `_overall_health_from_body` değeri **`round(raw, 2)`**
+> ile 2 ondalığa indiriyor; `analysis_results.overall_health_index` kolonu gerçekte
+> **`numeric(4,3)`** (ölçüldü: `information_schema`), ORM'de ise `Numeric(3, 2)` yazıyor.
+> `2026_08_04_analysis_results_model_align.py:40` daraltmayı **bilinçli olarak ayrı bir
+> karara bırakmış** — ama `round(..., 2)` o kararı **sessizce zaten almış** durumda:
+> demo satırındaki `0.264` kod yoluyla **asla** üretilemez, `0.26` olur.
 >
 > 🆕 **DK-16 (yeni, 2026-08-05):** `metrics` zinciri **uçtan uca canlı mesajla** doğrulanmadı.
 > Her halka ayrı ayrı mutasyonla test edildi (worker üretim · to_dict serileştirme · platform

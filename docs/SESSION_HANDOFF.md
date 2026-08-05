@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-05 (üçüncü oturum — worker GPU ayağa kalktı + ölçüm zinciri)
+**Son güncelleme:** 2026-08-05 (**dördüncü oturum** — DK-17/DK-18 kalıcı çözüm + worker ilk gerçek iş mesajı)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,112 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-05, **üçüncü oturum: worker GPU + ölçüm zinciri**) — ✅ **KAPANDI, MERGE EDİLDİ**
+## 0.A EN GÜNCEL — (2026-08-05, **dördüncü oturum: DK-17/DK-18 kalıcı çözüm + İLK GERÇEK İŞ MESAJI**)
+
+> ℹ️ Aynı günün önceki üç turu §0.A-c / §0.A-b / §0.A-a'dadır ve geçerliliğini KORUR.
+>
+> ### 🔴 EN ÖNEMLİ İKİ CÜMLE
+>
+> 1. **Worker ilk kez gerçek bir `analysis_job` mesajı işledi** — ve KR-018 kapısı doğru
+>    biçimde reddetti. Çıkarım hâlâ koşmadı; sebebi **kod değil veri**: elimizdeki Terra
+>    çıktısı **radyometrik düzeltme KAPALI** üretilmiş, yani ham DN (DK-21).
+> 2. **`s3_endpoint` ölü alanı yalnız yazma yolunu değil OKUMA yolunu da bozuyormuş** —
+>    GDAL endpoint'siz kalınca `s3://` isteği **gerçek AWS'ye** çıkıyordu. İlk kalem
+>    (DK-17) bunu görmemişti; denetimde çıktı.
+>
+> ### ✅ DK-17 — `s3_endpoint` artık İKİ yola da bağlı (tek kaynak)
+>
+> `src/shared/s3_endpoint.py` eklendi: boto3 `endpoint_url` + path-style adresleme alır,
+> GDAL `AWS_S3_ENDPOINT`/`AWS_HTTPS`/`AWS_VIRTUAL_HOSTING` alır. Ortam değişkeni adı
+> `WorkerConfig.model_config["env_prefix"]`'ten **türetilir** (ikinci kopya yok).
+> Bağlanan yerler: `result_artifact_sink` · `s3_export_sink` · `adapter_registry` ·
+> `pipeline._open_validated_image`.
+>
+> **Üretim yolundan ölçüldü** (konteyner içinde, `AWS_S3_ENDPOINT` ortamda **YOKken**):
+> ```
+> okuma : _open_validated_image("s3://tarlaanaliz-results/.../ndvi.tif") -> 8558x7638 EPSG:4326
+> yazma : S3ResultArtifactSink.upload(...) -> s3://tarlaanaliz-results/dk17-smoke/.../manifest.json
+>         (MinIO'da gerçekten göründü: manifest.json 134 B · ndvi.png 19 B — sonra silindi)
+> ```
+> Ölçüm imzası (endpoint'siz koşunun AWS'ye gittiğinin kanıtı): MinIO
+> *"The Access Key Id ..."* der, AWS *"The **AWS** Access Key Id ..."* der.
+>
+> ### ✅ DK-18 — `[s3]` extras hash-kilitli olarak imajda
+>
+> `requirements-s3.in` + `requirements-s3.lock` (`pip-compile --generate-hashes`, 7 paket
+> tam geçişli) · `Dockerfile.gpu`'da **ayrı katmanda** `--require-hashes` kurulum (torch
+> katmanının build cache'ini bozmamak için). İmaj 13.7 → **13.8 GB**; konteynerde
+> `boto3 1.43.64` doğrulandı. Compose'ta `TARLAANALIZ_ENABLE_RESULT_ARTIFACT_UPLOAD: "true"`.
+> **Kök sorun:** tek bir ürün kararı İKİ kapıya bağlıydı; ikincisi (imaj içeriği) görünmezdi.
+>
+> ### 🧪 İLK GERÇEK İŞ MESAJI — ölçülen zincir
+>
+> Gerçek DJI/Terra ortomozaiğinden 4-bantlı COG yığıldı (G/R/RE/NIR · 8558×7638 · 618 MB),
+> MinIO'ya yüklendi, `analysis_jobs`'a dürüst `calibration_type: NONE` ile basıldı:
+> ```
+> worker  : KR-018: Calibration NONE — job rejected
+> worker  : Message published -> analysis_results   (status=REJECTED, NO_RESULT)
+> worker  : Message published -> expert_review_queue
+> platform: WORKER_BRIDGE.RESULT_RECEIVED status=REJECTED · ANALYSIS_FAILED
+> ```
+> ⚠️ Platform `analysis_results` **satırı yazılmadı** — doğrudan kuyruğa basılan iş için
+> `analysis_jobs` satırı yoktu (FK). Bu **düzeneğin** eksiği, üretim yolunun değil.
+> Demo satırını bozmamak için DB'ye elle kayıt açılmadı.
+>
+> ### 🔴 BU KOŞU ÜÇ YENİ KUSUR ÇIKARDI (birim testler göremiyordu)
+>
+> | # | Bulgu | Durum |
+> |---|---|---|
+> | **DK-19** | Worker eskalasyon gövdesi `audit_bucket`/`audit_rotation_key`/`audit_selection_rate` alanlarını **açık `null`** yazıyordu; şema opsiyonel ama `null` kabul etmiyor → **kendi vendored şemasını ihlal eden** mesaj. Fixture'lar alanları dolu verdiği için görülmüyordu (**DK-13 boşluğu**) | ✅ kapatıldı — düşürülecek alan **şemadan türetiliyor** |
+> | **DK-20** | **Platform üretim imajında `jsonschema` YOK** → KR-081 kapısı worker'dan gelen her mesaj için **fail-open**. Platform kendi logunda söylüyor: `SCHEMA_VALIDATE_BROKEN ... KR-081 kapısı bu mesaj için ETKİSİZ`. `pyproject.toml` onu **`dev`** grubunda beyan ediyor; `requirements.lock`'ta yok. **DK-18'in platform ikizi** | ✅ kapatıldı — ana bağımlılığa taşındı, lock yenilendi, imaj kuruldu; **pozitif kontrolle** doğrulandı (kasten bozuk mesaj `SCHEMA_INVALID` + DLX, DB'ye değmedi) |
+> | **DK-21** | Terra çıktısı **ham DN** (`radiometricCorrectionSet=False`) → ÖN RAPOR üretilemez | 🔴 **AÇIK — kullanıcı Terra'yı düzeltme AÇIK yeniden koşmalı** |
+>
+> ### 🔍 DEMO SAYILARININ DENETİMİ — hepsi yeniden üretildi
+>
+> Demo satırındaki (elle girilmiş) sayılar worker'ın **kendi fonksiyonlarıyla** gerçek
+> veriden birebir çıktı — tarla sınırına kırpılmış Terra NDVI raster'i üzerinden:
+> ```
+> compute_mean_ndvi          -> 0.264   (DB overall_health_index = 0.264 ✔)
+> critical% + poor%          -> 85.00   (özet "yüzde 85" ✔ · 7,07 dönüm ↔ "7,1" ✔)
+> good% + excellent%         ->  5.42   (0,45 dönüm ↔ "0,5" ✔)
+> geçerli piksel oranı 50.7% -> 16.41 × 0.507 = 8.32 dönüm  (özet "8,3 dönüm" ✔)
+> ```
+> **Yani ÖN RAPOR metni dürüst; yalnız makine üretmiyor.** İki uyarı: (a) bu NDVI ham DN
+> üzerinden hesaplandığı için mutlak eşikler **yaklaşıktır** (DK-21); (b) `round(raw, 2)`
+> yüzünden kod yolu `0.264`'ü **asla** üretemez, `0.26` olur — kolon `numeric(4,3)` (**DK-23**).
+> Ayrıca raster okunurken `nodata=0.0` nöbetçisi dikkate alınmazsa aynı sayı **0.1525**
+> çıkıyor (%42 hata) — bugün canlı değil ama tuzak duruyor (**DK-22**).
+>
+> ### 🏁 EN GÜÇLÜ TEK KANIT — worker kendi konteynerinde, kendi kodu, gerçek veri
+>
+> `InferencePipeline._load_bands` **üretim fonksiyonu** MinIO'daki gerçek 4-bantlı
+> ortomozaiği `s3://` üzerinden okudu ve worker'ın kendi ölçüm fonksiyonları şunu üretti:
+> ```
+> OKUNAN BANTLAR: ['G','NIR','R','RE'] · crs=EPSG:4326 · 7638x8558 · gecerli %50.2
+> mean_ndvi(RELATIVE) = 0.2639            -> DB overall_health_index 0.264 ✔
+> dagilim = critical 38.8 · poor 46.2 · fair 9.57 · good 5.13 · excellent 0.29
+>           critical+poor = %85.0          -> ozet "yuzde 85" ✔
+> ```
+> Bu, Terra'nın NDVI raster'inden **bağımsız ikinci bir türetmedir** (ham bantlardan
+> hesaplandı) ve üç ondalıkta aynı sayıyı verdi.
+> ⚠️ **Bu bir ÖLÇÜM TATBİKATIDIR, kapıdan geçmiş bir iş DEĞİL:** `RELATIVE` metrik
+> fonksiyonlarına **elle** verildi. Gerçek iş hâlâ dürüstçe `NONE` ile gidiyor ve
+> **reddediliyor** (DK-21 kapanana kadar öyle kalmalı).
+>
+> ### ♻️ SONRAKİ KOŞUM İÇİN HAZIR DURAN
+> `s3://tarlaanaliz-results/jobs/dicle-20260729/bands_basic4.tif` (618 MB, G/R/RE/NIR
+> yığılmış COG) MinIO'da duruyor. Terra düzeltme AÇIK yeniden koşulunca bu dosya
+> **yeniden üretilmeli** (bantlar değişecek), sonra aynı akış `RELATIVE` ile koşulur.
+>
+> ### 📌 GİRİŞ NOKTASI
+> Yazılım kuyruğu → eylem planı **§3.6 (`DK-1…DK-23`)**.
+> **SIRADAKİ TEK BLOKÖR: DK-21** — Terra'yı radyometrik düzeltme AÇIK yeniden koş
+> (adım adım tarif: [`docs/TERRA_RADYOMETRIK_YENIDEN_KOSUM.md`](TERRA_RADYOMETRIK_YENIDEN_KOSUM.md)).
+> Sonrasında aynı akış `RELATIVE` ile koşar ve ÖN RAPOR makineden çıkar.
+
+---
+
+## 0.A-c ÖNCEKİ TUR — (2026-08-05, **üçüncü oturum: worker GPU + ölçüm zinciri**) — ✅ **KAPANDI, MERGE EDİLDİ**
 
 > ℹ️ Aynı günün **birinci** turu §0.A-a'da, **ikinci** turu §0.A-b'de; ikisi de geçerliliğini
 > KORUR. Bu tur onlarla paralel/ardışık koştu ve farklı alana dokundu (worker + ölçüm).
