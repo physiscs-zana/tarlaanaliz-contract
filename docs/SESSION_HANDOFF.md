@@ -164,12 +164,27 @@
 >
 > ### 🔴 SONRAKİ OTURUM BUNU BİLMELİ
 >
-> 1. **Doğrulanmamış tek şey: uçtan uca prova.** Docker kapalıydı; kullanıcı
->    `docker compose up -d --build backend web` ile provayı **kendisi** yapacak.
->    Beklenen ekran: ÖN RAPOR bandı · "Tarlanızın Durumu" kutusu (serbest metin **yok** —
->    A3 kapısı boşaltıyor; canlılık puanı ve açıklamalar **var**) · katmanlar
->    "Genel Sağlık" + "Azot Stresi" · harita tarlaya odaklı (~20 m ölçek).
->    **Prova sonucu alınmadan "çalışıyor" denmez.**
+> 1. ✅ **Uçtan uca prova YAPILDI (2026-08-05, canlı sistemde ölçüldü).** Kullanıcı
+>    Docker'ı `--no-cache` ile yeniden kurup `alembic upgrade head` koştu; zincirin
+>    tamamı komutla doğrulandı. Ayrıntı: **`docs/DEMO_GUNU_YAPILACAKLAR.txt` → EK-B**.
+>    Özet: giriş 200 · liste 200 (`HEALTH←gndvi`, `NITROGEN_STRESS←ndre`,
+>    `tier=TEMEL`, `band=BASIC_4BAND`) · `report_phase=PRELIMINARY`, `detections=[]` ·
+>    tile `HEALTH` 68.786 bayt + `NITROGEN_STRESS` 40.660 bayt (PNG imzalı),
+>    rasteri olmayan katman ve tarla dışı karo **404**, tokensiz **401** ·
+>    sonuç sayfası SSR 200 ("Sonuçlar yüklenemedi" **yok**).
+>
+>    🔬 **KR-019 kapısı pozitif kontrollü ölçüldü:** DB'de `summary` **305 karakter
+>    dolu**, API `''` döndürüyor. Yani kapı gerçekten kesiyor — "zaten boştu" değil.
+>    **Sonucu:** çiftçi serbest özet paragrafını **görmeyecek** (kasıtlı, fail-closed).
+>    Kutuda canlılık puanı (%26.4) + "haritayı nasıl okursunuz" + "bu ölçüm ne
+>    değildir" duruyor. Demoda "özet paragrafı" vaat edilmemeli.
+>
+>    ⚠️ **Tile kimliği tuzağı:** tile/metadata uçları `result_id` bekler, liste ucunun
+>    döndürdüğü `analysis_job_id` **değil** (ikisi ayrı kolon). Yanlışıyla çağrı
+>    fail-closed **403 "Sonuc sahipligi dogrulanamadi"** verir — uç bozuk sanılmasın.
+>    Detay ucu (`/results/{mission_id}/summary`) doğru `result_id`'yi zaten döndürüyor.
+>
+>    🔴 **Kalan tek doğrulama: gözle.** Mapbox tarayıcıda çizer; komutla ölçülemez.
 > 2. **Ertelenen 14 kalem eylem planına taşındı** → `TARLAANALIZ_EYLEM_PLANI_2026-07-30.md`
 >    **§3.6**. (Yerel `SONRAKI_OTURUM_PLANI.txt` git'te **değildir**, ikinci makinede yoktur —
 >    kanonik liste §3.6'dır.)

@@ -1,0 +1,263 @@
+===============================================================================
+TARLAANALIZ - DEMO GUNU YAPILACAKLAR
+Guncelleme: 05.08.2026 | Urun: ANTEP FISTIGI (PISTACHIO)
+===============================================================================
+
+Bu liste TAMAMLANAN maddeler CIKARILARAK guncellenir.
+Tamamlananlar en altta "EK-A" (04.08) ve "EK-B" (05.08) bolumlerinde durur.
+
+KANONIK KOPYA: tarlaanaliz-contract/docs/DEMO_GUNU_YAPILACAKLAR.txt
+  Bu dosya 05.08.2026'da contract deposuna alindi -> git ile ikinci makineye
+  tasinir. Bir madde degisecekse ORADA degisir.
+
+-------------------------------------------------------------------------------
+A. DEMO'DAN ONCE (bir gun kala)
+-------------------------------------------------------------------------------
+
+[ ] A1. Bu makineyi sahaya goturecegini teyit et
+        Neden: DJI Terra lisansi 1 CIHAZ ve bu bilgisayara bagli.
+               Dell Latitude'da Terra CALISMAZ - o yalnizca hafiza karti
+               kopyalamak icin.
+        Lisans bitis: 27.10.2026
+
+[ ] A2. Demo verisini GERCEK ciftci bilgisiyle kur
+        Dosya: scratchpad/demo_veri.py  ->  "DEMO GUNU BURAYI DEGISTIR" blogu
+          CIFTCI_AD / CIFTCI_SOYAD / CIFTCI_TEL / CIFTCI_PIN
+          IL / ILCE / KOY / ADA_NO / PARSEL_NO
+          CROP = "PISTACHIO"        <-- urunu CIFCI belirler
+        Script eski demo zincirini kendisi siler; yeniden calistirilabilir.
+        NOT: mission durumu PENDING_REVIEW olarak birakilir (ON RAPOR).
+             'DONE' yazmak "TAM RAPOR - Uzman Onayli" bandini bastirir;
+             uzman incelemesi YOKKEN bu gercek disi beyandir.
+
+[ ] A3. Tarayicida GOZLE prova
+        http://localhost:8080/login  ->  giris  ->  sol menu "Sonuclar"
+        ->  karta tikla  ->  harita
+        NOT: zincirin tamami 05.08.2026'da KOMUTLA olculdu ve calisiyor
+        (bkz. EK-B). Geriye yalnizca GOZLE dogrulama kaldi: haritanin
+        gercekten cizildigi ve renklerin ayirt edilebildigi. Mapbox anahtari
+        tarayici tarafinda calisir - komutla olculemez.
+        Demo gunu ILK KEZ denemeyin.
+
+[ ] A4. Kalibrasyon panelini cantaya koy
+        Neden: 29.07 ucusunda panel cekilmedi; bantlar HAM SAYI (DN) olarak
+        kaldi. Bu yuzden OSAVI hesaplanamiyor (formulundeki 0.16 sabiti
+        0-1 yansima olcegi varsayar). Panel cekilirse OSAVI de acilabilir.
+
+[ ] A5. NOTLAR.txt'i masaustunden kaldir
+        Yol: C:\Users\Bilgisayar\Desktop\DJI_29-07-CEKIM\NOTLAR.txt
+        Icinde duz metin sifre var; ekran paylasiminda gorunur.
+
+[ ] A6. Mapbox anahtari icin ekran hijyeni
+        Anahtar sayfa kaynaginda gorunur (istemci tarafi token - normaldir).
+        Demo'da gelistirici konsolunu (F12) ACMAYIN.
+
+-------------------------------------------------------------------------------
+B. UCUS ONCESI (sahada)
+-------------------------------------------------------------------------------
+
+[ ] B1. NTRIP baglan, kumandada "FIX" gor
+        Neden: 29.07 ucusunun AT raporu:  FIX=0  FLOAT=0  SINGLE=114  NONE=20
+               Georeferencing RMSE = 1.838 m
+        Fotograf etiketinde GpsStatus="RTK" yazmasi FIX cozumu DEMEK DEGILDIR.
+        FIX gormeden havalanmayin, yoksa harita ~2 m kayar.
+
+[ ] B2. Kalibrasyon paneli fotografi - kalkista VE inipte
+        Isik degisimini duzeltir; OSAVI/mutlak NDVI icin sarttir.
+
+[ ] B3. Ucus saati 10:00-14:00
+        Golge boyu minimum, isik kararli.
+
+[ ] B4. 30 m yukseklik, %80 ileri / %70 yan ortusme
+        29.07 ayari buydu; 1.6 cm/piksel cozunurluk verdi.
+
+[ ] B5. Sunum tarlasi SULANAN / CANLI olsun
+        Kuru tarlada her yer ayni renk cikar, ayrim gorunmez.
+        Antep fistigi icin ek not: agac kulturu oldugundan sira arasi toprak
+        gorunur; bu normaldir ve GNDVI bu durumda NDVI'den daha iyi ayirir.
+
+-------------------------------------------------------------------------------
+C. ISLEME (ofiste / aracta)
+-------------------------------------------------------------------------------
+
+[ ] C1. Karti bu bilgisayara kopyala            (~6-7 GB)
+
+[ ] C2. DJI Terra -> "2D Multispectral"          (~9 dk / 134 poz)
+        AT DEGIL! AT yalnizca on isleme yapar, ortofoto/indeks URETMEZ.
+
+[ ] C3. AT/report/report.md ac -> "RTK Status" satirina bak
+        FIX sayisi dusukse ciftciye konum hassasiyetini ABARTMA.
+
+[ ] C4. COG donusumu                              (~10 sn/dosya)
+        scratchpad/cog_uret.py     (ndvi + ndre)
+        scratchpad/gndvi_ekle.py   (gndvi - HEALTH katmaninin ana kaynagi)
+
+[ ] C5. MinIO'ya yukle                            (~450 MB)
+        scratchpad/minio_yukle.py
+
+[ ] C6. Demo verisi                               (saniyeler)
+        scratchpad/demo_veri.py
+
+        NOT: Isleme asamasi INTERNETSIZ calisir (olculdu: 9 dakikalik kosuda
+        14:01 sonrasi tek ag istegi yok). Internet yalnizca Terra acilirken
+        lisans sorgusu icin gerekir.
+
+-------------------------------------------------------------------------------
+D. SUNUMDA
+-------------------------------------------------------------------------------
+
+GOSTER:
+  - http://localhost:8080 -> giris -> sol menu "Sonuclar" -> karta tikla
+  - "Tarlanizin Durumu" kutusu. ICINDE NE VAR (05.08.2026'da olculdu):
+      * "Genel canlilik puani: % 26.4"
+      * "Bu puan, tarlanizdaki bitki ortusunun ne kadar yogun ve yesil
+         oldugunun ortalamasidir. Dusuk deger seyrek veya kurumus ortuyu,
+         yuksek deger sik ve yesil ortuyu gosterir."
+      * "Haritayi nasil okursunuz" + "Bu olcum ne DEGILDIR" bolumleri
+    !!! SERBEST OZET METNI GORUNMEZ - bu KASITLIDIR.
+        DB'de 305 karakterlik ciftci metni VAR ama API onu BOS donduruyor;
+        cunku gorev PENDING_REVIEW (uzman onayi yok) ve KR-019/ADR-008 kapisi
+        uzman onaylanmamis her serbest metni keser (fail-closed = supheliyken
+        paylasmama). Kapinin calistigi olculdu: DB 305 karakter -> API ''.
+        Cifciye "ozet paragrafi" VAAT ETMEYIN; puan + aciklamalar yeterlidir.
+  - Katmanlar: "Genel Saglik" ve "Azot Stresi"
+
+SOYLE:
+  - "Bu bir ON RAPOR - uzman incelemesi sonrasi kesinlesir"
+  - "Haritada renk farki = bitki canliligindaki fark"
+  - "Yesil daha canli, sari-kirmizi daha zayif"
+  - "Zayif gorunen alanin sebebi sulama, toprak, hastalik ya da anız olabilir;
+     sebebi yerinde kontrol gerektirir"
+
+GOSTERME / SOYLEME:
+  - Diger 8 katman (Hastalik, Zararli, Mantar, Ot, Su/Tuz/Termal Stres,
+    Faydali) -> hepsi BOS harita doner (raster karsiligi yok)
+  - "Uzman onayladi" -> uzman YOK
+  - DJI Terra ekrani -> RENKLERI TERS! Terra'da kirmizi = YUKSEK NDVI (saglikli),
+    TarlaAnaliz'de kirmizi = DUSUK (zayif). Yan yana gosterirseniz
+    "hangisi dogru?" sorusu gelir. Acmak zorunda kalirsaniz
+    "bu muhendis ekrani, renk yonu ters" deyin.
+
+YEDEK PLAN:
+  Internet/lisans sorununda Terra'nin kendi ekrani calisir - ama yukaridaki
+  renk uyarisini unutmayin.
+
+-------------------------------------------------------------------------------
+E. ANTEP FISTIGI - BILINMESI GEREKENLER
+-------------------------------------------------------------------------------
+
+  * PISTACHIO sistemde KAYITLI ve siparise acik (bookable=true)
+    ANCAK veri durumu "limited" (misir/bugday/uzum "strong").
+    -> Tespit dogrulugu iddiasini bu urunde daha ihtiyatli tutun.
+
+  * Sezon: Pistacia vera, uyanma ~5 Nisan (Sanliurfa/Gaziantep/Diyarbakir),
+    24 hafta. Agustos basi sezon icidir.
+
+  * Periyodisite (var-yil / yok-yil) icin YILLAR ARASI baseline gerekir.
+    Ilk ucusta o gecmis YOKTUR -> "bu yil az" DENEMEZ.
+    Yalnizca "su anki durum" gosterilebilir.
+
+  * M3M mavi bant TASIMAZ (G/R/RE/NIR).
+    -> Rapor seviyesi yalnizca "TEMEL" olabilir.
+       GENISLETILMIS (EVI, mavi ister) ve KAPSAMLI (termal) URETILEMEZ.
+       Sayfa bunu zaten kendiliginden yaziyor.
+
+===============================================================================
+EK-A : 04.08.2026 OTURUMUNDA TAMAMLANANLAR (tekrar yapilmasi gerekmez)
+===============================================================================
+
+[x] Terra lisansi dogrulandi ve bind edildi
+    Kanit: <License> precheck: cache-first hit -> AVAILABLE, scene=16
+           Precheck completed: has_block=0 final=success
+
+[x] Docker yigini ayaga kaldirildi (postgres/redis/rabbitmq/minio/backend/web/nginx)
+    - .env REDIS_PASSWORD dolduruldu (yedek: .env.yedek-1445)
+    - docker-compose.override.yml ile yerel nginx eklendi (port 8080)
+
+[x] Alembic migration'lari kosuldu (57 tablo) + yeni migration:
+    analysis_results tablosu ORM modeliyle hizalandi (veri korunarak)
+
+[x] Kodda 6 gercek hata bulundu ve duzeltildi:
+     1. Dockerfile'a libexpat1 eklendi (rasterio import edilemiyordu)
+     2. rasterio.Env(AWS_*) -> AWSSession (rasterio 1.5 yasakliyor)
+     3. cog.geographic_bounds -> get_geographic_bounds() (rio-tiler 7)
+     4. next.config.mjs sessiz uretim fallback'i kaldirildi
+        (yerel giris denemesi api.tarlaanaliz.com'a gidiyordu!)
+     5. analysis_results model<->sema ayrismasi (migration)
+     6. SSR goreli URL ile fetch -> resolveRequestBase() (fail-closed)
+
+[x] Harita metadata ucundan besleniyor (sabit merkez/zoom kaldirildi)
+    Olcum: harita olcegi 50 km -> 20 m (tarlaya odakliyor)
+
+[x] ON RAPOR / TAM RAPOR fazi duzeltildi (mission.status = PENDING_REVIEW)
+
+[x] Ciftci-dostu ozet bolumu eklendi ("Tarlanizin Durumu")
+    - summary alani API'ye ve arayuze baglandi
+    - Sade dilde: canlilik puani ne demek, harita nasil okunur,
+      bu olcum NE DEGILDIR (teshis/recete degil - KR-025)
+
+[x] HEALTH katmani GNDVI'den beslenecek sekilde degistirildi
+    Gerekce (olculdu + literatur):
+      - Ayrim skoru: GNDVI 2.50 > NDRE 2.49 > LCI 2.47 > NDVI 2.38 > OSAVI 2.32
+      - GNDVI NDVI'den GEC doyar (agac kulturunde belirleyici)
+      - Antep fistigi literaturunde verim/kalite korelasyonunda EN ETKILI
+      - Manifest'te gndvi yoksa ndvi'ye duser (eski ciktilar bozulmaz)
+
+[x] /results LISTE UCU tamamlandi (eskiden sabit "return []" stub idi)
+    Ciftci artik "Sonuclar" menusunden kendi raporlarina ulasiyor.
+    Kapilar tekil uc ile AYNI kaynaklardan yurur (kopyalanmadi):
+      RBAC sahiplik (SQL'de) + KR-033 odeme + EXPERT_REJECTED haric +
+      KR-093 faz turetmesi + KR-019 tespit sizinti kapisi (liste DAIMA bos)
+    7 yeni test; 4 mutasyonun 4'u de testi kirdi (kapilar gercek).
+
+[x] OSAVI ELENDI - kaynak veri bozuk
+    Olcum: NDVI/GNDVI/LCI/NDRE Terra ciktisi formulle BIREBIR uyusuyor,
+           OSAVI 0.0337 vs beklenen 0.2639 (8 kat sapma).
+    Sebep: OSAVI'nin 0.16 sabiti 0-1 YANSIMA olcegi varsayar; bantlar
+           kalibre edilmedigi icin ham sayi (NIR ort 997, Red ort 587).
+    Cozum: kalibrasyon paneli cekilirse OSAVI de kullanilabilir hale gelir.
+
+===============================================================================
+EK-B : 05.08.2026 - CALISAN SISTEM UZERINDE OLCULDU (yeniden yapilmasi gerekmez)
+===============================================================================
+
+Kullanici Docker'i --no-cache ile yeniden kurdu + alembic upgrade head kostu.
+Asagidakiler CANLI sistemde komutla dogrulandi (iddia degil, olcum):
+
+[x] Konteynerlerin hepsi ayakta ve "healthy"
+    web / backend / redis / rabbitmq / db / minio / nginx
+
+[x] Build PR #381'i icerdigi dogrulandi (kod konteynerin ICINDE arandi)
+    results_service_impl.py: 3 cagri | detection_gate.py: 1 tanim
+
+[x] GIRIS         HTTP 200, ta_token cerezi set ediliyor
+[x] SONUC LISTESI HTTP 200, 1 sonuc
+    tier=TEMEL band=BASIC_4BAND (M3M'de mavi bant yok -> dogru)
+    katmanlar: HEALTH<-gndvi, NITROGEN_STRESS<-ndre
+[x] ON RAPOR      report_phase=PRELIMINARY, detections=[] (KR-019 kapisi)
+[x] KR-019 SIZINTI KAPISI - POZITIF KONTROLLU olcum:
+      DB'de summary  : PENDING_REVIEW | 305 karakter DOLU
+      API'nin donduru: ''  (bos)
+    Yani kapi gercekten kesiyor; "zaten bostu" degil.
+
+[x] HARITA ZINCIRI (tile_id = result_id, analysis_job_id DEGIL!):
+      metadata           -> min_zoom=18 max_zoom=23 + bounds
+      HEALTH (gndvi)     -> HTTP 200 | 68.786 bayt | PNG imzasi 89504e47
+      NITROGEN_STRESS    -> HTTP 200 | 40.660 bayt | PNG imzasi 89504e47
+      DISEASE (raster yok)-> HTTP 404  (uydurmuyor - dogru)
+      TARLA DISI tile    -> HTTP 404  (dogru)
+      TOKENSIZ           -> HTTP 401  (yetki kapisi calisiyor)
+
+[x] SONUC DETAY SAYFASI (SSR) HTTP 200, 26.863 bayt
+      "Sonuclar yuklenemedi" -> YOK  (SSR duzeltmesi calisiyor)
+      "ON RAPOR"             -> VAR
+      "TAM RAPOR"            -> YOK  (dogru, uzman onayi yok)
+      "Tarlanizin Durumu" / "Genel Saglik" / "Azot Stresi" -> VAR
+      "Hastalik" gecen 8 yerin HEPSI <title>/meta etiketi (site geneli SEO),
+      ekranda katman dugmesi DEGIL.
+
+[x] LISTE SAYFASI /results HTTP 200; ham index anahtari (ndvi/ndre) HTML'de YOK
+
+TEK KALAN: gozle dogrulama (Mapbox tarayicida cizecek - komutla olculemez).
+
+===============================================================================
