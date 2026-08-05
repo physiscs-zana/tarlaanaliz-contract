@@ -418,9 +418,32 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > `use_sun_sensor_per_image=False` · `radiometricCorrectionSet=False`. Yani çıktı **ham
 > DN**'dir; kanonik KR-018/082: *"Worker ham DN veya kalibrasyonu belirsiz veriyi kabul
 > etmez."* Dürüst bir işte `calibration_type: NONE` yazılır ve iş **reddedilir**
-> (koşuldu — DK-15'e bakınız). Yapılacak: aynı 670 fotoğrafla 2D Multispectral **yeniden
-> koşulsun, "Radiometric Correction" AÇIK** (güneş sensörü) → `RELATIVE` → kapı geçer.
-> Terra'nın CLI'ı yok; bu **elle GUI işidir** (~9-15 dk).
+> (koşuldu — DK-15'e bakınız).
+>
+> > ⛔ **2026-08-06 DÜZELTMESİ.** Bu kalem önce *"aynı 670 fotoğrafla Terra'yı Radiometric
+> > Correction AÇIK yeniden koş, güneş sensörü yeter, panel şart değil (~10-15 dk)"* diyordu.
+> > **YANLIŞTI.** Terra 5.3.0'ın "Radiometric Correction" ekranı (kullanıcının ekran
+> > görüntüsüyle ölçüldü) yalnızca **kalibrasyon paneli** içindir: *Camera Reflectance
+> > Factor* · 3 × *Calibration Board* sekmesi · 5 bant yansıma kutusu · *Import Calibration
+> > Photo*. Ekranda **"Sun sensor" seçeneği YOK**. 29-07 uçuşunda panel fotoğrafı
+> > çekilmediği için bu yol **geriye dönük tamamlanamaz** — panel sonradan eklenemez.
+> >
+> > **Ama güneş sensörü verisi ELİMİZDE** (ham karelerin XMP'sinde ölçüldü): aynı karede
+> > `Irradiance` G 16077.6 · R 13096.1 · RE 10038.8 · NIR 9741.7 (+ `SensorGain`,
+> > `ExposureTime`, `BlackLevel=3200`, `VignettingData`); uçuş boyunca %1.5 değişiyor.
+> > Bantlar arası **%65** irradyans farkı, ham DN'de bant oranlarını sistematik kaydıran
+> > şeyin ta kendisi.
+> >
+> > **Üç gerçek seçenek** (ayrıntı: `docs/TERRA_RADYOMETRIK_YENIDEN_KOSUM.md`):
+> > **A)** Terra + panel → **yeni uçuş** gerekir · **B)** ⭐ **Pix4Dfields ile aynı
+> > fotoğrafları işle** → uçuş gerekmez; `TARLAANALIZ_SSOT_v1_2_0.txt:79` Pix4Dfields'in
+> > M3M için **panelsiz göreli kalibrasyon** ürettiğini yazıyor (bu makinede kurulu değil,
+> > ölçüldü) · **C)** Terra'da güneş-sensörü anahtarı gerçekten yok mu — 1 dakikalık
+> > kontrol (`use_sun_sensor_per_image` parametresi Terra'nın iş kaydında **var**).
+> >
+> > 🔴 **Motor seçimine etkisi:** KR-034 motorları agnostik sayar ama **eşdeğer değiller** —
+> > aynı panelsiz uçuşta Pix4Dfields kurtarabiliyor, Terra kurtaramıyor. Bu, **Ç-2 / W8**
+> > (motor değişimi `encoder_version` tetikleyicisi olsun) kalemini güçlendirir.
 >
 > 🟠 **DK-22 (yeni, 2026-08-05) — GİZLİ RİSK, bugün canlı DEĞİL.** `health_distribution.py`
 > geçerli-piksel filtresi olarak **yalnız `np.isfinite`** kullanıyor; bir raster'ın

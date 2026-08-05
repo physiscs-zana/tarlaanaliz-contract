@@ -1,99 +1,132 @@
-# DJI Terra — radyometrik düzeltme AÇIK yeniden koşum (DK-21)
+# Kalibre veri seti nasıl üretilir (DK-21)
 
-> **Neden gerekiyor.** Elimizdeki tek işlenmiş Terra projesi **radyometrik düzeltme kapalı**
-> koşuldu. Ölçüldü — proje iş kaydı
-> `Documents/DJI/DJITerra/rmziozkan@gmail.com/Multispectral Project_1/records/94280574-*.json`:
-> ```
-> use_reflectance_calibration = False
-> use_sun_sensor_per_image    = False
-> radiometricCorrectionSet    = False
-> ```
-> Yani çıktı **ham DN**'dir (Digital Number = kameranın ham sayısal değeri; yansıma değil).
-> Kanonik kural KR-018/082: *"Worker ham DN veya kalibrasyonu belirsiz veriyi kabul etmez."*
-> Bu yüzden dürüst bir işte `calibration_type: NONE` yazılır ve worker işi **reddeder**
-> (koşuldu, ölçüldü: `"KR-018: Calibration NONE — job rejected"`).
+> ## ⛔ 2026-08-06 DÜZELTMESİ — bu dosyanın ilk hâli YANLIŞTI
 >
-> **Panel (yansıma kartı) GEREKMİYOR.** Mavic 3M'in üstündeki **güneş sensörü** yeterli;
-> çıktı `RELATIVE` (göreli kalibrasyon) olur ve kapıdan geçer. Panel yalnız `PANEL_ABSOLUTE`
-> için gerekir ve o da model eğitimi içindir, ÖN RAPOR için değil.
+> İlk sürüm şöyle diyordu: *"Panel gerekmiyor; Terra'da Radiometric Correction'ı açın,
+> **Sun sensor** seçeneğini seçin (~10-15 dk)."* **Bu yanlıştı ve geri alındı.**
+> Kullanıcının gönderdiği Terra 5.3.0 ekran görüntüleri gösterdi ki o ekranda
+> **"Sun sensor" diye bir seçenek yok**; ekranın tamamı **kalibrasyon paneli**
+> (calibration board) içindir. Ders: bir arayüzü görmeden adım adım tarif yazma —
+> ölçülebilen kısmı (iş kaydı parametreleri) ölçüp, geri kalanını **soru** olarak bırak.
 
 ---
 
-## Başlamadan önce — 3 kontrol
+## 1. Sorun (ölçüldü, değişmedi)
 
-| Kontrol | Durum (2026-08-05'te ölçüldü) |
+Elimizdeki tek işlenmiş Terra projesinin iş kaydı
+(`.../Multispectral Project_1/records/94280574-*.json`):
+
+```
+use_reflectance_calibration = False
+use_sun_sensor_per_image    = False
+reflectance_calibration_info = []      <- kalibrasyon paneli listesi BOŞ
+```
+
+Çıktı **ham DN**'dir (Digital Number = kameranın işlenmemiş sayısal değeri, yansıma değil).
+KR-018/082: *"Worker ham DN veya kalibrasyonu belirsiz veriyi kabul etmez."* Dürüst bir işte
+`calibration_type: NONE` yazılır ve worker **reddeder** (koşuldu, ölçüldü:
+`"KR-018: Calibration NONE — job rejected"`).
+
+## 2. Terra'nın "Radiometric Correction" ekranı gerçekte ne (ekran görüntüsünden)
+
+| Ekranda ne var | Anlamı |
 |---|---|
-| Ham fotoğraflar duruyor mu | ✅ `C:\Users\Bilgisayar\Desktop\DJİ_29-07-ÇEKİM\DJI_202607291415_003_ÇimDeneme\` — 674 dosya (670 fotoğraf) |
-| Disk yeter mi | ✅ proje ~15 GB yer kaplıyor, C: sürücüsünde **699 GB boş** |
-| İnternet gerekiyor mu | Yalnız **Terra açılırken** (lisans kontrolü). İşleme adımı tamamen çevrimdışı çalışıyor (ölçüldü: 9 dakikalık koşuda ilk 1 dakikadan sonra sıfır ağ isteği) |
+| Başlık: *Camera Reflectance Factor* | Kamera yansıma katsayısı |
+| 3 sekme: *Calibration Board 1/2/3* | Üç adede kadar **kalibrasyon paneli** |
+| 5 bant satırı: Blue · Green · Red · Red Edge · Near Infrared (hepsi `NaN`) | Her bant için panelin yansıma değeri |
+| Düğme: *Import Calibration Photo* | Panel fotoğrafı içe aktar |
+| İpucu metni | *"…add photos for different bands… outline the calibration target… Enter each calibration target's reflectance…"* |
 
-⚠️ **Eski projeyi SİLMEYİN, ÜZERİNE DE YAZMAYIN.** Yeni bir proje açın. Sebep: bugünkü
-demo haritası o eski çıktıdan üretilmiş COG'lara dayanıyor. Yeni koşum beklenmedik bir
-sonuç verirse geri dönecek yeriniz olsun.
+**Sonuç: bu ekran, uçuş sırasında çekilmiş bir kalibrasyon paneli fotoğrafı İSTER.**
+Bizim 29-07 uçuşumuzda panel fotoğrafı **yok** → bu yol **geriye dönük tamamlanamaz**.
 
----
+*(Yan not: ekran **Blue** bandı da istiyor; M3M'de mavi bant yok — diyalog DJI'ın tüm
+çok-bantlı kameraları için ortak, M3M'de 5 kutudan 4'ü doldurulur.)*
 
-## Adım adım
+## 3. Elimizde OLAN — güneş sensörü verisi (ölçüldü, ham karelerin XMP'sinde)
 
-**1. Terra'yı açın.** İnternet bağlı olsun (lisans önbelleği tazelensin).
-
-**2. Yeni proje oluşturun.**
-`New Mission` / `Yeni Görev` → tür olarak **2D Multispectral** (2D Çok Bantlı) seçin.
-Ada anlamlı bir şey verin, örneğin: `Dicle_29-07_RADYOMETRIK`
-
-**3. Fotoğrafları ekleyin.**
-`Add Images` / `Görüntü Ekle` → şu klasörü seçin:
 ```
-C:\Users\Bilgisayar\Desktop\DJİ_29-07-ÇEKİM\DJI_202607291415_003_ÇimDeneme
+DJI_20260729142624_0001_MS_*.TIF  (aynı kare, dört bant)
+  G   Irradiance = 16077.6   BlackLevel = 3200   BandFreq = 560(±16)nm
+  R   Irradiance = 13096.1   BlackLevel = 3200   BandFreq = 650(±16)nm
+  RE  Irradiance = 10038.8   BlackLevel = 3200   BandFreq = 730(±16)nm
+  NIR Irradiance =  9741.7   BlackLevel = 3200   BandFreq = 860(±26)nm
+ayrıca: SensorGain · SensorGainAdjustment · ExposureTime · VignettingData
+uçuş boyunca (134 NIR karesi): Irradiance 9600 → 9742 (%1.5 değişim)
 ```
-Terra fotoğrafları **kopyalamaz**, yerinde okur (ölçüldü: proje `images/survey/image_list.json`
-doğrudan bu yolu gösteriyor). Yüklenen fotoğraf sayısı **670** çıkmalı.
 
-**4. 🔴 ASIL ADIM — Radyometrik düzeltmeyi AÇIN.**
-İşleme ayarları / `Reconstruction Parameters` ekranında, **2D Multispectral** bölümünde
-**Radiometric Correction** (Radyometrik Düzeltme) başlığını bulun ve **açın**.
+**Bu neden önemli:** aynı anda, aynı sahnede bantların irradyansı **%65 farklı**
+(G 16078 ↔ NIR 9742). Bu farkı düzeltmeden hesaplanan bant oranları sistematik olarak
+kaymış olur — mutlak NDVI eşiklerinin (%85 zayıf gibi) ham DN'de neden güvenilmez olduğu
+tam olarak budur.
 
-Seçenek listesi çıkarsa şu sırayla tercih edin:
-- **Sun sensor** / *Güneş sensörü* (İRRADYANS) ← **bunu seçin**, elimizdeki donanım bu
-- *Sun sensor + Reflectance panel* → panel fotoğrafı çekilmediği için **kullanılamaz**
-- *None / Kapalı* → **bu, bugünkü hatalı durumdur, seçmeyin**
+Yani **veri var**; eksik olan, onu kullanacak motor ayarı.
 
-Diğer ayarlara dokunmayın — çıktının eskisiyle kıyaslanabilir kalması için aynı kalsınlar.
+## 4. Üç gerçek seçenek
 
-**5. Başlatın.** Önceki koşu **9 dakika 6 saniye** sürdü (13:59:49 → 14:08:55). Benzer bekleyin.
+### A) Terra + kalibrasyon paneli → **yeni uçuş gerekir**
+Panel fotoğrafı sonradan eklenemez. En iyi kalite (mutlağa yakın) ama bir uçuş + bir
+yansıma paneli maliyeti var. Yalnız zaten tekrar uçacaksanız mantıklı.
 
-**6. Bitince bana proje adını söyleyin.** Gerisini ben yaparım:
-- çıktıyı doğrularım (aşağıdaki komut),
-- 4 bandı tek COG'a yığar, MinIO'ya yüklerim,
-- işi `calibration_type: RELATIVE` ile kuyruğa basarım,
-- ÖN RAPOR bu kez **makineden** çıkar.
+### B) Pix4Dfields ile **aynı fotoğrafları** işle → uçuş gerekmez ⭐
+Kanonik metin bunu açıkça söylüyor — `TARLAANALIZ_SSOT_v1_2_0.txt:79`:
+> *"Pix4Dfields, M3M için 'tam radyometrik kalibrasyon değil, **göreli (relative)
+> kalibrasyon**' sağlar; mutlak reflectance yerine reflectance'a orantılı relatif
+> değerler üretir."*
 
----
+Yani Pix4Dfields, §3'teki güneş-sensörü verisinden **panelsiz** `RELATIVE` üretir —
+worker kapısının kabul ettiği tip. Bu makinede **kurulu değil** (ölçüldü). Mevcut uçuşla
+ÖN RAPOR'u açan tek yol budur. Lisans/deneme kararı: eylem planı **§12.4 / §12.5**.
 
-## Doğrulama — tıklamaya değil, dosyaya bakın
+### C) Terra'da güneş-sensörü anahtarı gerçekten yok mu — **1 dakikalık kontrol** 🔍
+Terra'nın kendi iş kaydında `use_sun_sensor_per_image` diye bir parametre **var**, yani
+motor bunu yapabiliyor; ekran görüntüsünde görünmüyor. Karar vermeden önce şuralara bakın:
+1. **Radiometric Correction** panelini **en aşağı kaydırın** (ipucu metninin altında bir şey var mı).
+2. Ayarlar panelinde **Camera Info** yanındaki **⚙ dişli**.
+3. **Preprocessing (AT)** bölümünü açın.
 
-Bu komut kararı verir; ekranda ne yazdığından bağımsızdır. Yeni projenin adını yazın:
+*"Sunlight sensor" / "Irradiance" / "Güneş" geçen bir şey görürseniz bana söyleyin.*
+Bulunursa seçenek B'ye gerek kalmaz.
+
+## 5. Karar akışı
+
+```
+C'yi yap (1 dk)
+   ├─ güneş-sensörü anahtarı BULUNDU → aç, panel fotoğrafı EKLEME, Start Reconstruction
+   │                                    → §6'daki komutla doğrula → ÖN RAPOR açılır
+   └─ BULUNAMADI → B (Pix4Dfields, uçuş gerekmez)  ya da  A (yeni uçuş + panel)
+```
+
+## 6. Doğrulama — ekrana değil dosyaya bakın
+
+Hangi yolu seçerseniz seçin, karar bu komuttadır (yeni proje adını yazın):
 
 ```bash
-python -c "import json,glob,sys; p=glob.glob(r'C:/Users/Bilgisayar/Documents/DJI/DJITerra/rmziozkan@gmail.com/PROJE_ADI/records/*.json')[0]; d=json.load(open(p,encoding='utf-8')); r=d['recons_params']['build'][0]['recons_params']['parameter']; print('use_reflectance_calibration =', r.get('use_reflectance_calibration')); print('use_sun_sensor_per_image    =', r.get('use_sun_sensor_per_image'))"
+python -c "import json,glob; p=glob.glob(r'C:/Users/Bilgisayar/Documents/DJI/DJITerra/rmziozkan@gmail.com/PROJE_ADI/records/*.json')[0]; r=json.load(open(p,encoding='utf-8'))['recons_params']['build'][0]['recons_params']['parameter']; print('use_reflectance_calibration =', r.get('use_reflectance_calibration')); print('use_sun_sensor_per_image    =', r.get('use_sun_sensor_per_image')); print('reflectance_calibration_info=', r.get('reflectance_calibration_info'))"
 ```
 
-**Beklenen:** `use_reflectance_calibration = True`. Hâlâ `False` ise düzeltme açılmamıştır —
-işleme tekrar koşulmalıdır (çıktıyı elle "kalibre" saymak kapıyı geçmez ve geçmemelidir).
+İkisinden **en az biri `True`** olmalı. İkisi de `False` ise çıktı yine ham DN'dir ve
+kapı yine reddeder — çıktıyı elle "kalibre" saymak çözüm değildir.
 
----
+## 7. Sonrası — ne değişecek
 
-## Sonrası — ne değişecek
-
-| | Bugün (ham DN) | Yeniden koşumdan sonra (RELATIVE) |
+| | Bugün (ham DN) | Kalibre olduğunda |
 |---|---|---|
-| `calibration_type` | `NONE` | `RELATIVE` |
+| `calibration_type` | `NONE` | `RELATIVE` (güneş sensörü) / `PANEL_ABSOLUTE` (panel) |
 | Worker kapısı | **REDDEDER** | **GEÇER** |
-| `health_distribution` / `mean_ndvi` | üretilmez (fail-closed) | üretilir |
-| `absolute_scale_valid` | — | `false` (sınıf sınırları **yaklaşık**; bu dürüstçe etiketlenir) |
-| Fine-tuning'e girer mi | hayır | **hayır** — K-3: RELATIVE eğitime girmez, yalnız SSL morfoloji |
+| `health_distribution` · `mean_ndvi` | üretilmez (fail-closed) | üretilir |
+| `absolute_scale_valid` | — | `RELATIVE`'de `false` — sınıf sınırları **yaklaşık**, dürüstçe etiketlenir |
+| Fine-tuning'e girer mi | hayır | `RELATIVE` **hayır** (K-3: yalnız SSL morfoloji) · `PANEL_ABSOLUTE` evet |
 
 **Not (KR-018 gerekçesi):** NDVI bir orandır, ham DN'de bile "doğru görünür" — tuzak budur.
-Bozulan şey mutlak eşikler, zaman serisi ve tarlalar arası kıyastır. Ölçülmüş örnek:
-Terra'nın NDVI/GNDVI/LCI/NDRE çıktıları formülle birebir uyuştu ama **sabit terimli OSAVI
-bozuldu** (0.0337 ↔ 0.2639).
+Bozulan şey mutlak eşikler, zaman serisi ve tarlalar arası kıyastır. Ölçülmüş örnek: Terra'nın
+NDVI/GNDVI/LCI/NDRE çıktıları formülle birebir uyuştu ama **sabit terimli OSAVI bozuldu**
+(0.0337 ↔ 0.2639).
+
+## 8. Bu ders motor seçimini de etkiliyor
+
+KR-034 motorları **agnostik** sayar (Pix4Dfields *veya* DJI Terra) — ama ikisi **eşdeğer
+değil**: aynı panelsiz uçuşta Pix4Dfields `RELATIVE` üretebiliyor, Terra (görebildiğimiz
+kadarıyla) panel istiyor. Motor seçimi bir "zevk" meselesi değil, **hangi uçuşların
+kurtarılabildiği** meselesi. Bu, eylem planı **Ç-2 / W8** kalemini de güçlendiriyor:
+motor değişimi `encoder_version` tetikleyicisi olmalı.
