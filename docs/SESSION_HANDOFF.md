@@ -184,7 +184,29 @@
 >    fail-closed **403 "Sonuc sahipligi dogrulanamadi"** verir — uç bozuk sanılmasın.
 >    Detay ucu (`/results/{mission_id}/summary`) doğru `result_id`'yi zaten döndürüyor.
 >
->    🔴 **Kalan tek doğrulama: gözle.** Mapbox tarayıcıda çizer; komutla ölçülemez.
+>    ✅ **Gözle doğrulama da yapıldı (kullanıcı, 2026-08-05): harita göründü.**
+>    Böylece demo akışında **doğrulanmamış adım kalmadı** — backend komutla,
+>    arayüz tarayıcı gezintisiyle, harita gözle doğrulandı.
+>
+>    ⚠️ **Ama harita İNTERNET İSTER (ölçüldü).** Ağı kapalı bir tarayıcıda tek bir
+>    `.png` karo isteği bile gitmiyor: taban harita
+>    `mapbox://styles/mapbox/satellite-streets-v12` gelmezse `map.on('load')`
+>    tetiklenmiyor ve **bizim raster katmanlarımız da eklenmiyor**. Yani internet
+>    kesilirse sadece uydu arka planı değil, ürettiğimiz analiz katmanı da kaybolur.
+>    Saha notu: `docs/DEMO_GUNU_YAPILACAKLAR.txt` **A7**. Çevrimdışı yedek bilinçli
+>    olarak yapılmadı (demo sunumunda internet bulunacağı teyit edildi).
+>
+>    🔬 **Bu turun en pahalı dersi — mutasyonla sınanmış yeşil test bile üretim
+>    çıktısını ölçmez.** Platform PR #382 Mapbox CSS'ini CDN'den paket import'una
+>    çevirdi; `tsc`/`eslint`/`jest` temiz, iki mutasyon kilidi kırmızıya döndü — ve
+>    **canlıda hiçbir işe yaramadı**. Kök neden `next.config.mjs`'teki
+>    `test: /mapbox-gl/` + `sideEffects: false`: `import 'x.css'` **yan etkili** bir
+>    import'tur, webpack onu tree-shaking ile atıyordu. Kanıt: import eklendiği hâlde
+>    build çıktısı **bit bit aynı** kaldı. PR **#383** regex'i `.js` ile sınırladı ve
+>    aynı kalıbın kalan iki örneğini (`FieldMap`, `FieldMapDraw`) de kapattı.
+>    Ölçüm: mapbox CSS kuralı **0 → 107**, `.mapboxgl-canvas` position
+>    **`static` → `absolute`**. Kural: *kaynak doğru ≠ çıktı doğru* — araya bundler
+>    yapılandırması girer ve kaynağı sessizce iptal edebilir.
 > 2. **Ertelenen 14 kalem eylem planına taşındı** → `TARLAANALIZ_EYLEM_PLANI_2026-07-30.md`
 >    **§3.6**. (Yerel `SONRAKI_OTURUM_PLANI.txt` git'te **değildir**, ikinci makinede yoktur —
 >    kanonik liste §3.6'dır.)

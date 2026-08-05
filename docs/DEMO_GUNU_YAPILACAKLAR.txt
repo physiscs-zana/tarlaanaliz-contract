@@ -30,14 +30,14 @@ A. DEMO'DAN ONCE (bir gun kala)
              'DONE' yazmak "TAM RAPOR - Uzman Onayli" bandini bastirir;
              uzman incelemesi YOKKEN bu gercek disi beyandir.
 
-[ ] A3. Tarayicida GOZLE prova
+[ ] A3. Tarayicida son bir kez bak (RUTIN KONTROL - artik "ilk deneme" degil)
         http://localhost:8080/login  ->  giris  ->  sol menu "Sonuclar"
         ->  karta tikla  ->  harita
-        NOT: zincirin tamami 05.08.2026'da KOMUTLA olculdu ve calisiyor
-        (bkz. EK-B). Geriye yalnizca GOZLE dogrulama kaldi: haritanin
-        gercekten cizildigi ve renklerin ayirt edilebildigi. Mapbox anahtari
-        tarayici tarafinda calisir - komutla olculemez.
-        Demo gunu ILK KEZ denemeyin.
+        Zincirin tamami 05.08.2026'da olculdu VE harita gozle dogrulandi
+        (bkz. EK-B). Bu madde artik bir kesif degil, demo sabahi yapilacak
+        RUTIN kontroldur: veri degistiyse (A2) ya da makine/ag degistiyse
+        yeniden bakilir. Bakilacak sey: uydu goruntusu geliyor mu, renk
+        farki ayirt ediliyor mu, olcek ~20 m mi.
 
 [ ] A4. Kalibrasyon panelini cantaya koy
         Neden: 29.07 ucusunda panel cekilmedi; bantlar HAM SAYI (DN) olarak
@@ -303,8 +303,11 @@ Asagidakiler CANLI sistemde komutla dogrulandi (iddia degil, olcum):
     Mutasyonla sinandi: regex genis haline donunce KIRMIZI; import silinince
     pozitif kontrol KIRMIZI. Ikisi de geri alindi, hash birebir ayni.
 
-TEK KALAN: gozle dogrulama - harita GERCEKTEN ciziliyor mu (internetli
-makinede). Zincirin geri kalani olculdu; bu adim Mapbox'in tarayicida
-render etmesine bagli ve komutla olculemez.
+[x] GOZLE DOGRULAMA YAPILDI (kullanici, 05.08.2026): HARITA GORUNDU.
+    Boylece zincirin TAMAMI dogrulanmis oldu:
+      backend (komutla) + arayuz (tarayici gezintisi) + harita (gozle).
+    Demo akisinda dogrulanmamis adim KALMADI.
+    Geriye kalan is kesif degil, HAZIRLIK: A bolumu (gercek ciftci verisi,
+    kalibrasyon paneli, internet teyidi) ve B/C bolumleri (ucus + isleme).
 
 ===============================================================================
