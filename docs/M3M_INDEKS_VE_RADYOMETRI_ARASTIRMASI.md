@@ -34,6 +34,33 @@ Ağustos 2026 itibarıyla **280 indeks**.
 > **Dürüst cevap: 58 vejetasyon indeksi** (tüm alanlar dahil 72). Önceki oturumdaki "~50"
 > yanlış değildi ama düşüktü ve dayanaksızdı.
 
+### ⚠️ SAYIYA DEĞİL, ÜRETECE GÜVENİN
+
+Bu dosyanın ilk sürümü sayıyı yazıp **üreteci yazmamıştı** — `CLAUDE.md`'nin *"Do not trust
+a number written here — run the generator… publish the generator, not the number"* kuralının
+ihlali. (O kural bu depoda **iki kez bayatlamış sayı yüzünden iki yanlış teşhis** üretildiği
+için var.) Katalog güncellenince yukarıdaki üç sayı değişir. Bugünkü değeri veren komut:
+
+```bash
+python - <<'PY'
+import json, urllib.request, collections
+B = "https://raw.githubusercontent.com/awesome-spectral-indices/awesome-spectral-indices/main/output"
+idx   = json.load(urllib.request.urlopen(f"{B}/spectral-indices-dict.json"))["SpectralIndices"]
+bands = set(json.load(urllib.request.urlopen(f"{B}/bands.json")))   # sabitleri ayıklamak için
+need  = lambda e: {b for b in e["bands"] if b in bands}             # yalnız GERÇEK bantlar
+M3M   = {"G", "R", "RE2", "N", "N2"}        # RE2 = 730-750nm  ← M3M'in 730±16'sı
+for ad, izin in (("kirmizi kenarsiz", M3M - {"RE2"}),
+                 ("M3M gercek (RE2)", M3M),
+                 ("RE1/RE3 ikamesi ", M3M | {"RE1", "RE3"})):
+    h = [k for k, e in idx.items() if need(e) and need(e) <= izin]
+    d = collections.Counter(idx[k]["application_domain"] for k in h)
+    print(f"{ad}: toplam {len(h):3d} | vejetasyon {d['vegetation']:3d}")
+print("katalog boyu:", len(idx))
+PY
+```
+
+**2026-08-06'da bu komutun çıktısı:** `68/54` · `72/58` · `102/87` · katalog `280`.
+
 ### 🔴 Beklenmedik bulgu — kırmızı kenar sandığınız kadar kapı açmıyor
 
 `B − A = yalnızca 4` indeks. Kırmızı kenarın M3M'de açtığı tek şey:
