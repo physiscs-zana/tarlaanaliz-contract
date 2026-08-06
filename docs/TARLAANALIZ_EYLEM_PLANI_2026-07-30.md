@@ -494,6 +494,54 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > **RE1 (705nm)** için tanımlı → Terra'nın NDRE'si bir **ikame** · DJI'ın kendi kılavuzu
 > **panelsiz** yolu tarif ediyor · üçüncü motor **ODM** ($0, `camera+sun`).
 >
+> ✅ **DK-21 KAPANDI (2026-08-06) — ODM ile kalibrasyon KOŞTU.**
+> `opendronemap/odm` (0.63 GB) çekildi, 670 fotoğraf `--radiometric-calibration camera+sun`
+> ile işlendi ve **14 dakikada** bitti (RTX 3090 Ti makinesi, GPU gerekmedi). ODM kendi
+> `log.json`'ında `"radiometric_calibration": "camera+sun"` yazıyor. Çıktı:
+> **5 bantlı float32 ortofoto** (`Red, Green, NIR, RedEdge` + alpha), değerler **0–0.20**
+> — yani **reflektans** (Terra'nın ham DN'i 36–4044'tü). Panel gerekmedi, ücret ödenmedi.
+>
+> 🔴 **ÖNGÖRÜM YANLIŞ ÇIKTI — kayda geçiriyorum.** 2026-08-06 sabahı, tek karede ölçülen
+> R/NIR irradyans oranından (1.3443) yola çıkıp *"kalibrasyon uygulanınca '%85 zayıf'
+> ~%62'ye iner"* demiştim. Ölçüm bunu **çürüttü**:
+> ```
+> Terra (ham DN, kalibresiz) : mean_ndvi 0.264   · critical+poor %85.0
+> ODM  (camera+sun, RELATIVE): mean_ndvi 0.2657  · critical+poor %87.8
+> ```
+> Fark **%0.6**. Tek-kare irradyans oranından tarla geneline yapılan çıkarım tutmadı —
+> muhtemelen Terra'nın zaten uyguladığı kazanç/pozlama normalizasyonu farkın çoğunu
+> soğuruyor. **Ders:** bu büyüklük hesapla kestirilemiyor, koşturmak gerekiyordu.
+> ⚠️ Bu bir **toplam** (motor + kalibrasyon) ve **toplu** karşılaştırmadır; iki raster
+> farklı ızgarada ve farklı geçerlilik maskesinde (Terra %50.7 ↔ ODM %57.0). Piksel-piksel
+> sıra korelasyonu **hâlâ ölçülmedi** (ortak ızgaraya getirme gerekir).
+>
+> 🟡 **DK-15 İLERLEDİ, KAPANMADI — çıkarım İLK KEZ koştu.** Kalibre COG (`G,R,RE,NIR`,
+> reflektans, NaN maskeli) MinIO'ya kondu ve `calibration_type: RELATIVE` +
+> `calibration_method: DLS_IRRADIANCE` + `scale: reflectance_0_1` ile iş basıldı.
+> **KR-018 kapısı İLK KEZ GEÇTİ.** Boru hattının tamamı koştu: tile → çıkarım →
+> AL paketleme → rapor → yayın. **AMA sonuç `NO_RESULT`** (bkz. DK-25).
+>
+> 🔴 **DK-25 (yeni, 2026-08-06) — AÇIK, YÜKSEK ÖNCELİK. Çıkarım hiçbir tile'ı analiz etmedi.**
+> Ölçüldü: `T3.1 NaN-resilience: 16/16 tiles skipped` + `4/4 tiles skipped` → **20/20**.
+> Kök neden: gerçek bir ortomozaiğin uçuş ayak izi **dikdörtgen değildir**; dışarısı
+> `NaN`'dır (bu koşuda raster'ın **%43'ü**). `pipeline._process_batch` NaN taşıyan tile'da
+> hata alıp **tile'ın TAMAMINI** atıyor (T3.1 dayanıklılık kalkanı). Sonuç zinciri:
+> 0 tile → `confidence 0.0` → `result_mode: NO_RESULT` → `_compute_field_metrics`
+> K-10 gereği `None` döner → **`metrics` hiç gitmez**, dolayısıyla DK-24'ün göreli
+> dağılımı da üretilmez.
+> **Yani bugün gerçek bir orto ile çıkarım pratikte HİÇBİR ŞEY analiz edemiyor.**
+> Bu bir politika kararı ister (tek başıma almadım): kısmen geçerli tile ne olacak —
+> (a) geçerli piksel oranı eşiği + NaN doldurma (`REFLY_RECOMMENDED.VALID_PIXEL_LOW`
+> zaten 0.85 eşiğini tanımlıyor), (b) NaN-duyarlı havuzlama, (c) ayak izine kırpma.
+> Seçim modelin gördüğü dağılımı değiştirir → ML incelemesi gerekir.
+>
+> 🟠 **DK-26 (yeni, 2026-08-06).** Platform `worker_bridge` tüketicisi **düşmüş durumda** —
+> platformun kendi sağlık kontrolü söylüyor: `health-degraded: worker_bridge unreachable`.
+> Kuyruklar dolu bekliyor (`analysis_results 1 · expert_review_queue 1`, tüketici 0).
+> Muhtemel kök neden ölçüldü: FK ihlali `_handle_expert_escalation`'da yakalanmayan
+> `IntegrityError` fırlatıyor ve **aio_pika tüketici görevini kalıcı olarak öldürüyor**
+> (`Task finished … exception=IntegrityError`). Yeniden bağlanma yok.
+>
 > 🟠 **DK-23 (yeni, 2026-08-05).** `_overall_health_from_body` değeri **`round(raw, 2)`**
 > ile 2 ondalığa indiriyor; `analysis_results.overall_health_index` kolonu gerçekte
 > **`numeric(4,3)`** (ölçüldü: `information_schema`), ORM'de ise `Numeric(3, 2)` yazıyor.

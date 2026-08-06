@@ -117,9 +117,22 @@
 > yığılmış COG) MinIO'da duruyor. Terra düzeltme AÇIK yeniden koşulunca bu dosya
 > **yeniden üretilmeli** (bantlar değişecek), sonra aynı akış `RELATIVE` ile koşulur.
 >
+> ### 🟢 2026-08-06 EKİ — ODM KOŞTU, ÇIKARIM İLK KEZ ÇALIŞTI, İKİ YENİ KUSUR ÇIKTI
+>
+> * **DK-21 KAPANDI.** ODM `camera+sun` 670 fotoğrafı **14 dk**'da işledi; çıktı 5 bantlı
+>   **reflektans** ortofoto (0–0.20). Panelsiz, ücretsiz. Terra ↔ ODM farkı **%0.6**
+>   (`mean_ndvi` 0.264 ↔ 0.2657) — *"kalibrasyon %85'i %62'ye indirir"* öngörüm **çürüdü**.
+> * **KR-018 kapısı İLK KEZ GEÇTİ** ve çıkarım boru hattı baştan sona koştu.
+> * 🔴 **DK-25:** ama **20/20 tile NaN yüzünden atlandı** (orto ayak izi dikdörtgen değil,
+>   raster'ın %43'ü NaN) → `NO_RESULT` → `metrics` hiç gitmedi. **Gerçek orto ile çıkarım
+>   bugün pratikte hiçbir şey analiz etmiyor.** Politika kararı ister (ML incelemesi).
+> * 🟠 **DK-26:** platform `worker_bridge` tüketicisi ölü (`health-degraded`), kuyruklar
+>   bekliyor; kök neden yakalanmayan `IntegrityError` tüketici görevini öldürüyor.
+>
 > ### 📌 GİRİŞ NOKTASI
-> Yazılım kuyruğu → eylem planı **§3.6 (`DK-1…DK-23`)**.
-> **SIRADAKİ TEK BLOKÖR: DK-21 — ve artık bir KARAR kalemi, tıklama kalemi değil.**
+> Yazılım kuyruğu → eylem planı **§3.6 (`DK-1…DK-26`)**.
+> **SIRADAKİ BLOKÖR: DK-25** (tile NaN politikası) — ÖN RAPOR ona bağlı.
+> *(Aşağıdaki DK-21 metni tarihsel kayıttır; kalem 2026-08-06'da kapandı.)*
 > Terra panelsiz uçuşu kurtaramıyor; Pix4Dfields (SSOT:79) kurtarabiliyor. Üç seçenek,
 > ölçümler ve karar akışı: [`docs/TERRA_RADYOMETRIK_YENIDEN_KOSUM.md`](TERRA_RADYOMETRIK_YENIDEN_KOSUM.md).
 > Kalibre veri geldiği anda aynı akış `RELATIVE` ile koşar ve ÖN RAPOR makineden çıkar.
