@@ -129,9 +129,30 @@
 > * 🟠 **DK-26:** platform `worker_bridge` tüketicisi ölü (`health-degraded`), kuyruklar
 >   bekliyor; kök neden yakalanmayan `IntegrityError` tüketici görevini öldürüyor.
 >
+> ### 🎯 2026-08-06 (öğleden sonra) — **ÖN RAPOR İLK KEZ MAKİNEDEN ÇIKTI**
+>
+> ```
+> result_mode PARTIAL_REPORT · confidence 0.598 · calibration_type RELATIVE
+> health_distribution: critical 35.98 · poor 51.79 · fair 7.22 · good 4.72 · excellent 0.28
+> mean_ndvi 0.2657 · absolute_scale_valid false
+> relative_distribution (DK-24): p05 0.132 · p20 0.170 · p50 0.227 · p80 0.322 · p95 0.600
+> ```
+> Bağımsız ölçümle birebir aynı (0.2657 / %87.8). Zincir: ODM `camera+sun` → COG →
+> MinIO → `analysis_jobs` → KR-018 geçti → çıkarım → rapor → köprü.
+>
+> **Bunun için DÖRT kusur düzeltildi** (üçü sessizdi) — DK-25 (tile NaN politikası),
+> `safe_divide` (bilinmeyen → 0.0, %50 hata), **DK-27 (MC-Dropout `.eval()` eksikti —
+> çıkarım 2026-05-17'den beri HİÇ çalışmamış)**, ve sebebi doğrulamadan isimlendiren log.
+>
+> **Terra ↔ ODM üç kollu karşılaştırma:** `docs/TERRA_ODM_KARSILASTIRMA_2026-08-06.md`
+> — kalibrasyonun ağırlığı **kamera düzeltmelerinde** (`none→camera` ortalama +%47),
+> güneş sensörü ekstra ~%0; Terra zaten **yarı kalibre**; piksel düzeyindeki düşük
+> korelasyonun sebebi **konumsal kayma** (uçuşun kendi RMSE'si 1.838 m ≈ 37 px).
+>
 > ### 📌 GİRİŞ NOKTASI
-> Yazılım kuyruğu → eylem planı **§3.6 (`DK-1…DK-26`)**.
-> **SIRADAKİ BLOKÖR: DK-25** (tile NaN politikası) — ÖN RAPOR ona bağlı.
+> Yazılım kuyruğu → eylem planı **§3.6 (`DK-1…DK-27`)**.
+> **AÇIK:** DK-26 (köprü tüketicisi IntegrityError'da ölüyor) · **W8/Ç-2** (motor
+> değişimi `encoder_version` tetikleyicisi — kanıt artık var, kalem açık) · DK-23.
 > *(Aşağıdaki DK-21 metni tarihsel kayıttır; kalem 2026-08-06'da kapandı.)*
 > Terra panelsiz uçuşu kurtaramıyor; Pix4Dfields (SSOT:79) kurtarabiliyor. Üç seçenek,
 > ölçümler ve karar akışı: [`docs/TERRA_RADYOMETRIK_YENIDEN_KOSUM.md`](TERRA_RADYOMETRIK_YENIDEN_KOSUM.md).
