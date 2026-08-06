@@ -535,6 +535,43 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > zaten 0.85 eşiğini tanımlıyor), (b) NaN-duyarlı havuzlama, (c) ayak izine kırpma.
 > Seçim modelin gördüğü dağılımı değiştirir → ML incelemesi gerekir.
 >
+> ✅ **DK-25 KAPANDI (2026-08-06) — kısmen geçerli tile politikası, literatür dayanaklı.**
+> **Eşik:** `config.tile_min_valid_ratio = 0.20`. Dayanak: Raster Vision'ın `nodata_threshold`
+> **varsayılanı 1.0** (chip yalnız %100 nodata ise atılır — üretimdeki en müsamahakâr uç) ·
+> uydu iş akışlarında yaygın öneri *"geçerli kaplama %20'nin altındaki sahneyi at"*.
+> 🔴 **0.85 KULLANILMADI:** `REFLY_RECOMMENDED.VALID_PIXEL_LOW` uçuş düzeyinde bir
+> *yeniden-uç* sinyalidir; tile'a uygulamak ayak izi sınırındaki her tile'ı atardı —
+> eşiği yanlış bağlamdan kopyalamak olurdu.
+> **Doldurma:** yalnız **model tensörü** için, o tile'ın **bant ortalaması**. 0 ile doldurmak
+> fiziksel olarak "siyah cisim" demektir ve modele yanlış sinyal verir; bant ortalaması
+> tile'ın kendi dağılımına göre en az bilgi taşıyan değerdir.
+> 🔴 **ÖLÇÜME DOLDURMA GİRMEZ:** `ndvi_mean`/`ndre_mean` orijinal (NaN'lı) bantlardan
+> `np.nanmean` ile hesaplanır.
+>
+> 🔴 **DK-25 ALT-BULGUSU — `safe_divide` "bölen sıfır" ile "girdi bilinmiyor"u karıştırıyordu.**
+> NaN girdi sessizce **0.0**'a dönüyordu; %50 geçerli bir tile'da gerçek NDVI ortalaması 0.5
+> iken **0.25** çıkıyordu (**%50 hata**, sessiz). DK-22'nin hesap düzeyindeki ikizi. Artık
+> bilinmeyen NaN olarak yayılır; gerçek sıfır-bölen davranışı **değişmedi**.
+>
+> 🔴 **DK-27 (yeni, 2026-08-06) — ASIL BLOKÖR BUYMUŞ: MC-Dropout çıkarımı HİÇ koşamıyordu.**
+> DK-25 düzeltmesinden sonra tile'lar hâlâ atlanıyordu. Sebep NaN **değildi**:
+> ```
+> RuntimeError: P1-C1: norm layer 'input_proj.spectral_spatial.norm' (GroupNorm)
+> is in train mode during MC-Dropout — would corrupt epistemic uncertainty…
+> ```
+> `encode_with_mc_dropout` modeli MC geçişlerinden **önce** `.eval()` yapmıyordu; tek
+> `self.eval()` çağrısı geçişlerden **sonraydı** ve kapı ondan önce patlıyordu. `nn.Module`
+> varsayılanı **train** olduğu için kapı **her tile'da** fırlıyordu. Kapı 2026-05-17'de
+> eklenmiş; gerçek bir iş hiç koşulmadığı için **o günden beri çıkarım hiç çalışmamış**.
+> Düzeltme tek satır: `self.eval()` → `_enable_dropout_only()` → invariant kontrolü.
+>
+> 🔴 **DK-27 ALT-BULGUSU — hata SEBEBİ DOĞRULANMADAN isimlendiriliyordu.** Genel `except`
+> her `ValueError/RuntimeError`'ı yakalayıp *"skipping tile due to **non-finite data**"*
+> diye logluyordu. Encoder invariant hatası "NaN sorunu" diye raporlandı ve teşhis saatlerce
+> yanlış yöne gitti. Üstelik gerçek sebep (`reason`) yalnız `extra`daydı ve **JSON
+> biçimlendirici onu düşürüyordu** — operatör sebebi hiç göremiyordu. Mesaj artık
+> `type(exc).__name__` + metni **taşıyor**.
+>
 > 🟠 **DK-26 (yeni, 2026-08-06).** Platform `worker_bridge` tüketicisi **düşmüş durumda** —
 > platformun kendi sağlık kontrolü söylüyor: `health-degraded: worker_bridge unreachable`.
 > Kuyruklar dolu bekliyor (`analysis_results 1 · expert_review_queue 1`, tüketici 0).
