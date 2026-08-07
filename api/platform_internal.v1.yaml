@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TarlaAnaliz Platform Internal API
-  version: 7.5.0
+  version: 7.6.0
   description: |
     Internal API for service-to-service communication.
     Used by: Platform ↔ Edge ↔ Worker services
@@ -45,6 +45,42 @@ paths:
         '201':
           description: Manifest accepted
   
+
+  /intake/datasets/{dataset_id}/calibrated-manifest:
+    post:
+      tags:
+        - Intake
+      summary: Submit calibrated dataset manifest (DK-28/DK-29)
+      description: >-
+        Edge (M2) kalibrasyon tamamlandiktan sonra kalibre paket manifestini
+        gonderir. Platform `outputs[]` icinden adresleri cikarir:
+        `layer_type == "ORTHO"` -> `datasets.rgb_ortho_uri` ("Gercek Gorunum"
+        taban goruntusu, KR-017/DK-28). Ayni giris, manifest AYRI bant rasteri
+        BEYAN ETMIYORSA `datasets.calibrated_ortho_uri`'ye de yazilir
+        (DK-29: worker'in analiz edecegi cok-bantli yigin).
+        FAIL-CLOSED: `uri` adreslenebilir olmalidir (`s3://` | `https://`);
+        yerel dosya yolu REDDEDILIR — platform M1'in yerel yolunu okuyamaz.
+        mTLS zorunlu (KR-071).
+      parameters:
+        - name: dataset_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/schemas.yaml#/components/schemas/CalibratedDatasetManifest'
+      responses:
+        '200':
+          description: Manifest kabul edildi; cikarilan adresler yazildi
+        '400':
+          description: Sema ihlali ya da adreslenemeyen `uri` (fail-closed)
+        '404':
+          description: Dataset bulunamadi
   /jobs:
     post:
       tags: [Jobs]
