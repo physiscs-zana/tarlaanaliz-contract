@@ -667,6 +667,76 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > `maps.rgb.geotiff`. Karar sahibinin: (a) RGB ortofotoyu ingest hattına ekle,
 > (b) düğmeyi kaldır, (c) olduğu gibi bırak ve belgele.
 >
+> ### ✅ KARAR: (a) — 2026-08-07, sahip kararı. Platform yarısı UYGULANDI.
+>
+> **Sözleşme değişikliği GEREKMEDİ.** Kanonik şema bunu zaten modelliyordu:
+> `schemas/platform/calibrated_dataset_manifest.v1` → `outputs[].layer_type` enum'unda
+> **`ORTHO`** var (*"ORTHO/DSM raster ürünleridir"*). Yani eksik olan sözleşme değil,
+> **kablolamaydı**.
+>
+> **Zincirin ölçülmüş hâli (2026-08-07) — üç depoda:**
+>
+> | Halka | Durum | Kanıt |
+> |---|---|---|
+> | Motorlar RGB ortomozaik üretiyor | ✅ | Terra `map/result.tif` = *"the RGB 2D orthographic map"* |
+> | Edge motor çıktısını buluyor | ✅ | `calibration_gate/engine_adapter.py` → `ortho_path` (Terra/ODM/Pix4D üçü için) |
+> | Edge onu kullanıyor | ⚠️ **yalnız yerel** | `expert_image_renderer.py` — uzman görseli; platforma gitmiyor |
+> | Edge manifeste `outputs[ORTHO]` yazıyor | ❌ | `manifest_writer.py`'de `outputs`/`layer_type`/`ORTHO` → **0 eşleşme** |
+> | Platform kalibre manifesti kabul ediyor | ❌ | `calibrated_dataset_manifest` platform kodunda **yalnız 1 yorum satırı**; OpenAPI'da uç **yok** |
+> | Platform adresi saklıyor | ✅ **YENİ** | `datasets.rgb_ortho_uri` (göç `2026_08_07_dataset_rgb_ortho_uri.py`) |
+> | Tile servisi sunuyor | ✅ **YENİ** | `_resolve_basemap_uri()` — ingest kanonik, worker manifesti geriye dönük yedek |
+> | Arayüz düğmesi | ✅ | `MapLayerViewer` 6 test |
+>
+> **Bu turda yapılan (platform, PR ile):** `datasets.rgb_ortho_uri` kolonu (additive,
+> nullable, `varchar(500)` — `av2_report_uri` ile aynı şekil) + domain entity + repository
+> iki-yön eşlemesi + `_resolve_basemap_uri()`. `has_basemap` ve `/tiles/{id}/basemap/...`
+> artık **ingest tarafına** bakıyor. Fail-honest davranış korundu: adres yoksa `None` →
+> uç 404 → düğme gizli. 4 mutasyon öldürüldü + pozitif kontrol.
+>
+> **Neden JSONB `manifest` içine değil:** `datasets.manifest` **ham intake** manifestini
+> tutuyor (`ingest_service_impl.py:201` — batch_id, kiosk_id, dosya sayısı), kalibre
+> çıktıları değil. Ayrıca tile servisi bunu tile başına okur; ayrı kolon JSONB
+> ayrıştırması gerektirmez.
+>
+> **KALAN — edge yarısı (donanım-kapılı, M1/M2 istasyonu henüz yok):**
+> 1. `manifest_writer` → `outputs[]`'a `{layer_type: "ORTHO", uri, sha256, reflectance_scale}` yaz,
+> 2. ortomozaiği yükleme kümesine ekle (bugün yalnız yerelde duruyor),
+> 3. platform: kalibre manifesti kabul eden uç + `rgb_ortho_uri`'yi yazan adım
+>    (OpenAPI'da uç **hiç tanımlı değil** — bu bir sözleşme işi, KR-081 contract-first).
+>
+> 🔴 **DK-29 (yeni, 2026-08-07) — ÖNCE BU ÇÖZÜLMELİ: `av2_report_uri` iki farklı şey.**
+> DK-28'in edge yarısını bağlarken çıktı. Aynı kolon iki yerde çelişik tanımlanmış:
+> * `src/core/domain/entities/dataset.py:58,75` → *"Merkez **AV2 raporu** URI"*,
+>   `CALIBRATED_SCANNED_CENTER_OK` için zorunlu;
+> * `src/application/services/av2_orchestrator.py:151` → `av2_report_uri=report.report_uri`
+>   (antivirüs **tarama raporu**, KR-073);
+> * `src/infrastructure/messaging/worker_job_publisher.py:11,145,159-169` → aynı alanı
+>   **`image_urls[0]`** yapıyor ve *"av2 kalibre **ortomozaik**"* diye adlandırıyor;
+>   doğrulaması yalnız `s3://|https://` şema kontrolü — içeriğin raster olduğunu **hiç
+>   denetlemiyor**.
+>
+> **Kanıtın desteklediği:** iki tanım çelişiyor, biri yanlış. **Desteklemediği:** üretimde
+> kolonda fiilen ne durduğu — onu görmek için canlı satır gerekir ve o satırı yazacak
+> ingest yolu donanım-kapılı. Worker bu oturumda gerçek rasteri **harness ile doğrudan
+> URL** verilerek okudu, bu yoldan değil. RGB ortomozaiği bu alana bindirmeden önce
+> ayrıştırılmalı: AV raporu ile raster adresi **ayrı kolonlar** olmalı.
+>
+> 🟠 **DK-30 (yeni, 2026-08-07) — yerel `DATABASE_URL` göçü engelliyor.** DK-28 göçünü
+> gerçek DB'de doğrularken çıktı. `backend` konteynerinde:
+> * `DATABASE_URL=postgresql+asyncpg://…@**localhost**:5432/tarlaanaliz`
+> * ama `TARLA_DB_HOST=**postgres**` (doğru servis adı)
+>
+> `alembic/env.py:54` **önce `DATABASE_URL`'e bakıyor**, parçalı `TARLA_DB_*`
+> değişkenlerine (satır 62-64) ancak o yoksa düşüyor. Sonuç: konteyner içinde
+> `alembic upgrade head` → `Connection refused (localhost:5432)`. Göç yalnız
+> `-e DATABASE_URL=…@postgres:5432/…` ile elle ezilerek koşuyor.
+>
+> Bu, "göç koştu sandım ama koşmadı" sınıfının aynısıdır (2026-08-06'da `migrate`
+> servisi `alembic/`'i mount etmediği için sessizce `exit 0` dönmüştü). Düzeltme:
+> compose'daki `DATABASE_URL` host'u `postgres` olmalı **ya da** env.py'nin öncelik
+> sırası belgelenip compose ondan türetilmeli. **Ölçüm komutu:**
+> `docker compose exec -T backend printenv | grep -E "DATABASE_URL|TARLA_DB_HOST"`
+>
 > 🆕 **DK-16 (yeni, 2026-08-05):** `metrics` zinciri **uçtan uca canlı mesajla** doğrulanmadı.
 > Her halka ayrı ayrı mutasyonla test edildi (worker üretim · to_dict serileştirme · platform
 > üç kademeli türetme) ama tek bir gerçek iş mesajıyla baştan sona akış görülmedi.
