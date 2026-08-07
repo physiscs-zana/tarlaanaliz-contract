@@ -704,7 +704,7 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > 3. platform: kalibre manifesti kabul eden uç + `rgb_ortho_uri`'yi yazan adım
 >    (OpenAPI'da uç **hiç tanımlı değil** — bu bir sözleşme işi, KR-081 contract-first).
 >
-> 🔴 **DK-29 (yeni, 2026-08-07) — ÖNCE BU ÇÖZÜLMELİ: `av2_report_uri` iki farklı şey.**
+> ✅ **DK-29 (2026-08-07) — KAPANDI (platform PR #395 → `02be248`): `av2_report_uri` iki farklı şeydi.**
 > DK-28'in edge yarısını bağlarken çıktı. Aynı kolon iki yerde çelişik tanımlanmış:
 > * `src/core/domain/entities/dataset.py:58,75` → *"Merkez **AV2 raporu** URI"*,
 >   `CALIBRATED_SCANNED_CENTER_OK` için zorunlu;
@@ -721,7 +721,24 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > URL** verilerek okudu, bu yoldan değil. RGB ortomozaiği bu alana bindirmeden önce
 > ayrıştırılmalı: AV raporu ile raster adresi **ayrı kolonlar** olmalı.
 >
-> 🟠 **DK-30 (yeni, 2026-08-07) — yerel `DATABASE_URL` göçü engelliyor.** DK-28 göçünü
+> **ÇÖZÜM:** yeni kolon `datasets.calibrated_ortho_uri` (additive, nullable,
+> `varchar(500)`); `av2_report_uri` **değiştirilmedi** (AV zinciri KR-072 9-durum
+> geçişleri ona bağlı). Yayıncı artık yeni alanı okuyor ve eksikse **iki alanın
+> farkını adıyla açıklayan** bir hatayla fail-closed reddediyor.
+>
+> **Kodda yedek YOK, veride taşıma VAR.** *"ortho yoksa av2'ye düş"* fallback'i
+> bilerek yazılmadı — düzeltilen belirsizliği kalıcılaştırırdı. Göç,
+> `av2_report_uri` fiilen `.tif`/`.tiff` ise değeri taşır. Mantık **canlı
+> Postgres'te** sınandı (işlem `ROLLBACK`'li): `s3://b/ORTO.TIF` taşındı (büyük
+> harf de yakalandı), `s3://b/av2_report.json` NULL kaldı.
+>
+> ⚠️ **BİLİNÇLİ SONUÇ — dağıtım artık her iş için fail-closed.**
+> `calibrated_ortho_uri`'nin ÜRETİCİSİ henüz yok (ölçüldü) — kalibre-ingest yolu
+> DK-28 ile **aynı donanım-kapılı yol**. Önceki davranış *sessizce yanlıştı*
+> (worker'a denetim belgesi gidiyordu) ve worker platform-dağıtımlı bir işi zaten
+> hiç başarıyla tüketmemişti. 4 mutasyon öldürüldü + pozitif kontrol.
+>
+> ✅ **DK-30 (2026-08-07) — KAPANDI (aynı PR): yerel `DATABASE_URL` göçü engelliyordu.** DK-28 göçünü
 > gerçek DB'de doğrularken çıktı. `backend` konteynerinde:
 > * `DATABASE_URL=postgresql+asyncpg://…@**localhost**:5432/tarlaanaliz`
 > * ama `TARLA_DB_HOST=**postgres**` (doğru servis adı)
@@ -736,6 +753,20 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > compose'daki `DATABASE_URL` host'u `postgres` olmalı **ya da** env.py'nin öncelik
 > sırası belgelenip compose ondan türetilmeli. **Ölçüm komutu:**
 > `docker compose exec -T backend printenv | grep -E "DATABASE_URL|TARLA_DB_HOST"`
+>
+> ⛔ **İLK ÇERÇEVELEMEM EKSİKTİ, düzeltiyorum:** "göçü engelliyor" dedim ama
+> **tasarlanan yol `migrate` servisidir ve o DOĞRU** — tuzağı 2026-07-21
+> denetiminde üç bağımsız BLOCKER olarak bulup çözmüşler (compose:231-246).
+> Gerçek boşluk şuydu: göç **yazan** kişi için doğal yer `backend`'dir, çünkü
+> `migrate`in aksine `./alembic`i **mount eder** (compose:349) — yeni göç anında
+> oradadır; `migrate` imajı bayattır ve `build` ister. Ama `backend`'de aynı
+> override yoktu.
+>
+> **ÇÖZÜM:** aynı açık `DATABASE_URL` override'ı `backend`'e de eklendi.
+> Ezmek güvenli: uygulama `DATABASE_URL`'i **okumaz** (`grep -rn DATABASE_URL src/`
+> → tek eşleşme `cli/commands/migrate.py`); runtime `TARLA_DB_*` üzerinden bağlanır.
+> Üretim yolundan doğrulandı (elle override VERMEDEN): `alembic current` → head ·
+> `downgrade -1`/`upgrade head` → kolon 1→0→1 · `GET /health` → **HTTP 200**.
 >
 > 🆕 **DK-16 (yeni, 2026-08-05):** `metrics` zinciri **uçtan uca canlı mesajla** doğrulanmadı.
 > Her halka ayrı ayrı mutasyonla test edildi (worker üretim · to_dict serileştirme · platform
