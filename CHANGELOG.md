@@ -7,6 +7,65 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.5.0] - 2026-08-07 — CONTRACT TUR 3 (motor-agnostik kalibrasyon KAPANDI)
+
+> ✅ **TUR 3 KAPANDI.** `7.4.0`'ın `PENDING_REPIN` beyanı tam olarak bu turu bekliyordu
+> (*"TUR 3 açık — motor-agnostik kalibrasyon"*); `tools/pin_version.py --minor` dosyayı
+> baştan üretince beyan kendini sildi ve üç kapı birden sertleşti.
+>
+> **Kapsam DAR ve ÖLÇÜLDÜ:** `v7.4.0..master` arasında 59 commit var ama **sözleşme
+> artefaktı olarak yalnız 3 dosya** değişti (`git diff --stat v7.4.0..master -- schemas/
+> enums/ api/`). Üçü de **additive** → MINOR, `Breaking Change: NO`.
+
+### Added
+
+- **`enums/radiometric_mode.enum.v1.json`** → yeni değer **`SENSOR_CORRECTED`**
+  (sensör/kamera modeli düzeltmeleri uygulandı, ışınım normalizasyonu YOK).
+  `tools/breaking_change_detector.py` doğruladı: *"Non-Breaking Changes — Enum value
+  added"*.
+- **`enums/radiometric_mode.enum.v1.json`** → **`x-ladder`**: eksen bayrak KÜMESİ değil
+  **monoton merdiven** (`RAW_DN < SENSOR_CORRECTED < SUN_IRRADIANCE < PANEL`). Yeni
+  düzeltme aşaması çıkarsa kendi basamağı eklenir; kombinasyon başına değer eklenmez
+  (n aşama → n değer, 2ⁿ değil). Tüketici kuralı: değer ADINA göre `if/elif` değil,
+  `order` içindeki İNDEKS ile karşılaştır.
+- **`enums/radiometric_mode.enum.v1.json`** → **`x-provenance-axis`**: bu eksen "NE
+  yapıldı"yı söyler, "KİM yaptı"yı DEĞİL. Kim bilgisi `calibration_method` ekseninde
+  (`FACTORY_RADIOMETRIC` / `FACTORY_RADIOMETRIC_ILS` dahil). **Gerekçe:** kameralar
+  radyometrik düzeltmeyi kendi yapmaya başlarsa motor bayrağı `none` olsa bile veri ham
+  DN DEĞİLDİR; bu ayrım olmadan otomatik kalibre eden bir kamera
+  `RAW_DN → NONE → KR-018 sert red` ile GERÇEKTEN KALİBRE veriyi reddettirirdi.
+- **`enums/calibration_type.enum.v1.json`** → türetme tablosuna iki göz
+  (`relative|SENSOR_CORRECTED` ve `absolute|SENSOR_CORRECTED` → **`RELATIVE`**) +
+  **`x-never-upgrade-rule`**: `radiometric_mode` sensör sınıfını ASLA YÜKSELTMEZ,
+  gerekirse DÜŞÜRÜR. Kural yeni değil — `absolute|RAW_DN → NONE` tabloda zaten vardı.
+  E13-R'nin `map.absolute.allowed` kümesi `RELATIVE` ile **tamamlandı** (değiştirilmedi):
+  o küme yazıldığında merdivende `SUN_IRRADIANCE`'ın altında basamak YOKTU.
+- **`schemas/edge/calibrated_dataset_manifest.v1.schema.json`** → **opsiyonel `outputs[]`**
+  (`$defs.file_artifact` + bağımlı `$defs.uri` / `$defs.sha256`). **DK-28:** RGB
+  ortomozaiğin adresi edge'den platforma HİÇBİR YOLDAN geçmiyordu; taban görüntü girişi
+  `layer_type: "ORTHO"` taşır ve platform onu `datasets.rgb_ortho_uri`'ye yazar.
+  Edge'de **opsiyonel**, platform formunda **zorunlu** — fark bilerektir ve
+  `tests/test_file_artifact_parity.py` ile kilitlidir.
+
+### Changed (normatif metin)
+
+- **`docs/TARLAANALIZ_SSOT_v1_2_0.txt` → `[KR-034]`**: desteklenen motorlar
+  Pix4Dfields + DJI Terra + **OpenDroneMap (ODM)**. *"İkisinin de yerel CLI'ı yoktur"*
+  mutlağı olguyla çeliştiği için daraltıldı — **ODM'nin CLI'ı VARDIR** (2026-08-06'da
+  ölçüldü: ODM 3.6.1, aynı 670 fotoğrafla üç kol, kol başına ~14 dk, panelsiz, GPU
+  gerekmedi). Edge'in okuma sözleşmesi DEĞİŞMEDİ: her motor için tek yol yine
+  `engine_adapter` ile çıktı dizinini okumak.
+
+### Consumer etkisi
+
+| Depo | Etki |
+|---|---|
+| **edge** | `outputs[]` vendor'landı → edge SemVer `1.5.0` → `1.6.0` (MINOR) + hash bloğu yeniden üretilir. `OpenDroneMapAdapter` + `CalibratedManifestWriter` bu sürüme dayanır. |
+| **platform** | Submodule pini `v7.5.0`'a alınır (I-3). `datasets.rgb_ortho_uri` kolonu hazır (PR #394). |
+| **worker** | Bu turda değişen 3 dosyanın hiçbiri worker'ın 8 izli dosyasında DEĞİL → etki yok. |
+
+---
+
 ## [7.4.0] - 2026-08-01 — CONTRACT TUR 2 (C8 ile kapatıldı)
 
 > ✅ **TUR 2 KAPANDI.** `PENDING_REPIN` beyanı kalktı, agrega checksum yeniden pinlendi
