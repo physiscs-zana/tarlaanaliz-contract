@@ -80,16 +80,26 @@
     "source": "drone_capability_matrix.yaml → capabilities[drone_type].calibration_class (kanonik, makine-okunur)",
     "map": {
       "relative": {
-        "allowed": ["RELATIVE"],
+        "allowed": [
+          "RELATIVE"
+        ],
         "why": "Sensör sınıfı göreli. Ölçülen dayanak üç yerde birden: (1) `drone_capability_matrix.yaml` → `DJI_MAVIC_3M.calibration_class: relative` + notu *'Pix4Dfields göreli kalibrasyon sağlar'*; (2) `docs/TARLAANALIZ_SSOT_v1_2_0.txt:79` *'Pix4Dfields, M3M için tam radyometrik kalibrasyon DEĞİL, göreli (relative) kalibrasyon sağlar'* ve `:1014` aynı hüküm; (3) platform `src/core/domain/value_objects/calibration_class.py:41` → `DJI_MAVIC_3M: RELATIVE` (tolerans 2.0× gevşetmesi bu sınıfa bağlı). Panel kullanılmış olması bu sınıfı yükseltmez: panel SOP gereği zaten zorunludur (KR-018), yani panelin varlığı sınıflar arasında AYIRT EDİCİ bir sinyal değildir."
       },
       "absolute": {
-        "allowed": ["ABSOLUTE", "PANEL_ABSOLUTE"],
-        "why": "Sensör sınıfı mutlak (Sentera 6X · MicaSense RedEdge-P · Altum-PT · Sequoia+). Edge `ABSOLUTE` yazar; platform sınırında `PANEL_ABSOLUTE`'a normalize edilebilir (bkz. `x-normalization`)."
+        "allowed": [
+          "ABSOLUTE",
+          "PANEL_ABSOLUTE",
+          "RELATIVE"
+        ],
+        "why": "Sensör sınıfı mutlak (Sentera 6X · MicaSense RedEdge-P · Altum-PT · Sequoia+). Edge `ABSOLUTE` yazar; platform sınırında `PANEL_ABSOLUTE`'a normalize edilebilir (bkz. `x-normalization`).\n\n➕ 2026-08-07 (SENSOR_CORRECTED basamağı eklenirken): `RELATIVE` kümeye eklendi. Bu E13-R'yi DEĞİŞTİRMEZ, TAMAMLAR — E13-R yazıldığında merdivende SUN_IRRADIANCE'ın altında bir basamak YOKTU. Yeni basamak ışınım normalizasyonu içermediği için `absolute` sınıflı sensör bile o kipte mutlak reflektans üretmez. Yön DAİMA aşağıdır (bkz. x-never-upgrade-rule); yukarı yönlü yükseltme P14'te fail-OPEN diye kaldırıldı."
       }
     },
     "forbidden": {
-      "relative": ["ABSOLUTE", "PANEL_ABSOLUTE", "DLS2_RELATIVE"],
+      "relative": [
+        "ABSOLUTE",
+        "PANEL_ABSOLUTE",
+        "DLS2_RELATIVE"
+      ],
       "why": "🔴 Göreli sınıf bir dronun paketine mutlak etiket yazmak ÜÇ zincirî bozar: (1) worker `FINETUNE_ALLOWED_CALIBRATIONS` (`src/core/domain/enums.py:73`) `ABSOLUTE`'u ince ayara UYGUN sayar → K-3'ün *'fine-tuning: SADECE PANEL+DLS2'* kuralı sessizce delinir ve göreli veri model eğitimine girer; (2) platform'un göreli sınıfa ayırdığı **2.0× tolerans** gevşemesi devreye girmez; (3) zaman serisi karşılaştırmaları mutlak tutarlılık varsayar — SSOT `:1014` bunu açıkça reddediyor."
     },
     "x-radiometric-axis-2026-08-02": {
@@ -102,7 +112,9 @@
         "relative|RAW_DN": "NONE",
         "absolute|PANEL": "ABSOLUTE",
         "absolute|SUN_IRRADIANCE": "ABSOLUTE",
-        "absolute|RAW_DN": "NONE"
+        "absolute|RAW_DN": "NONE",
+        "relative|SENSOR_CORRECTED": "RELATIVE",
+        "absolute|SENSOR_CORRECTED": "RELATIVE"
       },
       "invariants": [
         "Tablo TAM olmalıdır: her (calibration_class × radiometric_mode) çifti bir değer üretir; boş göz YOKTUR.",
@@ -110,7 +122,8 @@
         "Tablonun reflektans kipli gözleri (`PANEL` / `SUN_IRRADIANCE`) yukarıdaki `map.<class>.allowed` kümesinin İÇİNDE olmalıdır — iki blok ayrışamaz.",
         "`DLS2_RELATIVE` tablonun hiçbir gözünde üretilmez (bkz. `forbidden` + `notes.c6b_subset_alignment`)."
       ],
-      "consumer_obligation": "edge: `calibration_gate/calibration_type_resolver.py::resolve_calibration_type` bu tabloyu uygular ve enum'u BU dosyadan yükler (hardcode YASAK — ayrışma build'i kırar). `NONE` üretildiğinde kalibre manifest HİÇ ÜRETİLMEZ; paket `REJECTED_QUARANTINE`'a gider."
+      "consumer_obligation": "edge: `calibration_gate/calibration_type_resolver.py::resolve_calibration_type` bu tabloyu uygular ve enum'u BU dosyadan yükler (hardcode YASAK — ayrışma build'i kırar). `NONE` üretildiğinde kalibre manifest HİÇ ÜRETİLMEZ; paket `REJECTED_QUARANTINE`'a gider.",
+      "x-never-upgrade-rule": "MERDİVEN × SINIF birleşim kuralı — GELECEĞE AÇIK, göz göz karar gerektirmez: `radiometric_mode` sensör sınıfını **ASLA YÜKSELTMEZ, gerekirse DÜŞÜRÜR**. Bu kural yeni değil, tablonun kendisinde zaten vardı: `absolute|RAW_DN → NONE` (fabrika kalibrasyonlu sensör bile ham DN'i telafi etmez — test_raw_dn_is_hard_reject_for_every_drone_class). SENSOR_CORRECTED merdivende SUN_IRRADIANCE'ın ALTINDA olduğu için `absolute` sınıfı `RELATIVE`'e düşer: ışınım normalizasyonu yapılmamış çıktı aydınlatma değişimine bağlı kalır, mutlak reflektans değildir. Ters yön (zayıf kipte sınıfı yükseltmek) YASAKTIR — P14'te kaldırılan 'CALIBRATED → PANEL_ABSOLUTE güvenlik-ağı' tam olarak buydu ve fail-OPEN'dı. SONUÇ: merdivene ileride eklenen her yeni basamak için ayrı karar gerekmez; basamağın RANK'ı kuralı belirler."
     },
     "consumer_obligation": {
       "edge": "E14 `calibration_result_writer` / `calibrated_validator`: kalibre manifeste yazılacak değeri intake'teki drone modelinden, matristen VE motor radyometrik kip beyanından TÜRETİR (bkz. `x-radiometric-axis-2026-08-02`); sabit yazmaz. Matriste olmayan bir drone için değer uydurulmaz — kalibrasyon reddedilir (fail-closed, KR-018).",

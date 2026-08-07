@@ -64,7 +64,7 @@ def test_radiometric_mode_enum_exists_and_is_well_formed() -> None:
     for key in ("$schema", "$id", "title", "description", "type", "enum", "x-enum-descriptions"):
         assert key in data, f"radiometric_mode enum'unda zorunlu anahtar yok: {key}"
     assert data["type"] == "string"
-    assert data["enum"] == ["PANEL", "SUN_IRRADIANCE", "RAW_DN"]
+    assert data["enum"] == ["PANEL", "SUN_IRRADIANCE", "SENSOR_CORRECTED", "RAW_DN"]
     # Her değerin açıklaması olmalı — açıklamasız değer, anlamı koda gömer.
     assert set(data["x-enum-descriptions"]) == set(data["enum"])
 
