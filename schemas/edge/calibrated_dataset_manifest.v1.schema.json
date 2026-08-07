@@ -231,6 +231,16 @@
   },
   "x-updated": "2026-07-31",
   "$defs": {
+    "uri": {
+      "type": "string",
+      "minLength": 1,
+      "description": "URI or path reference (e.g., s3://..., file://..., https://...)."
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[A-Fa-f0-9]{64}$",
+      "description": "SHA-256 hex digest of the referenced content."
+    },
     "file_artifact": {
       "type": "object",
       "required": [
