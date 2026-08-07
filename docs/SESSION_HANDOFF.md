@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-05 (**dördüncü oturum** — DK-17/DK-18 kalıcı çözüm + worker ilk gerçek iş mesajı)
+**Son güncelleme:** 2026-08-07 (**beşinci oturum** — açık listenin kapatılması: W8/Ç-2 · DK-23 · DK-26 · DK-28 keşfi)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,44 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-05, **dördüncü oturum: DK-17/DK-18 kalıcı çözüm + İLK GERÇEK İŞ MESAJI**)
+## 0.A EN GÜNCEL — (2026-08-07, **beşinci oturum: açık listenin kapatılması — W8/Ç-2 · DK-23 · DK-26 · DK-28 keşfi**)
+
+> ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE
+>
+> 1. **Üç açık kalem kapandı**, üçü de artık **kapıya** bağlı (yorum değil): W8/Ç-2
+>    (kalibrasyon motoru → `encoder_version` tetikleyicisi + BUILD FAIL kapısı) ·
+>    DK-23 (üç katmanda ondalık daralması) · DK-26 (eskalasyon FK önkoşulu).
+> 2. **DK-28 KEŞFEDİLDİ:** "Gerçek Görünüm" düğmesi **üretimde hiç görünmüyor** —
+>    arayüz kusursuz ve test edilmiş, ama `maps.rgb` üreticisi **hiç yok**
+>    (`_MAPS_BY_RESULT_MODE` = ndvi/ndre/stress_ratio). Karar gerekiyor, eylem planına
+>    üç seçenekle yazıldı.
+> 3. **Eylem planındaki bir MEKANİZMA İDDİASI çürütüldü** (DK-26'nın "aio_pika tüketiciyi
+>    öldürüyor"u) — kütüphane kaynağından ölçüldü. Altındaki kusur gerçekti ve kapatıldı.
+>
+> ### Açılan PR'lar (bu oturum)
+>
+> | Depo | PR | İçerik |
+> |---|---|---|
+> | worker | **#203** | W8/Ç-2 — `CALIBRATION_SCALE_CHANGE` tetikleyicisi + `encoder_version_reason` build kapısı |
+> | platform | **#393** | DK-23 (numeric(4,3) hizalaması) + DK-26 (eskalasyon FK kapısı) |
+> | contract | **bu PR** | eylem planı: W8/DK-23/DK-26 kapandı, DK-28 açıldı |
+>
+> ### Ölçülen kapılar
+>
+> worker `pytest tests/unit` **3928 passed** · platform **5730 passed** (`PYTEST_EXIT=0`) ·
+> iki depoda `ruff` temiz · platform `mypy src/` 461 dosya 0 sorun ·
+> **13 mutasyon koşuldu, 13'ü de testleri kırdı**, her birinin yanında pozitif kontrol.
+>
+> ### Ortam notu
+>
+> **Docker Desktop yeniden ayağa kaldırıldı (29.4.3).** 2026-08-06 15:22–2026-08-07 00:05
+> UTC arasında **GitHub Actions büyük kesintisi** vardı; o pencerede kuyruğa giren
+> contract master koşusu **kalıcı olarak `queued`'da çakılı** kaldı (iptal/rerun ikisi de
+> reddediyor — kurtarma yolu yeni push). Worker master `0b4fd5e` **yeşil** (ölçüldü).
+
+---
+
+## 0.A-d ÖNCEKİ TUR — (2026-08-05, **dördüncü oturum: DK-17/DK-18 kalıcı çözüm + İLK GERÇEK İŞ MESAJI**)
 
 > ℹ️ Aynı günün önceki üç turu §0.A-c / §0.A-b / §0.A-a'dadır ve geçerliliğini KORUR.
 >
