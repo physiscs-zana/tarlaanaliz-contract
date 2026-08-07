@@ -1,19 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.4.0
+## Version: 7.5.0
 
-**Release Date:** 2026-08-01T18:15:21.806126Z  
+**Release Date:** 2026-08-07T09:55:16.853558Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `c7b8d46eba2dcc49395a76e50d86e3b7f32742c1f912d13e60a9c1c9a59949ee`
-
-**Checksum State:** PENDING_REPIN — TUR 3 açık (2026-08-02, motor-agnostik kalibrasyon).
-Tur içeriği: `enums/radiometric_mode.enum.v1.json` (**yeni kanonik enum**) +
-`enums/calibration_type.enum.v1.json → x-derivation.x-radiometric-axis-2026-08-02`
-(iki girdili türetme tablosu) + KR-034/KR-030 normatif metni motor-agnostik.
-Yukarıdaki agrega checksum bu turdan ÖNCEKİ hâli gösterir ve bilerek bayattır;
-bir sonraki C8 töreninde `tools/pin_version.py` dosyayı baştan üretince **bu satır
-kendini siler** ve üç kapı (CI `verify-checksums` · `test_real_repo_checksum_verifies`
-· `test_pending_propagation_is_empty`) aynı anda sertleşir.
+**Contracts Checksum (SHA-256):** `20105240bddc8539a6e68e44023c810e14bbce78d01f9efc545183a7fbce2bad`
 
 ---
 
@@ -62,7 +53,7 @@ Individual file hashes for verification:
 - `enums/analysis_type.enum.v1.json`  
   `7f470beebd06c02049c2d8fe182ab9d6f62e58f11be34442368f3054d965c3f1`
 - `enums/calibration_type.enum.v1.json`  
-  `8bde0136593bc443ac6bedeb4e117d88f1dd8c01db56dea90d5cfd935902f28f`
+  `8c35271314e57a936dd1cf7c6fa62badea272a551b1d172e4456f7fe2d649f29`
 - `enums/crop_type.enum.v1.json`  
   `34babfb9245ca3999bfef7f06846c8835592acbf0cd2804c6167df8bd9451194`
 - `enums/dataset_status.enum.v1.json`  
@@ -89,6 +80,8 @@ Individual file hashes for verification:
   `889b0f3010678976e7ac351977b5d83391d9d119c91e50e060bc027c32134206`
 - `enums/quarantine_decision.enum.v1.json`  
   `641b5a9e766f7e91837695954d1d0b45aeca6bfbe67356f12a0a65f762fa91c0`
+- `enums/radiometric_mode.enum.v1.json`  
+  `da7c319fa30be25fb42db9cc03d777815a9975c48ae46580582da9e861546ae9`
 - `enums/report_phase.enum.v1.json`  
   `1769ebc86fdcfbd4343951e21a01d6df872981a907eef7af8bcfdd90d0175cb2`
 - `enums/role.enum.v1.json`  
@@ -143,7 +136,7 @@ Individual file hashes for verification:
 - `schemas/edge/attestation_record.v1.schema.json`  
   `dfcc65d709746107eceb67f943dcb60a13a900008e959f0f38df197d6cc1b95b`
 - `schemas/edge/calibrated_dataset_manifest.v1.schema.json`  
-  `848c4a6155fdd139368f5f3345208441bb59d2b5d9ce6f118605edc3074aa83c`
+  `766891608ffd6f00ab49d53a3901e076beaa66b684825ee0bcca69356cb59c4c`
 - `schemas/edge/calibration_result.v1.schema.json`  
   `cf67bfa0642dc24e0745ed4fd32cf12c1190206e36684a06c7127d3c816c58be`
 - `schemas/edge/dataset_manifest.v1.schema.json`  
@@ -262,15 +255,21 @@ Individual file hashes for verification:
 ### API Specs
 
 - `api/edge_local.v1.yaml`  
-  `137a9a4a00ba7debae616da7368d26830b2df11618f79fc386df835c1344bf16`
+  `28acc6504c664f55f7cb9ddb8fe0f136927c6d3be378daa9e4013fa8665f73b1`
 - `api/platform_internal.v1.yaml`  
-  `0a192d8d385d09db4825bff2a045452ac314cf9c713608cd3f3468fe4d19aafc`
+  `621fd762f7af145b8625dacd9843b959a834b166ca988a230af56d894d2c7447`
 - `api/platform_public.v1.yaml`  
-  `a3132146a8832a9e8dd6c92ebcca39c6808cbc55c50072eb1fe0f93acf8cdd36`
+  `721e965cd71bccd0f3d88f90a0a258a43a40b463b78fb0ec588034b662bd95d4`
 
 ---
 
 ## Changelog
+
+### v7.5.0 (2026-08-07)
+
+**Breaking:** NO
+
+Version pinned automatically.
 
 ### v7.4.0 (2026-08-01)
 
@@ -384,7 +383,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("c7b8d46eba2dcc49395a76e50d86e3b7f32742c1f912d13e60a9c1c9a59949ee"), "Contracts checksum mismatch!"
+assert verify_contracts("20105240bddc8539a6e68e44023c810e14bbce78d01f9efc545183a7fbce2bad"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -397,7 +396,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("c7b8d46eba2dcc49395a76e50d86e3b7f32742c1f912d13e60a9c1c9a59949ee"), "Contracts checksum mismatch!");
+assert(verifyContracts("20105240bddc8539a6e68e44023c810e14bbce78d01f9efc545183a7fbce2bad"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -448,4 +447,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-08-01T18:15:21.806126Z
+**Last Updated:** 2026-08-07T09:55:16.853558Z
