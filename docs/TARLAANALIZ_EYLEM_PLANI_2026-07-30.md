@@ -572,19 +572,100 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > biçimlendirici onu düşürüyordu** — operatör sebebi hiç göremiyordu. Mesaj artık
 > `type(exc).__name__` + metni **taşıyor**.
 >
-> 🟠 **DK-26 (yeni, 2026-08-06).** Platform `worker_bridge` tüketicisi **düşmüş durumda** —
-> platformun kendi sağlık kontrolü söylüyor: `health-degraded: worker_bridge unreachable`.
-> Kuyruklar dolu bekliyor (`analysis_results 1 · expert_review_queue 1`, tüketici 0).
-> Muhtemel kök neden ölçüldü: FK ihlali `_handle_expert_escalation`'da yakalanmayan
-> `IntegrityError` fırlatıyor ve **aio_pika tüketici görevini kalıcı olarak öldürüyor**
-> (`Task finished … exception=IntegrityError`). Yeniden bağlanma yok.
+> 🟠 **DK-26 (yeni, 2026-08-06) — ✅ KAPANDI 2026-08-07, ama MEKANİZMA İDDİASI ÇÜRÜDÜ.**
+> Platform `worker_bridge` tüketicisi **düşmüş durumda** — platformun kendi sağlık kontrolü
+> söylüyor: `health-degraded: worker_bridge unreachable`. Kuyruklar dolu bekliyor
+> (`analysis_results 1 · expert_review_queue 1`, tüketici 0).
 >
-> 🟠 **DK-23 (yeni, 2026-08-05).** `_overall_health_from_body` değeri **`round(raw, 2)`**
-> ile 2 ondalığa indiriyor; `analysis_results.overall_health_index` kolonu gerçekte
-> **`numeric(4,3)`** (ölçüldü: `information_schema`), ORM'de ise `Numeric(3, 2)` yazıyor.
+> ⛔ **"aio_pika tüketici görevini KALICI OLARAK öldürüyor, yeniden bağlanma yok" iddiası
+> ÖLÇÜMLE ÇÜRÜTÜLDÜ (2026-08-07).** İki bağımsız ölçüm:
+> * `aio_pika 9.6.2` + `aiormq`: teslim görevi `Channel.create_task(consumer(message))` ile
+>   açılır; `FutureStore.add`'in done-callback'i **yalnızca görevi kümeden çıkaran bir
+>   `remover`**'dır — istisnayı kanala YAYMAZ, kanalı kapatmaz.
+> * `get_async_session` hatada `rollback()` + `close()` yapıyor → bağlantı havuzu da
+>   zehirlenmiyor ("failed transaction" hipotezi de düşüyor).
+>
+> Yani tüketici **ölmüyordu**. Gözlenen "unreachable" durumu, aynı oturumda Docker
+> Desktop'ın kapanmış olmasıyla açıklanır (yığın komple aşağıdaydı).
+>
+> ✅ **AMA ALTINDAKİ KUSUR GERÇEKTİ ve kapatıldı.** `expert_reviews.result_id`,
+> `analysis_results.result_id`'ye FK'dir (`expert_review_model.py:52`). Eskalasyon
+> işleyicisi ana satırı **yalnız koşullu** yaratıyordu (job_id VE mission_id dolu VE
+> mission kaydı var VE `mission.field_id` dolu). Koşul tutmazsa
+> `_build_expert_review_rows` (`worker_bridge_consumer.py:219`) `result_id`'yi
+> `UUID(job_id)` — job_id yoksa **rastgele `uuid4()`** — yapıp satırı yine üretiyordu;
+> rastgele UUID `analysis_results`'ta asla bulunmaz → commit **kesin** FK ihlali.
+> Gerçek zarar tüketicinin ölmesi değil: **eskalasyon her seferinde sessizce DLX'e
+> gidiyordu** (uzman incelemesi hiç yaratılmıyor → KR-019 zinciri kopuyor) ve operatör
+> Postgres'in FK metnini görüyordu, EKSİK OLANIN adını değil.
+> Çözüm: saf `escalation_precondition_error()` kapısı + `EscalationPreconditionUnmet`
+> istisnası — DB'ye hiç dokunmadan, eksik alanın adıyla fail-closed.
+> Test: `tests/unit/infrastructure/messaging/test_escalation_fk_precondition.py`
+> (3 mutasyon öldürüldü + pozitif kontrol).
+>
+> 🟠 **DK-23 (yeni, 2026-08-05) — ✅ KAPANDI 2026-08-07.** `_overall_health_from_body`
+> değeri **`round(raw, 2)`** ile 2 ondalığa indiriyor; `analysis_results.overall_health_index`
+> kolonu gerçekte **`numeric(4,3)`** (ölçüldü: `information_schema`; kaynak göç
+> `alembic/versions/20260103_007_analysis_jobs.py:147`), ORM'de ise `Numeric(3, 2)` yazıyor.
 > `2026_08_04_analysis_results_model_align.py:40` daraltmayı **bilinçli olarak ayrı bir
 > karara bırakmış** — ama `round(..., 2)` o kararı **sessizce zaten almış** durumda:
 > demo satırındaki `0.264` kod yoluyla **asla** üretilemez, `0.26` olur.
+>
+> Üç katman ayrı ayrı yanlıştı, üçü birden hizalandı (göç GEREKMEDİ — daraltan taraf koddu):
+> tüketici `round(raw, 3)` · ORM `Numeric(4, 3)` · ölçüm-yok dalı `Decimal("0.000")`.
+> ORM sapması ayrıca **testleri üretimden farklı bir şemada koşturuyordu** (`create_all`
+> ORM'i kullanır) — dar kolonda yeşil geçen test üretimi temsil etmez.
+> Gerçek ÖN RAPOR ölçüsüyle kanıt: `mean_ndvi = 0.2657` → eski kod `0.27`, yeni kod
+> **`0.266`**. Mevcut testlerden **ikisi kusuru kilitliyordu** (`0.264 → Decimal("0.26")`
+> bekliyorlardı); ölçülüp güncellendiler. 3 mutasyon öldürüldü + pozitif kontrol.
+> Sınır değerleri üretim yolundan ölçüldü: `0.0 · 1.0 · 1.5 · -0.5 · 0.9995` — hepsi
+> `[0,1]` değişmezini koruyor ve `numeric(4,3)`'e sığıyor (`1.000` = 4 basamak, tam sınır).
+>
+> ⚠️ **AŞAĞI AKIŞTA ÖLÇÜLEN YAN ETKİ (öz-denetimde bulundu, gizlenmiyor):**
+> `retention_service.py:257` → `health_score=int(ar.overall_health_index * 100)`.
+> `int()` **aşağı keser**, yuvarlamaz. Aynı ölçüm (0.2657) için: eski zincir
+> `0.27 → 27`, yeni zincir `0.266 → **26**`. Gerçek değer %26.57 olduğuna göre yeni
+> sayı doğru tarafta (eski 27, çift-yuvarlamanın artığıydı) — ama bu **bir davranış
+> değişimidir** ve `field_index_timeseries.health_score` ile `avg_health_score`
+> toplulaştırmasına yansır. `int()` → `round()` düzeltmesi BU PR'A ALINMADI: ayrı bir
+> karar (retention davranışını tek başına değiştirir) ve kapsam dışı.
+>
+> 🔴 **DK-28 (yeni, 2026-08-07) — "Gerçek Görünüm" düğmesi ÜRETİMDE HİÇ GÖRÜNMEZ.**
+> Kalem aslında "düğmenin görsel doğrulaması" idi; doğrulama **yapılamadı, çünkü
+> doğrulanacak bir şey yok** — özellik uçtan uca ölü. Zincir komutla ölçüldü:
+>
+> | Halka | Ölçüm | Sonuç |
+> |---|---|---|
+> | Arayüz | `MapLayerViewer.test.tsx` 6 test (yerleşim sırası, varsayılan kapalı, örtme hatası, pozitif kontrol) | ✅ doğru ve test edilmiş |
+> | Platform kapısı | `tile_service_impl.py:130` `_BASEMAP_INDEX = "rgb"` · `:351` `has_basemap = _resolve_cog_uri(result_id, "rgb") is not None` | manifestte `maps.rgb.geotiff` arıyor |
+> | Manifest kaynağı | `_resolve_manifest_uri` → `DatasetModel.result_uri` = **worker'ın sonuç manifesti** | worker üretiyor |
+> | Worker üretimi | `reporting_agent.py:52-57` `_MAPS_BY_RESULT_MODE` = `ndvi, ndre, stress_ratio` — **`rgb` HİÇBİR result_mode'da yok** | ❌ |
+>
+> Anahtar zinciri **tek yönlü ve kapalı**: `_build_manifest` → `"maps": index_maps`
+> (birebir) ← `sink.upload(artifacts)` ← `render_index_maps` yalnız `allowed` içinde
+> dönüyor ← `allowed = _MAPS_BY_RESULT_MODE[result_mode]`. Yani `maps.rgb` **üretilemez**.
+>
+> ⚠️ **İlk kanıtım zayıftı, öz-denetimde düzeltildi.** `grep -rn '"rgb"' worker/src` → 0
+> eşleşme yazmıştım; **pozitif kontrolle** sınayınca (`"ndvi"` 17 · `"stress_ratio"` 14
+> eşleşme veriyor, yani araç çalışıyor) geniş tarama `grep -rin "\brgb\b"` **114 eşleşme**
+> buldu. Hepsi incelendi: SSL eğitimi / augmentation / encoder / renderer **iç değişkenleri**
+> — hiçbiri artefakt anahtarı değil. Tek gerçek-renk çıktısı `true_color.png`, yalnız
+> `expert_bundle_persistence.py` üzerinden **yerel uzman paketi dizinine** yazılıyor
+> (`<output_dir>/<job_id>/true_color.png` + kendi manifesti) ve **PNG**'dir; tile servisi
+> ise açıkça GeoTIFF ister (*"GeoTIFF (COG) tercih; yoksa tile render edilemez"*).
+> Sonuç değişmedi ama artık kanıtlı: **dar grep'in "0 eşleşme"si tek başına kanıt değildi.**
+>
+> Yani `has_basemap` **yapısal olarak daima False**; düğme hiç render edilmez. Arayüz
+> testleri `has_basemap: true`'yu **kendileri enjekte ettiği** için yeşil — bu tam olarak
+> "alan-kapısı ≠ bilgi-kapısı" tuzağı: tüketici doğru, ÜRETİCİ yok.
+>
+> ⚠️ **Tek satırlık düzeltmesi YOK, mimari karar gerektiriyor.** `render_true_color_composite`
+> mevcut ama yalnız `expert_bundle_producer.py:320`'ye bağlı (uzman paketi, çiftçi haritası
+> değil). Üstelik Mavic 3M'in **mavi bandı yok** (G/R/RE/NIR) — gerçek renkli ortofoto
+> worker'ın hesapladığı bir indeks değil, drone'un ayrı 20MP RGB kamerasının Terra/ODM
+> ile işlenmiş **girdi artefaktıdır**. Doğru akış: ingest → dataset manifesti →
+> `maps.rgb.geotiff`. Karar sahibinin: (a) RGB ortofotoyu ingest hattına ekle,
+> (b) düğmeyi kaldır, (c) olduğu gibi bırak ve belgele.
 >
 > 🆕 **DK-16 (yeni, 2026-08-05):** `metrics` zinciri **uçtan uca canlı mesajla** doğrulanmadı.
 > Her halka ayrı ayrı mutasyonla test edildi (worker üretim · to_dict serileştirme · platform
@@ -1585,6 +1666,33 @@ kıyaslanamaz hâle gelir. Bu, KİLİT-1'in tam olarak kapattığı hata sınıf
 **"kalibrasyon motoru veya reflektans ölçeği değişimi"** eklensin; tercihen
 `model_registry.yaml`'a `calibration_engine` alanı konup değişimi runbook'ta zorunlu artırıma
 bağlansın. **Maliyeti düşük, atlanması sessiz ve pahalı.**
+
+✅ **W8 / Ç-2 KAPANDI (2026-08-07).** Liste artık **yorum değil, KAPI**:
+
+* `src/shared/encoder_version.py` → `EMBEDDING_SPACE_DRIFT_TRIGGERS` (kapalı küme):
+  `SSL_RETRAIN · BACKBONE_SWAP · CHANNEL_TRANSFER · VIT_LORA_ATTENTION ·`
+  **`CALIBRATION_SCALE_CHANGE`** (+ `INITIAL`, yalnız sürüm 1 için).
+* `config/model_registry.yaml` → yeni kardeş alan `encoder_version_reason`.
+  Öneriden farkı: `calibration_engine` **motorun adını** tutardı (Terra/ODM), oysa
+  guard'ın ihtiyacı "gömme uzayı kaydı mı?" sorusunun cevabı. Gerekçe alanı hem
+  kalibrasyon hem de diğer dört tetikleyiciyi **tek eksende** taşır; motor adı zaten
+  `calibration_metadata` sözleşmesinde iş mesajıyla geliyor (mükerrer kaynak açılmadı).
+* `scripts/validate_model_registry.py` → `find_encoder_version_violations()`:
+  eksik / uydurma / sürüme uymayan gerekçe = **BUILD FAIL** (contracts_gate.yml:79'da
+  zaten koşuyor). Sürüm 1 ⇒ `INITIAL`; her artırım ⇒ bir tetikleyici adı.
+* Sürüklenme kapıları: kanonik küme ile **docstring** ve **operatörün gerçekten baktığı**
+  `model_registry.yaml` metni ayrık düşerse test kırmızıya döner.
+* 4 mutasyon öldürüldü (tetikleyiciyi sil · doğrulayıcıyı hep-geçer yap · `main`'den
+  kontrolü çıkar · canlı registry'ye uydurma gerekçe yaz) + pozitif kontrol; gerçek kapı
+  uydurma gerekçede `exit=1` verdi.
+
+**Ölçülmüş gerekçe (kanıt):** ODM `none → camera`, aynı tarla + aynı 670 fotoğraf →
+ortalama NDVI 0.182 → 0.267 (**+%47**), "en zayıf %20" IoU **0.355**; Terra ↔ ODM piksel
+sıra korelasyonu **0.299** (`docs/TERRA_ODM_KARSILASTIRMA_2026-08-06.md`).
+
+⚠️ **AL-W8 hâlâ açık ve W8'in yanında durmalı:** ilk gerçek artırımdan ÖNCE legacy
+`None`-sürüm gömmeleri v1'e damgalanmalı (fail-open köprü kapansın), aksi hâlde eski
+vektörler gerçek bir gömme-uzayı değişiminin ötesine "bedava" biner.
 
 ### Ç-3 · Mahsul sayısı üç kaynakta üç farklı
 
