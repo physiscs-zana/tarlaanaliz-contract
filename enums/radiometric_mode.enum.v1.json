@@ -7,12 +7,14 @@
   "enum": [
     "PANEL",
     "SUN_IRRADIANCE",
+    "SENSOR_CORRECTED",
     "RAW_DN"
   ],
   "x-enum-descriptions": {
     "PANEL": "Reflektans paneli kullanılarak radyometrik düzeltme yapıldı. Motor bazlı kısıtlar vardır ve ÜRÜNE ÖZGÜDÜR: Pix4Dfields DJI P4M/M3M için YALNIZ Micasense ve Sentera hedeflerini kabul eder (Parrot paneli açıkça UYUMSUZ); DJI Terra en az 1, en çok 3 panel grubu alır ve her bandın reflektans katsayısı ELLE girilir.",
     "SUN_IRRADIANCE": "Güneş/ışınım sensörü verisiyle düzeltme yapıldı, reflektans paneli yok. Pix4Dfields'in DJI M3M için uyguladığı kip budur: güneş sensörü verisi EXIF'ten otomatik okunur, ancak üretici sensör YÖNELİMİNİ yayımlamadığı için güneş AÇISI düzeltmesi yapılamaz ve yalnız 'Sun Irradiance' düzeltme tipi uygulanabilir. Bu kipte çıktı reflektansla ORANTILI göreli değerdir, mutlak reflektans DEĞİLDİR.",
-    "RAW_DN": "Radyometrik düzeltme UYGULANMADI. Çıktı ham dijital sayıdır (digital number — sensör sayımı), reflektans değildir. DJI Terra'da 'Radiometric Correction' modülü kapalıyken üretilen çıktı budur. FAIL-CLOSED VARSAYILAN: kip beyan edilmemişse bu değer varsayılır."
+    "RAW_DN": "Radyometrik düzeltme UYGULANMADI. Çıktı ham dijital sayıdır (digital number — sensör sayımı), reflektans değildir. DJI Terra'da 'Radiometric Correction' modülü kapalıyken üretilen çıktı budur. FAIL-CLOSED VARSAYILAN: kip beyan edilmemişse bu değer varsayılır.",
+    "SENSOR_CORRECTED": "Sensör/kamera modeli düzeltmeleri uygulandı (siyah seviye, kazanç, pozlama, vinyetleme) ANCAK ışınım normalizasyonu YOK. Çıktı ham DN DEĞİLDİR ama aydınlatma değişimine karşı normalize de edilmemiştir.\n⚠️ BU DEĞER AKTÖR-BAĞIMSIZDIR — düzeltmeyi KİMİN yaptığını söylemez, NE yapıldığını söyler. İki farklı üretici aynı değere düşer: (a) motorun kamera modeli düzeltmesi (ODM `--radiometric-calibration camera`), (b) kameranın KENDİ donanımında/gömülü yazılımında otomatik uyguladığı radyometrik düzeltme. 'Kim' bilgisi AYRI eksende taşınır: `calibration_method` (kamera-içi için `FACTORY_RADIOMETRIC`, ışınım sensörlü kamera-içi için `FACTORY_RADIOMETRIC_ILS`).\nÖlçüm (2026-08-06, ODM 3.6.1, aynı 670 fotoğraf): `none → camera` ortalama NDVI 0.182 → 0.267 (+%47) — yani gerçek ve büyük bir düzeltme. `camera → camera+sun` ise ortalamayı neredeyse hiç değiştirmiyor (0.267 → 0.266, sıra korelasyonu 0.857)."
   },
   "x-fail-closed": {
     "policy": "Kip BİLDİRİLMEMİŞSE hiçbir kip VARSAYILMAZ; eksik bilgi en güçlü sınıfa değil `RAW_DN`'e yorumlanır ve türetme zincirinde `calibration_type: NONE`'a (KR-018/082 hard reject) çıkar.",
@@ -21,12 +23,14 @@
   "x-why-declared-not-detected": {
     "measured": "2026-08-02 motor araştırması: DJI Terra V5.3.0 çevrimiçi kılavuzunun 302 JS parçası tarandı; `sunlight sensor` | `irradiance` | `sun sensor` | `light compensation` için SIFIR eşleşme. Terra'nın M3M güneş sensörünü otomatik kullanıp kullanmadığı resmi kaynakta HİÇ belgelenmemiştir.",
     "consequence": "Kip motor çıktısından güvenilir biçimde ÇIKARILAMAZ. Bu yüzden operatör tarafından BEYAN edilir; ölçülemeyeni tahmin etmek yerine beyan ettirmek bu depodaki yerleşik kuraldır.",
-    "producer": "edge — `calibration_gate/engine_adapter.py::read_declaration` (motor çıktı dizinindeki `tarlaanaliz_engine.json`)."
+    "producer": "edge — `calibration_gate/engine_adapter.py::read_declaration` (motor çıktı dizinindeki `tarlaanaliz_engine.json`).",
+    "measured_2026_08_07_odm": "ÖLÇÜM GÜNCELLENDİ — 'kip motor çıktısından çıkarılamaz' hükmü MOTORA BAĞLIDIR, evrensel değildir. OpenDroneMap `log.json` içinde `odmVersion` + `options.radiometric_calibration` yazar; yani ODM'de kip MAKİNE-OKUNURDUR. Bu yüzden ODM adaptörü beyanı motorun kendi kaydıyla ÇAPRAZ DOĞRULAR ve çelişkide fail-loud olur (operatör yanılır, log yanılmaz). Terra/Pix4Dfields için beyan yolu aynen geçerlidir."
   },
   "x-engine-notes": {
     "description": "Motor-agnostik mimari (KR-034) kapsamında desteklenen motorların bu eksendeki davranışı. Motor kimliği `calibrated_dataset_manifest.v1 → tool_name` / `tool_version` ile taşınır (enum kısıtı YOKTUR — yeni motor sözleşme değişikliği gerektirmez).",
     "Pix4Dfields": "Her koşulda radyometrik düzeltme uygular; M3M için `SUN_IRRADIANCE`, panel varsa `PANEL`. `RAW_DN` üretmez. Üretici M3M'i 'not fully radiometrically calibrated, only a relative calibration' diye sınıflar.",
-    "DJI Terra": "Radyometrik düzeltme OPSİYONELDİR ('2D Map > Advanced > Radiometric Correction'). Kapalıyken çıktı `RAW_DN`, açıkken `PANEL`. Kılavuz: 'Multispectral images with radiometric correction can be reconstructed to a 2D multispectral map with an output of reflectance.'"
+    "DJI Terra": "Radyometrik düzeltme OPSİYONELDİR ('2D Map > Advanced > Radiometric Correction'). Kapalıyken çıktı `RAW_DN`, açıkken `PANEL`. Kılavuz: 'Multispectral images with radiometric correction can be reconstructed to a 2D multispectral map with an output of reflectance.'",
+    "OpenDroneMap": "`--radiometric-calibration none|camera|camera+sun` → sırasıyla `RAW_DN` | `SENSOR_CORRECTED` | `SUN_IRRADIANCE`. Kip `log.json`'dan MAKİNE-OKUNUR (bkz. x-why-declared-not-detected.measured_2026_08_07_odm). ⚠️ CLI bayrağı `--radiometric-calibration` (tire) ile log anahtarı `radiometric_calibration` (alt çizgi) AYNI DEĞİLDİR — ölçüldü (3.6.1)."
   },
   "x-evidence": {
     "dji_absolute_impossible": "DJI Mavic 3M Image Processing Guide v1.0 (2023.08) Eq. 4-6: NIR_ref = (NIR_camera × pCam_NIR)/(NIR_LS × pLS_NIR) × ρ_NIR. ρ_NIR (kamera ↔ güneş sensörü dönüşüm katsayısı) metaveride YAYIMLANMAZ ⇒ panelsiz MUTLAK reflektans türetilemez; katsayı yalnız oranlı indekslerde (NDVI/NDRE) sadeleşir. Bu, E13-R'nin `relative` kararını üreticinin kendi matematiğiyle doğrular.",
@@ -39,5 +43,28 @@
     "KR-082"
   ],
   "x-ssot-version": "1.2.0",
-  "x-updated": "2026-08-02"
+  "x-updated": "2026-08-07",
+  "x-ladder": {
+    "rule": "Bu eksen bir MERDİVENDİR (monoton), bayrak KÜMESİ değil. Her basamak bir öncekinin üstüne BİR düzeltme aşaması ekler. Yeni bir aşama çıkarsa eksene KENDİ BASAMAĞI eklenir — kombinasyon başına yeni değer EKLENMEZ. Böylece n aşama için n değer olur, 2^n değil.",
+    "order": [
+      "RAW_DN",
+      "SENSOR_CORRECTED",
+      "SUN_IRRADIANCE",
+      "PANEL"
+    ],
+    "rungs": {
+      "RAW_DN": "hiçbir radyometrik düzeltme yok",
+      "SENSOR_CORRECTED": "+ sensör/kamera modeli düzeltmeleri",
+      "SUN_IRRADIANCE": "+ ışınım normalizasyonu (DLS/güneş sensörü)",
+      "PANEL": "+ reflektans paneli çıpası (mutlak dayanak)"
+    },
+    "why_not_a_set": "Kümeye dönüştürmek (ör. {SENSOR, IRRADIANCE, PANEL}) daha esnek görünür ama TÜKETİCİ tarafını patlatır: her tüketici kendi 'yeterli mi' kuralını yazar ve o kurallar sessizce ayrışır. Merdiven tek bir karşılaştırma verir: 'şu basamaktan yukarıda mı?'",
+    "consumer_rule": "Bir tüketici asgari basamak beyan eder ve `order` içindeki İNDEKS ile karşılaştırır; değer ADINA göre if/elif yazmaz (yeni basamak eklenince o kod sessizce eskir)."
+  },
+  "x-provenance-axis": {
+    "principle": "BU EKSEN 'NE YAPILDI'yı söyler; 'KİM YAPTI' AYRI eksendedir.",
+    "who": "calibration_method (calibration_type.enum.v1 → x-separate-axis): REFLECTANCE_PANEL · DLS_IRRADIANCE · EMPIRICAL_LINE · FACTORY_RADIOMETRIC · FACTORY_RADIOMETRIC_ILS",
+    "engine": "tool_name / tool_version (calibrated_dataset_manifest.v1) — enum kısıtı YOK, yeni motor sözleşme değişikliği gerektirmez.",
+    "future_auto_calibrating_cameras": "Kameralar radyometrik düzeltmeyi kendi yapmaya başlarsa motor bayrağı `none` OLSA BİLE veri ham DN DEĞİLDİR. O durumda kip `SENSOR_CORRECTED` (ışınım sensörü de varsa `SUN_IRRADIANCE`) yazılır ve `calibration_method` `FACTORY_RADIOMETRIC(_ILS)` taşır. Bu ayrım olmasaydı otomatik kalibre eden bir kamera `RAW_DN → NONE → KR-018 sert red` ile GERÇEKTEN KALİBRE veriyi reddettirirdi."
+  }
 }
