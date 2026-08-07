@@ -7,6 +7,36 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.6.0] - 2026-08-07 — INGEST UCU: kalibre manifest kabulü (DK-28/DK-29 son halka)
+
+### Added
+
+- **`api/platform_internal.v1.yaml`** → yeni uç
+  **`POST /intake/datasets/{dataset_id}/calibrated-manifest`**.
+  Edge (M2) kalibrasyon tamamlandıktan sonra kalibre paket manifestini gönderir;
+  platform `outputs[]` içinden adresleri çıkarır:
+  - `layer_type == "ORTHO"` → **`datasets.rgb_ortho_uri`** (KR-017 "Gerçek Görünüm"
+    taban görüntüsü — **DK-28**'in son halkası),
+  - aynı giriş, manifest **ayrı bant rasteri beyan etmiyorsa**
+    **`datasets.calibrated_ortho_uri`** (**DK-29**: worker'ın analiz edeceği çok-bantlı
+    yığın). Bant girişi varsa (ör. DJI Terra `result_*.tif`) ORTHO **RGB-only**'dir ve
+    analiz kaynağı olarak yazılmaz — fail-closed, sessiz-yanlış yerine boş bırakılır.
+- **`api/components/schemas.yaml`** → `CalibratedDatasetManifest` (kanonik şemaya `$ref`,
+  kopya değil).
+
+### Neden MINOR
+
+`docs/versioning_policy.md:153,163` — *"Yeni endpoint ekleme → Breaking? ❌ Hayır"*,
+*"✅ Yeni OpenAPI endpoint ekleme"* MINOR listesinde. Mevcut hiçbir uç/şema değişmedi.
+
+### Fail-closed kuralı (uçta zorunlu)
+
+`uri` **adreslenebilir** olmalıdır (`s3://` | `https://`). **Yerel dosya yolu REDDEDİLİR** —
+platform M1'in `C:/…` yolunu okuyamaz. Bu kural 2026-08-07 öz-denetiminde ölçülen gerçek
+boşluktan doğdu: edge yazıcısı manifeste yerel yol yazıyordu.
+
+---
+
 ## [7.5.0] - 2026-08-07 — CONTRACT TUR 3 (motor-agnostik kalibrasyon KAPANDI)
 
 > ✅ **TUR 3 KAPANDI.** `7.4.0`'ın `PENDING_REPIN` beyanı tam olarak bu turu bekliyordu

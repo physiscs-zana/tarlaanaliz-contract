@@ -103,6 +103,11 @@ components:
     
     IntakeManifest:
       $ref: '../../schemas/edge/intake_manifest.v1.schema.json'
+
+    # DK-28/DK-29: kalibre paket manifesti — outputs[] icinde layer_type ORTHO
+    # taban goruntuyu (KR-017) tasir; platform onu datasets.rgb_ortho_uri'ye yazar.
+    CalibratedDatasetManifest:
+      $ref: '../../schemas/edge/calibrated_dataset_manifest.v1.schema.json'
     
     EdgeMetadata:
       $ref: '../../schemas/edge/edge_metadata.v1.schema.json'
