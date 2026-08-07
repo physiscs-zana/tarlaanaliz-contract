@@ -185,6 +185,15 @@
         ],
         "additionalProperties": false
       }
+    },
+    "outputs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/file_artifact"
+      },
+      "description": "DK-28: kalibrasyon motorunun ÜRETTİĞİ çıktı dosyaları (ortomozaik, bantlar, indeksler). **OPSİYONEL** — yokluğu geriye uyumluluk içindir, boşluğu değil: mevcut paketler bu alanı taşımıyordu.\n🔴 NEDEN EKLENDİ: 'Gerçek Görünüm' taban görüntüsü (KR-017) worker'ın ürettiği bir indeks DEĞİL, motorun GİRDİ artefaktıdır. Bu alan olmadan RGB ortomozaiğin adresi edge'den platforma HİÇBİR YOLDAN geçmiyordu — ölçüldü (2026-08-07): `has_basemap` yapısal olarak daima False'tu.\nTaban görüntü girişi: `layer_type == \"ORTHO\"`. Platform onu `datasets.rgb_ortho_uri`'ye yazar."
     }
   },
   "required": [
@@ -220,5 +229,71 @@
     },
     "field_placement_rule": "İki dosya AYNI ADI taşır ve yalnız dizinle ayrılır (edge/ vs platform/). Yeni alan eklemeden önce hangi formun sahibi olduğu YAZILI olarak belirlenir: kalibrasyon kanıtı ve tek-dataset düzeyindeki alanlar BU forma, paket/çıktı agregasyonu alanları counterpart'a girer. Ad benzerliğine bakarak hedef seçmek kusurdur (2026-07-31 denetimi)."
   },
-  "x-updated": "2026-07-31"
+  "x-updated": "2026-07-31",
+  "$defs": {
+    "file_artifact": {
+      "type": "object",
+      "required": [
+        "uri",
+        "sha256",
+        "type"
+      ],
+      "properties": {
+        "uri": {
+          "$ref": "#/$defs/uri"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Artifact type tag (consumer-defined)."
+        },
+        "layer_type": {
+          "type": "string",
+          "enum": [
+            "ORTHO",
+            "DSM",
+            "NDVI",
+            "NDRE",
+            "GNDVI",
+            "CIR",
+            "EVI",
+            "SAVI",
+            "LCI",
+            "CWSI",
+            "CANOPY_TEMP",
+            "CANOPY_SOIL_DELTA",
+            "CANOPY_TEMP_UNIFORMITY"
+          ],
+          "description": "Çıktı katmanının KANONİK türü. ORTHO/DSM raster ürünleridir; kalan değerler drone_capability_matrix.yaml → available_indices (core+extended+thermal) kümesinden TÜRETİLMİŞTİR, ayrı bir vocabulary DEĞİLDİR. Opsiyonel: eski üreticiler alanı atlar. `type` alanıyla karıştırılmaz — `type` tüketici-tanımlı serbest etikettir.\n\n📐 **Sınıflandırma (2026-07-31/D9):** Bu enum tek bir düz liste değildir; her değerin bir SINIFI vardır (`x-layer-classes`) ve üretilebilirlik sınıfa göre farklı çalışır — bkz. aşağıdaki `x-layer-classes` ile drone_capability_matrix.yaml → `index_requirements`.\n\n🔄 **`IRRIGATION_EFFICIENCY` → `CANOPY_TEMP_UNIFORMITY` (2026-07-31/D9②):** Termal kamera 'sulama verimliliği' ÖLÇMEZ — verimlilik, uygulanan su miktarı ve bitki su tüketimi bilinmeden hesaplanamaz (ikisi de bu sistemde YOK). LWIR'den doğrudan türetilebilen büyüklük **kanopi sıcaklığının tarla içi tekdüzeliğidir** ve sulama sorunlarının bir VEKİL göstergesidir (proxy). Ad, ölçülen şeyi söylemeliydi. Yeniden adlandırma bu turda **bedava**: `layer_type` bu turda eklendi (üretici yok) ve eski ad kardeş depoların hiçbirinde geçmiyor (ölçüldü). Bir sonraki turda MAJOR olurdu.\n\n🔄 **`CHLOROPHYLL_A` → `LCI` (2026-07-31, AK-1):** ad, WORKER'DA GERÇEKTEN UYGULANAN indeksle aynı hâle getirildi — `tarlaanaliz-worker/src/indices/lci.py`: `LCI = (NIR − RedEdge) / (NIR + RedEdge)`. `CHLOROPHYLL_A` contract'a özgü, formülü hiçbir yerde tanımlı olmayan bir addı; bant gereksinimi bu yüzden `null` bırakılmıştı (uydurmamak için). Artık ad tek → gereksinim ÖLÇÜLEBİLİR: `[RED_EDGE, NIR]`.\n\n⚠️ **LCI ile NDRE aynı FORMÜLÜ paylaşır** (worker: `LCICalculator(NDRECalculator)`, H9/MD-9 denetim kararı) — ikisi bilerek ayrı tutulur: NDRE genel canlılık, LCI klorofil bozulmasına özgü okuma (fıstık psillid balözü tespitinde NDWI+Green ile birlikte kullanılıyor). Biri diğerinin yerine 'sadeleştirilemez'.\n\n**Tüketici borcu:** platform `src/core/domain/value_objects/spectral_tier.py:51` `EXTENDED_INDICES` sabiti `CHLOROPHYLL_A` yazıyor → `LCI` olmalı (P15)."
+        },
+        "band": {
+          "type": "string",
+          "enum": [
+            "BLUE",
+            "GREEN",
+            "RED",
+            "RED_EDGE",
+            "NIR",
+            "LWIR"
+          ],
+          "description": "Tek-bant raster çıktısı için spektral bant. Çok-bantlı/indeks çıktılarda alan BULUNMAZ. Vocabulary intake_manifest.available_bands ile aynıdır."
+        },
+        "reflectance_scale": {
+          "type": "string",
+          "enum": [
+            "reflectance_0_1",
+            "reflectance_0_100",
+            "scaled_int",
+            "unknown"
+          ],
+          "description": "S6 (2026-08-01): BU ÇIKTININ ölçeği. Paket düzeyindeki `reflectance_scale` artık bir VARSAYILANDIR; burada yazılan onu ezer.\n\n**Neden gerekti — ölçüldü:** `outputs[]` heterojendir (bantlar · ortomozaik · indeksler) ve tek bir paket-düzeyi ölçek hepsini tarif EDEMEZ: DSM metre cinsindendir, CWSI birimsiz 0–1'dir, 8-bit ORTHO görselleştirme çıktısıdır. Tek ölçek dayatmak, tüketiciyi ya yanlış bölmeye ya da ölçeği yok saymaya zorlar.\n\nSözlük paket düzeyiyle ve `worker/calibration_metadata.scale` ile AYNIDIR."
+        }
+      },
+      "unevaluatedProperties": false,
+      "description": "Kalibre çıktı dosyası. ⚠️ Bu tanım `schemas/platform/calibrated_dataset_manifest.v1.schema.json → $defs.file_artifact` ile BİREBİR AYNI olmak zorundadır. Depo çapraz-dosya `$ref` kullanmıyor (ölçüldü: hiçbir şemada yok), bu yüzden tanım kopyalandı; kopyanın sessizce çürümemesi için `tests/test_file_artifact_parity.py` iki tanımı yapısal olarak karşılaştırır."
+    }
+  }
 }
