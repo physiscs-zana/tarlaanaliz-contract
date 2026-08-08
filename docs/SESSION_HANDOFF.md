@@ -168,6 +168,62 @@
 
 ---
 
+## 0.A-uctan-uca — ZİNCİR GERÇEK VERİYLE KAPANDI (2026-08-08 denetim turu)
+
+> ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE
+>
+> 1. **Zincir ilk kez tek bir akışta uçtan uca koştu:** edge kalibre manifesti →
+>    platform ingest → `analysis_job.v1` → worker (**gerçek ODM ortomozaiği**) →
+>    sonuç → tüketici → `field_index_timeseries` → **çiftçinin sayfası**.
+> 2. **İki kopuk halka bulundu ve düzeltildi** (platform [#401](https://github.com/physiscs-zana/tarlaanaliz-platform/pull/401)):
+>    **DK-34** dashboard boş kalıyordu · **DK-35** kalibrasyon tipi hiç taşınmıyordu.
+>    İkisi de aynı sınıf: *tüketici kusursuz, üretici hiç yazmıyor.*
+> 3. **Önceki turun iki düzeltmesi gerçek veriyle doğrulandı:** worker #206'nın bant
+>    sözlüğü (kanonik `GREEN/RED/RED_EDGE/NIR` kabul edildi) ve bant planı
+>    (`Band plan resolved via raster_descriptions: {'R':1,'G':2,'NIR':3,'RE':4}` —
+>    konumsal varsayım kullanılmadı).
+>
+> ### Demo kullanıcının sayfası — ölçülen çıktı
+>
+> ```
+> GET /api/v1/dashboard/farmer   (+905000000001 / FARMER_SINGLE)
+>   ÖNCE : avg_health_score=null · health_score=null · ndvi_mean=null
+>   SONRA: avg_health_score=15.0 · health_score=15 · ndvi_mean=0.151
+>          overall_health=FIELD_MEAN_NDVI · uyarı: "Sağlık skoru düşük: 15/100" (HIGH)
+> GET /api/v1/results
+>   3 katman (HEALTH/ndvi · NITROGEN_STRESS/ndre · WATER_STRESS/stress_ratio)
+>   overall_health_index=0.151 · report_phase=PRELIMINARY
+> ```
+>
+> **NDVI 0.151 gerçek ölçümdür** (29-07-2026 uçuşu, antep fıstığı, seyrek örtü) —
+> uydurulmuş bir demo değeri değil. Worker 2496×2672 rasteri 36 tile'a böldü,
+> `INDICES_ONLY` modunda bitirdi (güven 0.429 → KR-019 uzman kapısı devrede).
+>
+> ### mTLS — uygulama tarafı ÇALIŞTI
+>
+> Üretilen istemci sertifikasının parmak izi `.env`'e (`API_MTLS_REGISTERED_FINGERPRINTS`)
+> eklendi ve backend yeniden kuruldu. `POST /api/v1/ingest/.../calibrated-manifest`
+> çağrısı **401 → 403**'e döndü: yani **mTLS kimliği kabul edildi**, istek RBAC'ta durdu
+> (`required_roles=['CENTRAL_ADMIN','STATION_OPERATOR']`, demo kullanıcı `FARMER_SINGLE`).
+> Rol UYDURULMADI; aynı iş servis katmanından koşuldu (uç zaten yalnız onu çağırır).
+>
+> ### ⚠️ Hâlâ kapalı olan meşru yol (sahte kanıt YAZILMADI)
+>
+> `WorkerDispatchService.dispatch_to_worker` iki kapıdan geçemiyor (ölçüldü):
+> `av1_report_uri=NULL` · `av2_report_uri=NULL` · `calibration_records=0`.
+> Bu tur **AV kapısı ve kalibrasyon-kaydı ön koşulu atlanarak** `build_analysis_job_v1`
+> + `publish_analysis_job` doğrudan çağrıldı. Yani ölçülen şey **worker→platform→arayüz**
+> bacağıdır; **AV/kayıt ön koşulu hâlâ açık kalemdir.**
+>
+> ### Ortam tuzağı (yeni)
+>
+> Backend konteynerinde `RABBITMQ_URL` **`localhost`** gösteriyor (konteyner içinde yanlış
+> adres). Çalışan doğru biçim worker'ınkidir:
+> `amqp://tarlaanaliz:***@tarlaanaliz-rabbitmq:5672/%2Ftarlaanaliz` (vhost URL-kodlu).
+> Ayrıca backend `/health` **`worker_bridge unreachable`** uyarısı basıyor — ayrı bir kalem.
+
+---
+
 ## 0.A-e ÖNCEKİ TUR — (2026-08-07, **beşinci oturum: W8/Ç-2 · DK-23 · DK-26 · DK-28 keşfi**) — ✅ **KAPANDI, MERGE EDİLDİ**
 
 > ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE

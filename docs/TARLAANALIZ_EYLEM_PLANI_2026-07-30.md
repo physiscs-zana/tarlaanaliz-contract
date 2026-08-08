@@ -663,6 +663,26 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 >
 > ---
 >
+> ✅ **DK-34 (2026-08-08) — dashboard boş kalıyordu. KAPANDI** (platform #401).
+> `/api/v1/results` `overall_health_index=0.151` dönerken `/api/v1/dashboard/farmer`
+> `avg_health_score=null` gösteriyordu: `_insert_timeseries` yalnız `summary.*` yolunu
+> okuyor, worker ise ÖN RAPOR'da `summary`yi KR-019 gereği boş gönderiyordu. Artık aynı
+> kanonik türetme (`_overall_health_from_body`) kullanılıyor; fail-closed korundu.
+> Ölçüm: dashboard `avg_health_score` **null → 15.0**.
+>
+> ✅ **DK-35 (2026-08-08) — kalibrasyon tipi HİÇ taşınmıyordu. KAPANDI** (platform #401).
+> Edge manifesti `calibration_result.calibration_type = RELATIVE` taşıyor ama kalibre
+> manifest ingest'i yalnız iki URI kolonunu yazıyordu; tüketici tipi `dataset.manifest`ten
+> okuduğu için daima `NONE` görüyor ve **worker HER işi KR-018 sert kapısıyla reddediyordu**.
+> Bu, DK-28 zincirinin uçtan uca kapanmasını engelleyen halkaydı. Ölçüm: düzeltme sonrası
+> worker gerçek ODM ortomozaiğini işledi (36 tile).
+>
+> 🟠 **DK-36 (yeni, 2026-08-08) — meşru dispatch yolu hâlâ kapalı.**
+> `dispatch_to_worker` ön koşulları ölçüldü: `av1_report_uri=NULL` · `av2_report_uri=NULL` ·
+> `calibration_records=0`. Uçtan uca koşumda bu kapı **bilinçli atlandı** ve sahte AV raporu /
+> sahte kalibrasyon kaydı **YAZILMADI**. Kalem açık: AV1/AV2 üreticisi + `CalibrationRecord`
+> üreticisi bağlanmalı (P19 ile aynı aile: alan var, üretici yok).
+>
 > 🔴 **DK-31 (yeni, 2026-08-08) — AK-4: kanonik `analysis_job.v1` bant sözlüğünü ZORLAMIYOR.**
 > Worker `available_bands`'i kanonik `GREEN/RED/RED_EDGE/NIR/BLUE/LWIR` sözlüğüyle
 > **vendored şemasında** daralttı (worker #206) çünkü kanonik şema alanı serbest string
