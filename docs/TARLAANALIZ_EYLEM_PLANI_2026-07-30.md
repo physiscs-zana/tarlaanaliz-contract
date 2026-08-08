@@ -652,6 +652,15 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > mTLS istemci sertifikası (M2→platform yükleme) ve AV2 servisi (`is_ready_for_analysis`).
 > Ayrıntı: `docs/SESSION_HANDOFF.md` §0.A.
 >
+> 🟡 **GÜNCELLEME (2026-08-08 denetim turu) — mTLS'in SERTİFİKA ayağı kapandı.** Özel CA +
+> istemci sertifikası üretildi (`openssl verify` → OK, `clientAuth` uzantılı,
+> `C:\ProgramData\TarlaAnaliz\certs\`); edge HC-03 kapısı artık `CertificateNotFoundError`
+> **fırlatmıyor** (ölçüldü). Bu sertifika **satın alınmaz** — halka açık CA'lar istemci
+> kimliği için sertifika vermez; güven kaynağı platformun `API_MTLS_REGISTERED_FINGERPRINTS`
+> listesi, yani **kendi özel CA'mız**. Maliyet sıfır. **Kalan üç adım** (parmak izini env'e
+> kaydet · mTLS-sonlandıran ters vekil `X-Client-Cert`+`X-Client-Cert-Verify: SUCCESS`
+> başlıklarını set etsin · platform ayağa kaldırılsın): `docs/SESSION_HANDOFF.md` §0.A-mtls.
+>
 > ---
 >
 > 🔴 **DK-31 (yeni, 2026-08-08) — AK-4: kanonik `analysis_job.v1` bant sözlüğünü ZORLAMIYOR.**
