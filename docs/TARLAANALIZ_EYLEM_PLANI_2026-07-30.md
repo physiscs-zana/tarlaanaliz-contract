@@ -677,6 +677,33 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > Bu, DK-28 zincirinin uçtan uca kapanmasını engelleyen halkaydı. Ölçüm: düzeltme sonrası
 > worker gerçek ODM ortomozaiğini işledi (36 tile).
 >
+> 🔴 **DK-38 (yeni, 2026-08-08) — SESSİZ YANLIŞ SAYI: `mean_ndvi` geçersiz pikselleri sayıyor.**
+> Çiftçiye gösterilen "sağlık 15/100" **yanlıştır**; doğrusu ~27'dir. Ölçüm (aynı raster,
+> `pipeline.py:2451` `src.read(band_index)` — maske OKUNMUYOR):
+>
+> | Hesap | NDVI ort | std |
+> |---|---|---|
+> | maskesiz (boş pikseller 0 sayılıyor) | **0.1515** | 0.1674 |
+> | alfa bandı maskeli (doğru) | **0.2657** | 0.1372 |
+> | DJI Terra, kendi bant rasterleri (`nodata=nan`) | **0.2639** | 0.1551 |
+>
+> Worker'ın raporladığı `0.151` maskesiz değerle **birebir** aynı. Kök neden: ODM
+> ortomozaiğinde `nodata=None`, uçuş alanı dışı pikseller **0** taşıyor ve 5. bant (alfa)
+> yok sayılıyor; ortomozaik köşe kutusunun yalnız **%57**'sini kaplıyor → %43 boş alan
+> ortalamayı aşağı çekiyor. `compute_mean_ndvi` doğru yazılmış (NaN'ları hariç tutuyor) —
+> eksik olan **maskenin pipeline'da hiç okunmaması**. Düzeltme dikkat ister: NaN'lar model
+> tensörüne sızmamalı (`_build_tensor`), bu yüzden ayrı bir kalem olarak açıldı.
+> **Yan bulgu (olumlu):** Terra ↔ ODM `camera` farkı **<%1** — iki motorun radyometrik
+> işlemesi tutarlı, yani sorun motorda değil tüketicide.
+>
+> ✅ **DK-39 (2026-08-08) — "Gerçek Görünüm" GRİ KARE gösteriyordu. KAPANDI** (platform #401).
+> Taban görüntü olarak yazılan ODM ortomozaiği multispektral (5 bant `float32`,
+> `('Red','Green','NIR','RedEdge',None)`, 0–0.1); `indexes=(1,2,3)` 3. kanalda mavi yerine
+> **NIR** okuyor ve ölçekleme olmadığı için tile düz gri çıkıyordu. Artık fail-honest:
+> kaynak görünür ışık taşımıyorsa `has_basemap=False` + tile 404, düğme hiç açılmaz.
+> **Mavic 3M'in mavi bandı yoktur** → o pakette gerçek renkli görünüm üretilemez; gerçek
+> RGB kaynak Terra'nın `map/result.tif`'idir (ölçüldü: 4 bant `uint8`, R/G/B + alfa).
+>
 > 🟠 **DK-36 (yeni, 2026-08-08) — meşru dispatch yolu hâlâ kapalı.**
 > `dispatch_to_worker` ön koşulları ölçüldü: `av1_report_uri=NULL` · `av2_report_uri=NULL` ·
 > `calibration_records=0`. Uçtan uca koşumda bu kapı **bilinçli atlandı** ve sahte AV raporu /
