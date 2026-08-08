@@ -677,9 +677,27 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > Bu, DK-28 zincirinin uçtan uca kapanmasını engelleyen halkaydı. Ölçüm: düzeltme sonrası
 > worker gerçek ODM ortomozaiğini işledi (36 tile).
 >
-> 🔴 **DK-38 (yeni, 2026-08-08) — SESSİZ YANLIŞ SAYI: `mean_ndvi` geçersiz pikselleri sayıyor.**
-> Çiftçiye gösterilen "sağlık 15/100" **yanlıştır**; doğrusu ~27'dir. Ölçüm (aynı raster,
-> `pipeline.py:2451` `src.read(band_index)` — maske OKUNMUYOR):
+> ✅ **DK-41 (2026-08-08) — taban görüntü paketleme anında COG'a çevrilir. KAPANDI** (edge #64).
+> Terra RGB ortomozaiği 14527×12966 / 276 MB **düz** GeoTIFF; iç karolama ve overview
+> olmadan tile sunucusu her karo için dosyanın büyük bölümünü tarıyordu. Artık M1
+> paketleme adımında otomatik çevriliyor — **her uçuşta**, elle iş yok. Çözünürlük
+> değişmez; fail-soft (çevrilemezse orijinal kullanılır, COG sunum optimizasyonudur).
+>
+> ✅ **DK-42 (2026-08-08) — nginx `upstream` IP'yi dondurup 502 üretiyordu. KAPANDI** (platform #402).
+> Konteyner yeniden oluşturulunca IP değişiyor, nginx eski adreste kalıyordu
+> (`upstream: http://172.18.0.2:3000` · gerçek IP `172.18.0.9` · web doğrudan 200).
+> Belirti aldatıcı: **servis çalışıyor ama site 502**. Çözüm: `resolver 127.0.0.11` +
+> değişkenli `proxy_pass $upstream$request_uri`. Ayırt edici testle doğrulandı (IP zorla
+> değiştirildi, nginx'e dokunulmadan 3/3 HTTP 200).
+>
+> ✅ **DK-38 (2026-08-08) — SESSİZ YANLIŞ SAYI: `mean_ndvi` geçersiz pikselleri sayıyordu. KAPANDI** (worker #207).
+> Çiftçiye gösterilen "sağlık 15/100" **yanlıştı**; doğrusu **27**. Düzeltme sonrası
+> üretimde ölçüldü: `Valid-pixel mask applied (alpha_band_5): 43.0%` →
+> `overall_health_index` **0.151 → 0.266** → dashboard **15 → 27**.
+> ⚠️ İki kaynak gerekti: `dataset_mask()` ODM'de *all_valid* döndüğü için tek başına
+> YETMEDİ; `colorinterp`'teki **alfa bandı** ikinci kaynak olarak eklendi (ölçüldü —
+> ilk yazımda bu dal yoktu ve düzeltme üretimde sessizce etkisiz kaldı).
+> Özgün ölçüm (aynı raster, `src.read(band_index)` — maske OKUNMUYORDU):
 >
 > | Hesap | NDVI ort | std |
 > |---|---|---|

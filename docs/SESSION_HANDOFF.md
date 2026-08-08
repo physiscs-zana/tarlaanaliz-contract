@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-08 (**altıncı oturum** — DK-28/DK-29 zinciri kapandı · ilk gerçek-veri koşumları · üç üretim kusuru bulundu ve düzeltildi)
+**Son güncelleme:** 2026-08-08 (**yedinci oturum** — denetim turu: zincir gerçek veriyle uçtan uca kapandı · beş üretim kusuru (DK-38…DK-42) bulundu, düzeltildi, **merge edildi ve imajlar yeniden kuruldu**)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,75 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-08, **altıncı oturum: DK-28/DK-29 zinciri + ilk gerçek-veri koşumları + üç üretim kusuru**)
+## 0.A EN GÜNCEL — (2026-08-08, **yedinci oturum: DENETİM TURU — beş kusur, hepsi merge + deploy**)
+
+> ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE
+>
+> 1. **Zincir gerçek veriyle uçtan uca kapandı ve çiftçinin sayfasına yansıdı:**
+>    M3M uçuşu → DJI Terra → edge paketleme (**COG otomatik**) → platform ingest →
+>    worker → tüketici → dashboard **27/100 · ndvi 0.266** · **RGB "Gerçek Görünüm"**.
+> 2. **Beş üretim kusuru bulundu, düzeltildi, MERGE EDİLDİ ve imajlar yeniden kuruldu**
+>    (merge ≠ deploy — üç imaj da yeniden kurulup içeriği doğrulandı).
+> 3. **En ağır bulgu DK-38'di:** çiftçiye gösterilen sağlık puanı **yanlıştı** (15,
+>    doğrusu 27) — worker geçersiz piksel maskesini hiç okumuyordu. DJI Terra ile
+>    bağımsız karşılaştırma sorunun **motorda değil tüketicide** olduğunu kanıtladı.
+>
+> ### Merge edilen beş PR
+>
+> | Depo | PR | İçerik |
+> |---|---|---|
+> | contract | **#55** | devir notu + §0.A-mtls + eylem planı (DK-31…DK-42) |
+> | platform | **#401** | 🔴 DK-34 dashboard boş · DK-35 kalibrasyon tipi taşınmıyor · DK-39 gri taban görüntü · DK-40 yeniden analiz yansımıyor · çiftçi dili |
+> | platform | **#402** | 🔴 DK-42 nginx `upstream` IP'yi donduruyor → **502** |
+> | worker | **#207** | 🔴 DK-38 geçersiz piksel maskesi okunmuyor → **sessiz yanlış NDVI** |
+> | edge | **#64** | DK-41 taban görüntü paketleme anında **COG**'a çevrilir (her uçuşta otomatik) |
+>
+> ### Bilimsel karşılaştırma — Terra ↔ ODM (ölçüldü)
+>
+> | Kaynak | mean NDVI | std |
+> |---|---|---|
+> | DJI Terra (kendi bant rasterleri, `nodata=nan`) | **0.2639** | 0.1551 |
+> | ODM `camera` (alfa maskeli) | **0.2657** | 0.1372 |
+> | ODM **maskesiz** (kusurlu hesap) | 0.1515 | 0.1674 |
+>
+> İki motor arasındaki fark **<%1** — radyometrik işleme tutarlı. Worker'ın raporladığı
+> `0.151` maskesiz değerle **birebir** aynıydı: ortomozaik köşe kutusunun yalnız %57'sini
+> kaplıyor, %43 boş alan NDVI=0 olarak ortalamaya giriyordu.
+>
+> ### Kurulum durumu (merge ≠ deploy — ölçüldü)
+>
+> | Bileşen | `src` bind-mount | Yapılan |
+> |---|---|---|
+> | backend | ✅ var | `compose build backend` + recreate |
+> | worker | ❌ **yok** | `docker build -f Dockerfile.gpu` |
+> | web | ❌ hiç mount yok | `compose build web` |
+>
+> İmajların **içinde** yeni kod doğrulandı (`grep -c DK-38/DK-39/DK-40` konteyner içinde).
+> ⚠️ `docker cp` geçici yamadır — konteyner yeniden oluşturulunca kaybolur.
+>
+> ### Gösteri öncesi bilinmesi gerekenler
+>
+> 1. 🟠 **Tarla sınırı gerçek görev planından gelmeli.** Test koşumunda uydurma sınır
+>    `coverage_ratio=0.5069` → QC **FAIL** üretti. Gerçek sınırla düzelir.
+> 2. 🟠 **Meşru dispatch yolu hâlâ kapalı** (DK-36): `av1_report_uri=NULL`,
+>    `av2_report_uri=NULL`, `calibration_records=0`. Koşumlarda bu kapı bilinçli atlandı;
+>    **sahte AV raporu / sahte kalibrasyon kaydı YAZILMADI**.
+> 3. Donanım: M1/M2 ayrı istasyon **yok**; her şey bu makinede (Docker). Laptop yalnız
+>    tarayıcı olarak kullanılacaksa backend `127.0.0.1`'e bağlı — ağa açmak ayrı iş.
+>
+> ### Ortam tuzakları (bu turda ölçüldü)
+>
+> * **nginx 502 = imaj kurulumunun yan etkisi** (DK-42, artık kalıcı düzeltildi). Eski bir
+>   kurulumda görülürse hızlı çare `docker restart tarlaanaliz-nginx`.
+> * Backend `RABBITMQ_URL` konteyner içinde **`localhost`** gösteriyor (yanlış); çalışan
+>   biçim worker'ınkidir: `amqp://…@tarlaanaliz-rabbitmq:5672/%2Ftarlaanaliz` (vhost URL-kodlu).
+> * Backend `/health` **`worker_bridge unreachable`** uyarısı basıyor — ayrı kalem.
+> * Edge CI `ruff check` **ve** `ruff format --check` koşar; yeni bir `src/` modülü
+>   `config/build_profiles.yaml` → `ownership` + karşı makinenin `exclude`'una girmeli.
+
+---
+
+## 0.A-f ÖNCEKİ TUR — (2026-08-08, **altıncı oturum: DK-28/DK-29 zinciri + ilk gerçek-veri koşumları + üç üretim kusuru**)
 
 > ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE
 >
