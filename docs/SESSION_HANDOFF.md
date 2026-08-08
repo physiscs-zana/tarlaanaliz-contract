@@ -24,9 +24,15 @@
 
 > ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE
 >
-> 1. **DK-28/DK-29 zinciri motor çıktısından tile'a kadar KAPANDI** ve **gerçek veriyle
->    koşturuldu**: ODM 3 kol + DJI Terra → kanıt seti → M1→M2 gözetim zinciri →
->    platform → worker → **render olan 3 katman + "Gerçek Görünüm"**.
+> 1. **DK-28/DK-29 zinciri KOD DÜZEYİNDE uçtan uca bağlandı** — üretici→tüketici arasında
+>    kopuk halka yok (2026-08-08 denetiminde halka halka izlendi: edge `package_builder`
+>    → `calibrated_manifest_uploader` → platform `POST …/calibrated-manifest` →
+>    `datasets.calibrated_ortho_uri` → `worker_job_publisher.py:205` `image_urls=[ortho]`
+>    → worker `_parse_job`). **Gerçek veri M1→M2'ye kadar aktı** (ODM 3 kol + DJI Terra
+>    → kanıt seti → M1→M2 gözetim zinciri). ⚠️ **M2→platform bacağı bu turda
+>    KOŞULAMADI** (mTLS provizyonu yoktu); aşağıdaki "demo" bloğundaki 3 katman **daha
+>    önceki bir dataset'ten** üretildi. Yani **tek bir uçuşun uçtan uca aktığı henüz
+>    ÖLÇÜLMEDİ** — kalan adımlar §0.A-mtls'te.
 > 2. **Test etmek üç GERÇEK üretim kusuru buldu** — üçü de ölçülüp düzeltildi ve
 >    merge edildi: platform boot-crash (bayat KR-042 pini) · M2 replay **veri kaybı** ·
 >    worker bant sözlüğü uyuşmazlığı + **sessiz yanlış NDVI**.
@@ -94,8 +100,7 @@
 > 1. 🔴 **AK-4 aynası:** kanonik `analysis_job.v1` → `drone_metadata.available_bands`
 >    hâlâ serbest string. Worker önden gitti (vendored enum); kanonik ayna inmeli.
 >    Gerekçe + istek: `tarlaanaliz-worker/denetim/band_sozlugu_devir_spec_2026_08_08.md` §3.
-> 2. 🟠 **mTLS sertifikası yok** → M2→platform yükleme kolu koşulamıyor (HC-03, tasarım gereği).
->    Sim M2 profilinde cert yok; provizyon işi.
+> 2. 🟡 **mTLS: sertifika engeli KALKTI (2026-08-08), kalan iş proxy + kayıt.** Bkz. §0.A-mtls.
 > 3. 🟠 **AV2 servisi deploy edilmemiş** (`TARLA_AV2_ENABLED=false`, `av2-scanner` konteyneri yok)
 >    → `is_ready_for_analysis` sağlanamıyor, yani **tam meşru** dispatch yolu kapalı.
 >    Demo koşumunda AV ön koşulu bilinçli atlandı; **sahte AV raporu YAZILMADI**.
@@ -112,6 +117,110 @@
 >   (bugün tam olarak bu oldu; silince iki taraf da 56 hata verdi).
 > * **Edge CI'da iki iş PR'da ATLANIR** (`Test Windows` + `Package Build`, Windows/2× ücret
 >   kapısı). `build_profiles.yaml`'a dokunursan paket kapısını **yerelde** koştur.
+
+---
+
+## 0.A-mtls — M2→platform kolu: sertifika engeli KALKTI (2026-08-08 denetim turu)
+
+> ### Önce kavram — bu sertifika **satın alınmaz**
+>
+> mTLS (karşılıklı TLS = hem sunucu hem istemci birbirine sertifika göstererek kimlik
+> kanıtlar) için gereken **istemci sertifikası** halka açık bir sertifika otoritesinden
+> (CA = Certificate Authority, sertifika imzalayan kurum) **alınmaz**. Let's Encrypt gibi
+> ücretsiz CA'lar yalnız **sunucu** sertifikası verir; istemci kimliği için sertifika
+> vermezler. Bu sistemde zaten veremezler: platform, tanıdığı cihazları
+> **`API_MTLS_REGISTERED_FINGERPRINTS`** listesindeki parmak izleriyle (fingerprint =
+> sertifikanın SHA-256 özeti) tanır — yani güven kaynağı **kendi özel CA'mızdır**.
+> Dışarıdan alınan bir sertifika bu kapıyı hiç açmaz. **Maliyet: sıfır.**
+>
+> ### Ne yapıldı (ölçüldü)
+>
+> | Adım | Sonuç |
+> |---|---|
+> | Özel CA + istemci sertifikası üretildi (`openssl`, RSA-4096 CA / RSA-2048 istemci) | `openssl verify -CAfile ca.pem client.pem` → **OK** |
+> | `extendedKeyUsage = TLS Web Client Authentication` | ölçüldü ✅ |
+> | Konum: **`C:\ProgramData\TarlaAnaliz\certs\`** (kodun gerçek kökü — `config.py:20` `_CFGROOT`) | `client.pem` · `client-key.pem` · `ca.pem` |
+> | HC-03 kapısı | `EdgeCloudClient(config=…)` artık **`CertificateNotFoundError` FIRLATMIYOR** |
+>
+> ⚠️ Depo içindeki `tarlaanaliz-edge/config/security/certs/` **yükleme yolu DEĞİLDİR** —
+> ilk denemede oraya konmuştu ve kod görmedi. Gerçek kök `_CFGROOT`'tur.
+> (Her iki konumda da `.gitignore:30` `*.pem`'i kapatır — sır commit edilmez.)
+>
+> ### Kalan üç adım (bunlar olmadan kol hâlâ koşmaz)
+>
+> 1. **Parmak izini platforma kaydet:** `.env` → `API_MTLS_REGISTERED_FINGERPRINTS=<izi>`.
+>    Hesabı platformun kendi yöntemiyle yapılır (`mtls_verifier.py:215-222` — PEM gövdesinden
+>    başlık/satır sonu çıkarılıp SHA-256). Liste **boş bırakılırsa fail-closed**: hiçbir
+>    cihaz kabul edilmez (`no_registered_devices`).
+> 2. **mTLS'i sonlandıran ters vekil (reverse proxy) gerekli.** Platform sertifikayı
+>    soketten değil **başlıktan** okur: `X-Client-Cert` + `X-Client-Cert-Verify: SUCCESS`
+>    (`mtls_verifier.py:148-170`, `SUCCESS` değilse fail-closed). Yani nginx/traefik gibi
+>    bir katman TLS'i sonlandırıp bu iki başlığı **kendisi** set etmeli.
+> 3. **Platform ayakta olmalı.** Denetim anında Docker Engine kapalıydı; `main`'e merge
+>    **deploy değildir** (imaj yeniden kurulmadan yeni sözleşme sürümü boot-crash yapar).
+>
+> ### Üretim töreni (saha donanımı gelince)
+>
+> Yukarıdaki sertifikalar **test/sim** içindir (CN=`sim-m2-01`). Gerçek istasyonda: CA'nın
+> özel anahtarı (`ca-key.pem`) **M1/M2'de DEĞİL**, çevrimdışı bir kasada durur; her kiosk
+> için ayrı CN (`STATION-XXX-01`) ile ayrı istemci sertifikası imzalanır; parmak izi
+> platform env'ine eklenir. Bir kiosk kaybolursa **yalnız o parmak izi** listeden silinir.
+
+---
+
+## 0.A-uctan-uca — ZİNCİR GERÇEK VERİYLE KAPANDI (2026-08-08 denetim turu)
+
+> ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE
+>
+> 1. **Zincir ilk kez tek bir akışta uçtan uca koştu:** edge kalibre manifesti →
+>    platform ingest → `analysis_job.v1` → worker (**gerçek ODM ortomozaiği**) →
+>    sonuç → tüketici → `field_index_timeseries` → **çiftçinin sayfası**.
+> 2. **İki kopuk halka bulundu ve düzeltildi** (platform [#401](https://github.com/physiscs-zana/tarlaanaliz-platform/pull/401)):
+>    **DK-34** dashboard boş kalıyordu · **DK-35** kalibrasyon tipi hiç taşınmıyordu.
+>    İkisi de aynı sınıf: *tüketici kusursuz, üretici hiç yazmıyor.*
+> 3. **Önceki turun iki düzeltmesi gerçek veriyle doğrulandı:** worker #206'nın bant
+>    sözlüğü (kanonik `GREEN/RED/RED_EDGE/NIR` kabul edildi) ve bant planı
+>    (`Band plan resolved via raster_descriptions: {'R':1,'G':2,'NIR':3,'RE':4}` —
+>    konumsal varsayım kullanılmadı).
+>
+> ### Demo kullanıcının sayfası — ölçülen çıktı
+>
+> ```
+> GET /api/v1/dashboard/farmer   (+905000000001 / FARMER_SINGLE)
+>   ÖNCE : avg_health_score=null · health_score=null · ndvi_mean=null
+>   SONRA: avg_health_score=15.0 · health_score=15 · ndvi_mean=0.151
+>          overall_health=FIELD_MEAN_NDVI · uyarı: "Sağlık skoru düşük: 15/100" (HIGH)
+> GET /api/v1/results
+>   3 katman (HEALTH/ndvi · NITROGEN_STRESS/ndre · WATER_STRESS/stress_ratio)
+>   overall_health_index=0.151 · report_phase=PRELIMINARY
+> ```
+>
+> **NDVI 0.151 gerçek ölçümdür** (29-07-2026 uçuşu, antep fıstığı, seyrek örtü) —
+> uydurulmuş bir demo değeri değil. Worker 2496×2672 rasteri 36 tile'a böldü,
+> `INDICES_ONLY` modunda bitirdi (güven 0.429 → KR-019 uzman kapısı devrede).
+>
+> ### mTLS — uygulama tarafı ÇALIŞTI
+>
+> Üretilen istemci sertifikasının parmak izi `.env`'e (`API_MTLS_REGISTERED_FINGERPRINTS`)
+> eklendi ve backend yeniden kuruldu. `POST /api/v1/ingest/.../calibrated-manifest`
+> çağrısı **401 → 403**'e döndü: yani **mTLS kimliği kabul edildi**, istek RBAC'ta durdu
+> (`required_roles=['CENTRAL_ADMIN','STATION_OPERATOR']`, demo kullanıcı `FARMER_SINGLE`).
+> Rol UYDURULMADI; aynı iş servis katmanından koşuldu (uç zaten yalnız onu çağırır).
+>
+> ### ⚠️ Hâlâ kapalı olan meşru yol (sahte kanıt YAZILMADI)
+>
+> `WorkerDispatchService.dispatch_to_worker` iki kapıdan geçemiyor (ölçüldü):
+> `av1_report_uri=NULL` · `av2_report_uri=NULL` · `calibration_records=0`.
+> Bu tur **AV kapısı ve kalibrasyon-kaydı ön koşulu atlanarak** `build_analysis_job_v1`
+> + `publish_analysis_job` doğrudan çağrıldı. Yani ölçülen şey **worker→platform→arayüz**
+> bacağıdır; **AV/kayıt ön koşulu hâlâ açık kalemdir.**
+>
+> ### Ortam tuzağı (yeni)
+>
+> Backend konteynerinde `RABBITMQ_URL` **`localhost`** gösteriyor (konteyner içinde yanlış
+> adres). Çalışan doğru biçim worker'ınkidir:
+> `amqp://tarlaanaliz:***@tarlaanaliz-rabbitmq:5672/%2Ftarlaanaliz` (vhost URL-kodlu).
+> Ayrıca backend `/health` **`worker_bridge unreachable`** uyarısı basıyor — ayrı bir kalem.
 
 ---
 

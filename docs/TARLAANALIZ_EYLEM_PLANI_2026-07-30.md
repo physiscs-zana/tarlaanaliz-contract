@@ -652,7 +652,63 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > mTLS istemci sertifikası (M2→platform yükleme) ve AV2 servisi (`is_ready_for_analysis`).
 > Ayrıntı: `docs/SESSION_HANDOFF.md` §0.A.
 >
+> 🟡 **GÜNCELLEME (2026-08-08 denetim turu) — mTLS'in SERTİFİKA ayağı kapandı.** Özel CA +
+> istemci sertifikası üretildi (`openssl verify` → OK, `clientAuth` uzantılı,
+> `C:\ProgramData\TarlaAnaliz\certs\`); edge HC-03 kapısı artık `CertificateNotFoundError`
+> **fırlatmıyor** (ölçüldü). Bu sertifika **satın alınmaz** — halka açık CA'lar istemci
+> kimliği için sertifika vermez; güven kaynağı platformun `API_MTLS_REGISTERED_FINGERPRINTS`
+> listesi, yani **kendi özel CA'mız**. Maliyet sıfır. **Kalan üç adım** (parmak izini env'e
+> kaydet · mTLS-sonlandıran ters vekil `X-Client-Cert`+`X-Client-Cert-Verify: SUCCESS`
+> başlıklarını set etsin · platform ayağa kaldırılsın): `docs/SESSION_HANDOFF.md` §0.A-mtls.
+>
 > ---
+>
+> ✅ **DK-34 (2026-08-08) — dashboard boş kalıyordu. KAPANDI** (platform #401).
+> `/api/v1/results` `overall_health_index=0.151` dönerken `/api/v1/dashboard/farmer`
+> `avg_health_score=null` gösteriyordu: `_insert_timeseries` yalnız `summary.*` yolunu
+> okuyor, worker ise ÖN RAPOR'da `summary`yi KR-019 gereği boş gönderiyordu. Artık aynı
+> kanonik türetme (`_overall_health_from_body`) kullanılıyor; fail-closed korundu.
+> Ölçüm: dashboard `avg_health_score` **null → 15.0**.
+>
+> ✅ **DK-35 (2026-08-08) — kalibrasyon tipi HİÇ taşınmıyordu. KAPANDI** (platform #401).
+> Edge manifesti `calibration_result.calibration_type = RELATIVE` taşıyor ama kalibre
+> manifest ingest'i yalnız iki URI kolonunu yazıyordu; tüketici tipi `dataset.manifest`ten
+> okuduğu için daima `NONE` görüyor ve **worker HER işi KR-018 sert kapısıyla reddediyordu**.
+> Bu, DK-28 zincirinin uçtan uca kapanmasını engelleyen halkaydı. Ölçüm: düzeltme sonrası
+> worker gerçek ODM ortomozaiğini işledi (36 tile).
+>
+> 🔴 **DK-38 (yeni, 2026-08-08) — SESSİZ YANLIŞ SAYI: `mean_ndvi` geçersiz pikselleri sayıyor.**
+> Çiftçiye gösterilen "sağlık 15/100" **yanlıştır**; doğrusu ~27'dir. Ölçüm (aynı raster,
+> `pipeline.py:2451` `src.read(band_index)` — maske OKUNMUYOR):
+>
+> | Hesap | NDVI ort | std |
+> |---|---|---|
+> | maskesiz (boş pikseller 0 sayılıyor) | **0.1515** | 0.1674 |
+> | alfa bandı maskeli (doğru) | **0.2657** | 0.1372 |
+> | DJI Terra, kendi bant rasterleri (`nodata=nan`) | **0.2639** | 0.1551 |
+>
+> Worker'ın raporladığı `0.151` maskesiz değerle **birebir** aynı. Kök neden: ODM
+> ortomozaiğinde `nodata=None`, uçuş alanı dışı pikseller **0** taşıyor ve 5. bant (alfa)
+> yok sayılıyor; ortomozaik köşe kutusunun yalnız **%57**'sini kaplıyor → %43 boş alan
+> ortalamayı aşağı çekiyor. `compute_mean_ndvi` doğru yazılmış (NaN'ları hariç tutuyor) —
+> eksik olan **maskenin pipeline'da hiç okunmaması**. Düzeltme dikkat ister: NaN'lar model
+> tensörüne sızmamalı (`_build_tensor`), bu yüzden ayrı bir kalem olarak açıldı.
+> **Yan bulgu (olumlu):** Terra ↔ ODM `camera` farkı **<%1** — iki motorun radyometrik
+> işlemesi tutarlı, yani sorun motorda değil tüketicide.
+>
+> ✅ **DK-39 (2026-08-08) — "Gerçek Görünüm" GRİ KARE gösteriyordu. KAPANDI** (platform #401).
+> Taban görüntü olarak yazılan ODM ortomozaiği multispektral (5 bant `float32`,
+> `('Red','Green','NIR','RedEdge',None)`, 0–0.1); `indexes=(1,2,3)` 3. kanalda mavi yerine
+> **NIR** okuyor ve ölçekleme olmadığı için tile düz gri çıkıyordu. Artık fail-honest:
+> kaynak görünür ışık taşımıyorsa `has_basemap=False` + tile 404, düğme hiç açılmaz.
+> **Mavic 3M'in mavi bandı yoktur** → o pakette gerçek renkli görünüm üretilemez; gerçek
+> RGB kaynak Terra'nın `map/result.tif`'idir (ölçüldü: 4 bant `uint8`, R/G/B + alfa).
+>
+> 🟠 **DK-36 (yeni, 2026-08-08) — meşru dispatch yolu hâlâ kapalı.**
+> `dispatch_to_worker` ön koşulları ölçüldü: `av1_report_uri=NULL` · `av2_report_uri=NULL` ·
+> `calibration_records=0`. Uçtan uca koşumda bu kapı **bilinçli atlandı** ve sahte AV raporu /
+> sahte kalibrasyon kaydı **YAZILMADI**. Kalem açık: AV1/AV2 üreticisi + `CalibrationRecord`
+> üreticisi bağlanmalı (P19 ile aynı aile: alan var, üretici yok).
 >
 > 🔴 **DK-31 (yeni, 2026-08-08) — AK-4: kanonik `analysis_job.v1` bant sözlüğünü ZORLAMIYOR.**
 > Worker `available_bands`'i kanonik `GREEN/RED/RED_EDGE/NIR/BLUE/LWIR` sözlüğüyle
