@@ -630,6 +630,69 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > toplulaştırmasına yansır. `int()` → `round()` düzeltmesi BU PR'A ALINMADI: ayrı bir
 > karar (retention davranışını tek başına değiştirir) ve kapsam dışı.
 >
+> ✅ **DK-28 KAPANDI (2026-08-08, altıncı oturum) — zincir motor çıktısından tile'a kadar CANLI.**
+> Kapanış **gerçek veriyle** doğrulandı, kod okumasıyla değil:
+>
+> ```
+> layers            3 katman (HEALTH/ndvi · ndre · stress_ratio) -> /api/v1/tiles/...
+> has_basemap       True
+> tile render       HEALTH 115 KB · NITROGEN 127 KB · WATER 123 KB · BASEMAP 1.7 KB PNG
+> ```
+>
+> Kapatan halkalar (hepsi merge edildi):
+> | Halka | Nerede | PR |
+> |---|---|---|
+> | M1 ÜRETİCİSİ (motor dizini → 3 kanıt dosyası) | edge `package_builder.py` + `POST /calibration-gate/build` | edge #62 |
+> | Adres kancası (yerel yol → nesne deposu URI'si) | edge `uri_resolver.py` | edge #62 |
+> | Ayak izi ÖLÇÜMÜ (kutu değil, geçerli-piksel maskesi) | edge `RasterioFootprintReader` | edge #62 |
+> | Artefakt yükleme kapsamı + tam adres | platform `X-Artifact-Name` + `assembled_uri` | platform #399 |
+> | Kalibre manifest ingest ucu | platform `POST /ingest/datasets/{id}/calibrated-manifest` | platform #398 |
+>
+> 🔴 **Kalan üretici boşluğu YOK ama iki DAĞITIM kapısı var** (kusur değil, donanım/provizyon):
+> mTLS istemci sertifikası (M2→platform yükleme) ve AV2 servisi (`is_ready_for_analysis`).
+> Ayrıntı: `docs/SESSION_HANDOFF.md` §0.A.
+>
+> ---
+>
+> 🔴 **DK-31 (yeni, 2026-08-08) — AK-4: kanonik `analysis_job.v1` bant sözlüğünü ZORLAMIYOR.**
+> Worker `available_bands`'i kanonik `GREEN/RED/RED_EDGE/NIR/BLUE/LWIR` sözlüğüyle
+> **vendored şemasında** daralttı (worker #206) çünkü kanonik şema alanı serbest string
+> bırakıyor:
+>
+> ```json
+> "available_bands": { "type": "array", "items": { "type": "string" } }
+> ```
+>
+> Sözlük **başka bir kanonik şemada** (`edge/intake_manifest.v1`) tanımlı ama iş mesajında
+> zorlanmıyordu — uyuşmazlığın sessiz kalmasının sebebi tam olarak bu: telin **iki ucunda
+> da kapı yoktu**. Ölçülen sonuç: platformdan gelen her iş `capability_detector` sert
+> kapısında düşüyordu, ve düşmese bile bantlar **konuma göre** yanlış eşlenip NDVI'yi
+> sessizce bozuyordu (ort +0.3381→+0.3910, std 0.1866→0.0695).
+>
+> **İstek:** kanonik `schemas/worker/analysis_job.v1.schema.json` →
+> `drone_metadata.available_bands.items` alanına `intake_manifest.v1` ile **aynı enum**.
+> Daraltma güvenli: tek üretici (platform `build_analysis_job_v1`) zaten kanonik gönderiyor.
+> Tam gerekçe: `tarlaanaliz-worker/denetim/band_sozlugu_devir_spec_2026_08_08.md` §3.
+> Kanonik ayna inince worker'ın I-5 sapması kapanır.
+>
+> ---
+>
+> 🟠 **DK-32 (yeni, 2026-08-08) — `/calibration-gate/build` üzeri-yazma muhafızı taşımıyor.**
+> Aynı `batch_id` ile ikinci çağrı mevcut kanıt setini **sessizce eziyor** (koşum 6'da
+> ölçüldü: iki kol aynı batch'e yazdı, ikincisi kaldı). Yeniden kalibrasyon meşru bir
+> operatör işlemidir, ama `/validate`'ten geçmiş bir paketi ezmek değildir. **Karar
+> gerekiyor:** (a) idempotent üzerine-yaz (bugünkü), (b) mevcut paket varsa 409,
+> (c) `force=true` bayrağı. Kapsam dışı bırakıldı, uydurulmadı.
+>
+> ---
+>
+> 🟠 **DK-33 (yeni, 2026-08-08) — `OSAVI` kanonik `layer_type` kümesinde yok.**
+> DJI Terra gerçekten üretiyor (koşum 5: Terra 10 çıktı verdi, biri `OSAVI.tif`).
+> Yazıcı uydurma enum değeri yazmıyor → giriş yazılıyor ama `layer_type` alanı
+> KONULMUYOR (tasarım gereği). Kanonik kümeye eklenmeli mi, ayrı sözleşme kalemi.
+>
+> ---
+>
 > 🔴 **DK-28 (yeni, 2026-08-07) — "Gerçek Görünüm" düğmesi ÜRETİMDE HİÇ GÖRÜNMEZ.**
 > Kalem aslında "düğmenin görsel doğrulaması" idi; doğrulama **yapılamadı, çünkü
 > doğrulanacak bir şey yok** — özellik uçtan uca ölü. Zincir komutla ölçüldü:

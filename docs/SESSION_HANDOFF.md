@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-07 (**beşinci oturum** — açık listenin kapatılması: W8/Ç-2 · DK-23 · DK-26 · DK-28 keşfi)
+**Son güncelleme:** 2026-08-08 (**altıncı oturum** — DK-28/DK-29 zinciri kapandı · ilk gerçek-veri koşumları · üç üretim kusuru bulundu ve düzeltildi)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,102 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-07, **beşinci oturum: açık listenin kapatılması — W8/Ç-2 · DK-23 · DK-26 · DK-28 keşfi**)
+## 0.A EN GÜNCEL — (2026-08-08, **altıncı oturum: DK-28/DK-29 zinciri + ilk gerçek-veri koşumları + üç üretim kusuru**)
+
+> ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE
+>
+> 1. **DK-28/DK-29 zinciri motor çıktısından tile'a kadar KAPANDI** ve **gerçek veriyle
+>    koşturuldu**: ODM 3 kol + DJI Terra → kanıt seti → M1→M2 gözetim zinciri →
+>    platform → worker → **render olan 3 katman + "Gerçek Görünüm"**.
+> 2. **Test etmek üç GERÇEK üretim kusuru buldu** — üçü de ölçülüp düzeltildi ve
+>    merge edildi: platform boot-crash (bayat KR-042 pini) · M2 replay **veri kaybı** ·
+>    worker bant sözlüğü uyuşmazlığı + **sessiz yanlış NDVI**.
+> 3. **Beş çapraz-repo değişmezi tutuyor**, dört depoda **0 açık PR**, dört çalışma
+>    ağacı da temiz ve ana dalda (ölçüldü, aşağıda).
+>
+> ### Merge edilenler (bu tur)
+>
+> | Depo | PR | İçerik | Merge |
+> |---|---|---|---|
+> | edge | **#62** | DK-28 M1 ÜRETİCİSİ: `package_builder` + `uri_resolver` kancası + `RasterioFootprintReader` + `POST /calibration-gate/build` | `3655dfa` |
+> | edge | **#63** | 🔴 M2 **VERİ KAYBI**: replay denemesi meşru stage'i siliyordu | `02a1967` |
+> | platform | **#399** | DK-28 artefakt kapsamı: `X-Artifact-Name` + `assembled_uri` + akıtmalı birleştirme | `05faf59` |
+> | platform | **#400** | 🔴 **BOOT-CRASH**: bayat `CONTRACTS_SHA256` pini (96 pin / 97 dosya) | `46f9cb5` |
+> | worker | **#206** | 🔴 bant sözlüğü uyuşmazlığı + konumsal bant eşlemesi (**sessiz yanlış sayı**) | `b7dd53f` |
+>
+> Tur başında ayrıca #61/#398/#205 (v7.6.0 pin + kalibre-manifest ingest ucu) merge edildi.
+>
+> ### Ölçülen değişmezler (kapanış anı)
+>
+> ```
+> I-1  contract 7.6.0 · platform 7.6.0 · worker v7.6.0 · edge SSOT 7.6.0 (edge SemVer 1.7.0)
+> I-2  git -C contracts describe --tags HEAD  ->  v7.6.0   (temiz, bulanık değil)
+> I-3  git submodule status contracts  ->  fc7e0e6b (v7.6.0), '+/-' YOK, içerik temiz
+> I-4  worker compute_contracts_hash.py --verify  ->  OK (v7.6.0)
+> I-5  BİR geçici sapma: worker bant enum'u kanonikten önde (devir spesi yazıldı)
+> ```
+>
+> Dört depo: `contract=master · platform=main · edge=main · worker=master`, hepsi **0 kirli dosya**.
+> Dört depoda **0 açık PR**.
+>
+> ### Gerçek veriyle ne koşturuldu (`edge-simulasyon/KOSUM_SONUCLARI.md`)
+>
+> | Koşum | Ne ölçüldü |
+> |---|---|
+> | 5 | Üretici, gerçek ODM 3 kol + Terra ile. `none` kolu **KR-018 sert red**. Üç manifest de **kanonik** şemayı geçti |
+> | 6 | `/build` HTTP ucu; H3 depo-kökü hapsi + kayıtsız drone reddi doğrulandı |
+> | 7 | M1→transfer→M2 gözetim zinciri; **4 farklı ret sebebi** (ayırt edici) |
+>
+> **🔴 En değerli sayı:** DJI Terra ortomozaiği köşe kutusunun **yalnız %54'ünü** kaplıyor.
+> Kutu kullanılsaydı kapsama 1.00 okunacak, KR-065 oranı → KR-031 **ödemesi %84 şişecekti**.
+> Geçerli-piksel maskesi tercihi teorik değilmiş.
+>
+> ### Demo — worker sonuçları artık GÖRÜNÜYOR
+>
+> ```
+> layers            3 katman  (HEALTH/ndvi · ndre · stress_ratio) -> /api/v1/tiles/...
+> available_indices ['ndvi', 'ndre', 'stress_ratio']
+> overall_health    0.151  (basis: FIELD_MEAN_NDVI)
+> has_basemap       True            <- "Gerçek Görünüm" de açıldı
+> tile render       HEALTH 115 KB · NITROGEN 127 KB · WATER 123 KB · BASEMAP 1.7 KB
+> ```
+>
+> Öncesi `layers: []` idi. Kopuk halka `datasets.result_uri` idi — **NULL değil boş dize**,
+> yani tüketici koşmuş, worker mesajında alan yokmuş (satır 2026-08-04'ten, ilk manifest
+> 2026-08-05'ten → eski satır hiçbir zaman katman kazanamazdı).
+>
+> `summary` ve `detections` **bilerek boş**: `report_phase=PRELIMINARY` (mission `DONE` değil).
+> Bu **KR-019 uzman onay kapısıdır**, kusur değil — DB'den zorlanmadı.
+>
+> ### Sonraki oturumun kapısındaki kalemler
+>
+> Tam liste **eylem planında**. Buradaki üçü durum fotoğrafının parçası:
+>
+> 1. 🔴 **AK-4 aynası:** kanonik `analysis_job.v1` → `drone_metadata.available_bands`
+>    hâlâ serbest string. Worker önden gitti (vendored enum); kanonik ayna inmeli.
+>    Gerekçe + istek: `tarlaanaliz-worker/denetim/band_sozlugu_devir_spec_2026_08_08.md` §3.
+> 2. 🟠 **mTLS sertifikası yok** → M2→platform yükleme kolu koşulamıyor (HC-03, tasarım gereği).
+>    Sim M2 profilinde cert yok; provizyon işi.
+> 3. 🟠 **AV2 servisi deploy edilmemiş** (`TARLA_AV2_ENABLED=false`, `av2-scanner` konteyneri yok)
+>    → `is_ready_for_analysis` sağlanamıyor, yani **tam meşru** dispatch yolu kapalı.
+>    Demo koşumunda AV ön koşulu bilinçli atlandı; **sahte AV raporu YAZILMADI**.
+>
+> ### ⚠️ Sonraki oturum için ölçülmüş tuzaklar
+>
+> * **`main`'e merge DEPLOY DEĞİLDİR.** Backend `src/` bind-mount ama `CONTRACTS_VERSION.md` +
+>   `contracts/` **imaja gömülü**; uvicorn `--reload`'suz. Yeni sözleşme sürümünde
+>   **imaj yeniden kurulmalı** (`docker compose build backend`), yoksa boot-crash.
+> * **Worker `src` bind-mount DEĞİL** — kod değişikliği için
+>   `docker build -f Dockerfile.gpu -t tarlaanaliz-worker:gpu .` +
+>   `docker compose --env-file ../tarlaanaliz-platform/.env up -d worker` (env-file ZORUNLU).
+> * **mypy çalışma ağacında çöküp taze klonda çalışıyorsa** ilk şüphe bayat `.mypy_cache`'tir
+>   (bugün tam olarak bu oldu; silince iki taraf da 56 hata verdi).
+> * **Edge CI'da iki iş PR'da ATLANIR** (`Test Windows` + `Package Build`, Windows/2× ücret
+>   kapısı). `build_profiles.yaml`'a dokunursan paket kapısını **yerelde** koştur.
+
+---
+
+## 0.A-e ÖNCEKİ TUR — (2026-08-07, **beşinci oturum: W8/Ç-2 · DK-23 · DK-26 · DK-28 keşfi**) — ✅ **KAPANDI, MERGE EDİLDİ**
 
 > ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE
 >
