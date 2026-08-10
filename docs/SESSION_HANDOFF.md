@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-10 (**sekizinci oturum** — doğrulama turu: yedinci turun **her iddiası komutla yeniden ölçüldü**, simülasyon 1–7 baştan koştu, zincir taze veriyle tekrar aktı; **depolara tek satır kod girmedi**)
+**Son güncelleme:** 2026-08-10 (**dokuzuncu oturum** — DK-43…DK-47: Aşama-1 NaN fail-open kapandı · `stress_ratio` ilk kez üretiliyor · fıstık ad ekseni + kök-çürüklüğü kartı · **worker = kart SSOT, platform bayt-özdeş** · tanıtım metni gerçeğe hizalandı. ⚠️ **COMMIT EDİLMEDİ** — üç depoda çalışma ağacı kirli)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,102 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-10, **sekizinci oturum: DOĞRULAMA TURU — iddialar mutasyonla sınandı, zincir tekrar aktı**)
+---
+
+## 0.A EN GÜNCEL — (2026-08-10, **dokuzuncu oturum: DK-43…DK-47 — sessiz kusurlar · indeks gerçeği · kart SSOT**)
+
+> **Durum: HEPSİ MERGE EDİLDİ** (kullanıcı talimatı: *"konu başına ayrı PR aç ve commit'le
+> push ve merge yap"*). İş listesi kalemleri: eylem planı **§14.10** (AL-K1…AL-K16 +
+> çürütülmüş iddialar).
+>
+> | PR | Depo | Konu | Ana dal (merge sonrası) |
+> |---|---|---|---|
+> | [#208](https://github.com/physiscs-zana/tarlaanaliz_worker/pull/208) | worker | DK-43 | — |
+> | [#209](https://github.com/physiscs-zana/tarlaanaliz_worker/pull/209) | worker | DK-44 | — |
+> | [#210](https://github.com/physiscs-zana/tarlaanaliz_worker/pull/210) | worker | DK-45 | — |
+> | [#211](https://github.com/physiscs-zana/tarlaanaliz_worker/pull/211) | worker | DK-46 (ratchet + baseline + test) | — |
+> | [#212](https://github.com/physiscs-zana/tarlaanaliz_worker/pull/212) | worker | DK-47 | `master 029aa4a` |
+> | [#404](https://github.com/physiscs-zana/tarlaanaliz-platform/pull/404) | platform | DK-46 (13 dosya bayt-özdeş + `labeling_card_service`) | `main 9ec947c2` |
+>
+> Her PR **ayrı ayrı** CI'dan geçti (worker 4 kapı · platform 6 kapı). Üç depoda da
+> çalışma ağacı **temiz**. ⚠️ **Merge ≠ deploy** — canlıda görünme ayrı adımdır.
+
+### Ne yapıldı (hepsi ölçüm + mutasyonla doğrulandı)
+
+| Kod | Depo | İş |
+|---|---|---|
+| **DK-43** | worker | Aşama-1 anomali filtresi NaN'da **fail-OPEN**'dı: ölçüm yapılmamış karo "sağlıklı" sayılıyordu. Gerçek uçuşta 36 karonun **11'i**. `np.nanmean` + fail-closed + kapsama kapısı. Sağlıklı 11→**0**, hariç tutulan 0→**11**. |
+| **DK-44** | worker | `stress_ratio` `_compute_indices`'te **hiç üretilmiyordu** (ValueError DEBUG'a yutuluyordu). İki turlu, sıradan bağımsız çözüm + WARNING. Ölçülen özdeşlikler belgelendi: `LCI==NDRE`, `GNDVI==−NDWI`. |
+| **DK-45** | worker | Fıstık ad ekseni crops→kart/registry hizalandı (3 eşleme); `card_coverage_baseline` **yanıltıcı gerekçesi** düzeltildi; **kök/kökboğazı çürüklüğü şemsiye kartı** eklendi. Kartsız 16→13, sapma 85→79. |
+| **DK-46** | worker + platform | **Worker = kart SSOT.** Platform bayt-özdeş kopya (11 dosya/132 kart → 15/**210**), **12 HEALTH kartı** portala geldi (öncesinde HİÇ yoktu). Sapma 30→**2**. Ratchet kapısı + baseline + 8 test. Platform'da **RICE eşlemesi** eklendi (satılan ürün, portalda kartı yoktu). |
+| **DK-47** | worker | Tanıtım özeti gerçeğe hizalandı: 3 üretici-ölü özellik ayrı kutuya, 7 iddia düzeltildi, sayısal özet ölçülen değerlerle karşılaştırıldı. |
+
+**Kapılar (kapanışta, her PR'da ayrı ayrı ölçüldü):** worker `ruff` temiz · `mypy` 128
+(taban) · üç ratchet OK · KR-041 `OK (v7.6.0)` · `pytest` **4422 passed** ·
+platform `ruff`/BOUND temiz · `mypy` **462 dosya, 0 sorun** · `pytest` (CI ile birebir
+`TARLA_ENVIRONMENT=development`) **6031 test / 0 hata / 5 skip**, kapsam **%83.67** (eşik 80).
+**13 mutasyon, 13'ü de bir testi öldürdü.**
+
+### 🔬 SONRAKİ OTURUM — BU OTURUMUN İŞİNİ ÖNCE DENETLE
+
+Aşağıdakiler **benim kendi işime** karşı yazılmış denetim kalemleridir. Kod yazmadan önce
+bunları koş; hiçbirini "geçmiştir" diye varsayma.
+
+**D-1 · Tazelik.** Üç depoda `git status --short` + `git log --oneline -1`. Bu oturumda
+platform HEAD'i ölçüm sırasında `409def12`→`14804d73` değişti (başka aktör). Kirli ağaç
+varsa **önce onu anla**, üzerine yazma.
+
+**D-2 · Gerçek-veri iddiasını yeniden üret.** DK-43'ün sayıları `_anomaly_filter` üretim
+kodu **doğrudan çağrılarak** ölçüldü; **tam konteyner uçtan-uca koşumu TEKRARLANMADI**.
+Kabul ölçütü: aynı raster ile
+`docker logs tarlaanaliz-worker | grep "Anomaly filter"` → beklenen **36/36** (11 karo
+artık "sağlıklı" değil, Aşama-2'de *atlandı* olarak loglanır) ve `tile_count_healthy`
+**0**. Dashboard `health` **düşmeli ya da aynı kalmalı** — yükselirse düzeltme yanlış yönde.
+
+**D-3 · Ratchet gerçekten kapı mı?** `check_card_catalog_drift` worker CI'ında **atlıyor**
+(platform yan yana yok). Yani bugün "kapı" değil, geliştirici kontrolü. AL-K13 kapatılmadan
+"kart senkronu garantili" **denmemeli**. Ölç: CI logunda skip satırını gör.
+
+**D-4 · Mutasyon borcunu yeniden çalıştır.** Bu oturumda **iki testim ilk yazımda
+mutasyondan sağ çıktı** (biri gerekçe metnini dosyanın herhangi bir yerinde arıyordu,
+biri savunma-derinliği guard'ıydı). İkisi de güçlendirildi — ama aynı hata sınıfı
+tekrarlanabilir: yeni yazılan her testte "hangi mutasyon bunu öldürür?" sorusunu yaz.
+
+**D-5 · Platform kart senkronu içerik denetimi.** Bayt-özdeşlik **doğrulandı** ama
+platform kartlarının uzman portalı **arayüzünde** nasıl göründüğü denetlenmedi (v2.x
+alanları ilk kez orada). Portal ekranını bir kez gözle doğrula.
+
+**D-6 · Çürütülmüş iddiaları tekrar gündeme getirme.** §14.10 sonundaki tabloya bak:
+"platform kopyası bayat" · "healthy_rice yok" · "fail-open veri kaybı üretiyor" ·
+"DK-44 WATER_STRESS katmanını besliyor" — dördü de ölçümle çürütüldü.
+
+**D-7 · Bu oturumun kendi yöntem hataları** (tekrarlamamak için):
+- `git checkout` ile mutasyon geri alırken **kendi commit'lenmemiş işimi sildim** →
+  mutasyon geri alma için **yedek** kullan, git değil.
+- İlk gerçek-veri ölçümüm **geçersizdi** (alfa bandını `str(enum)` ile arıyordum; Python
+  3.11+ `IntEnum.__str__` sayı döndürüyor). Üretim loguyla çapraz kontrol olmasa
+  fark etmezdim → **her ölçümü bilinen bir gerçekle çapraz doğrula.**
+- `class_vocab_drift_baseline.yaml`'ı **yanlış dizinde** aradım (`config/` vs
+  `config/phenology/`) ve "yok" sandım → "hiç yok" çıktısına **pozitif kontrol** koy.
+- `healthy_rice` yok dedim; `startswith("healthy")` filtresi `rice_crop_healthy`'yi
+  kaçırdı → **ada değil alana** (`sub_specialty`) bak.
+- 🔴 **Geçici klasördeki (scratchpad) yedeği tek kaynak saydım ve klasör silindi.**
+  PR'lar arası bekleyen DK-45/46/47 dosyaları oradaydı; oturum ortasında **boşaldı**.
+  Kurtarma **oturum kaydından** (transcript `.jsonl`) yapıldı: `Write` içerikleri +
+  `Edit` `old/new` çiftleri + betikli yazmalar kronolojik sırayla yeniden oynatıldı
+  (20/20 uygulandı; biri `import` satırı ayrı bir komuttaydı, `ruff` yakaladı).
+  Doğrulama: worker↔platform kart bayt-özdeşliği yeniden ölçüldü → sapma yine **2**.
+  **Ders:** commit'lenmemiş iş için tek yedek yeri **geçici klasör olamaz** — ya
+  hemen bir dala commit'le ya da depo içinde kalıcı bir yere koy. Transcript bir
+  kurtarma kaynağıdır ama **yedek değildir** (yalnız bu makinede, yalnız bu oturum).
+
+### 📌 Karar bekleyenler (kullanıcıya)
+1. ✅ **KAPANDI** — konu başına ayrı PR açıldı, CI'dan geçirildi ve merge edildi (tablo yukarıda).
+2. AL-K9: üç üretici-ölü özellik bağlanacak mı, düşülecek mi.
+3. AL-K16: barley/potato ürünleri açılacak mı (kartları hazır bekliyor).
+4. AL-K8: kartlardaki THERMAL_REQUIRED talepleri "gelecek yetenek" diye mi işaretlensin.
+
+## 0.A-h ÖNCEKİ TUR — (2026-08-10, **sekizinci oturum: DOĞRULAMA TURU — iddialar mutasyonla sınandı, zincir tekrar aktı**)
 
 > ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE
 >
