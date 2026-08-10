@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-08 (**yedinci oturum** — denetim turu: zincir gerçek veriyle uçtan uca kapandı · beş üretim kusuru (DK-38…DK-42) bulundu, düzeltildi, **merge edildi ve imajlar yeniden kuruldu**)
+**Son güncelleme:** 2026-08-10 (**sekizinci oturum** — doğrulama turu: yedinci turun **her iddiası komutla yeniden ölçüldü**, simülasyon 1–7 baştan koştu, zincir taze veriyle tekrar aktı; **depolara tek satır kod girmedi**)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -20,7 +20,117 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-08, **yedinci oturum: DENETİM TURU — beş kusur, hepsi merge + deploy**)
+## 0.A EN GÜNCEL — (2026-08-10, **sekizinci oturum: DOĞRULAMA TURU — iddialar mutasyonla sınandı, zincir tekrar aktı**)
+
+> ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE
+>
+> 1. **Yedinci turun beş düzeltmesi de CANLI ve GERÇEKTEN çalışıyor** — yeşil teste
+>    güvenilmedi: DK-38 ile `build_profiles` kapısı **mutasyonla** (kodu bilerek bozup
+>    testin kırıldığını görerek), DK-42 **backend IP'sini zorla değiştirerek**, DK-39
+>    **iki yönde** (kaynak RGB iken açık / multispektral iken kapalı) sınandı.
+> 2. **Simülasyon 1–7 baştan koştu (hepsi `EXIT=0`)** ve sayılar 2026-08-08 ile birebir
+>    çıktı — zincir kararlı, tek seferlik değil. Ardından **taze bir iş** M1 paketinden
+>    çiftçinin sayfasına kadar aktı: `27/100 · ndvi 0.266`.
+> 3. **Bu turda depolara tek satır kod girmedi** (dört depo temiz, HEAD'ler değişmedi);
+>    bulunan tek kusur **simülasyon koşumunun kendisindeydi** ve orada düzeltildi.
+>
+> ### Ölçülen iddialar (hepsi komutla)
+>
+> | İddia | Ölçüm | Sonuç |
+> |---|---|---|
+> | 5 PR ana dalda | 4 depo `git log` + `rev-list --left-right` | ✅ `0 0` (origin ile aynı) |
+> | Planda DK-38/41/42 KAPANDI | eylem planı satır 680/686/693 | ✅ |
+> | Mojibake onarıldı | 10 dosya UTF-8 çözücü + **pozitif kontrol** | ✅ hiçbirinde yok |
+> | edge CI kapısı | `ruff check` · `ruff format --check` · 3 takım + kapsam | ✅ **1371 geçti**, %84.88 |
+> | worker birim takımı | `pytest tests/unit` | ✅ **3975 geçti** |
+> | platform (değişen modüller) | 5 test dosyası, `APP_ENV=development` | ✅ **116 geçti** |
+> | DK-36 hâlâ kapalı | DB sorgusu | ✅ av1 `0` · av2 `0` · `calibration_records` `0` |
+>
+> ### Mutasyon sınamaları (yeşil test kanıt değildir)
+>
+> * **DK-38** — alfa bandı dalı öldürüldü → `test_ALFA_BANDI_yoluyla_maske_OLCULEN_ODM_DURUMU`
+>   **kırmızıya döndü**. Yani düzeltmeyi koruyan gerçek bir kilit var.
+> * **`build_profiles` sahipliği** — `cog_converter` satırı silindi → **2 test öldü**.
+> * **DK-42 (ayırt edici)** — ağa dolgu konteyner konup backend yeniden başlatıldı,
+>   IP **`172.18.0.8 → 172.18.0.12`** değişti; nginx yeniden başlatılMADAN **401**
+>   döndü (**502 değil**). 502'yi doğuran senaryonun ta kendisi koşturuldu.
+> * İki mutasyon da geri alındı; dört çalışma ağacı temiz, I-3 bayt-özdeşliği sağlam.
+>
+> ### Simülasyon: koşum 8 (ayrıntı `edge-simulasyon/KOSUM_SONUCLARI.md`)
+>
+> Kaynak kilidi 5/5 · koşum 1–7 `EXIT=0` · maske/kutu **0.9737 · 0.9732 · 0.5424**
+> (08-08 ile birebir) · `dicle_none` **422 sert red** · depo-kökü-dışı **400** ·
+> kayıtsız drone **422** · gözetim zinciri 6 kol / **4 farklı red sebebi**.
+>
+> **Yeni:** M1→M2'ye giden dosya **5 değil 6** — `rgb_ortho_cog.tif` (DK-41 üretim
+> yolunda). Doğrulandı: `tiled · 512×512 · overview [2,4,8] · deflate · EPSG:32637`.
+>
+> 🔴 **DK-41 × DK-38 çapraz sınaması:** COG çevrimi geçerli-piksel bilgisini koruyor mu?
+> Kaynak ve COG'da alfa oranı **0.42972333 = 0.42972333** → koruyor. Korumasaydı worker
+> sessizce yanlış NDVI'ya dönerdi. (Not: `dataset_mask()` iki dosyada da "hepsi geçerli"
+> diyor — bilgi **yalnız** alfa bandında; DK-38'in ikinci dalı olmasa düzeltme burada
+> da etkisiz kalırdı.)
+>
+> ### Taze uçtan uca koşum (üretim kodu)
+>
+> `M2 staged COG → nesne deposu → RealIngestService → analysis_jobs → build_analysis_job_v1
+> + publish_analysis_job → RabbitMQ → worker → analysis_results → timeseries → dashboard`
+>
+> ```
+> Pipeline completed: tiles=25 confidence=0.433 mode=INDICES_ONLY 9869ms
+> Valid-pixel mask applied (alpha_band_5): 43.0% out-of-flight      <- DK-38 canlı
+> Band plan resolved via raster_descriptions: {R:1,G:2,NIR:3,RE:4}  <- PR #206 canlı
+> Timeseries UPDATED (re-analysis) rows=1 health=27                 <- DK-40 canlı
+> dashboard/farmer -> health_score 27/100 · ndvi_mean 0.266
+> ```
+>
+> **DK-39 iki yönde:** `rgb_ortho_uri` ODM ortomozaiğini gösterirse `has_basemap=false`
+> + 404 (float32, mavi bandı yok → sahte görüntü göstermiyor); DJI Terra RGB COG'u
+> gösterirse `has_basemap=true` + **98 KB gerçek ortofoto, 24.104 farklı renk, gri
+> piksel %0.0**. Düğme "hep açık" değil — kaynağı görünür ışık taşımıyorsa kapanıyor.
+>
+> ### Bulunan tek kusur: simülasyon koşumunun kendisi (düzeltildi)
+>
+> `kosum_3` §3 *"beyan dosyası yoksa fail-closed mu"* bölümü **kendi iddiasını
+> ölçmüyordu**: koşum 5/6 aynı ODM dizinine operatör beyanını (`tarlaanaliz_engine.json`)
+> yazdığı için girdi kirlenmişti — ekrana "RAW_DN olmalı" yazıp `SUN_IRRADIANCE` okuyordu.
+> Beyansız geçici kopya + ters yön pozitif kontrolü ile düzeltildi. **Üretim kodu sağlam:**
+> temiz kopyada `beyan YOK → RAW_DN`, `beyan VAR → SUN_IRRADIANCE`.
+> **Genel ders:** bir koşum başka bir koşumun girdisine yazıyorsa, sonrakilerin pozitif
+> kontrolleri **sessizce geçersizleşir**.
+>
+> ### Ölçülmeyenler (dürüst liste — "doğrulandı" sayılmasın)
+>
+> * Platform **tam** takımı ve `mypy` koşulmadı; yalnız değişen modüllerin 116 testi.
+> * Yerel `ruff 0.15.12`, CI'nın pinlediği **0.15.20** (aynı araç, yama sürümü farklı).
+> * Tarayıcıda **görsel** doğrulama yapılmadı; API + tile ölçüldü.
+> * **mTLS bacağı yine koşulamadı** — M2→depo yüklemesi elle yapıldı (açık dikiş).
+> * **DK-36 meşru dispatch yolu bilinçle atlandı**; sahte AV raporu / kalibrasyon kaydı
+>   **YAZILMADI**, onun yerine `analysis_jobs` satırı elle açılıp üretim yayıncısı çağrıldı.
+>
+> ### Ortam tuzakları (bu turda ölçüldü — bir sonraki oturuma zaman kazandırır)
+>
+> * Docker Desktop kapalıysa önce o açılır; açılınca 8 konteynerin hepsi `healthy` geldi.
+> * nginx **127.0.0.1:8080**'de (port 80 yayınlanmamış — `http://localhost/` bağlanamaz,
+>   bu **502 sanılmasın**).
+> * DB kullanıcısı **`tarlaanaliz_user`** (`tarlaanaliz` değil → `role does not exist`).
+> * Giriş gövdesi alanı **`phone`** (`phone_number` değil → `Validation failed`).
+> * Git Bash konteyner yollarını bozar → `MSYS_NO_PATHCONV=1` (`/etc/…` yolu
+>   `C:/Program Files/Git/etc/…` oluyor ve "dosya yok" hatası veriyor).
+> * Backend içi S3 önekleri `TARLA_S3_*`, worker'ınkiler `TARLAANALIZ_S3_*` — **farklı**.
+>
+> ### Gösteri öncesi açık kalemler (değişmedi)
+>
+> 1. 🟠 **Tarla sınırı gerçek görev planından gelmeli** — uydurma sınır yine
+>    `coverage_ratio=0.0043` ve QC **FAIL** üretti (ölçüm artefaktı, hüküm değil).
+> 2. 🟠 **DK-36 meşru dispatch yolu kapalı** (av1/av2 NULL, kalibrasyon kaydı yok).
+> 3. 🟠 **M1/M2 ayrı istasyon yok**; her şey bu makinede (Docker).
+> 4. Demo verisi notu: `datasets.rgb_ortho_uri` **Terra RGB COG'da kalmalı** — ODM
+>    manifesti yutulursa bu alan ODM ortomozaiğine döner ve "Gerçek Görünüm" kapanır.
+
+---
+
+## 0.A-g ÖNCEKİ TUR — (2026-08-08, **yedinci oturum: DENETİM TURU — beş kusur, hepsi merge + deploy**)
 
 > ### 🔴 EN ÖNEMLİ ÜÇ CÜMLE
 >
