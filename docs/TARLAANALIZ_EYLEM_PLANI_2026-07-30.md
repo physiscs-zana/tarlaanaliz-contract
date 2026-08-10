@@ -2385,6 +2385,32 @@ ticarileşmeyecek bir hat için düşünün.
 geçerlilik → ⑤ kanıt/kapı bütünlüğü → ⑥ mimari tutarlılık → ⑦ süreç kolaylığı.
 Anahtar ilke: **"Yeşil ama yalan bir kapı, kırmızı bir kapıdan tehlikelidir."**
 
+> ## 🧭 TEK YETKİLİ GİRİŞ NOKTASI — bunu okumadan §14'e dalma
+>
+> **Sorun (ölçüldü 2026-08-11):** bu dosyada *“sonraki oturum buradan başla”* iddiası
+> taşıyan **beş** bölüm vardı (§14.7 · §14.9 · ▶️ GİRİŞ NOKTASI · tarihsel kayıt · §14.8)
+> ve bölümler **sıra dışıydı** (14.7 → 14.6 → 14.9 → başlıksız ▶️ → 14.8 → 14.10).
+> Hangisinin canlı olduğu okurun tahminine kalıyordu.
+>
+> | Bölüm | Statü | Neden korunuyor |
+> |---|---|---|
+> | **§14.10 (2026-08-10)** | 🟢 **CANLI GİRİŞ NOKTASI** | En yeni tur; DK-43…DK-47 + AL-K13…AL-K18 |
+> | **§▶️ GİRİŞ NOKTASI (2026-08-02)** | 🟡 canlı ama kısmi | **P-1…P-6 kalemleri hâlâ açık** (ENGEL 1/2/3 donanım-bloke); 🔴 ile işaretli |
+> | §14.9 (2026-08-01) | 🟠 süperseded, **korunuyor** | *Turdan BAĞIMSIZ kuyruk* 6 açık kalemi burada yaşıyor |
+> | §14.8 (2026-08-01) | 🟠 süperseded, **korunuyor** | 3 ⬜ kalem taşıyor |
+> | §14.7 (2026-07-31) | 🟠 süperseded, **korunuyor** | 13 ⬜ kalem taşıyor |
+> | ▶️ tarihsel kayıt (2026-08-02) | ⛔ **KALDIRILDI** | 0 tekil kalem taşıyordu (ölçüldü) |
+>
+> ⚠️ **Süperseded bölümler SİLİNMEDİ** çünkü içlerinde açık iş var. Silmeden önce
+> o kalemleri §14.10'a taşımak gerekir — ayrı ve dikkatli bir iş.
+>
+> 🔬 **Yöntem uyarısı (kendi kusurum, kayda geçiyor):** bölümlerin açık iş taşıyıp
+> taşımadığını ölçmek için ilk turda yalnız **⬜** saydım. Bu **yanıltıcıdır** —
+> ▶️ GİRİŞ NOKTASI bölümü 0 ⬜ gösteriyordu ama açık kalemlerini **🔴** ile işaretliyor.
+> Bir bölümü silmeden önce **⬜ ve 🔴 birlikte** sayılmalı, üstelik kalem kimliklerinin
+> başka yerde izlendiği de doğrulanmalı (`kimlik ∈ blok − blok_dışı` = 0 olmalı).
+
+
 ## 14.0 KADEME 0 — Kapılar dürüst hale gelsin (her şeyden ÖNCE) — ✅ **TAMAMLANDI (2026-07-31)**
 
 > **Durum:** D1…D6 **altısı da yapıldı** · süit **735 geçti / 2 beyanlı xfail / 0 skip** ·
@@ -3102,135 +3128,21 @@ Bunlar **kendi kurulumunuzda** ölçülür, kaynaktan öğrenilemez:
 
 ---
 
-## ▶️ (TARİHSEL KAYIT — YERİNE YUKARIDAKİ BÖLÜM GEÇTİ) v8.0.0 TURU: ÖLÇÜLMÜŞ İŞ PLANI (2026-08-02 gecesinde yazıldı)
+## ▶️ (KALDIRILDI 2026-08-11) v8.0.0 TURU — ÖLÇÜLMÜŞ İŞ PLANI (2026-08-02 gecesi)
 
-> ⚠️ **BU BÖLÜM ARTIK İŞ LİSTESİ DEĞİLDİR.** 2026-08-02 motor araştırması S3'ü ve K1'i
-> MINOR'a indirdi, S7-b zaten MINOR'du ⇒ turda yalnız DEP-1 kaldı. Ayrıca ENGEL 1/2/3
-> (kalibre manifest yazıcısı yok · CLI yok · tek eğitilmiş model BLUE bekliyor) bu
-> kalemlerin hepsinden acildir. Güncel sıra yukarıdadır.
-
-> **Bu bölüm sonraki oturumun giriş noktasıdır.** Her kalemin gerekçesi ÖLÇÜLMÜŞTÜR;
-> aşağıdaki sayılar tahmin değil, o gün koşturulan komutların çıktısıdır. Bir kalem
-> burada yoksa yapılmaz; yapılacaksa önce buraya yazılır.
+> **Bu bölüm 132 satırdı ve kendisi zaten *“ARTIK İŞ LİSTESİ DEĞİLDİR”* diyordu.**
+> 2026-08-11'de kaldırıldı. **Hiçbir iş kalemi kaybolmadı — ölçüldü:** bloktaki 28 kalem
+> kimliğinin **hiçbiri** yalnız orada geçmiyordu (`kimlik ∈ blok − blok_dışı` = **0**).
+> Nereye devredildiği:
 >
-> 🔴 **ÖNCE KULLANICI KARARI:** turun kendisi açılacak mı? MAJOR sürüm dört deponun
-> aynı anda yeniden pinlenmesini gerektirir ve geri alınması zordur. İki seçenek:
-> **(a)** turu şimdi aç (adlar/kısıtlar temizlenir, borçlar kapanır) · **(b)** pilot
-> sonrasına bırak (bugünkü hâl çalışıyor; hiçbir kalem CANLI bir arıza değil).
-> Kalemlerin teknik hazırlığı tamamdır; bekleyen şey **zamanlama kararıdır.**
-
-### 📋 v8.0.0 içeriği — dört kalem, kanıtlarıyla
-
-#### S3 — `DLS2_RELATIVE`: satıcıya özgü ürün adı, genel bir kavramın yerinde
-**Sorun:** "DLS2" bir **MicaSense parçasının adıdır** (SSOT KR-018: *"MicaSense
-RedEdge-P/Altum-PT: DLS2 + reflectance panel"*). M3M'de de güneş sensörü var ama **DLS2
-değil**. Yani genel bir kalibrasyon sınıfına tek bir üreticinin ürün adı verilmiş; başka
-bir sensörle göreli kalibrasyon yapıldığında veri yanlış adla etiketlenir.
-
-**ÖLÇÜM (2026-08-02):**
-| Yer | Geçiş sayısı |
-|---|---|
-| contract `schemas/` + `enums/` | **19** |
-| worker `src/` | **17** |
-| platform `src/` | **2** |
-| edge `src/` | **0** |
-
-**Neden MAJOR:** enum değeri yeniden adlandırma = `ENUM_VALUE_REMOVED` + yeni değer.
-38 canlı atıf. Migration guide + üç tüketici re-pin şart.
-**Karar gerekiyor:** yeniden adlandır mı (`IRRADIANCE_RELATIVE` gibi genel bir ad), yoksa
-tamamen kaldır mı? E13-R zaten değeri kalibre paket yüzeyinden reddetti — ama worker'daki
-17 atıf hâlâ canlı, önce onların ne yaptığı okunmalı.
-
-#### S7-b — `raw_frames[].band` zorunlu değil, bu yüzden boşluk hâlâ belirsiz
-**Sorun:** Alan boşsa iki ayrı şey demek olabiliyor: (a) bu bir RGB kompozit kare,
-(b) bant bilinmiyor/yazılmadı. `RGB` değeri S7'de eklenerek (a) açıkça söylenebilir hâle
-geldi, ama alan **opsiyonel** kaldığı için yokluk hâlâ iki anlamlı.
-
-**ÖLÇÜM (2026-08-02):**
-```
-raw_frames[] required : ['frame_id', 'relative_path', 'sees_patch_ids']   ← band YOK
-band enum             : BLUE GREEN RED RED_EDGE NIR LWIR RGB
-Bu alani YAZAN kod    : edge 0 · platform 0 · worker 0
-```
-**⚡ AK-11 bunu MINOR'a da uygun kıldı:** üretici olmadığı ÖLÇÜLDÜĞÜ için artık
-`"x-compat-accepted": {..., "accepts": ["FIELD_MADE_REQUIRED"]}` beyanıyla MINOR turda da
-kapatılabilir. Yani S7-b **v8.0.0'ı BEKLEMEK ZORUNDA DEĞİL** — turu açmazsanız bile
-yapılabilir.
-⚠️ Bedel yazılı: alan zorunlu olduktan sonra onu yazmayan bir üretici yazılırsa paket
-reddedilir. Üretici (E11 kare seçici) bu alanı **daima** yazacak şekilde yazılmalı.
-📌 Aynı turda: o alanın açıklamasındaki *"dedektör … hiç kontrol etmiyor (satır 615-630)"*
-cümlesi **bayat** — AK-11 kapandı. Aynı alana dokunulduğu için birlikte düzeltilecek.
-
-#### K1 — müşteri kimliği depolama anahtarında açık metin
-**Sorun:** Nesne anahtarı şeması `{tenant}/{dataset_id}/patches/{patch_id}/{ad}`. Yani
-**kimin verisi olduğu yolun içinde yazıyor.** Yol bir log satırına, bir hata mesajına ya da
-bir URL'ye düştüğü anda müşteri kimliği de onunla sızar.
-
-**ÖLÇÜM:** `schemas/edge/intake_manifest.v1.schema.json:324` — güvenlik yapısı zaten
-zorlanıyor (mutlak yol RED · `..` traversal RED · `/patches/` öncesi ≥2 segment) ama
-**tenant kısmı açık metin**.
-
-**Neden MAJOR:** anahtar biçimi değişirse bugüne kadar üretilmiş tüm anahtarlar etkilenir;
-geçiş planı (eski anahtarları okumaya devam etme penceresi) gerekir.
-
-#### DEP-1 — penceresi dolmuş iki ödeme nesnesi
-| Nesne | Beyan | Durum |
-|---|---|---|
-| `enums/payment_status.enum.v1.json` | `deprecated: true`, **`since: 6.2.0`**, `removal_plan: "gelecek bir MAJOR"` | 6.2.0'dan beri **7.0 · 7.1 · 7.2 · 7.3 · 7.4** geçti |
-| `schemas/platform/payment_intent.v1.schema.json` | `deprecated: true`, v2 kanonik, migration guide **yazılı** | tüketiciler v2'ye pinli (beyanda ölçülü) |
-
-**Neden şimdi:** İkisi de düzgün beyan edilmiş, unutulmuş değil — ama v8.0.0 içerik
-listesinde **yoklardı** (ÖD-0'da fark edildi). MAJOR turu zaten açılacaksa, "silinecek"
-diye bekleyenler o turda silinmeli; yoksa bir MAJOR daha beklerler.
-
-### 🔢 Tur açılırsa — adım sırası (C8 töreniyle birebir, MAJOR farklarıyla)
-1. **AK-11** ✅ zaten kapalı.
-2. **S3 kararı** (yeniden adlandır / kaldır) → worker'daki 17 atıf okunup etkisi ölçülür.
-3. Dört kalem uygulanır. S7-b'ye `accepts` beyanı yazılır; `band` açıklamasındaki bayat
-   AK-11 cümlesi aynı düzenlemede temizlenir.
-4. **Tek migration guide** — `docs/migration_guides/` (MAJOR'da politika ŞART koşuyor;
-   `versioning_policy.md:253`).
-5. Dedektör **iki bağımsız ölçümle**: `--old v7.4.0 --new .` + dedektörün kodunu
-   kullanmayan düzleştirilmiş tarama. **Beklenen: breaking VAR** (bu turun amacı bu) —
-   her breaking kalem migration guide'da adıyla geçmeli.
-6. `python tools/pin_version.py --major --breaking` → CHANGELOG `[Unreleased]` başlığı
-   `[8.0.0]`'a çevrilir (yeni `release_gate` bunu zorluyor).
-7. Annotated tag + push → I-2 ölçümle doğrulanır.
-8. **Yayılım artık elle YAPILMAZ:** `python tools/propagate_vendored.py --check` sonra
-   `--apply`. ⚠️ Araç **daraltmaları uygulamaz, raporlar** — her biri için üretici ölçülür.
-9. Üç depo re-pin → I-1/I-3/I-4 ölçülür.
-
-### 📌 Turdan BAĞIMSIZ kuyruk (MAJOR beklemez)
-| # | Depo | İş | Kanıt |
-|---|---|---|---|
-| 🔴 **W8-b** | worker | Denetim çekilişini **doğru popülasyona** bağla | Publish noktasında elde yalnız `result.detections` (**anomali** kareler) var; `AnalysisResult` toplu sayı taşıyor (`tile_count_total/healthy/anomaly`), tam kare listesi **yok**. Oradan çekiliş, örneği ölçtüğü sonuca koşullar. Tam küme `worker/src/core/services/inference/pipeline.py:~1715` (`tiles`/`healthy_tiles`/`anomaly_tiles`) — üç katman taşıma gerekiyor. **Yanlı çekiliş, hiç çekiliş yapmamaktan KÖTÜDÜR** |
-| ⬜ **P21** | platform | `consensus_participation` alanını kalıcılaştır (kolon + worker mesajından okuma) | `expert_review_model.py` içinde alan adı **0 kez** geçiyor |
-| ⬜ **P16** | platform | Konsensüs yolu `EXCLUDED` satırı saymasın | 🔒 W8-b + P21'e bağlı; dışlanacak veri henüz **yok** |
-| ⬜ **W8-c** | worker | Örnekleme oran tablosunu doldur (AL-W1) | `audit_set_sampler.py:70` → `_DEFAULT_STRATUM_RATE = 0.0` ⇒ bugün **hiçbir kare seçilmiyor**. Aktivasyon bilinçli ops kararı: hangi ürün/katman için % kaç |
-| ⬜ **Ö7** | contract | W14'ün **kalıcı** beyanını `KNOWN_VENDORED_AHEAD`'den ayır | O yapı *"kalıcı olamaz · yalnız küçülür"* diyor; bugün delik değil (6 değerin 6'sı dolu) ama sayaç tanımı gereği 0'a inemez |
-| ⬜ **P20** | platform | Ingest kapısı ham gövdeyi de görsün | Doğrulama `model_dump()` çıktısına yapılıyor → modelde tanımsız alanlar doğrulamadan ÖNCE düşüyor. Ölçüldü: `sorties` + `mission_date` böyle düşüyor (ikisi de C11 ile kanoniğe absorbe edilmişti; platform `sorties`'i hiç kullanmıyor) |
-
-### 📌 Denetim borcu — ✅ **ÖD-0 KAPANDI (2026-08-01 gece)**
-`sürüm-riski` lensi **koşturuldu** (elle, 9 soru). Kanıt:
-`denetim/denetim_raporu_2026-08-01_gece_od0_surum_riski_lensi.md`.
-
-**Temiz çıkanlar:** MINOR kararı **iki bağımsız ölçümle** doğrulandı (dedektör 9/0 + dedektörün
-kodunu hiç kullanmayan düzleştirilmiş tarama, 89 dosya / 0 — araç **3/3 mutasyonla** görür
-kanıtlandı) · migration guide gerekmiyor (MINOR) · I-2 **22/22 annotated** · `x-normalization`
-"manual review" bayrağı zaten incelenmiş ve yazılı · **re-pin penceresi güvenli**: v7.4.0'ın
-getirdiği alanların **canlı üreticisi yok** (platform `calibration_method`/`reflectance_scale`
-**0**; edge `PANEL_ABSOLUTE`/`RGB` eşleşmeleri yalnız yorum ve PIL renk kipi).
-
-**Lensin bulup kapattığı:**
-* 🔴 **Yayın kapısı boşluğu** — `pin_version.py` sürümü yazar ama `## [Unreleased]` başlığını
-  **çevirmez**; hiçbir kapı ölçmüyordu ⇒ sürüm notları "Unreleased" etiketiyle yayımlanabilirdi
-  (worker CI'ında bu kapı **var**, SSOT deposunda yoktu). Kapı yazıldı (`release_gate`,
-  başlık + **gövde**), **2/2 mutasyon** kırmızı.
-* 🔴 **CHANGELOG turun ORTASINI anlatıyordu** — 3 cümle bayattı (`analysis_job` beyanı W13'te
-  silinmişti · borç "16 değer" → **6** · E16 "küçük harf" → kapandı) ve turun son üç kararı
-  (W13 · W14 · SD11) hiç yazılmamıştı. C8 bunları `[7.4.0]` altında **yayımlayacaktı**. Düzeltildi.
-
-**Lensin bulup kardeş depolara yazdığı (aşağıda SIRA 3):** **E18** · **P19** · **W15**.
+> | Blokta olan | Bugün nerede |
+> |---|---|
+> | S3 · S7-b · K1 kalemleri | **§14.5 KADEME 5** tablosu (üçü de ⬜ olarak izleniyor) |
+> | S3 kararının çözümü | **§▶️ GİRİŞ NOKTASI** — `x-derivation.map` ölçümüyle çözüldü |
+> | DEP-1 (penceresi dolmuş 2 ödeme nesnesi) | **§▶️ GİRİŞ NOKTASI** → `v8.0.0 \| Yalnız DEP-1 kaldı` |
+> | *Turdan BAĞIMSIZ kuyruk* 6 kalemi (W8-b · P21 · P16 · W8-c · Ö7 · P20) | **§14.9** (aynı altı satır orada da var) |
+> | ÖD-0 sürüm-riski lensi kapanışı | `denetim/denetim_raporu_2026-08-01_gece_od0_surum_riski_lensi.md` |
+> | v8.0.0 9 adımlık tur töreni | `docs/checklists/SDLC_GATES.md` §3G + `docs/versioning_policy.md` §Release |
 
 ---
 
@@ -3315,7 +3227,7 @@ getirdiği alanların **canlı üreticisi yok** (platform `calibration_method`/`
 | **AL-K14** 🟡 | worker | **HEALTH referans kartı adlandırması tekdüze değil:** 11 dosya `healthy_<crop>`, `rice_cards` **`rice_crop_healthy`**. DK-45'in çözdüğü ad-ekseni sorununun aynısı, küçük ölçekte. Testler bu yüzden ada değil `sub_specialty: HEALTH` alanına bakıyor. | Tek satırlık düzeltme ama DK-45 töreninin aynısını ister (baseline + drift senkronu) |
 | **AL-K15** 🟠 | worker | **`spectral_signatures.yaml` iddia edilenin çok altında:** tanıtım 64 kayıt/12 bitki diyordu, ölçüm **9 kayıt / 6 bitki** (wheat, corn, grape, apple, olive, peach). **Pamuk, fıstık ve ayçiçeği atlası BOŞ** — bu üçü L1 atlas isabetinden hiç yararlanamıyor. Platformdaki 13 `spectral_signatures_ref` işaretçisinin 9'u bu yüzden bayattı. | Kalibre saha verisine bağlı (aynı kök: GAP verisi) |
 | **AL-K16** 🟡 | platform | **`barley_cards` / `potato_cards` öksüz.** BARLEY/POTATO iki deponun da crop enum'unda yok (platformda yorum satırında, "ARŞİV"). Kartlar silinmedi (ürün açılırsa hazır), worker'a taşınmadı (enum ihlali olurdu). Katalog drift baseline'ındaki **kalan 2 sapma** bunlar. | Ürün kararı: bu iki ürün açılacak mı |
-| **AL-K17** 🟠 | worker + contract + platform | **`tile_counts` muhasebesi artık kapanmıyor.** DK-43 üçüncü bir kova (hariç tutulan) yarattı: `_anomaly_filter` düşük kaplamalı karoyu `continue` ile atlıyor (`pipeline.py:2337`), ama `tile_count_total` hâlâ `len(tiles)`. **Ölçüldü:** 3 karo → total=3 · anomaly=1 · healthy=0 → **2 karo hiçbir alanda yok**. Pozitif kontrol: DK-43 öncesi aynı fonksiyonda `continue` **yok** (0 adet) → `total == healthy + anomaly` değişmezi tutuyordu; DK-43 onu kırdı. Kanonik şema (`analysis_result.v1.schema.json:221`) hâlâ **ikili** çerçeve tanımlıyor (*"green-vs-problem"*, `total` = *"tiles scanned"*) — üçüncü kovanın sözleşmede adı yok. **Bugün canlı yanlış rapor YOK** (ölçüldü: platform `src/` **ve** `web/src` bu üçlüyü yalnız saklıyor/taşıyor, türetme yapmıyor — pozitif kontrollü). Risk: `healthy = total − anomaly` diyen herhangi bir tüketici DK-43'ün sildiği hatayı yeniden doğurur. | Kalıcı çözüm **contract-first** (KR-081): şema alanı → worker `PipelineResponse` taşıma → platform sütunu + tüketici → test; MINOR sürüm + üç depo turu. **W8-b ile komşu ama aynı değil** (*Turdan BAĞIMSIZ kuyruk* bölümündeki, `tile_count_total/healthy/anomaly` üçlüsünü açıkça anan kalem): o, denetim çekilişinin popülasyonu; bu, muhasebenin kapanışı — birlikte tasarlanmalı |
+| **AL-K17** 🟠 | worker + contract + platform | **`tile_counts` muhasebesi artık kapanmıyor.** DK-43 üçüncü bir kova (hariç tutulan) yarattı: `_anomaly_filter` düşük kaplamalı karoyu `continue` ile atlıyor (`pipeline.py:2337`), ama `tile_count_total` hâlâ `len(tiles)`. **Ölçüldü:** 3 karo → total=3 · anomaly=1 · healthy=0 → **2 karo hiçbir alanda yok**. Pozitif kontrol: DK-43 öncesi aynı fonksiyonda `continue` **yok** (0 adet) → `total == healthy + anomaly` değişmezi tutuyordu; DK-43 onu kırdı. Kanonik şema (`analysis_result.v1.schema.json:221`) hâlâ **ikili** çerçeve tanımlıyor (*"green-vs-problem"*, `total` = *"tiles scanned"*) — üçüncü kovanın sözleşmede adı yok. **Bugün canlı yanlış rapor YOK** (ölçüldü: platform `src/` **ve** `web/src` bu üçlüyü yalnız saklıyor/taşıyor, türetme yapmıyor — pozitif kontrollü). Risk: `healthy = total − anomaly` diyen herhangi bir tüketici DK-43'ün sildiği hatayı yeniden doğurur. | Kalıcı çözüm **contract-first** (KR-081): şema alanı → worker `PipelineResponse` taşıma → platform sütunu + tüketici → test; MINOR sürüm + üç depo turu. **W8-b ile komşu ama aynı değil** (**§14.9** *Turdan BAĞIMSIZ kuyruk* tablosundaki, `tile_count_total/healthy/anomaly` üçlüsünü açıkça anan kalem): o, denetim çekilişinin popülasyonu; bu, muhasebenin kapanışı — birlikte tasarlanmalı |
 | **AL-K18** 🟡 | worker | **`np.errstate(invalid="ignore")` amaçladığı uyarıyı bastırmıyor.** `pipeline.py:2348`: `np.nanmean`'in *"Mean of empty slice"* uyarısı kayan-nokta hata durumundan (`errstate`'in kapsamı) değil `warnings` modülünden gelir. **Ölçüldü:** `pytest tests/unit/test_pipeline_helpers.py -W error::RuntimeWarning` → `test_non_finite_mean_is_never_healthy` **FAILED**; aynı dosya uyarısız **96 passed**. DK-43 bu dosyaya **4 yeni** `np.nanmean` ekledi (diff +4 / −0; 7→11). **Şiddet dürüstçe daraltıldı:** bu yol bugün üretimde **ULAŞILAMAZ** — testin kendi docstring'i söylüyor (`safe_divide` + `_valid_pixel_ratio` + `clip_index` birlikte kapatıyor); uyarı yalnız testin `monkeypatch`'lediği sahte hesaplayıcıyla üretiliyor. Gerçek etki: (a) `filterwarnings = error` açılırsa test kırılır ve `errstate` kurtarmaz; (b) kod niyetini yanlış ifade ediyor — okuyan "bastırılıyor" sanır. | Doğru düzeltme bir davranış kararı ister: uyarıyı `warnings.catch_warnings()` ile hedefli susturmak mı, boş dilimi `nanmean`'den önce elemek mi. Tek satırlık yama yerine, testin öngördüğü gün (kırpma yapmayan yeni indeks, ör. CWSI) ile birlikte ele alınmalı |
 
 > **AL-K17/AL-K18'in kaynağı farklıdır:** bu iki kalem turun kendi öz-denetiminde değil,
