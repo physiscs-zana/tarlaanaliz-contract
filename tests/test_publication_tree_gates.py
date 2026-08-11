@@ -112,16 +112,28 @@ class TestMainActuallyUsesTheTargetList:
     """
 
     def test_main_validates_exactly_the_declared_targets(self, monkeypatch, capsys) -> None:
-        """`validation_targets` TEK hedef döndürürse `main()` TEK dosya doğrulamalı."""
-        tek = validate.validation_targets(ROOT)[0]
-        monkeypatch.setattr(validate, "validation_targets", lambda base_dir: [tek])
+        """`main()` listenin TAMAMINI işlemeli — sayı DA kimlik DE ölçülür.
+
+        ⚠️ İlk yazımda buraya **tek** hedef veriyordum ve öz-denetimde ölçtüm:
+        `main()` listeyi `[:1]` diye dilimlese bile test **yeşil kalıyordu** (21 passed).
+        Yani "listeyi okuyor mu"yu ölçüyordum, "hepsini işliyor mu"yu değil. Üç hedefle
+        ve çıktıdaki DOSYA ADLARIYLA ölçmek o kör noktayı kapatır.
+        """
+        secilen = validate.validation_targets(ROOT)[:3]
+        assert len(secilen) == 3, "ön koşul: en az 3 hedef olmalı"
+        monkeypatch.setattr(validate, "validation_targets", lambda base_dir: list(secilen))
         with pytest.raises(SystemExit):
             validate.main()
         cikti = capsys.readouterr().out
-        assert "Total files validated: 1" in cikti, (
-            "`main()` kendi dosya yürüyüşünü yapıyor — kapsam `validation_targets()`'tan "
-            "GELMİYOR. Bu tam olarak ÖD-13'ün ayna hatasıdır: kapı listeyi ölçer, araç "
-            "başka bir şey tarar.\n" + cikti[-400:]
+        assert "Total files validated: 3" in cikti, (
+            "`main()` kendi dosya yürüyüşünü yapıyor ya da listeyi DARALTIYOR — kapsam "
+            "`validation_targets()`'tan gelmiyor. Bu tam olarak ÖD-13'ün ayna hatasıdır: "
+            "kapı listeyi ölçer, araç başka bir şey tarar.\n" + cikti[-400:]
+        )
+        eksik = [t.path.name for t in secilen if t.path.name not in cikti]
+        assert not eksik, (
+            f"Listede olan ama İŞLENMEYEN hedef(ler): {eksik}. Sayı tutup kimlik "
+            "tutmuyorsa `main()` başka dosyaları sayıyor demektir."
         )
 
     def test_main_reports_zero_when_there_are_no_targets(self, monkeypatch, capsys) -> None:

@@ -293,6 +293,17 @@ gitmemeli).
 | `validation_targets`'tan `dist` çıkar | — | **2 kırmızı** (165→97) |
 | `main()`'i kendi döngüsüne döndür (ayna hatasını yeniden üret) | **yeşil kalıyordu** | **2 kırmızı** (165→68) |
 
+### Öz-denetim: ayna karşıtı testin KENDİ kör noktası (aynı turda bulundu ve kapatıldı)
+
+İlk yazımda `test_main_validates_exactly_the_declared_targets` monkeypatch'e **tek**
+hedef veriyordu. Yayımlanan halde ölçtüm: `main()` listeyi `[:1]` diye **dilimlese bile
+test yeşil kalıyordu** (21 passed). Yani "listeyi okuyor mu"yu ölçüyordum, **"hepsini
+işliyor mu"yu değil** — ayna hatasının bir gömlek incelmiş hâli.
+
+Düzeltildi: üç hedefle ölçülüyor, hem **sayı** (`Total files validated: 3`) hem
+**kimlik** (üç dosya adı da çıktıda) doğrulanıyor. Üç daraltma mutasyonu da artık
+kırmızı: `[:1]` · `[1:]` · `[::2]`; daraltma yokken yeşil (pozitif kontrol).
+
 ### Ölçüldü ama değiştirilmedi (dürüstlük)
 
 `mypy tools/validate.py` → master'da **2**, şimdi **1**: eksik `-> None` düzeltildi,
