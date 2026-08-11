@@ -131,7 +131,19 @@ Pozitif kontrol: aynı tarayıcı `crop_type`'ın bağlı olduğunu görüyor.
   imza adıdır; kanonik sözlüğü YOKTUR — ikisi karıştırılmasın).
 - **`edge/quarantine_event.v1` `threat_type`** → `$ref` kanonik enum.
 
-İkisi de `x-compat-accepted` ile beyan edildi (dedektörün beyanlı-daraltma mekanizması).
+İkisine de `x-compat-accepted` beyanı yazıldı. ⚠️ **Bu beyan burada dedektörü
+ETKİLEMEZ — düzeltme:** mekanizma yalnız `ACCEPTABLE_TYPES` içindeki 5 tipe uygulanır
+(`MIN_MAX_TIGHTENED`, `PATTERN_TIGHTENED`, `ENUM_CONSTRAINT_ADDED`,
+`COMPOSITION_BRANCH_CHANGED`, `FIELD_MADE_REQUIRED`) ve bu değişiklik `REF_CHANGED`
+olarak sınıflanıyor. Dedektör `$ref`'i **çözmediğini** kendi belgeliyor (satır 53-55) ve
+raporda *"NOT resolved by this tool — manual review required"* yazıyor; yani bu bir
+**beyanlı sınır**, gizli bir kör nokta değil. İnsan kapısı SDLC_GATES §3E'dir.
+Beyan yine de duruyor: üretici ölçümünü değişikliğin **yanında** tutar.
+
+> Alternatif olarak enum'u satır içi yazmak dedektörü `ENUM_CONSTRAINT_ADDED`'a
+> döndürürdü, ama bu deponun DRY kuralını çiğnerdi
+> (`tests/test_inline_refs.py::test_source_still_uses_refs`) — `$ref` doğru seçim.
+
 **Kırıcılık ölçümü:** kanonik 15 değerin **hiçbiri** platform/worker/edge Python kodunda
 geçmiyor (pozitif kontrol: aynı tarayıcı `QUARANTINED` için edge'de 34 isabet buluyor);
 edge'in `QuarantineEvent` modelinde `threat_type` alanı **hiç yok**; dört depodaki
