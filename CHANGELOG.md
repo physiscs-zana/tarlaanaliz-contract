@@ -247,6 +247,60 @@ ve testi kırmızıya çevirdi — kapı daha yazıldığı turda kendi yazarın
 
 ---
 
+## ÖD-13 kapısı **AYNAYI** ölçüyordu — `main()` artık tek kaynağı kullanıyor
+
+### ÖLÇÜLEN SORUN
+
+`tools/validate.py → validation_targets()` docstring'i *"`main()` bu listeyi kullanır"*
+diyordu. **Kullanmıyordu:** `main()` aynı dört ağacı kendi `rglob` döngüleriyle yeniden
+geziyordu ve `tests/test_publication_tree_gates.py` yalnız `validation_targets()`'ı
+okuyordu. Yani kapı, aracın **kopyasını** ölçüyordu.
+
+Mutasyonla kanıtlandı (taze klon, `master`):
+
+```
+main()'den dist bloğu silindi
+  ->  Total files validated: 165 -> 97      (68 yayın şeması denetlenmiyor)
+  ->  ÖD-13 kapısı: 17 passed               ← YEŞİL KALDI
+  ->  tüm süit    : yeşil
+```
+
+Kapı, koruduğunu iddia ettiği davranışı **hiç ölçmüyordu**.
+
+### Changed — tek kaynak
+
+- `validation_targets()` artık `List[Target]` döndürüyor: `(path, kind, label)`.
+  `kind` → `_VALIDATORS` tablosuyla doğrulayıcıya eşlenir (`schema`/`enum`/`openapi`).
+- `main()`'in dört `rglob` döngüsü **silindi**; yalnız `validation_targets()`'ı dolaşıyor.
+- Davranış eşdeğerliği ölçüldü: **165 dosya**, dosya kümesi iki yönde de **sıfır fark**,
+  çıktı etiketleri korundu (`(yayın ağacı)` 68 · `(PII scope)` 7).
+- Bonus: `main()`'e eksik `-> None` anotasyonu eklendi (mypy'ın kendi önerisi).
+
+### Added — ayna karşıtı testler
+
+`TestMainActuallyUsesTheTargetList` (2 test): `validation_targets` monkeypatch'lenerek
+`main()`'in **gerçekten** o listeyi dolaştığı ölçülür — tek hedef verilince
+*"Total files validated: 1"*, boş liste verilince *"0"*.
+
+`TestPublicationTreeIsValidated`'e 2 test daha: her hedefin `kind`'ı `_VALIDATORS`'ta
+tanımlı · her ağaç **doğru** doğrulayıcıya yönleniyor (enum dosyası şema doğrulayıcısına
+gitmemeli).
+
+**Mutasyon (iki yön):**
+
+| Mutasyon | Önce | Sonra |
+|---|---|---|
+| `validation_targets`'tan `dist` çıkar | — | **2 kırmızı** (165→97) |
+| `main()`'i kendi döngüsüne döndür (ayna hatasını yeniden üret) | **yeşil kalıyordu** | **2 kırmızı** (165→68) |
+
+### Ölçüldü ama değiştirilmedi (dürüstlük)
+
+`mypy tools/validate.py` → master'da **2**, şimdi **2** (aynı iki hata; biri satır
+kaydı yüzünden yer değiştirdi, biri düzeltildi ve yerine yenisi gelmedi).
+`ruff` → dokunduğum iki dosyada **0/0**. CI ikisini de koşturmuyor (workflow'da 0 isabet).
+
+---
+
 ## Node/TS zinciri kaldırıldı — ölü değil **ZARARLI** bir komut vardı
 
 ### ÖLÇÜLEN SORUN
