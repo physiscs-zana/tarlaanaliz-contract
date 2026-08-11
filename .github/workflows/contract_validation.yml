@@ -48,6 +48,8 @@ on:
       - 'PATCH_NOTES.md'             # check_doc_links
       - 'requirements-dev.txt'       # CI bağımlılıkları buradan kurulur
       - 'pyproject.toml'             # pytest markers/config
+      - 'package.json'               # test_node_toolchain_honesty (script/bagimlilik kapisi)
+      - '.prettierignore'            # test_node_toolchain_honesty (sozlesme agaci korumasi)
       - '.redocly.yaml'              # lint-openapi yapılandırması
       - '.redocly.lint-ignore.yaml'  # test_publication_tree_gates: istisna listesi ratchet'i
       - '.github/**'                 # kapının kendisi + auto_sync (check_doc_links tarar)
@@ -74,6 +76,8 @@ on:
       - 'PATCH_NOTES.md'
       - 'requirements-dev.txt'
       - 'pyproject.toml'
+      - 'package.json'
+      - '.prettierignore'
       - '.redocly.yaml'
       - '.redocly.lint-ignore.yaml'
       - '.github/**'
