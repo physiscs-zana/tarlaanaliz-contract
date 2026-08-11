@@ -3257,6 +3257,6 @@ kapatmazdı**, iki ölçülmüş nedenle:
 
 | Kalem | Neden açık |
 |---|---|
-| **AL-K17** 🟡 · Kanonik `outside_value`/`formula` ile worker'ın Python sabitinin hizasını **hiçbir kapı ölçmüyor** | Contract deposu worker koduna bakamaz; `stress_ratio.py` başına uyarı yazıldı ama **uyarı kapı değildir**. Çözüm ya worker tarafında bir test (kanonik JSON'u okuyup `_stress`'i sınayan) ya da parite işine ek adım |
+| ✅ **AL-K17** · ~~Kanonik `outside_value`/`formula` ile worker'ın Python sabitinin hizasını hiçbir kapı ölçmüyor~~ → **KAPANDI (2026-08-11, worker PR #217)** | Çözüm önerilen yoldan geldi: worker'da `TestStressRatioKanonikSozlesmeyeBAGLI` — beklenen değerler vendored kanonik JSON'dan **TÜRETİLİR** (kopyalanmaz), sonra üretim koduyla davranışsal sınanır. **7 mutasyon, iki yönde**: kodu bozunca 5'er test, sözleşmeyi bozunca (kod doğru kalırken) **yalnız yeni bağ testi** kırılıyor — ayrıştırma kanıtı |
 | **AL-K18** 🟡 · Ön faz kapısı **canlı trafikte** doğrulanmadı | Ayakta yığın yoktu. Kabul ölçütü SESSION_HANDOFF §0.A/D-2'de yazılı (`summary` → `WATER_STRESS` yok · tile → 403 · `DONE` olunca 200) |
 | **AL-K19** 🟢 · Yeni parite kapısı **yalnız worker CI'ında** koşar | Contract CI'da kardeş depo checkout edilmez (D4-b tasarımı, bilinçli). Edge çiftleri de meşru olarak atlanır |
