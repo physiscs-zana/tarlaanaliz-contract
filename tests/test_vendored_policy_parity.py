@@ -143,6 +143,83 @@ def scan() -> tuple[list[tuple[str, str, str, str]], int, int]:
     return divergences, pairs_seen, nodes_compared
 
 
+def _node_at(doc: object, pointer: str):
+    """`$.a.b[0]` biçimli pointer'ı çözer (yalnız bu dosyanın ürettiği biçim)."""
+    node = doc
+    for part in pointer.split(".")[1:]:
+        while part.endswith("]") and "[" in part:
+            part, _, index = part[:-1].partition("[")
+            if part:
+                if not isinstance(node, dict) or part not in node:
+                    return None
+                node = node[part]
+            if not isinstance(node, list) or int(index) >= len(node):
+                return None
+            node = node[int(index)]
+            part = ""
+        if part:
+            if not isinstance(node, dict) or part not in node:
+                return None
+            node = node[part]
+    return node
+
+
+def _resolve_local_ref(doc: object, node: object) -> object:
+    """Düğüm `#/...` yerel `$ref` ise hedefini döndürür; değilse düğümün kendisini.
+
+    ⚠️ Bu satır bir öz-denetim düzeltmesidir: ilk yazımda `_narrowing_warnings` `$ref`'i
+    ÇÖZMÜYORDU ve uyarı *"kanonik 0 alan"* diyordu — gerçek 9. **Yanlış sayı taşıyan
+    uyarı, uyarı değildir.**
+    """
+    if not isinstance(node, dict):
+        return node
+    ref = node.get("$ref")
+    if not isinstance(ref, str) or not ref.startswith("#/"):
+        return node
+    target: object = doc
+    for part in ref[2:].split("/"):
+        if not isinstance(target, dict) or part not in target:
+            return node
+        target = target[part]
+    return target
+
+
+def _narrowing_warnings(pairs: list) -> str:
+    """Sapma raporuna 'KAPATMA — aşırı kısıtlama olur' uyarısı ekler.
+
+    ⚠️ Bu, worker oturumunun 2026-08-11'de ÖLÇÜP bildirdiği kuraldır ve benim kapımın
+    tavsiyesini düzeltir: vendored düğüm kanoniğin **dar alt kümesiyse**
+    `additionalProperties: false` yazmak hizalama değil **bug**tur — meşru kanonik
+    alanlar reddedilir. Kapı, alan kümelerini karşılaştırmadan "hizala" DİYEMEZ.
+    """
+    satirlar = []
+    for rel, pointer in pairs:
+        canonical_path = ROOT / rel
+        vendored_rel = dict(_pairs()).get(rel)
+        if vendored_rel is None or not (WORKSPACE / vendored_rel).exists():
+            continue
+        cd = json.loads(canonical_path.read_text(encoding="utf-8"))
+        vd = json.loads((WORKSPACE / vendored_rel).read_text(encoding="utf-8"))
+        cn = _resolve_local_ref(cd, _node_at(cd, pointer))
+        vn = _resolve_local_ref(vd, _node_at(vd, pointer))
+        if not isinstance(cn, dict) or not isinstance(vn, dict):
+            continue
+        kset, vset = set(cn.get("properties", {})), set(vn.get("properties", {}))
+        if kset != vset:
+            satirlar.append(
+                f"    {rel} {pointer}: ALAN KÜMELERİ AYRIŞIK "
+                f"(kanonik {len(kset)} · vendored {len(vset)}) → **KAPATMAYIN**, "
+                f"{len(kset - vset)} meşru kanonik alan reddedilirdi."
+            )
+    if not satirlar:
+        return ""
+    return (
+        "\n\n🔴 AŞIRI KISITLAMA UYARISI — bu düğümlerde alan kümesi ayrışıyor; "
+        "`additionalProperties: false` yazmak hizalama DEĞİL bug olur:\n"
+        + "\n".join(satirlar)
+    )
+
+
 @pytest.fixture(scope="module")
 def measurement():
     divergences, pairs_seen, nodes_compared = scan()
@@ -164,6 +241,11 @@ class TestPolicyDivergenceOnlyShrinks:
         current = {(rel, pointer) for rel, pointer, _, _ in divergences}
         new = sorted(current - set(KNOWN_POLICY_DIVERGENCE))
         detail = {(rel, pointer): (left, right) for rel, pointer, left, right in divergences}
+        # ⚠️ TAVSİYE GÜVENLİĞİ (worker oturumunun 2026-08-11'de ölçtüğü kural):
+        # vendored düğüm kanoniğin DAR ALT KÜMESİYSE `additionalProperties: false`
+        # yazmak hizalama değil **aşırı kısıtlamadır** — meşru kanonik alanları reddeder.
+        # Bu yüzden mesaj, alan kümelerini karşılaştırmadan "hizala" DEMEZ.
+        uyari = _narrowing_warnings(new)
         assert not new, (
             f"{len(new)} YENİ politika sapması — kanonik ile vendored kopya sızma "
             "konusunda FARKLI şey söylüyor:\n  "
@@ -177,6 +259,7 @@ class TestPolicyDivergenceOnlyShrinks:
             "DARALTMADIR — `tools/propagate_vendored.py` docstring'inin kuralı gereği "
             "önce ÜRETİCİYİ ölçün. Ne `propagate_vendored --check` ne de "
             "`test_vendored_parity` bu sınıfı görür; kapı budur."
+            + uyari
         )
 
     def test_baseline_has_no_stale_entry(self, measurement) -> None:
@@ -196,6 +279,97 @@ class TestPolicyDivergenceOnlyShrinks:
             "Yeni bir sapma buraya EKLENEREK geçirilemez: ya vendored kopyayı kanonikle "
             "hizalayın, ya da ayrışma bilinçliyse gerekçesini yazıp bu testi kasıtlı "
             "olarak değiştirin — o değişiklik incelemede görünür olur."
+        )
+
+
+class TestRefInlineAsymmetryIsVisible:
+    """KÖR NOKTA GÖRÜNÜR OLSUN — worker oturumunun 2026-08-11'de bildirdiği sınıf.
+
+    Karşılaştırma **pointer tabanlıdır**: bir tarafta `$ref`, diğerinde INLINE olan
+    aynı mantıksal düğüm iki farklı biçimde durur ve kesişime GİRMEZ. Ölçüldü:
+    bugün **tam 1** böyle düğüm var —
+
+        `schemas/worker/analysis_result.v1.schema.json` → `$.properties.summary`
+        kanonik: `$ref` → `$defs.ResultSummary` (9 alan, KAPALI)
+        vendored: INLINE, **1 alan** (`yield_estimate`), BEYANSIZ
+
+    ⚠️ Bu düğüm karşılaştırmaya SOKULMAMALI: alan kümeleri ayrışık olduğu için
+    "hizala" tavsiyesi **8 meşru kanonik alanı reddettirirdi**. Yani burada
+    karşılaştırmamak doğru davranıştır — ama **sessiz** kalmamalı; sayı kilitli.
+    """
+
+    MEASURED_ASYMMETRIC = 1
+
+    @staticmethod
+    def _asymmetric() -> list:
+        found = []
+        for canonical, vendored in _pairs():
+            cp, vp = ROOT / canonical, WORKSPACE / vendored
+            if not (cp.exists() and vp.exists()):
+                continue
+            cd = json.loads(cp.read_text(encoding="utf-8"))
+            vd = json.loads(vp.read_text(encoding="utf-8"))
+            cobj, vobj = _object_nodes(cd), _object_nodes(vd)
+
+            def refs(doc):
+                out = {}
+
+                def walk(node, pointer):
+                    if isinstance(node, dict):
+                        if isinstance(node.get("$ref"), str):
+                            out[pointer] = node["$ref"]
+                        for key, value in node.items():
+                            if key in {"examples", "example", "default", "const", "enum", "notes"}:
+                                continue
+                            if key.startswith("x-"):
+                                continue
+                            walk(value, f"{pointer}.{key}")
+                    elif isinstance(node, list):
+                        for index, value in enumerate(node):
+                            walk(value, f"{pointer}[{index}]")
+
+                walk(doc, "$")
+                return out
+
+            for pointer in refs(cd):
+                if pointer in vobj and pointer not in cobj:
+                    found.append((canonical, pointer, "kanonik=$ref vendored=INLINE"))
+            for pointer in refs(vd):
+                if pointer in cobj and pointer not in vobj:
+                    found.append((canonical, pointer, "kanonik=INLINE vendored=$ref"))
+        return found
+
+    def test_asymmetry_count_is_locked(self, measurement) -> None:
+        found = self._asymmetric()
+        assert len(found) <= self.MEASURED_ASYMMETRIC, (
+            f"{len(found)} asimetrik ($ref ↔ inline) düğüm var; ölçülen taban "
+            f"{self.MEASURED_ASYMMETRIC}. Bu düğümler pointer tabanlı karşılaştırmaya "
+            "GİRMEZ — yani politika sapmaları bu kapının kör noktasındadır. Sayı "
+            "artıyorsa kör nokta büyüyor: ya vendored kopyayı `$ref`'e taşıyın, ya "
+            "artışı gerekçesiyle bu tabana yazın.\n  "
+            + "\n  ".join(f"{rel} {ptr} [{tur}]" for rel, ptr, tur in found)
+        )
+
+    def test_the_known_asymmetry_is_still_a_narrow_subset(self, measurement) -> None:
+        """Bilinen tek asimetri GERÇEKTEN dar alt küme mi — yoksa kapatılabilir mi?"""
+        found = self._asymmetric()
+        if not found:
+            pytest.skip("asimetri kalmamış — `MEASURED_ASYMMETRIC` 0'a çekilebilir")
+        rel, pointer, _ = found[0]
+        cd = json.loads((ROOT / rel).read_text(encoding="utf-8"))
+        vd = json.loads((WORKSPACE / dict(_pairs())[rel]).read_text(encoding="utf-8"))
+        hedef = _node_at(cd, pointer) or {}
+        ref = hedef.get("$ref", "")
+        cozum = cd
+        for part in ref[2:].split("/") if ref.startswith("#/") else []:
+            cozum = cozum.get(part, {}) if isinstance(cozum, dict) else {}
+        kset = set(cozum.get("properties", {})) if isinstance(cozum, dict) else set()
+        vset = set((_node_at(vd, pointer) or {}).get("properties", {}))
+        assert vset and vset < kset, (
+            f"{rel} {pointer}: vendored artık kanoniğin DAR ALT KÜMESİ değil "
+            f"(kanonik {sorted(kset)} · vendored {sorted(vset)}). Alt küme olmaktan "
+            "çıktıysa bu düğüm ya `$ref`'e taşınmalı ya da politikası hizalanmalı — "
+            "'kapatma' kararının dayanağı değişti."
         )
 
 

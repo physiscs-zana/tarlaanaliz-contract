@@ -247,6 +247,48 @@ ve testi kırmızıya çevirdi — kapı daha yazıldığı turda kendi yazarın
 
 ---
 
+## Vendored parite kapısı: kör nokta görünür kılındı + **hataya yol açan tavsiye** düzeltildi
+
+Worker oturumu kapımın pointer-tabanlı karşılaştırmasında bir kör nokta bildirdi;
+**ölçtüm ve haklı çıktılar** — üstelik daha ağır bir sorun ortaya çıktı.
+
+**① Kör nokta (ölçüldü, tam 1 düğüm):** bir tarafta `$ref`, diğerinde INLINE olan aynı
+mantıksal düğüm iki farklı pointer'da durur ve kesişime girmez:
+
+```
+schemas/worker/analysis_result.v1.schema.json → $.properties.summary
+  kanonik : $ref → $defs.ResultSummary   (9 alan, KAPALI)
+  vendored: INLINE                        (1 alan, BEYANSIZ)
+```
+
+**② Asıl sorun — kapının TAVSİYESİ hatalıydı.** Sapma raporu *"hizalayın: vendored'a
+`additionalProperties` ekleyin"* diyordu. Bu düğümde o tavsiye **bug üretirdi**:
+alan kümeleri ayrışık olduğu için kapatmak **8 meşru kanonik alanı** reddettirirdi
+(`health_score`, `overall_health`, `index_averages`, …). Yani karşılaştırmaya
+sokmamak **doğru davranış**tı — ama sessiz kalması değil.
+
+### Changed
+
+- Sapma mesajı artık alan kümelerini karşılaştırıyor; ayrışıksa
+  **"🔴 KAPATMAYIN — aşırı kısıtlama olur, N meşru kanonik alan reddedilirdi"** diyor.
+  (Worker'ın ölçtüğü kural: *vendored kopya dar alt kümeyse `additionalProperties:
+  false` hizalama değil bug'dır.*)
+- `_narrowing_warnings` yerel `$ref`'i **çözüyor**. Öz-denetim notu: ilk yazımda
+  çözmüyordu ve uyarı *"kanonik 0 alan"* diyordu — gerçek **9**. Yanlış sayı taşıyan
+  uyarı, uyarı değildir.
+
+### Added — `TestRefInlineAsymmetryIsVisible` (2 test)
+
+Asimetrik düğüm sayısı **kilitli** (ölçülen taban: 1) ve bilinen tek asimetrinin
+**hâlâ dar alt küme** olduğu doğrulanıyor — alt küme olmaktan çıkarsa "kapatma"
+kararının dayanağı düşer ve kapı kırmızıya döner.
+
+**Mutasyon (iki yön):** kanonikte ikinci bir asimetri yarat → **3 kırmızı** ·
+uyarı fonksiyonunu kör et → uyarı üretilmiyor. Pozitif kontrol: alan kümeleri eşit
+olan düğümde uyarı **çıkmıyor**.
+
+---
+
 ## ÖD-13 kapısı **AYNAYI** ölçüyordu — `main()` artık tek kaynağı kullanıyor
 
 ### ÖLÇÜLEN SORUN
