@@ -223,7 +223,15 @@ def _sibling_resolves(cand: str) -> bool | None:
     return False
 
 
-def scan() -> tuple[set[str], int]:
+def scan() -> tuple[set[str], set[str]]:
+    """(cozulemeyen atiflar, ATLANAN capraz-repo atiflari) dondurur.
+
+    Ikinci kume neden SAYI degil KAYIT: bir CI isi kardes depoyu yan yana checkout
+    ediyorsa (E17 deseni) *"o kardese ait hicbir atif atlanmadi"* diye olcmek ister.
+    Toplam sayi bunu SOYLEYEMEZ — hangi kardesin atlandigi kaybolur. Worker'in
+    `sibling-parity` isi ayni dersi yaziyor: olcut "hic atlama yok" degil,
+    "checkout EDILEBILEN kardese ait atlama = 0".
+    """
     files = tracked_files()
     # Cozum kumesi submodule iceriklerini DE kapsar (yalniz cozumde; taranan
     # dosyalar hala bu deponun kendi izli dosyalaridir).
@@ -234,7 +242,7 @@ def scan() -> tuple[set[str], int]:
         by_basename.setdefault(rel.rsplit("/", 1)[-1], []).append(rel)
 
     unresolved: set[str] = set()
-    skipped_cross_repo = 0
+    skipped_cross_repo: set[str] = set()
 
     for rel in files:
         if rel in (SELF_REL, BASELINE_REL):
@@ -253,7 +261,7 @@ def scan() -> tuple[set[str], int]:
             if cand.startswith(SIBLING_PREFIXES):
                 verdict = _sibling_resolves(cand)
                 if verdict is None:
-                    skipped_cross_repo += 1
+                    skipped_cross_repo.add(f"{rel}|{cand}")
                     continue
                 if verdict:
                     continue
@@ -314,6 +322,28 @@ def write_baseline(hits: set[str]) -> None:
     BASELINE.write_text(header + body, encoding="utf-8", newline="\n")
 
 
+def _report_skipped(skipped: set[str]) -> None:
+    """Atlanan capraz-repo atiflarini MAKINE-OKUNUR bicimde bas.
+
+    Satir bicimi BILEREK ASCII ve sabit: `SKIPPED_CROSS_REPO <atif_yapan>|<hedef>`.
+    Bir CI isi kardes depoyu yan yana checkout ediyorsa (E17) su olcumu kurabilir:
+
+        grep "^SKIPPED_CROSS_REPO .*tarlaanaliz-contract/" doclinks.log && exit 1
+
+    Yani "checkout ETTIGIM kardese ait hicbir atif atlanmadi". Turkce/emoji desen
+    kullanilmiyor — locale farki yanlis-yesil uretmesin (worker sibling-parity isi
+    ayni gerekceyi yaziyor).
+    """
+    if not skipped:
+        print("SKIPPED_CROSS_REPO_COUNT 0")
+        return
+    # Tek satir + <100 karakter: worker (line-length 100) ve edge (120)
+    # formatlayicilari ayni bayti kabul etsin (bolunme/birlesme cakismasi yok).
+    print(f"SKIPPED_CROSS_REPO_COUNT {len(skipped)}  (kardes depo checkout degil)")
+    for entry in sorted(skipped):
+        print(f"SKIPPED_CROSS_REPO {entry}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Sarkan dokuman atifi kapisi")
     parser.add_argument(
@@ -331,8 +361,7 @@ def main() -> int:
     if args.write_baseline:
         write_baseline(live)
         print(f"Baseline yazildi: {BASELINE_REL} ({len(live)} kayit)")
-        if skipped:
-            print(f"NOT: {skipped} capraz-repo atifi atlandi (kardes depo checkout degil).")
+        _report_skipped(skipped)
         return 0
 
     base = load_baseline()
@@ -357,10 +386,8 @@ def main() -> int:
         )
         return 1
 
-    msg = f"OK: sarkan dokuman atifi kapisi temiz ({len(live)} kabul edilmis kayit izleniyor)."
-    if skipped:
-        msg += f" {skipped} capraz-repo atifi atlandi (kardes depo checkout degil)."
-    print(msg)
+    print(f"OK: sarkan dokuman atifi kapisi temiz ({len(live)} kabul edilmis kayit izleniyor).")
+    _report_skipped(skipped)
     return 0
 
 
