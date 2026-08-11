@@ -18,9 +18,9 @@
     "GENERAL"
   ],
   "metadata": {
-    "version": "1.4.3",
-    "lastUpdated": "2026-07-31",
-    "changeNote": "PATCH (v1.4.3, 2026-07-31 — D17/A1): WATER_STRESS `availability` **available → proxy_only**. GEREKÇE (üç kaynağın çeliştiği ölçüldü): ① KG-0.f karar kaydı *\"gerçek WATER_STRESS için CWSI (termal) veya NDWI/NDMI (SWIR) gerekir, ikisi de yok\"* diyor ve WATER_STRESS'i THERMAL_STRESS ile birlikte optik sınırın (−) tarafına koyuyor ② bu enum ise `available` diyordu (yalnız GREEN/RED/RED_EDGE/NIR ile) ③ `report_phase.x-preliminary-content.stage_b` onu uzman kapısı ÖNCESİNDE çiftçiye teslim ediyordu. Yani sözleşme, sensörün ölçemediği bir katmanı 'mevcut' ilan edip doğrulanmamış hâlde teslim ediyordu. Bu turda `stage_b`'den de ÇIKARILDI. Yeni `availability` değeri `proxy_only` **additive**'dir (mevcut değerler değişmedi) → non-breaking. \n\nÖNCEKİ v1.4.2 (KG-0.f çapraz atfı — A2 düzeltmesiyle EKSİKSİZ alıntı): KG-0.f, YZ hedefini 'böcek türü + birey sayısı' yerine 'zararlı hasar izi sınıfı + şiddeti' olarak tanımlar (gerekçe: optik sınır, ÇS GSD ~9200 µm vs tekil böcek tanıma eşiği ~80 µm) ve **ÜÇ** katmanın üretilemez/sınırlı kalmasını onaylar: BENEFICIAL (`enum_valid_not_yet_emittable` — model olgunluğu), THERMAL_STRESS (`requires_thermal_payload` — 'Mavic 3M'de üretilemez') **ve WATER_STRESS** (CWSI/SWIR yok). ⚠️ v1.4.2 notu ilk iki katmanı sayıp WATER_STRESS'i ATLIYORDU (denetim bulgusu A2: seçici alıntı) — bu sürümde tamamlandı. Karar kaydı: docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md §9 KARAR 0.f. \n\nÖNCEKİ v1.4.1: THERMAL_STRESS.requires_bands tam sete genişletildi ([GREEN,RED,RED_EDGE,NIR,LWIR]) — CWSI/canopy-soil delta için vejetasyon bağlamı fiziksel olarak gereklidir.",
+    "version": "1.4.4",
+    "lastUpdated": "2026-08-11",
+    "changeNote": "PATCH (v1.4.4, 2026-08-11 — D12): `indexDefinitions.stress_ratio` **UNDEFINED_PENDING_DECISION → DEFINED**. ⛔ v1.4.2–v1.4.3'ün *\"ad var, üretim yok\"* iddiası ÇÜRÜTÜLDÜ: ölçüm yanlış dosyaya (`feature_extraction.compute_indices_v2`) bakmıştı; üretici çıkarım hattındadır ve çıktı nesne deposuna yüklenip manifest'te listelenir (yollar `measured_producers`'ta). Fiilen uygulanan formül OKUNARAK tanımlandı: `stress_ratio = NDRE / NDVI`, NDVI ≤ 0 piksellerinde nötr 1.0. **Teslimat kuralı DEĞİŞMEDİ ve artık makine-okunur:** `delivery_rule.preliminary = false` — katman `proxy_only` olduğu için uzman kapısı ÖNCESİNDE çiftçiye sunulmaz (KR-093 `stage_b` kapalı listesi aynen kalır); uzman yüzeyinde ve `report_phase = FULL`'de serbesttir. Tanımlılık ≠ geçerlilik: formülün yazılı olması onu doğrulanmış bir su-stresi ölçümü yapmaz. Enum DEĞERLERİ ve `byLayer` değişmedi → non-breaking. \n\nÖNCEKİ v1.4.3 (2026-07-31 — D17/A1): WATER_STRESS `availability` **available → proxy_only**. GEREKÇE (üç kaynağın çeliştiği ölçüldü): ① KG-0.f karar kaydı *\"gerçek WATER_STRESS için CWSI (termal) veya NDWI/NDMI (SWIR) gerekir, ikisi de yok\"* diyor ve WATER_STRESS'i THERMAL_STRESS ile birlikte optik sınırın (−) tarafına koyuyor ② bu enum ise `available` diyordu (yalnız GREEN/RED/RED_EDGE/NIR ile) ③ `report_phase.x-preliminary-content.stage_b` onu uzman kapısı ÖNCESİNDE çiftçiye teslim ediyordu. Yani sözleşme, sensörün ölçemediği bir katmanı 'mevcut' ilan edip doğrulanmamış hâlde teslim ediyordu. Bu turda `stage_b`'den de ÇIKARILDI. Yeni `availability` değeri `proxy_only` **additive**'dir (mevcut değerler değişmedi) → non-breaking. \n\nÖNCEKİ v1.4.2 (KG-0.f çapraz atfı — A2 düzeltmesiyle EKSİKSİZ alıntı): KG-0.f, YZ hedefini 'böcek türü + birey sayısı' yerine 'zararlı hasar izi sınıfı + şiddeti' olarak tanımlar (gerekçe: optik sınır, ÇS GSD ~9200 µm vs tekil böcek tanıma eşiği ~80 µm) ve **ÜÇ** katmanın üretilemez/sınırlı kalmasını onaylar: BENEFICIAL (`enum_valid_not_yet_emittable` — model olgunluğu), THERMAL_STRESS (`requires_thermal_payload` — 'Mavic 3M'de üretilemez') **ve WATER_STRESS** (CWSI/SWIR yok). ⚠️ v1.4.2 notu ilk iki katmanı sayıp WATER_STRESS'i ATLIYORDU (denetim bulgusu A2: seçici alıntı) — bu sürümde tamamlandı. Karar kaydı: docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md §9 KARAR 0.f. \n\nÖNCEKİ v1.4.1: THERMAL_STRESS.requires_bands tam sete genişletildi ([GREEN,RED,RED_EDGE,NIR,LWIR]) — CWSI/canopy-soil delta için vejetasyon bağlamı fiziksel olarak gereklidir.",
     "kr002_reference": "Analysis types defined in KR-002 (Harita katmanı anlamları). These are map layers with specific colors and patterns.",
     "bandRequirements": {
       "description": "KR-018 bant-gate tek-kaynak: her map-layer'ın üretimi için gereken minimum bantlar (requires_bands) + üretilebilirlik durumu (availability). Kesişim kuralı: analysis_type.requires_bands ⊆ drone'un ETKİN bant kümesi (effective_bands) ise o katman o drone ile üretilebilir. effective_bands = drone_capability_matrix.yaml[drone].supported_bands ∪ (termal payload takılıysa drone_capability_matrix.yaml[drone].thermal_variant.thermal_bands). Örn. DJI_M350_RTK_SENTERA_6X termal varyantta effective_bands = [BLUE,GREEN,RED,RED_EDGE,NIR,LWIR] → THERMAL_STRESS türetilebilir; termal payload'sız temel konfigürasyonda LWIR yoktur, türetilemez. Bant sözlüğü drone_capability_matrix.yaml ile ortaktır (GREEN/RED/RED_EDGE/NIR/BLUE/LWIR).",
@@ -334,18 +334,52 @@
       }
     },
     "indexDefinitions": {
-      "description": "Katman↔indeks eşlemesinde ADI GEÇEN her türetilmiş büyüklüğün TANIMI. 2026-07-31'de ölçüldü (denetim bulgusu A3): `stress_ratio` depo genelinde **3 yerde atıf alıyor, 0 yerde tanımlıydı** — üstelik KR-093'ün zorunlu teslimat kaleminin (`WATER_STRESS`) kaynağı olarak. Tanımsız bir büyüklük ne üretilebilir ne denetlenebilir: her tüketici kendi formülünü uydurur.",
+      "description": "Katman↔indeks eşlemesinde ADI GEÇEN her türetilmiş büyüklüğün TANIMI. Kural: bir ad ancak UYGULAMASI olan taraftan ÖLÇÜLEREK tanımlanır (tahminle formül yazmak doğrulanamaz bir kapı üretir ve yanlış agronomik karara yol açar — `CHLOROPHYLL_A`→`LCI` emsali). Tanımsız bir büyüklük ne üretilebilir ne denetlenebilir: her tüketici kendi formülünü uydurur.",
       "stress_ratio": {
-        "status": "UNDEFINED_PENDING_DECISION",
-        "referenced_by": [
-          "docs/TARLAANALIZ_SSOT_v1_2_0.txt (KR-093 gövdesi)",
-          "ssot/kr_registry.md (KR-093 gövdesi)",
-          "enums/report_phase.enum.v1.json (PRELIMINARY açıklaması)"
+        "status": "DEFINED",
+        "defined_on": "2026-08-11",
+        "formula": "stress_ratio = NDRE / NDVI",
+        "formula_notes": "TÜREV bir büyüklüktür, yeni bir spektral ölçüm DEĞİLDİR: aynı 4 banttan (GREEN/RED/RED_EDGE/NIR) zaten hesaplanmış iki normalize indeksin ORANIDIR. Girdisi ham bant değil, önceden hesaplanmış NDVI ve NDRE dizileridir (uygulama bunları anahtar adıyla `NDVI`/`NDRE` bekler).",
+        "domain_guard": {
+          "valid_where": "NDVI > 0",
+          "outside_value": 1.0,
+          "why": "NDVI > 0 (yani gerçek bitki örtüsü) olmayan piksellerde oran ANLAMSIZDIR — su/gölge/çıplak toprakta işaret değiştirir ya da patlar. Bu piksellerde değer NÖTR 1.0'a sabitlenir ('bu indeksten stres sinyali yok'); bölme sıfıra karşı korumalıdır (safe_divide). Nötr sabit bir ÖLÇÜM DEĞİL, ölçüm YOKLUĞU işaretidir — tüketici onu 'sağlıklı' diye yorumlayamaz.",
+          "measured_from": "tarlaanaliz-worker/src/indices/stress_ratio.py:59-60"
+        },
+        "direction_and_range": "Bitki örtüsü piksellerinde tipik aralık 0–1; yön: DÜŞÜK = stresli, YÜKSEK = sağlıklı (renk rampalarında yeşil = iyi).",
+        "dtype": "float32",
+        "measured_producers": [
+          "tarlaanaliz-worker/src/indices/stress_ratio.py:33-60 (StressRatioCalculator.compute + _stress — formülün kendisi)",
+          "tarlaanaliz-worker/src/core/services/inference/pipeline.py:141 (import)",
+          "tarlaanaliz-worker/src/core/services/inference/pipeline.py:902 (_INDEX_CALCULATORS kaydı)",
+          "tarlaanaliz-worker/src/core/services/inference/pipeline.py:2144 (full_indices['stress_ratio'] = ...)",
+          "tarlaanaliz-worker/src/core/services/inference/pipeline.py:1904 ve :1995 (response.index_maps_raw = full_indices)",
+          "tarlaanaliz-worker/src/agents/reporting_agent.py:55-56 (_MAPS_BY_RESULT_MODE → PARTIAL_REPORT + FULL_REPORT raster çıktısı)",
+          "tarlaanaliz-worker/src/infrastructure/storage/result_artifact_sink.py:106-155 (S3'e yükleme + manifest.json'da listeleme)"
         ],
-        "problem": "Formülü hiçbir kanonik kaynakta YOK. Worker'ın `channel_spec.py` dosyası `derived_indices` listesinde `stress_ratio` adını taşıyor ama hesabı `feature_extraction.compute_indices_v2` çıktısında yok — yani ad var, üretim yok.",
-        "why_not_guessed": "Tahminle formül yazmak, doğrulanamaz bir kapı üretir ve yanlış agronomik karara yol açar. `CHLOROPHYLL_A`→`LCI` vakasında olduğu gibi, ad ancak UYGULAMASI olan taraftan ölçülerek tanımlanır.",
-        "blocked_on": "WATER_STRESS artık `proxy_only` (D17/A1) ve ön fazdan çıkarıldı; bu yüzden `stress_ratio` bugün ZORUNLU bir teslimat kalemi DEĞİLDİR. Tanım, termal/SWIR donanım kararıyla birlikte verilir (eylem planı §14.5.1/AK-9).",
-        "until_then": "Hiçbir üretici bu adı emit ETMEMELİDİR; hiçbir tüketici onu beklememelidir. KR-093 metinlerindeki `WATER_STRESS←stress_ratio` eşlemesi bu karar verilene kadar ASKIDADIR."
+        "measured_on": "2026-08-11",
+        "internal_use": "Aşama-1 hızlı anomali taramasının 4 sinyalinden biri: `pipeline._anomaly_filter(stress_ratio_threshold=0.85)` — eşiğin ALTINDAKİ karo derin incelemeye yollanır. Bu bir TESLİMAT değil, iş akışı yönlendirmesidir ve teslimat kuralının kapsamı dışındadır. Modülün kendi `EARLY_WARNING_THRESHOLD = 0.8` sabiti üretim yolunda ÇAĞRILMAZ (yalnız birim testi çağırır — ölçüldü 2026-08-10, DK-44). İki sayı bilerek farklıdır; değiştirmek ablasyon (ayrı ayrı devre dışı bırakıp etkiyi ölçme) ister.",
+        "delivery_rule": {
+          "preliminary": false,
+          "feeds_layer": "WATER_STRESS",
+          "why": "Beslediği katman VEKİLDİR (`byLayer.WATER_STRESS.availability = proxy_only`): bitki su içeriğinin DOĞRUDAN ölçümü CWSI (LWIR/termal) veya NDMI (SWIR) ister, ikisi de referans donanımda YOKTUR. Formülün tanımlı olması onu doğrulanmış bir su-stresi ölçümü YAPMAZ — tanımlılık ile geçerlilik ayrı şeylerdir. Vekil bir gösterge uzman kapısı ÖNCESİNDE çiftçiye teslim edilemez; çiftçi onu doğrulanmış bir teşhis sanar (KR-093 + KR-019).",
+          "allowed_surfaces": [
+            "uzman inceleme yüzeyi (KR-019 kapısını işleten uzman; ödeme/faz kapısına tabi değildir)",
+            "report_phase = FULL (uzman konsensüs ONAY sonrası çiftçi görünümü)"
+          ],
+          "forbidden_surfaces": [
+            "report_phase = PRELIMINARY çiftçi görünümü (katman listesi, indeks listesi ve raster tile ucu dahil)"
+          ],
+          "enforced_by": "tarlaanaliz-platform/src/application/services/preliminary_content_gate.py — kapalı liste bu enum'un kardeşi `report_phase.enum.v1.json` → `x-preliminary-content.stage_b_post_analysis.fields`'ten OKUNUR (kopyalanmaz)."
+        },
+        "interpretation_limits": "① İki indeksin oranı yeni BİLGİ eklemez — 4 bantlık sensörde her indeks aynı 4 sayının deterministik fonksiyonudur; kazanç yalnız doğrusal/kural tabanlı tüketicilerdedir (derin ağ ham bantları zaten görür). ② Oran, su stresine ÖZGÜ değildir: NDRE/NDVI ayrışması azot, olgunlaşma ve kanopi yapısıyla da değişir. ③ Kalibrasyonsuz ham sayıda (DN) MUTLAK eşik anlamsızdır; sıralama (hangi bölge daha kötü) geçerli kalır.",
+        "superseded_claim": {
+          "marker": "⛔ ÇÜRÜTÜLDÜ",
+          "previous_status": "UNDEFINED_PENDING_DECISION (v1.4.2–v1.4.3, 2026-07-31)",
+          "refuted_text": "\"Formülü hiçbir kanonik kaynakta YOK. Worker'ın `channel_spec.py` dosyası `derived_indices` listesinde `stress_ratio` adını taşıyor ama hesabı `feature_extraction.compute_indices_v2` çıktısında yok — yani ad var, üretim yok.\" + \"Hiçbir üretici bu adı emit ETMEMELİDİR.\"",
+          "why_it_was_wrong": "Ölçüm YANLIŞ YERE bakmıştı: üretici `feature_extraction.compute_indices_v2` içinde değil, çıkarım hattının kendisindedir (`inference/pipeline.py`). Tek bir dosyada arayıp bulamamak 'üretim yok' KANITI değildir. Sonuç: kanonik metin, fiilen üretilen ve nesne deposuna yüklenen bir büyüklüğü 'ölü ad' ilan etti; 'emit ETMEMELİDİR' yasağının hiçbir kapısı yoktu ve gerçekte ihlal ediliyordu (2026-08-11 ölçümü).",
+          "lesson": "Bir adın üretilmediğini iddia etmeden önce taramayı BİLİNEN BİR POZİTİF ÖRNEKLE sına ve depo genelinde ara — 'şu dosyada yok' ile 'hiçbir yerde yok' aynı cümle değildir."
+        }
       }
     }
   },
