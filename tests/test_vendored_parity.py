@@ -77,6 +77,7 @@ Kapsam notu:
 """
 
 import json
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
@@ -667,6 +668,185 @@ class TestVendoredCopiesStayLean:
             f"({vendored_prose} > {canonical_prose}). I-4 gereği vendored dar alt kümedir; "
             "prose işaretçiye indirilir. C8'de bu kural çiğnendiğinde 45 test cp1254'te "
             "kırılmıştı."
+        )
+
+
+#: D12 öz-denetimi (2026-08-11) — SERBEST METİN taşıyan anahtar adları. Bunlar
+#: karşılaştırma DIŞINDADIR çünkü vendored kopyanın prose'u bilerek daha yalındır
+#: (`TestVendoredCopiesStayLean` bunu ayrıca ZORLAR: vendored prose ≤ kanonik).
+#: Liste **ölçülerek** doğdu, varsayımla değil: kapı ilk koşturulduğunda ayrışan 6
+#: yolun altısı da bu adlardaydı ve hiçbiri anlamsal çelişki değildi.
+#: ⚠️ Buraya bir ad eklemek, o alanın ARTIK DENETLENMEDİĞİ anlamına gelir.
+METADATA_PROSE_KEYS = {
+    "description",  # blok açıklaması
+    "changeNote",  # sürüm günlüğü — vendored kendi hizalama turunu anlatır
+    "why",  # gerekçe cümlesi
+    "internal_use",  # kullanım anlatımı
+    "enforced_by",  # kuralı KİMİN uyguladığını anlatan işaretçi
+    # Depo-göreli YOL: kanonik `tarlaanaliz-worker/src/...`, tüketici `src/...` yazar.
+    # Aynı satırı gösterirler; dize eşitliği burada yanlış-kırmızı üretir.
+    "measured_from",
+}
+
+#: Anahtar adıyla değil, ALT AĞAÇ olarak dışlananlar (`*` = tek seviye joker).
+METADATA_PROSE_SUBTREES = {
+    # Sözcük dağarcığının TANIMI: bir `availability` değerinin ne anlama geldiği.
+    # Worker kopyası sonuna çalışma-zamanı netleştirmesi ekler ("bu değer ÜRETİMİ
+    # durdurmaz, SUNUMU kısıtlar"). Değerin KENDİSİ (byLayer.*.availability) tam
+    # olarak denetlenmeye devam eder — asıl ayrışma orada yaşanmıştı.
+    ("bandRequirements", "availabilityValues"),
+}
+
+
+def _metadata_leaves(node: Any, path: tuple[str, ...] = ()) -> Iterator[tuple[tuple[str, ...], Any]]:
+    """`metadata` ağacındaki skaler (ve skaler-liste) yaprakları yol ile döndürür."""
+    if isinstance(node, dict):
+        for key, value in node.items():
+            yield from _metadata_leaves(value, path + (str(key),))
+    elif isinstance(node, list):
+        if all(not isinstance(x, (dict, list)) for x in node):
+            yield path, tuple(node)
+    else:
+        yield path, node
+
+
+def _is_excepted(path: tuple[str, ...]) -> bool:
+    """Yol serbest-metin mi? (anahtar adı ya da dışlanan alt ağaç)"""
+    if path and path[-1] in METADATA_PROSE_KEYS:
+        return True
+    for kalip in METADATA_PROSE_SUBTREES:
+        if len(path) < len(kalip):
+            continue
+        if all(k == "*" or k == p for k, p in zip(kalip, path[: len(kalip)])):
+            return True
+    return False
+
+
+def _shared_metadata_conflicts(cj: dict, vj: dict) -> tuple[int, list[tuple[str, Any, Any]]]:
+    """(karşılaştırılan yaprak sayısı, çelişenler) — yalnız İKİ TARAFTA DA olan yollar."""
+    karsilastirilan = 0
+    celisen: list[tuple[str, Any, Any]] = []
+    vendored_meta = vj.get("metadata", {})
+    for path, canonical_value in _metadata_leaves(cj.get("metadata", {})):
+        if _is_excepted(path):
+            continue
+        node: Any = vendored_meta
+        bulundu = True
+        for key in path:
+            if not isinstance(node, dict) or key not in node:
+                bulundu = False
+                break
+            node = node[key]
+        if not bulundu:
+            continue  # I-4: vendored EKSİK tutabilir — eksiklik çelişki değildir
+        vendored_value = tuple(node) if isinstance(node, list) else node
+        karsilastirilan += 1
+        if vendored_value != canonical_value:
+            celisen.append((".".join(path), canonical_value, vendored_value))
+    return karsilastirilan, celisen
+
+
+class TestVendoredMetadataDoesNotContradict:
+    """D12 (2026-08-11) — vendored `metadata` PAYLAŞILAN değerlerde kanonikle çelişemez.
+
+    🔴 **BU KAPI KENDİ İŞİMİN ÖZ-DENETİMİNDEN DOĞDU ve mevcut paritenin körlüğünü
+    ölçtü.** D12 turunda worker'ın vendored `analysis_type.enum` kopyası üç sürüm
+    geride kalmıştı ve TEK davranışsal değer ayrışıyordu:
+    `bandRequirements.byLayer.WATER_STRESS.availability` worker'da `available`,
+    kanonikte `proxy_only` — yani sözleşme, sensörün ölçemediği bir katmanı bir
+    tarafta 'mevcut' ilan ediyordu. Ayrışma **elle** bulundu; hizalandıktan sonra
+    *"bunu hangi kapı yakalardı?"* diye ölçtüm ve cevap **hiçbiri** çıktı:
+
+        proxy_only → available  geri alındı  → 169 passed (kapı görmedi)
+        formula NDRE/NDVI → NDVI/NDRE        → 169 passed (kapı görmedi)
+        version 1.4.4 → 1.4.1                → 169 passed (kapı görmedi)
+
+    Sebep yapısal: mevcut parite `properties`/`required`/`$defs`/enum **yüzeyini**
+    ölçer; `analysis_type.enum` bir değer kümesidir ve asıl sözleşmesi `metadata`
+    içinde yaşar — orası hiç okunmuyordu. Yani hizalamayı yaptım ama **geri
+    kaymasını engelleyen bir şey yoktu**; bu, bu turda kapattığım hatanın
+    (belgelenmiş kural ≠ kapı) aynısını kendi işimde tekrarlamak olurdu.
+
+    Kural I-4 ile uyumludur: vendored kopya kanoniği **EKSİK** tutabilir (alt küme),
+    **ÇELİŞEMEZ**. Bu yüzden yalnız iki tarafta da bulunan yollar karşılaştırılır.
+    """
+
+    #: 2026-08-11 ÖLÇÜMÜ (tahmin değil — komutla sayıldı): `analysis_type` çiftinde
+    #: **142** paylaşılan yaprak karşılaştırılıyor, 0 çelişki. Bu bir RATCHET'tir:
+    #: kanonik büyüdükçe sayı artar; DÜŞMESİ kapının körleştiği anlamına gelir
+    #: (ör. yürüyüş mantığı bozulup 0 karşılaştırma yaparsa test sessizce yeşil kalırdı).
+    MEASURED_SHARED_LEAVES = 142
+
+    @pytest.mark.parametrize(("canonical", "vendored"), MIRROR_PAIRS, ids=IDS)
+    def test_shared_metadata_values_agree(self, canonical: str, vendored: str) -> None:
+        cj, vj = _pair(canonical, vendored)
+        _, celisen = _shared_metadata_conflicts(cj, vj)
+        assert not celisen, (
+            f"{Path(canonical).name}: vendored `metadata` kanonikle ÇELİŞİYOR "
+            f"({len(celisen)} yol). Vendored kopya eksik tutabilir (I-4 alt küme) ama "
+            f"iki tarafta da olan bir değeri FARKLI yazamaz — sözleşme o noktada iki "
+            f"farklı şey söyler.\n"
+            + "\n".join(
+                f"  {yol}\n    kanonik: {k!r}\n    vendored: {v!r}" for yol, k, v in celisen[:5]
+            )
+        )
+
+    def test_gate_actually_compares_something(self) -> None:
+        """Sayaç kilidi — kapı gerçekten yaprak okuyor mu? (0 karşılaştırma = kör kapı)
+
+        ⚠️ ATLAMA KARARI **DOSYA VARLIĞINDAN** verilir, sayıdan DEĞİL. İlk yazımda
+        `if toplam == 0: skip` idi ve mutasyonla ölçtüm: yürüyüş mantığını bozup
+        her yaprağı istisna saydırdığımda test **atlanıp yeşil kaldı** — yani
+        sayaç kilidi kendi körlüğünü örtüyordu. `skip`, eksik kapının kılıfı olamaz.
+        """
+        mevcut_ciftler = [
+            (c, v) for c, v in MIRROR_PAIRS if (WORKSPACE / v).exists()
+        ]
+        if not mevcut_ciftler:
+            pytest.skip("kardeş depo yok — bu kapı kardeş CI'ında koşar (D4-b)")
+
+        toplam = 0
+        for canonical, vendored in mevcut_ciftler:
+            cj = json.loads((ROOT / canonical).read_text(encoding="utf-8"))
+            vj = json.loads((WORKSPACE / vendored).read_text(encoding="utf-8"))
+            toplam += _shared_metadata_conflicts(cj, vj)[0]
+        assert toplam >= self.MEASURED_SHARED_LEAVES, (
+            f"karşılaştırılan paylaşılan yaprak sayısı DÜŞTÜ ({toplam} < "
+            f"{self.MEASURED_SHARED_LEAVES}). Ya kanonik `metadata` küçüldü, ya vendored "
+            "kopya alan attı, ya da yürüyüş mantığı bozuldu — üçünde de kapı körleşir. "
+            "Sayı meşru şekilde arttıysa eşiği yükselt (ratchet)."
+        )
+
+    def test_prose_exception_list_does_not_grow_silently(self) -> None:
+        """İstisna listesi bir MAZERETTİR; büyümesi kapının kapsamını daraltır."""
+        assert len(METADATA_PROSE_KEYS) <= 6 and len(METADATA_PROSE_SUBTREES) <= 1, (
+            "Prose istisnaları büyümüş. Her yeni istisna, kapının o alanı artık "
+            "DENETLEMEDİĞİ anlamına gelir; eklemeden önce farkın gerçekten serbest "
+            "metin olduğunu ÖLÇ ve gerekçesini listenin yanına yaz."
+        )
+
+    def test_semantic_keys_are_not_excepted(self) -> None:
+        """POZİTİF KONTROL: kapının KORUMASI GEREKEN alanlar istisnaya kaçmasın.
+
+        Bir sonraki yanlış-kırmızıda refleks olarak `availability` ya da `formula`
+        istisnaya eklenirse kapı, doğduğu hatayı bir daha yakalayamaz. Bu test o
+        refleksi engeller.
+        """
+        korunmasi_gerekenler = {
+            "availability",
+            "requires_bands",
+            "formula",
+            "status",
+            "valid_where",
+            "outside_value",
+            "preliminary",
+            "feeds_layer",
+            "version",
+        }
+        kacanlar = korunmasi_gerekenler & METADATA_PROSE_KEYS
+        assert not kacanlar, (
+            f"anlamsal alan(lar) prose istisnasına kaçmış: {sorted(kacanlar)} — bu kapı "
+            "tam olarak bu alanlardaki sessiz ayrışma için yazıldı."
         )
 
 
