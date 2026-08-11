@@ -360,6 +360,85 @@ def validation_targets(base_dir: Path) -> List[Target]:
     return targets
 
 
+def validate_drone_registry_sync(base_dir: Path) -> List[str]:
+    """`drone_type` enum ↔ `drone_registry.yaml` ↔ `drone_capability_matrix.yaml`.
+
+    ⚠️ 2026-08-11: bu kural **YAZILIYDI ama KOŞMUYORDU**. Kanonik enum'un kendi
+    üstverisi kapıyı ADIYLA çağırıyordu —
+        `enums/drone_type.enum.v1.json → x-registry-sync.ci_check`
+        = *"tools/validate.py — drone_type enum değerleri drone_registry.yaml ile eşleşmeli"*
+    — ama `tools/validate.py` içinde `drone_registry` geçen **sıfır satır** vardı ve
+    hiçbir test dosyayı okumuyordu (2 isabetin ikisi de prose). `SDLC_GATES.md` de
+    üç ayrı yerde (§56/§88/§133) kapı olarak listeliyordu. Yani kanonik dosya,
+    var olmayan bir kapıya atıfla kendini garantiliyordu.
+
+    Veri o gün hizalıydı (5/5/5, sıfır fark) — yani eksik olan **kural değil KAPIYDI**.
+    Bu fonksiyon iddiayı DOĞRU hâle getirir.
+    """
+    errors: List[str] = []
+    enum_path = base_dir / 'enums' / 'drone_type.enum.v1.json'
+    registry_path = base_dir / 'drone_registry.yaml'
+    matrix_path = base_dir / 'drone_capability_matrix.yaml'
+    if not enum_path.exists():
+        return [f"{enum_path.name} yok — drone senkron kapısı KOŞAMAZ (fail-closed)."]
+
+    try:
+        import yaml  # type: ignore[import-untyped]
+    except ImportError:
+        # Sessiz atlama yeşil sayılmaz (D4/Q2 dersi).
+        return [
+            "pyyaml kurulu değil — drone_type ↔ drone_registry senkron kapısı KOŞMADI. "
+            "requirements-dev.txt'i kurun."
+        ]
+
+    def _keys(document: Any, section: str) -> set:
+        node = document.get(section) if isinstance(document, dict) else None
+        if isinstance(node, dict):
+            return set(node)
+        if isinstance(node, list):
+            found = set()
+            for item in node:
+                if isinstance(item, dict):
+                    for key in ('drone_type', 'type', 'code', 'id', 'model'):
+                        if key in item:
+                            found.add(item[key])
+                            break
+            return found
+        return set()
+
+    enum_values = set(json.loads(enum_path.read_text(encoding='utf-8')).get('enum', []))
+    for path, section, label in (
+        (registry_path, 'drones', 'drone_registry.yaml'),
+        (matrix_path, 'capabilities', 'drone_capability_matrix.yaml'),
+    ):
+        if not path.exists():
+            errors.append(f"{label} yok — drone senkron kapısı koşamaz (fail-closed).")
+            continue
+        keys = _keys(yaml.safe_load(path.read_text(encoding='utf-8')), section)
+        eksik = sorted(enum_values - keys)
+        fazla = sorted(keys - enum_values)
+        if eksik:
+            errors.append(
+                f"drone_type enum'unda VAR, {label} içinde YOK: {eksik}. "
+                "Yeni model akışı: registry → capability matrix → enum (enum SON adımdır)."
+            )
+        if fazla:
+            errors.append(
+                f"{label} içinde VAR, drone_type enum'unda YOK: {fazla}. "
+                "Kayıtlı ama enum'a girmemiş model, sözleşmede kullanılamaz."
+            )
+    return errors
+
+
+def cross_file_checks(base_dir: Path) -> List[str]:
+    """Tek dosyaya sığmayan (çapraz-dosya) kurallar — `main()` bunu DA koşar.
+
+    `validation_targets()` dosya BAŞINA çalışan kuralları taşır; buradakiler iki ya da
+    daha fazla dosyanın BİRLİKTE tutması gereken değişmezlerdir.
+    """
+    return validate_drone_registry_sync(base_dir)
+
+
 def main() -> None:
     """Main validation"""
     # Windows consoles default to a legacy code page (e.g. cp1254) that cannot
@@ -383,6 +462,10 @@ def main() -> None:
         total_files += 1
         print(f"Validating {target.path.relative_to(base_dir)}{target.label}...")
         all_errors.extend(_VALIDATORS[target.kind](target.path))
+
+    # Çapraz-dosya değişmezleri (dosya başına koşmayan kurallar).
+    print("Checking cross-file invariants (drone_type ↔ registry ↔ capability matrix)...")
+    all_errors.extend(cross_file_checks(base_dir))
 
     # Print results
     print(f"\n{'='*60}")

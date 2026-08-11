@@ -64,10 +64,15 @@ Karmaşıklığı kontrol altında tutmak için Draft 2020-12'nin şu iki özell
 
 ### Otomatik Kontroller
 
-`tools/validate.py` her PR'da şemaları tarar:
+`tools/validate.py` her PR'da şemaları **ve yayın ağacını** tarar:
 ```python
-FORBIDDEN_FIELD_NAMES = ["email", "tckn", "otp"]
+# tools/validate.py — TEK KAYNAK (pyproject.toml [tool.tarlaanaliz.schema] aynalar)
+FORBIDDEN_FIELDS = ['email', 'e_mail', 'tckn', 'tc_kimlik_no', 'otp', 'one_time_password']
 ```
+> ⚠️ Bu blok 2026-08-11'e kadar `FORBIDDEN_FIELD_NAMES` (var olmayan ad) ve **3 değer**
+> yazıyordu; gerçek sabit `FORBIDDEN_FIELDS` ve **6 değer**. Aynı sınıf D18'de
+> `pyproject` ↔ araç arasında bir kez düzeltilmişti, README'de kalmıştı.
+> `tests/test_pii_scope_gate.py` iki kaynağın ayrışmasını yasaklar.
 
 Bu alanların varlığı CI'da FAIL'e neden olur.
 
@@ -151,19 +156,19 @@ breaking_change: false
 ```yaml
 # .github/workflows/contract_check.yml
 - name: Verify contracts hash
-  run: |
-    cd contracts/
-    sha256sum -c ../CONTRACTS_VERSION.md
+  run: python3 contracts/tools/pin_version.py --verify
 ```
+> `CONTRACTS_VERSION.md` `sha256sum -c` biçiminde **değildir** (Markdown tablo/liste);
+> doğrulamayı `pin_version.py --verify` yapar.
 
 ### 3. Type Generation
 
 ```bash
-# TypeScript
-npm run types:gen
+# TypeScript (araçları `npm install -g` ile GLOBAL kurar; package.json'a bağlı değildir)
+bash tools/generate_types.sh --typescript
 
 # Python
-python -m tools.generate_types
+bash tools/generate_types.sh --python     # datamodel-code-generator
 ```
 
 ## 🔄 Geliştirme Akışı
@@ -174,8 +179,8 @@ python -m tools.generate_types
 # Schema validation (Draft 2020-12)
 python tools/validate.py
 
-# Forbidden fields check
-python tools/validate.py --check-forbidden
+# (Yasak alan taraması ayrı komut DEĞİL — yukarıdaki koşum içinde yapılır.
+#  `--check-forbidden` diye bir bayrak YOK: validate.py argüman almaz.)
 
 # Tests
 pytest tests/
@@ -202,9 +207,8 @@ python tools/breaking_change_detector.py
 ## 📚 Dokümantasyon
 
 - **[Versioning Policy](docs/versioning_policy.md)** — SemVer kuralları, deprecation, breaking change politikası
-- **[PR Gate Checklist](docs/checklists/PR_GATE_CHECKLIST.md)** — PR merge öncesi zorunlu kontroller
-- **[CI Gate Checklist](docs/checklists/CI_GATE_CHECKLIST.md)** — CI'da otomatik koşan kontroller
-- **[Release Gate Checklist](docs/checklists/RELEASE_GATE_CHECKLIST.md)** — Yayın öncesi kontroller
+- **[SDLC Gates](docs/checklists/SDLC_GATES.md)** — PR · CI · C8 release kapılarının **tamamı tek dosyada**
+  (Bu üç ayrı checklist dosyası hiç var olmadı; atıflar 2026-08-11'de düzeltildi.)
 
 ### Kanonik Dokümanlar (v2.4)
 
@@ -233,8 +237,11 @@ python tools/breaking_change_detector.py
 
 ```toml
 [tool.poetry.dependencies]
-jsonschema = "^4.20.0"
-pytest = "^7.4.3"
+jsonschema = { extras = ["format"], version = "^4.20.0" }
+
+[tool.poetry.group.dev.dependencies]
+pytest = "9.0.2"        # AK-4: kapıyı KOŞTURAN araç TAM SÜRÜME sabit
+pytest-cov = "7.0.0"    # (requirements-dev.txt + poetry.lock ile BİRLİKTE değişir)
 ```
 
 - **jsonschema** — Draft202012Validator
@@ -293,10 +300,10 @@ pytest = "^7.4.3"
 
 ## 📄 Lisans
 
-[Lisans bilgisi buraya eklenecek]
+`UNLICENSED` — özel (proprietary) depo, dağıtım için değildir. Bkz. `LICENSE`.
 
 ---
 
-**Son Güncelleme**: 2026-01-26  
+**Son Güncelleme**: 2026-08-11  
 **Kanonik Versiyon**: v2.4  
 **JSON Schema Standardı**: Draft 2020-12

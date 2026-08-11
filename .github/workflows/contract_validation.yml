@@ -49,6 +49,7 @@ on:
       - 'requirements-dev.txt'       # CI bağımlılıkları buradan kurulur
       - 'pyproject.toml'             # pytest markers/config
       - 'package.json'               # test_node_toolchain_honesty (script/bagimlilik kapisi)
+      - 'poetry.lock'                # test_dependency_sources_agree (AK-4 ucuncu kaynak)
       - '.prettierignore'            # test_node_toolchain_honesty (sozlesme agaci korumasi)
       - '.redocly.yaml'              # lint-openapi yapılandırması
       - '.redocly.lint-ignore.yaml'  # test_publication_tree_gates: istisna listesi ratchet'i
@@ -77,6 +78,7 @@ on:
       - 'requirements-dev.txt'
       - 'pyproject.toml'
       - 'package.json'
+      - 'poetry.lock'
       - '.prettierignore'
       - '.redocly.yaml'
       - '.redocly.lint-ignore.yaml'

@@ -90,7 +90,7 @@ Her şemada `unevaluatedProperties: false` zorunludur:
 - "Gizli alan" drift'ini önleme
 - Veri çöplüğü riskini minimize etme
 
-**Kontrol**: `tools/validate.py --check-unevaluated`
+**Kontrol**: `tools/validate.py    # (bayrak YOK — tüm kurallar tek koşumda)
 
 ### İleride Eklenebilir Özellikler
 
@@ -496,7 +496,7 @@ breaking_change: true
 #### 2. Consumer Sync
 
 ```bash
-python tools/sync_to_repos.sh --version v2.0.0 --notify
+./tools/sync_to_repos.sh --target platform   # (--version/--notify diye bayrak YOK)
 ```
 
 Bu script:
@@ -839,7 +839,7 @@ $ cat CHANGELOG.md
 # 5. Release
 $ git tag v2.0.0
 $ git push origin v2.0.0
-$ python tools/sync_to_repos.sh --version v2.0.0 --notify
+$ ./tools/sync_to_repos.sh --target platform   # (--version/--notify diye bayrak YOK)
 ```
 
 ### Örnek 2: MINOR Bump (Yeni Feature)
@@ -952,13 +952,13 @@ Consumer'lara sync:
 
 ```bash
 # PR aç (review için)
-python tools/sync_to_repos.sh --version v2.0.0
+./tools/sync_to_repos.sh --target platform
 
 # Notify gönder
-python tools/sync_to_repos.sh --version v2.0.0 --notify
+./tools/sync_to_repos.sh --target platform   # (--version/--notify diye bayrak YOK)
 
 # Specific repos
-python tools/sync_to_repos.sh --version v2.0.0 --repos platform,edge
+./tools/sync_to_repos.sh --all               # (--repos diye bayrak YOK)
 ```
 
 ---
