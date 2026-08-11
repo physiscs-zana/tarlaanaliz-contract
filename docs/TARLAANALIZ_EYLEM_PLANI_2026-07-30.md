@@ -2657,7 +2657,7 @@ A7 kanopi maskesi · A5/A6 fenoloji eşlemesi · §12 motor kararı sonrası `DT
 | ✅ **AK-7** | ~~İki ürün vocabulary'sinin kök nedeni~~ → **KAPANDI: beş serbest metin alanının HEPSİ kanonik sözlüğe bağlandı.** ⚠️ **Sınıf taraması tek örneği değil BEŞİNİ buldu:** `edge/worker_result.v1.crop_type` (*"e.g. cotton, wheat"* — küçük harf örneği, edge sözlüğünün kaynağı) + **dört olay şeması** (`analysis_completed`, `analysis_review_requested`, `field_created`, `field_health_changed`) — dördü de açıklamasında *"reference: crop_type.enum.v1"* diyordu ama şema **hiçbir şeyi zorlamıyordu** (C0'ın manifestlerde kapattığı "prose var, zorlanabilirlik yok" sınıfı). **Daraltma güvenli mi? ÖLÇÜLDÜ:** platform ürünleri zaten BÜYÜK harf üretiyor (`crop_type.py:113,130`) · `worker_result.v1`'in **kod üreticisi yok** · platform şema zorlaması varsayılan **KAPALI** (`settings.py:190`). Beş alan da `x-compat-accepted` ile beyanlı; yeni **sınıf kapısı** (`test_crop_vocabulary_single_standard.py`, 8 test) serbest metin ürün alanının geri gelmesini yasaklıyor | — | 5 şema + kanonik enum · dedektör: 5× `ENUM_CONSTRAINT_ADDED` **ACCEPTED** |
 | ✅ **AK-10** | **ÇÖZÜLDÜ (araç + kapı): `tools/sync_kr_corpus.py`.** Ölçüm doğrulandı ve artık ÖLÇÜLEBİLİR: `--check` bugün **4/4 hedefte sapma** raporluyor (platform SSOT metni STALE · worker SSOT metni **MISSING** · her iki registry kopyası STALE). Araç bilerek iki kipli: `--check` ölçer (kapı), `--apply` yalnız operatör çalıştırır ve sonucu **kardeş depoda AYRI PR** olur — sessiz kopyalama C8'in görünmez yan etkisi olurdu. CRLF farkı sapma sayılmaz (normalize hash). Kapı SDLC_GATES §3C'ye eklendi + 9 test (kardeş depo gerektirmeyen, geçici dizinli davranış testleri). **Kalan iş operatörde:** `--apply` + iki kardeş depoda commit/PR | ⬜→✅ | **eski metin:** `kr_registry.md`: platform `docs/kr/` **1211 satır**, platform `contracts/ssot/` **1242**, worker `docs/reference/` **936** — üçünde de **KR-093 başlığı YOK**; contract'ta 1267. SSOT metni: contract **1906** ↔ platform **1895**, worker'da **hiç yok**. Yani hem registry hem SSOT metni alt-akışta bayat ve worker KR korpusunun yeni yarısını hiç görmüyor | Senkron aracı yok (C-SSOT-2 kökü): `tools/sync_to_repos.sh` yalnız `schemas/`+`enums/`+`CONTRACTS_VERSION.md` taşıyor. Çözüm bir araç kararı: salt-okunur drift dedektörü mü, gerçek dağıtım mı? | plan §14.5.1 · ölçüm bu turda |
 | ⬜ **P17** 🔴 | **SSOT metni senkronu BOZULDU (bu turda, bilinçli):** D17'nin KR-093 gövde düzeltmesi `docs/TARLAANALIZ_SSOT_v1_2_0.txt`'i değiştirdi → contract kopyası artık platform kopyalarından FARKLI (ölçüldü: contract `41e152a3…` · platform/docs `78a4f557…` · platform/contracts/docs `d525671f…`). C-SSOT'un kurduğu bayt-özdeşlik yeniden kurulmalı | Platform deposunda yapılır (ayrı PR); C8'in parçası. ⚠️ Not: platform'un İKİ kopyası var (`docs/` ve submodule `contracts/docs/`) ve bunlar **birbirinden de farklı** — yani senkron zaten kırıktı, bu tur onu görünür kıldı | plan §14.5.1 |
-| ⬜ **AK-9** 🔴 | **`stress_ratio` TANIMSIZ** — KR-093'ün `WATER_STRESS` kaleminin kaynağı olarak **3 yerde** anılıyor, **0 yerde** tanımlı (A3 doğrulandı). Worker `channel_spec.py` adı `derived_indices` listesinde taşıyor ama `compute_indices_v2` çıktısında hesap YOK: ad var, üretim yok | Formülü tahminle yazmak doğrulanamaz kapı üretir (`CHLOROPHYLL_A` dersi). WATER_STRESS artık `proxy_only` ve ön fazdan çıktığı için bugün **zorunlu teslimat değil** → tanım, termal/SWIR donanım kararıyla birlikte verilir | `analysis_type → metadata.indexDefinitions.stress_ratio` (`UNDEFINED_PENDING_DECISION` + gerekçe) · kapı: `test_single_normative_body.py` |
+| ✅ **AK-9** | **KAPANDI (2026-08-11 · D12, contract 7.6.1 → PR #62).** ⛔ Aşağıdaki *"ad var, üretim yok"* iddiası **ÖLÇÜMLE ÇÜRÜTÜLDÜ**: iddia tek bir dosyaya (`feature_extraction.compute_indices_v2`) bakıp "yok" demişti; üretici worker'ın **çıkarım hattındadır** (`inference/pipeline.py:141 · :902 · :2144 · :1904/:1995`) ve çıktı `reporting_agent.py:55-56` ile rasterlanıp nesne deposuna yüklenip `manifest.json`'da listeleniyor. Formül **tahminle değil, koddan okunarak** tanımlandı: `stress_ratio = NDRE / NDVI`, NDVI ≤ 0 piksellerinde nötr `1.0` (`src/indices/stress_ratio.py:59-60`). Teslimat kuralı DEĞİŞMEDİ ama artık **makine-okunur**: `delivery_rule.preliminary = false` — katman `proxy_only`, uzman kapısı öncesinde çiftçiye sunulmaz. **Tanımlılık ≠ geçerlilik.** Kapı: `test_single_normative_body.py::TestDerivedQuantitiesAreDefined` (9 mutasyon) + kardeş-CI `TestVendoredMetadataDoesNotContradict` (6 mutasyon). Ayrıntı: **§14.11**. **Aşağıdaki özgün kayıt tarihsel bağlam için bırakıldı** ⬇️<br>~~`stress_ratio` TANIMSIZ~~ — KR-093'ün `WATER_STRESS` kaleminin kaynağı olarak **3 yerde** anılıyor, **0 yerde** tanımlı (A3 doğrulandı). Worker `channel_spec.py` adı `derived_indices` listesinde taşıyor ama `compute_indices_v2` çıktısında hesap YOK: ad var, üretim yok | Formülü tahminle yazmak doğrulanamaz kapı üretir (`CHLOROPHYLL_A` dersi). WATER_STRESS artık `proxy_only` ve ön fazdan çıktığı için bugün **zorunlu teslimat değil** → tanım, termal/SWIR donanım kararıyla birlikte verilir | `analysis_type → metadata.indexDefinitions.stress_ratio` (`UNDEFINED_PENDING_DECISION` + gerekçe) · kapı: `test_single_normative_body.py` |
 | ⬜ **AK-8** | **`expert_labeling_card.calendar_risk_by_crop` FARKLI EKSEN kullanıyor:** anahtarları `^[a-z_]+$` ve örnekleri *"cereals, fruit_trees, cotton"* — yani mahsul **GRUBU** ile mahsul **ADI** aynı sözlükte karışıyor. Ürün sözlüğü kapısı bunu bilerek kapsam dışı bıraktı (farklı eksen) | Grup ekseninin kanonik bir sözlüğü YOK; tanımlamak agronomi kararıdır (hangi gruplar, hangi mahsul hangi gruba?) | `schemas/worker/expert_labeling_card.v1.schema.json` → `calendar_risk_by_crop.patternProperties` |
 
 ## 14.7 ✅ TUR 1 KAPANIŞI (2026-07-31) — **2026-08-11'de depoda yeniden ölçüldü**
@@ -2701,7 +2701,7 @@ A7 kanopi maskesi · A5/A6 fenoloji eşlemesi · §12 motor kararı sonrası `DT
 | **2c** 🟡 | Ürün sözlüğü **eksen farkı** yazılı değil | worker `dynamic_thresholds.yaml` anahtarları küçük harf (`grape:`, `disease:`), kanonik tel BÜYÜK harf | Eksen farkı ya kanonik olarak beyan edilir ya anahtarlar hizalanır (worker kararı) |
 | **2d** 🟡 | `sync_kr_corpus.py` *“kaybolacak içerik”* ile *“üzerine yazılacak eski sürüm”* ayrımını yapmıyor | **2026-08-11'de bizzat yaşandı:** araç `DIVERGENT` deyip yazmayı reddetti; 8 satırın tamamı süperseded çıktı, elle birleştirildi | Ayrım satır-bazlı değil **blok-bazlı** eşleştirme ister (tasarım kararı) |
 | **AK-5** 🟡 | `x-compat-accepted` beyanlarına `revisit_when` alanı | **8 dosyada** beyan var, `revisit_when` → **0** | Gerekçe *“üretici yok”*; üretici yazılınca beyan sessizce bayatlar |
-| **AK-9** 🟡 | `stress_ratio` tanımsız | `analysis_type.enum.v1` → `UNDEFINED_PENDING_DECISION` **duruyor** | WATER_STRESS `proxy_only` olduğu için bugün zorunlu değil |
+| ✅ **AK-9** | ~~`stress_ratio` tanımsız~~ → **KAPANDI 2026-08-11** | `analysis_type.enum.v1` v1.4.4 → `status: DEFINED`, `formula: "stress_ratio = NDRE / NDVI"`, makine-okunur `domain_guard` + `delivery_rule.preliminary=false` | *"üretim yok"* iddiası ⛔ çürütüldü (ölçüm yanlış dosyaya bakmış); kısıt SUNUM katmanında uygulanıyor — bkz. §14.11 |
 
 **Diğer kapı borçları (durum değişmedi):** **AK-2** dedektör `$ref` hedeflerini çözmez —
 E3 inline'ı riski büyük ölçüde kaldırdı · **AK-3** `NORMATIVE_ANNOTATION_KEYS` elle tutulan
@@ -3234,3 +3234,53 @@ Bunlar **kendi kurulumunuzda** ölçülür, kaynaktan öğrenilemez:
 | "`healthy_rice` yok" | **VAR** — adı `rice_crop_healthy`. `startswith("healthy")` filtresi kaçırdı. 12 mahsulün 12'sinde de HEALTH referansı mevcut |
 | "Aşama-1 fail-open'ı **veri kaybı** üretiyor" | Bu konfigürasyonda **üretmiyordu**: kaçan 11 karonun hepsi `tile_min_valid_ratio=0.20` altındaydı, Aşama-2 zaten atardı. Kusur **muhasebede** (`tile_count_healthy` 11 hiç ölçülmemiş karo sayıyordu) ve **kırılganlıkta** (koruma tek bir belgelenmemiş yan etkiye bağlıydı) |
 | "DK-44 `stress_ratio` düzeltmesi platform `WATER_STRESS` katmanını besliyor" | **Beslemiyor.** O katman **tam-görüntü** yolundan besleniyor ve zaten çalışıyordu; tile düzeyindeki `stress_ratio`'nun bugün tüketicisi yok |
+
+---
+
+## 14.11 🔬 D12/D13 TURU (2026-08-11) — `stress_ratio` tanımlandı · ön faz kapısı kuruldu · üç-repo 7.6.1
+
+> **Tetikleyici:** worker `denetim/kalan_isler.txt` §4 **D12** — kanonik
+> `analysis_type.enum` *"hiçbir üretici bu adı emit ETMEMELİDİR"* diyordu ama worker
+> üretiyordu. Ölçüm iddiayı çürüttü ve asıl kusurun **başka yerde** olduğunu gösterdi.
+
+### Kalemler
+
+| Kod | Depo | İş | Durum |
+|---|---|---|---|
+| **D12-a** | contract | `indexDefinitions.stress_ratio`: `UNDEFINED_PENDING_DECISION` → **`DEFINED`**. `formula` + makine-okunur `domain_guard` (`valid_where: "NDVI > 0"`, `outside_value: 1.0`) + `measured_producers` (7 yol, `dosya:satır`) + `superseded_claim` (⛔ çürütme kaydı) + **`delivery_rule.preliminary=false`** | ✅ PR #62 |
+| **D12-b** | contract | Kapı: `TestDerivedQuantitiesAreDefined` — `delivery_rule.preliminary` ile `report_phase → x-preliminary-content.stage_b.fields` **makine düzeyinde anlaşmak zorunda**; `proxy_only` katmanı besleyen indeks ön fazda teslim edilemez. **9 mutasyon** | ✅ PR #62 |
+| **D12-c** | platform | **Asıl kusur:** KR-093 kapalı listesinin platformda **hiç tüketicisi yoktu** (`x-preliminary-content` → 0 eşleşme; pozitif kontrol: `x-derived-from` → 3). `preliminary_content_gate.py` listeyi **kanonikten okur**; kapı katman listesi + `available_indices` + raster tile ucu + tile metadata. Uzman/admin kapsam dışı. **7 mutasyon** (biri ayrıştırma: kapıyı uzmana uygula → 3 pozitif kontrol öldü) | ✅ PR #407 |
+| **D12-d** | platform | Yan delik 1: konsensüs RED (`EXPERT_REJECTED`) sonrası özet ucu 409 derken **tile'lar servis ediliyordu** (taban görüntü dahil) → fail-closed | ✅ PR #407 |
+| **D12-e** | platform | Yan delik 2: faz türetmesi `"FULL" if DONE else "PRELIMINARY"` idi; kanonik *"listelenmeyen = PRELIMINARY varsayımı YASAKTIR"* der → `CANCELLED`/`FAILED`/`ON_HOLD` artık 409, tek kaynak `derive_report_phase()` | ✅ PR #407 |
+| **D12-f** | worker | **Kod DEĞİŞMEDİ (bilinçli).** `reporting_agent.py` + `src/indices/stress_ratio.py` başına "neden burada kalıyor" gerekçesi | ✅ PR #216 |
+| **D13** | üç depo | Sürüm töreni **7.6.0 → 7.6.1**: contract re-pin + annotated tag · platform submodule + checksum + `main.py` boot-pin · worker vendored `analysis_type` v1.4.1 → v1.4.4 + KR-041 öz-hash | ✅ #62/#407/#408/#216 |
+| **D13-b** | contract | **Öz-denetim bulgusu:** kardeş-CI parite kapısı `metadata` **değerlerine kördü** — hizaladığım ayrışmanın geri kaymasını engelleyen hiçbir şey yoktu. `TestVendoredMetadataDoesNotContradict`: vendored `metadata` paylaşılan bir yolda kanonikle **çelişemez** (I-4 gereği EKSİK tutabilir). 142 yaprak, **6 mutasyon** | ✅ PR #63 |
+
+### Karar — neden seçenek (b) elendi
+
+`reporting_agent._MAPS_BY_RESULT_MODE`'dan `stress_ratio`'yu çıkarmak **sızıntıyı
+kapatmazdı**, iki ölçülmüş nedenle:
+
+1. `result_mode` ⟂ `report_phase` (KR-093 §Faz ekseni bağımsızlığı). `report_phase`
+   yalnız `mission.status`tan türetilir; **`FULL_REPORT` modundaki iş de uzman onayına
+   kadar `PRELIMINARY` fazındadır** → raster yine üretilir, yüklenir, sunulurdu.
+2. Kanonik `report_phase.enum → x-removed-2026-07-31.still_computable` worker'ın
+   hesaplamaya devam etmesine **açıkça izin verir**; kısıt üretimde değil **sunumda**.
+   Üstelik PARTIAL = düşük güven, yani uzmanın rastere en çok ihtiyaç duyduğu mod.
+
+### 📌 Bu turda ölçülüp ÇÜRÜTÜLEN iddialar (tekrar gündeme gelmesin)
+
+| İddia | Neden çürüdü |
+|---|---|
+| *"`stress_ratio`: ad var, üretim yok — hiçbir üretici emit etmemeli"* (kanonik v1.4.2–v1.4.3) | Ölçüm **yanlış dosyaya** bakmıştı (`compute_indices_v2`). Üretici çıkarım hattındadır; raster S3'e yüklenip `manifest.json`'da listeleniyor. "Şu dosyada yok" ≠ "hiçbir yerde yok" |
+| *"Çözüm worker'ın teslim setinden çıkarmaktır"* (paralel oturumun D12 planı) | Yanlış eksen — `result_mode` ⟂ `report_phase`; FULL_REPORT yolunda sızıntı devam ederdi. Kanonik `still_computable` da tersini söylüyor |
+| *"Çapraz-repo kapı YOK"* (benim ilk CHANGELOG cümlem) | Fazla genişti: kapı **vardı** (kardeş-CI paritesi) ama `metadata` değerlerine kördü. Düzeltildi; geçerli kalan sınır: contract deposu worker'ın **Python koduna** bakamaz |
+| *"Etiket merge sonrası atılır"* | Worker CI contract'ı **pinli etikete** göre checkout ediyor; tag yokken iş `Checkout contract @ pinli etiket` adımında düşer. Tag, tüketici PR'ları CI'a girmeden push edilmeli |
+
+### ⬜ Bu turdan AÇIK KALAN
+
+| Kalem | Neden açık |
+|---|---|
+| ✅ **AL-K17** · ~~Kanonik `outside_value`/`formula` ile worker'ın Python sabitinin hizasını hiçbir kapı ölçmüyor~~ → **KAPANDI (2026-08-11, worker PR #217)** | Çözüm önerilen yoldan geldi: worker'da `TestStressRatioKanonikSozlesmeyeBAGLI` — beklenen değerler vendored kanonik JSON'dan **TÜRETİLİR** (kopyalanmaz), sonra üretim koduyla davranışsal sınanır. **7 mutasyon, iki yönde**: kodu bozunca 5'er test, sözleşmeyi bozunca (kod doğru kalırken) **yalnız yeni bağ testi** kırılıyor — ayrıştırma kanıtı |
+| **AL-K18** 🟡 · Ön faz kapısı **canlı trafikte** doğrulanmadı | Ayakta yığın yoktu. Kabul ölçütü SESSION_HANDOFF §0.A/D-2'de yazılı (`summary` → `WATER_STRESS` yok · tile → 403 · `DONE` olunca 200) |
+| **AL-K19** 🟢 · Yeni parite kapısı **yalnız worker CI'ında** koşar | Contract CI'da kardeş depo checkout edilmez (D4-b tasarımı, bilinçli). Edge çiftleri de meşru olarak atlanır |
