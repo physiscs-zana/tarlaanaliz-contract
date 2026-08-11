@@ -7,11 +7,58 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
-## [Unreleased] — Belgelenmiş ama koşmayan kuralların kapıya bağlanması
+## [7.7.1] - 2026-08-11 — Vendored parite sayacı kardeş CI'ında YAPISAL KIRMIZI veriyordu
 
-> Bu blok **checksum-nötr**: `schemas/` · `enums/` · `api/` ağaçlarına dokunulmadı,
-> `v7.7.0` pini bozulmadı (`pin_version.py --verify` → 0). Sürüm gerektiren tek kalem
-> (`payment_target_type` bağlaması) **bilerek ertelendi** — aşağıya bakın.
+> Bu sürüm **PATCH**: sözleşme yüzeyi (alan · tip · zorunluluk · sözlük değeri) değişmedi.
+> `schemas/` ve `enums/` ağaçlarına dokunulmadı; `api/` içinde değişen tek şey üç dosyanın
+> `info.version` damgası (`7.7.0` → `7.7.1`), bu yüzden **agrega checksum yenilendi**
+> (`bf269235…` → `2d9f7475…`). Sürüm gerektiren tek içerik kalemi
+> (`payment_target_type` bağlaması) **hâlâ ertelendi** — aşağıya bakın.
+
+### 🔴 NEDEN PATCH GEREKTİ — düzeltme etiketin İÇİNE girmek zorunda
+
+`tests/test_vendored_parity.py::test_gate_actually_compares_something` küresel bir taban
+tutuyordu (`MEASURED_SHARED_LEAVES = 142`). Ama bu kapı **her kardeşin KENDİ CI'ında**
+koşar (D4-b: bu depo public, kardeşler private → yön tersine çevrilemez). edge CI'ında
+yalnız edge checkout'u bulunur; ölçülen toplam **0** çıkar ve `0 >= 142` **yapısal olarak**
+kırmızı verir. Gerçek olay: edge pin PR'ında 9 iş yeşil, yalnız bu kapı kırmızı.
+
+Kusur `v7.7.0` kaynaklı **değil** — sabit `v7.6.1` ile geldi; edge `7.6.0`'a pinliydi,
+o yüzden ancak yeni pine geçerken görünür oldu. Düzeltme `master`'a indi ama kardeş CI
+sözleşmeyi **pinli etiketten** checkout eder ve etiket değişmez (I-2) → yeni etiket şart.
+
+### Fixed
+
+- **Taban çizgisi ÇİFT başına tutuluyor** (`MEASURED_LEAVES_BY_PAIR`); beklenen değer o an
+  **mevcut** çiftlerden toplanır. Ölçüm (kapının kendi tanımıyla, üst düzey `metadata`
+  anahtarı): 13 MIRROR çiftinin **12'sinde iki tarafta da `metadata` yok** → 0 meşrudur;
+  142 yaprağın tamamı tek çiftten (`analysis_type.enum.v1.json`) gelir.
+
+### Added — iki yeni kilit (ikisi de mutasyonla sınandı)
+
+| Kilit | Neden | Mutasyon sonucu |
+|---|---|---|
+| `test_zero_baseline_pairs_really_have_no_canonical_metadata` | Taban 0 olunca kilit `0 >= 0` olur ve **hiçbir şey kanıtlamaz** | tabanı 0 olan kanoniğe `metadata` dik → **kırmızı** · taban sözlüğünü boşalt → **kırmızı** (taban aşındırılamıyor) |
+| `TestWalkMechanismItselfWorks` (5) — sentetik girdiyle, kardeş depo gerekmez | Her iki kilit de **depo verisini** okur; ölçecek veri olmayan kardeşte mekanizmanın bozulması görünmüyordu | yürüyüşü körelt → **4 kırmızı** · yaprak üretecini körelt → **4** · I-4 eksiklik kuralını kaldır → **2** |
+
+> ⚠️ **Bu ikinci kilidi kendi ölçümüm zorladı, öneri değil.** İlk düzeltmeden sonra
+> "edge-only CI + körelmiş yürüyüş" senaryosunu koştum: iki kilit de **yeşil kaldı**
+> (`2 passed`) — yani delik gerçekti. Aynı boşluk bu deponun kendi CI'ında daha büyüktü:
+> kardeş checkout'u hiç olmadığı için yürüyüş mantığı orada **hiç** sınanmıyordu.
+> Sentetik sınıf her iki boşluğu da kapatır.
+
+> 📌 **Düzeltmenin tasarımı edge oturumundan geldi.** İlk çözümüm tabanı *kardeş başına*
+> tutuyordu; edge "tabanı 0 olan kardeşte kilit boştur, yanına pozitif kontrol şart" diye
+> itiraz etti ve haklıydı. Kanonik tarafta `metadata` olup olmadığını ölçtüm: 12 çiftte
+> gerçekten yok → önerdikleri pozitif kontrol uygulanabilir çıktı ve alındı.
+
+---
+
+## [7.7.0-sonrası ara blok] — Belgelenmiş ama koşmayan kuralların kapıya bağlanması
+
+> Aşağıdaki kalemler `v7.7.0` etiketinden **sonra** `master`'a indi ve bu PATCH ile
+> yayımlanıyor. Kendi içinde checksum-nötrdüler: `schemas/` · `enums/` · `api/`
+> ağaçlarına dokunulmadı.
 
 ### ÖLÇÜLEN ÜÇ SORUN
 
