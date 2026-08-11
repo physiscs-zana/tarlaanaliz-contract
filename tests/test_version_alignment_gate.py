@@ -240,8 +240,14 @@ class TestFailClosedBehaviour:
     """'Ölçemedim' asla 'hizalı' sayılmaz."""
 
     def test_missing_pin_file_exits_1(self, tmp_path: Path, capsys) -> None:
+        # ⚠️ Sahte dosya adı BİLEREK uzantısızdır. İlk yazımda belge uzantılı bir ad
+        # kullandım; sarkan atıf kapısı onu kırık belge bağlantısı sandı ve CI kırmızıya
+        # döndü. Sonra kusuru yorumda ADIYLA anlattım — kapı ONU da yakaladı. Kural:
+        # sahte dosya adına belge uzantısı verme ve gerekçesinde de yazma.
         code = gate.main([
-            "--mode", "consumer", "--pinned-file", str(tmp_path / "yok.md"), "--latest", "7.7.2",
+            "--mode", "consumer",
+            "--pinned-file", str(tmp_path / "olmayan-pin-dosyasi"),
+            "--latest", "7.7.2",
         ])
         assert code == 1 and "fail-closed" in capsys.readouterr().out
 
