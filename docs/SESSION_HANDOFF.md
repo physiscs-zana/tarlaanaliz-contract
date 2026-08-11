@@ -29,19 +29,20 @@
 >
 > | Depo | Sürüm | Dal | Durum |
 > |---|---|---|---|
-> | contract | **7.7.1** | `master` | ✅ etiketli (`v7.7.1`, annotated), temiz |
-> | worker | `v7.7.0` | `sync/contracts-v7.7.0-repin` | 🟠 re-pin dalda — **7.7.1'e çekilmeli** |
-> | edge | `7.6.0` | `fix/deployment-scripts-kapisi` | 🟠 PR #70 açık — pin `7.7.1` yapılıp yeniden koşacak |
+> | contract | **7.7.2** | `master` | ✅ etiketli (`v7.7.2`, annotated), temiz |
+> | worker | `v7.7.1` | `master` | 🟠 pin indi; **7.7.2'ye çekilmeli** (A8 `--deselect`'i o zaman kalkar) |
+> | edge | `7.6.0` | `fix/deployment-scripts-kapisi` | 🟠 PR #70 açık — **doğrudan `7.7.2`'ye** pinlenecek (7.7.1 ile ikinci bir kırmızı alırdı) |
 > | platform | `7.6.1` | `main` | 🔴 **hiç re-pin edilmedi** — submodule pini `v7.6.1` (`c4b7b94`) |
 >
 > **platform'un geride kalması bu oturumda bilinçli değil, sadece sıra gelmedi** —
 > bu oturumda platform'da çalışan bir aktör yoktu. Bir sonraki oturumun ilk işi.
 >
-> Sürüm dizeleri: contract `7.7.1` · checksum `2d9f7475f3e31140446b6d006f222ec8b97cc4c9c2f454a9e55fc8d437023dd3`
-> (7.7.0'da `bf269235…` idi; **yalnız `api/` içindeki üç `info.version` damgası** değiştiği
-> için yenilendi — `schemas/` ve `enums/` ağaçlarına dokunulmadı).
+> Sürüm dizeleri: contract `7.7.2` · checksum `aded57d3926459a12a45d1004f16aee80e55de1e5bb6e310cbad563753b7a2b0`
+> (`bf269235…` 7.7.0 · `2d9f7475…` 7.7.1). Üç sürümde de **yalnız `api/` içindeki üç
+> `info.version` damgası** değişti — `schemas/` ve `enums/` ağaçlarına hiç dokunulmadı,
+> yani kardeşlerin vendored öz-hash'i sabit kaldı.
 
-### Ne yapıldı — 14 PR (#69…#82)
+### Ne yapıldı — 17 PR (#69…#85), üç sürüm etiketi
 
 Tema: **"belgelenmiş ama koşmayan kural bir dilektir"**. Denetim, sözleşme metnini değil
 **kapıların kendisini** hedef aldı; bulunanların çoğu *var sanılan* kapılardı.
@@ -55,7 +56,8 @@ Tema: **"belgelenmiş ama koşmayan kural bir dilektir"**. Denetim, sözleşme m
 | Ayna kusurları | #75, #76 | ÖD-13 kapısı `main()` yerine **kopyasını** ölçüyordu; düzeltmenin kendi kör noktası da ayrıca bulundu |
 | Ölü/zararlı araç | #73 | Node/TS zinciri **hiç var olmamıştı**; `npm run format` checksum kapsamındaki **94 dosyayı** yeniden biçimlendirirdi — ölü değil **zararlı** |
 | Koşmayan kurallar | #80 | `drone_type` senkron kapısı **yoktu** · `poetry.lock` üçüncü kaynak olarak **çelişiyordu** (pytest 7.4.4 ↔ 9.0.2) · belgelerde koşmayan komutlar |
-| Sürüm | #79, #82 | **v7.7.0** (MINOR) ve **v7.7.1** (PATCH) |
+| Sürüm | #79, #82, #85 | **v7.7.0** (MINOR) · **v7.7.1** ve **v7.7.2** (PATCH) |
+| Öz-kusur | #85 | `v7.7.1`'de *"sınıfın tamamını kapattım"* dedim; **kardeş dosyayı saymamıştım** — worker yakaladı, `v7.7.2` düzeltti |
 
 ### 🔴 v7.7.1 neden gerekti — etiket değişmez
 
