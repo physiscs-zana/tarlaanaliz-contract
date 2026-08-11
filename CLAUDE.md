@@ -227,7 +227,7 @@ checksum + vendored bayt-paritesi + `dist` tazeliği ona bağlıdır.
 `.github/workflows/contract_validation.yml` — 8 iş: `validate-schemas` ·
 `test-schemas` · `detect-breaking-changes` · `verify-checksums` · `lint-openapi` ·
 `check-forbidden-fields` · `check-draft-2020-12` · `check-brand-guard` (+ doc-link
-kapısı). Hepsi `summary` işinde toplanır. **Tek bir `npm run ci:gate` komutu yoktur** —
+kapısı **+ I-1 sürüm hizası kapısı**, AL-K30). Hepsi `summary` işinde toplanır. **Tek bir `npm run ci:gate` komutu yoktur** —
 öyle bir script hiç çalışmadı. Kapsam ve `needs` bütünlüğü
 `tests/test_ci_gate_honesty.py` ile türetilip zorlanır.
 
@@ -380,3 +380,39 @@ git describe --tags HEAD              # I-2: temiz vX.Y.Z dönmeli (etiketsizse:
 python tools/pin_version.py --verify  # I-3/I-4 kaynağı: agrega Contracts Checksum tutar
 python tools/validate.py && pytest tests/ -q
 ```
+
+### I-1'in KAPISI (AL-K30, 2026-08-11) — `tools/check_version_alignment.py`
+
+I-1 üç `CLAUDE.md`'de yazılıydı ama **doğrulayan tek bir komut yoktu**: dört depo tarandı,
+contract'ta 2 isabet düzyazı, platform'daki 8 isabet **başka bir numaralandırma**
+(Dockerfile değişmezi), worker/edge **0**. Kuralın sessizce kırıldığı da ölçüldü —
+edge `7.6.1`'i **hiç pinlemedi** ve kimse fark etmedi.
+
+Kapı **burada yazılır, kardeş depolarda koşar** (D4-b — parite testleriyle aynı model).
+İki kip vardır ve **karıştırılmamalıdır**:
+
+```bash
+# contract'ın kendisi — CI'da koşuyor. Sürüm etiketin GERİSİNDE olamaz;
+# İLERİSİNDE olabilir (release PR'ının normal hâli: sürüm yükseldi, etiket henüz yok).
+python tools/check_version_alignment.py --mode canonical \
+  --pinned-file CONTRACTS_VERSION.md --label '## Version:' --latest-from-git .
+
+# kardeş depo — kendi CI'ında koşar. Pin en yeni yayımlanmış sürüme EŞİT olmalı.
+python tools/check_version_alignment.py --mode consumer \
+  --pinned-file CONTRACTS_VERSION.md --label 'Upstream Contract Set' --latest 7.7.2
+```
+
+Üç kural, üçü de mutasyonla sınandı (`tests/test_version_alignment_gate.py`, 34 test):
+
+- ⚠️ **Kardeşin KENDİ checkout'uyla karşılaştırmak TOTOLOJİDİR** — kardeş CI sözleşmeyi
+  `ref: v${pin}` ile çeker, çektiği ağacın sürümü elbette pinine eşittir. Bu yüzden
+  `--latest` / `--latest-from-git` **zorunludur**.
+- 🔴 **`--label` şart.** Sürüm dosyaları değişiklik geçmişini de taşıyor: contract'ta **30**,
+  worker'da **22**, edge'de **27** farklı sürüm dizesi var. Etiketsiz koşum edge dosyasında
+  `1.7.0` (edge'in **kendi** SemVer'i) okudu — kapı doğru cevabı yanlış gerekçeyle verdi.
+  Artık belirsizlikte **tahmin etmez, fail-closed kapanır**.
+- **`fetch-depth: 0` gerekli.** Varsayılan sığ checkout etiket getirmez; etiketsiz ortamda
+  kapı fail-closed kırmızı verir (ölçüldü). *"Ölçemedim" asla "hizalı" sayılmaz.*
+
+I-5 gereği geçici gerilik **yalnız** `--allow-lag-until <tarih> --reason <gerekçe>` ile
+kabul edilir; gerekçesiz ya da süresi dolmuş muafiyet kırmızıdır.

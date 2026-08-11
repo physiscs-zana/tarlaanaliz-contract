@@ -417,6 +417,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          # I-1 kapisi `git tag --list` okur. Varsayilan sig checkout ETIKET GETIRMEZ;
+          # etiket yoksa kapi fail-closed kirmizi verirdi (olculdu: bos etiket listesi
+          # -> "en yeni surum belirlenemedi"). fetch-depth: 0 etiketleri de getirir.
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v6
@@ -428,6 +433,19 @@ jobs:
           # tarlaanaliz-contracts is synced from a sibling contracts repo.
           # This guard fails the build if that sibling brand/region leaks back in.
           python3 tools/check_no_egeanaliz.py
+
+      - name: I-1 version alignment gate (canonical mode)
+        run: |
+          # AL-K30. Uc deponun CLAUDE.md'sinde "I-1: surum uc depoda ayni" yaziyor ama
+          # 2026-08-11'e kadar bunu dogrulayan TEK BIR KOMUT YOKTU (dort depo tarandi:
+          # contract'ta 2 isabet duzyazi, platform'daki 8 isabet BASKA bir numaralandirma,
+          # worker/edge 0). Kural sessizce de kirilmisti: edge 7.6.1'i hic pinlemedi.
+          #
+          # KANONIK kip: surum en yeni etiketin GERISINDE olamaz. Ileride olabilir --
+          # release PR'inin normal hali (surum yukseltildi, etiket henuz basilmadi).
+          # Kardes depolar ayni araci TUKETICI kipinde kosar (D4-b: kapi burada yazilir,
+          # orada kosar); ornek cagri araclarin docstring'inde.
+          python3 tools/check_version_alignment.py             --mode canonical             --pinned-file CONTRACTS_VERSION.md             --label '## Version:'             --latest-from-git .
 
       - name: Dangling doc-reference gate — ratchet
         run: |
