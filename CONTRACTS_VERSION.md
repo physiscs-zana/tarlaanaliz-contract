@@ -1,11 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.6.1
+## Version: 7.7.0
 
-**Release Date:** 2026-08-10T22:55:22.968917Z  
+**Release Date:** 2026-08-11T18:33:03.020827Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `c4551a0683db6b0dc3152dcd1ff3406a268a923111ecd88824cfb40ccfaac965`  
-**Checksum State:** PENDING_REPIN — 2026-08-11 alan sızması (field drift) turu: 15 şemada 27 object düğümü sızma politikasını beyan eder hâle geldi (`unevaluatedProperties: false` ya da gerekçeli `additionalProperties`). Şema içeriği değişti, dolayısıyla checksum tur içinde uyuşmuyor; re-pin C8 release töreninde yapılır (tur içi ara re-pin, yayımlanmış `v7.6.1` etiketinin checksum anlamını bozardı). Sürüm önerisi **7.7.0 (MINOR)**: `events/field_created.v1`'e 12 opsiyonel alan beyanı eklendi; kırıcılık ölçüldü → aşağıya bakın.
+**Contracts Checksum (SHA-256):** `bf269235da5ba9eabd09d17fa9efe1e9e722dc6802b24abc7a3b74bd447f32a1`
 
 ---
 
@@ -116,21 +115,21 @@ Individual file hashes for verification:
 - `schemas/datasets/attestation.v1.schema.json`  
   `a4d906c1a1dadcb3284775f1fd8a97be9b3ec88142fe33f01d14cd5b2e2e1934`
 - `schemas/datasets/calibration_certificate.v1.schema.json`  
-  `5f3aba49cc653a8679f8d43b09d5788f8378df8f35879755ae36d3f6fe618d94`
+  `97227191bce218950b423bfbed2bb72c0ec96b1dbf31ff508bf86a9c8dfbe09f`
 - `schemas/datasets/dataset.v1.schema.json`  
   `652b794330b3a087152716091402f962722abbe1038a73b26cfb049545c12b89`
 - `schemas/datasets/dataset_manifest.v1.schema.json`  
-  `e2a02116b45ed4275dbf02bbc5e5f49281e6a048b33264d923ca6a7634ff7d78`
+  `4a8b4de900b30603f3bb6c596d17125a3188a7a441f67c29cb657060e7172581`
 - `schemas/datasets/evidence_bundle_ref.v1.schema.json`  
   `8897f5873ad9e97083309cb35cf4a8c1ebef213a253c28ac7beb2fe12db51e21`
 - `schemas/datasets/qc_report.v1.schema.json`  
-  `f3de16e8d4c816a06cc2e9a1dbda6797db3a41d28e27b6df70d372ace8d68e70`
+  `31f90c30b3fb030458d0b5a7343b3ba914c64546ed0a72826dc4fbdfc4dc5424`
 - `schemas/datasets/scan_report.v1.schema.json`  
-  `cf1197c4d4c552ce7c3516317bd5224a3c114d067843260bdc294fd4bf14a430`
+  `31d4e5ca966fc13274185d6f08274475b72e6a3d3198fa2cff7d7b7e79b341f3`
 - `schemas/datasets/transfer_batch.v1.schema.json`  
-  `b72a86ecf37ba3768843a105ac6c0c066124e68e74cd4c8c469f73e552ddd2f9`
+  `c61d82e8df3bf1a0827fc8c0b6d1f1725e6be7ee659c3589836e342abee8a81f`
 - `schemas/datasets/verification_report.v1.schema.json`  
-  `c9bb30e2e9d129ea64a7695fc29e95846147a061aa0ab7e56c6f809bc519dd40`
+  `80a59cd6f28bf4d48b22be591fce8f8f0794a416c9babce5d967b0756c99ad43`
 
 ### Edge Schemas
 
@@ -139,9 +138,9 @@ Individual file hashes for verification:
 - `schemas/edge/calibrated_dataset_manifest.v1.schema.json`  
   `766891608ffd6f00ab49d53a3901e076beaa66b684825ee0bcca69356cb59c4c`
 - `schemas/edge/calibration_result.v1.schema.json`  
-  `cf67bfa0642dc24e0745ed4fd32cf12c1190206e36684a06c7127d3c816c58be`
+  `1518bdfa2d99f03c1873483c04de71363ea11fb7e5fc9775717fd331e499e28a`
 - `schemas/edge/dataset_manifest.v1.schema.json`  
-  `b5a6f03d6aae2dc3e39605e1b2bf80729abcdfe3ebc73c6099747cf44127c5be`
+  `0c30a9e1c7b6b13a78908686f11fbdbd677b081d560f7c9b2af57a7f9df4307e`
 - `schemas/edge/edge_metadata.v1.schema.json`  
   `d081229b4092d67d1a38e61b994a8d4a83010d695c6b0769c3e31ac80312f851`
 - `schemas/edge/evidence_bundle_ref.v1.schema.json`  
@@ -149,32 +148,32 @@ Individual file hashes for verification:
 - `schemas/edge/intake_manifest.v1.schema.json`  
   `e484bf6e4570c1d818b09e0d60588dfa003de778c3e8c076ef1d29101a055838`
 - `schemas/edge/qc_report.v1.schema.json`  
-  `4193e9c6d73ddd98bf62ba5b2ea034263cb9a86b69f6c549e7d77ed5bc93d219`
+  `d052550ac7d561242c617f1d315eca9e1582f2f63d12dd8018da7eb28f33601e`
 - `schemas/edge/quarantine_event.v1.schema.json`  
-  `8ea1bf0eea7409b4cbfdc5608cda4689970a24eae7bbbfe251b7d66790e6bc94`
+  `3e2820232e39f84e39458a084e86e3a62aefee06f744e2f88fca3bfdbf4cd523`
 - `schemas/edge/scan_report.v1.schema.json`  
-  `d07e24a4c295f54bfc50da7f9e3cfb51ae95c0264d6ea3d02a8798e370ca9d28`
+  `bc1d7fb333604eac47d7c03f95ffc559acee79a3519587f564e8905a7933c98b`
 - `schemas/edge/transfer_batch.v1.schema.json`  
   `3dcc72d3097dad67d3216641b1d2bdecb44e6bfacb763c5fe3893cc21beb8472`
 - `schemas/edge/upload_receipt.v1.schema.json`  
   `93823aeb5abd686f9c751f57767f7524a7e295bcdf0f5de3aa49e54a69146fb1`
 - `schemas/edge/verification_report.v1.schema.json`  
-  `aa84f86d4ca03b515af8fc551ab66197f46e6dd532f6b48601f591e2be197d42`
+  `5211c16f22fc76e7c9dc50f290cd16c533ccca9da1f6b33b367eaa1b19724967`
 - `schemas/edge/worker_result.v1.schema.json`  
   `08cf7cd62cbc037cf93c43a078ce1a97e12be44a946afd87b12aa8eb6a5cce67`
 
 ### Worker Schemas
 
 - `schemas/worker/analysis_job.v1.schema.json`  
-  `8d9e43d2ae5c802345d9cbe41f7e4b98a3223e5a7fc6367a7c597a1d5c72ba4c`
+  `dd83bb7537447c204001655e1a552198f3610eab2116bb262be1a5b241487702`
 - `schemas/worker/analysis_result.v1.schema.json`  
-  `93e29920defea258e902b9351a1ccf86c06fda526e196a6654a6e36d9d981bd5`
+  `42cc6686b2bdbcdf35f107b1614fd24d4376f98e3d114bd58fed08ea8c4fccc6`
 - `schemas/worker/calibrated_dataset.v1.schema.json`  
   `a2e628b8ef996d8bdb828ef623a378aba9c43337b083351e0b137a312092618a`
 - `schemas/worker/calibration_metadata.v1.schema.json`  
   `7fbe7303c237bb11302a9c879d091d4da788b4a893ee8c1bebcfb8edf6b90d0c`
 - `schemas/worker/expert_feedback.v1.schema.json`  
-  `94e04216bd9af373ce6c0f237c26d38c6822950e097510c0f6193143be11d41d`
+  `f68361bec55ee84c49682779f078f695baadf5a811733a2a5873c1a9d9dd5475`
 - `schemas/worker/expert_labeling_card.v1.schema.json`  
   `8c320cb4c34fdfcf14c9c33be39d91445735251e347bc16cf9671ce8dba43c51`
 - `schemas/worker/expert_review_queue.v1.schema.json`  
@@ -191,7 +190,7 @@ Individual file hashes for verification:
 - `schemas/events/analysis_review_requested.v1.schema.json`  
   `8e08b503e0b25c866f2e8cbede96b39f3beb77490d82c6d78410db443706c687`
 - `schemas/events/dataset_analyzed.v1.schema.json`  
-  `13be86abb9d3be607d1779a02a42fa34742a37254f23bbf687475560c9410ed2`
+  `f1c6f51d9fbee29eafeda4da52be06b52c8664a459129f91d57ecee4ff8ef0e2`
 - `schemas/events/dataset_calibrated.v1.schema.json`  
   `f97fefea1da31e85d239a205b5ed69171f148ef21df5c9d74ad1b76f5f474366`
 - `schemas/events/dataset_dispatched.v1.schema.json`  
@@ -211,7 +210,7 @@ Individual file hashes for verification:
 - `schemas/events/expert_review_decided.v1.schema.json`  
   `5496b4abba4d63a9e047551fffba34ff340ec08e07de99668849e2096a39f62b`
 - `schemas/events/field_created.v1.schema.json`  
-  `9773227dca0ef028f3d77abd9c248dee6438cd7e781d6db626f81a449d9b04c1`
+  `655d2ef33d1bd0acce01db481950236eabed3d87682dcef1b7734c5510e5fb93`
 - `schemas/events/field_health_changed.v1.schema.json`  
   `48763d4b3b27eecf711d28b78f465032d3042a474e3d04681ddcd72644460c3d`
 - `schemas/events/mission_assigned.v1.schema.json`  
@@ -224,9 +223,9 @@ Individual file hashes for verification:
 - `schemas/platform/calibration_result.v1.schema.json`  
   `c51b377e0aa6922d0b86f4cf9076093d66fc4c13a747f44da3f7059c40a73038`
 - `schemas/platform/evidence_bundle_ref.v1.schema.json`  
-  `879e2c3762d92d257c579112c1a741dae78e33997a7c5ec53506dbc6e73bd109`
+  `258e9e21ca56ea5ceba49f40d8a11d7e42b14894c0ed8992bbc58c056240fd97`
 - `schemas/platform/layer_registry.v1.schema.json`  
-  `dcca0ac46ee0105da86a9c6f5dd867874b38bc288418c6807ec270c6e4a8cfeb`
+  `f1a89214a26b14ee97442e0bc64a9689daa163e0b9bc63edbdc5c7552a811f65`
 - `schemas/platform/payment_intent.v1.schema.json`  
   `ec1223135e451b17a76dd8fedd8f36b9ecda47cdd2f8688afce32f3e6455069d`
 - `schemas/platform/payment_intent.v2.schema.json`  
@@ -240,7 +239,7 @@ Individual file hashes for verification:
 - `schemas/platform/subscription.v1.schema.json`  
   `3467b8c75a94a3558edee94c3c9db7ec7e8db8ea1a59165668073a8a7698adcc`
 - `schemas/platform/training_feedback.v1.schema.json`  
-  `b2f20d016265619a92019ec7585b1d9573ba6c2639f458b8bfc4637c2ed8a438`
+  `df2388e7a5bf7e6d4d670c772790a937d92d8666ac0bc363c0c9d337273d2051`
 
 ### API Components
 
@@ -256,15 +255,21 @@ Individual file hashes for verification:
 ### API Specs
 
 - `api/edge_local.v1.yaml`  
-  `7077a3722a8d68a3e2b5e20da91bcae790465e5e7bad7602a44f88c7fd434a04`
+  `7eea7b070927df4e5cb64cc099dcf7532fcb59d411b74c1f87f84b9b0493b5c6`
 - `api/platform_internal.v1.yaml`  
-  `51f78af076bb44203aacda0cbbbadf399266158f01c2036444486a74108521bf`
+  `58db12948dc8863323ac747f2dd39a5f064ac8073a853018d497c9e684af2c41`
 - `api/platform_public.v1.yaml`  
-  `901434ecb196064c6c094d13d4433de4af4e7df9d2fe87847a2d1e71fd13ee51`
+  `8e2ce6495010af6ce1999c992f9941ad2fb05af0d31d41e4e13525b82d4b1520`
 
 ---
 
 ## Changelog
+
+### v7.7.0 (2026-08-11)
+
+**Breaking:** NO
+
+Alan sizmasi kapatildi (27 dugum) - threat_type kanonik sozluge baglandi - CI kapi durustlugu - Node/TS zinciri kaldirildi - OD-13 ayna duzeltmesi - vendored politika paritesi kapisi
 
 ### v7.6.1 (2026-08-10)
 
@@ -396,7 +401,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("c4551a0683db6b0dc3152dcd1ff3406a268a923111ecd88824cfb40ccfaac965"), "Contracts checksum mismatch!"
+assert verify_contracts("bf269235da5ba9eabd09d17fa9efe1e9e722dc6802b24abc7a3b74bd447f32a1"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -409,7 +414,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("c4551a0683db6b0dc3152dcd1ff3406a268a923111ecd88824cfb40ccfaac965"), "Contracts checksum mismatch!");
+assert(verifyContracts("bf269235da5ba9eabd09d17fa9efe1e9e722dc6802b24abc7a3b74bd447f32a1"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -460,4 +465,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-08-10T22:55:22.968917Z
+**Last Updated:** 2026-08-11T18:33:03.020827Z

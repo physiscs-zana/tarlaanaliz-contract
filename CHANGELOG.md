@@ -7,7 +7,27 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
-## [Unreleased] — Alan sızması (field drift) kapatıldı: dizi öğeleri ve iç içe nesneler
+## [7.7.0] - 2026-08-11 — Kapı dürüstlüğü turu: alan sızması · sözlük bağlama · ölü/zararlı araç zinciri
+
+> **MINOR, non-breaking.** Kırıcılık **elle ölçüldü** (dedektörün iki beyanlı sınırı var:
+> `$ref` çözülmez · object-politikası daralması sınıflandırılmaz). 5385 JSON + canlı
+> üretici kodu okundu; fazladan alan taşıyan yük bulunamadı.
+>
+> Bu sürüm **10 PR** taşıyor (#69–#78) ve beşi **kendi işimin öz-denetiminden** çıktı —
+> ayrıntı her bölümün altında.
+
+### Bu sürümdeki kapılar (hepsi mutasyonla sınandı)
+
+| Kapı | Ne korur |
+|---|---|
+| `tools/validate.py → _check_object_policy` | her object düğümü sızma politikasını **beyan etmeli** |
+| `tests/test_object_drift_gate.py` (14) | kapsam · dizi öğesi/birleşik tip körlüğü · davranışsal kanıt |
+| `tests/test_enum_binding_ratchet.py` (8) | kanonik sözlüğü olan alan serbest dize kalamaz (ratchet) |
+| `tests/test_ci_gate_honesty.py` (11) | `paths:` ve `summary.needs` **türetilir**, ezberlenmez |
+| `tests/test_vendored_policy_parity.py` (10) | vendored kopya politika sapması + aşırı-kısıtlama uyarısı |
+| `tests/test_node_toolchain_honesty.py` (13) | ölü/zararlı npm script ve tüketicisiz bağımlılık giremez |
+
+### Alan sızması (field drift) kapatıldı: dizi öğeleri ve iç içe nesneler
 
 > **Sürüm önerisi: 7.7.0 (MINOR).** Re-pin + tag C8 töreninde; bu tur
 > `CONTRACTS_VERSION.md → **Checksum State:** PENDING_REPIN` ile beyanlı.
