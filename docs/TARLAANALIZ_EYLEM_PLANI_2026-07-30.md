@@ -64,22 +64,34 @@ durum güncellemesi · `open_items_decisions_2026-06.md`'ye COORDINATE/DEFER kay
 
 ## 2.1 Ürün hazırlık matrisi — hangi ürünle ne gösterilebilir
 
-**Kanonik kaynak:** `tarlaanaliz-platform/data/crop_readiness.json`
-(üretildiği yer: `tarlaanaliz-worker/config/crop_readiness.yaml`, 2026-07-11).
-⚠️ **`config/*_datasets.yaml` dosyasının varlığı hazırlık göstergesi DEĞİLDİR** — tek yetkili
-sinyal `crop_readiness.json`'dır (zeytin buna örnek: `olive_datasets.yaml` var ama `bookable: False`).
+⛔ **DÜZELTİLDİ (2026-08-11 — bu matris koddan SAPMIŞTI, üç üründe.)** Eski hâli tek bir
+"kanonik kaynak" (`crop_readiness.json`) ve tek bir `bookable` sütunu gösteriyordu. Ölçüm
+bunun yanlış olduğunu gösterdi: **iki ayrı kapı vardır ve `missions.py` İKİSİNİ DE koşar.**
 
-| Ürün | stage1 | data_status | bookable | Edge NDVI eşiği + fenoloji | Demo uygunluğu |
-|---|---|---|---|---|---|
-| **GRAPE (üzüm/bağ)** | pilot | **strong** | ✅ | ✅ | ✅✅ **en iyi — tam** |
-| **CORN (mısır)** | pilot | **strong** | ✅ | ✅ | ✅✅ **tam** |
-| **PISTACHIO (antep fıstığı)** | pilot | **limited** | ✅ | ✅ | ✅ **yapılabilir** — tespit kalitesi zayıf olur, ÖN RAPOR sorunsuz |
-| COTTON (pamuk) | pilot | critical_gap | ✅ | ✅ | ⚠️ koşar ama tespit güvenilmez |
-| CHERRY (kiraz) | pilot | limited | ✅ | ❌ | ⚠️ eşik tablosu yok |
-| **WHEAT (buğday)** | pilot | **strong** | ✅ | ❌ **eksik** | ⚠️ **veri güçlü, tek engel iki YAML girdisi** → E8 |
-| OLIVE (zeytin) | research | critical_gap | ❌ | ❌ | ❌ |
-| RICE (çeltik) | research | critical_gap | ❌ | ✅ | ❌ `bookable:False` |
-| SUNFLOWER (ayçiçeği) | research | critical_gap | ❌ | ❌ | ❌ |
+| Kapı | Ne demek | Tek kaynağı | Kapıyı uygulayan |
+|---|---|---|---|
+| **SUNUM** (`is_gap_offered`) | ana sayfada gösterilir / seçilebilir mi | `tarlaanaliz-platform/web/src/lib/crops.ts` → `OFFERED_CROPS` (üreteç: `scripts/gen_offered_crops.py` → `config/offered_crops.generated.json`; FE+BE testleri pinler) | `fields.py` · `missions.py` · `subscriptions.py` · `change_crop_type.py` |
+| **TESLİM** (`is_bookable`) | worker o ürün için model koşabilir mi | `tarlaanaliz-platform/data/crop_readiness.json` (üretildiği yer: `tarlaanaliz-worker/config/crop_readiness.yaml`) | `missions.py` · `subscriptions.py` (**`fields.py` DEĞİL**) |
+
+**Değişmez:** SUNUM ⊆ TESLİM. Bir ürün sunuluyor ama readiness'te `bookable:false` ise
+çiftçi ana sayfada görür, tarlasını açabilir, sipariş verince **409** alır — 2026-08-11'e
+kadar ÇELTİK'te tam bu oluyordu. Değişmez artık testle kilitli:
+`tests/unit/domain/value_objects/test_crop_type.py::test_every_offered_crop_is_bookable_in_readiness`.
+
+⚠️ **`config/*_datasets.yaml` dosyasının varlığı hazırlık göstergesi DEĞİLDİR** — teslim
+sinyali `crop_readiness.json`'dır (zeytin buna örnek: `olive_datasets.yaml` var ama `bookable: False`).
+
+| Ürün | stage1 | data_status | SUNUM | TESLİM | Edge NDVI eşiği + fenoloji | Demo uygunluğu |
+|---|---|---|---|---|---|---|
+| **GRAPE (üzüm/bağ)** | pilot | **strong** | ✅ | ✅ | ✅ | ✅✅ **en iyi — tam** |
+| **CORN (mısır)** | pilot | **strong** | ✅ | ✅ | ✅ | ✅✅ **tam** |
+| **PISTACHIO (antep fıstığı)** | pilot | **limited** | ✅ | ✅ | ✅ | ✅ **yapılabilir** — tespit kalitesi zayıf olur, ÖN RAPOR sorunsuz |
+| COTTON (pamuk) | pilot | critical_gap | ✅ | ✅ | ✅ | ⚠️ koşar ama tespit güvenilmez |
+| RICE (çeltik) | research | critical_gap | ❌ **2026-08-11'de kaldırıldı** | ❌ | ✅ | ❌ — sunuluyordu ama TESLİM kapısı 409 veriyordu; kalibre veri gelince ikisi birlikte açılır |
+| CHERRY (kiraz) | pilot | limited | ❌ **GAP dışı** | ✅ | ❌ | ❌ — readiness "hazır" diyor ama ürün GAP'ta sunulmuyor; eşik tablosu da yok |
+| **WHEAT (buğday)** | pilot | **strong** | ❌ **sunulmuyor** | ✅ | ❌ **eksik** | ⚠️ veri güçlü ama **iki** engel var → aşağıdaki nota bak |
+| OLIVE (zeytin) | research | critical_gap | ❌ | ❌ | ❌ | ❌ |
+| SUNFLOWER (ayçiçeği) | research | critical_gap | ❌ | ❌ | ❌ | ❌ |
 
 **İki ayrı "ön rapor" kavramını karıştırmayın:**
 
@@ -103,8 +115,16 @@ Demoda ayrımı **açıkça söyleyin:** *"indeks katmanı bookable ürünlerin 
 kalitesi ürün bazlı veri olgunluğuna bağlı — üzüm ve mısır `strong`, fıstık `limited` ve pilot
 aşamasında."* Bu zayıflık değil **yol haritası** olarak okunur.
 
-**En ucuz kazanç:** BUĞDAY `data_status: strong` ve `bookable: True` ama **edge eşik/fenoloji
-tablosunda yok** — iki YAML girdisi (birkaç saat) güçlü verili bir ürünü daha açar (§3-E8).
+**En ucuz kazanç — DÜZELTİLDİ (2026-08-11):** BUĞDAY `data_status: strong` ve TESLİM kapısında
+`bookable: True`, ama **iki** engeli var, bir değil:
+1. **SUNUM kapısında yok** — `crops.ts::OFFERED_CROPS` buğday içermiyor, yani bugün ana sayfada
+   seçilemiyor. (Eski metin *"`bookable: True`"* deyip bunu tek engel sanmıştı; ölçüm iki ayrı
+   kapı olduğunu gösterdi — yukarıdaki kapı tablosuna bak.)
+2. **Edge eşik/fenoloji tablosunda yok** — iki YAML girdisi (§3-E8).
+
+Yani buğdayı açmak = `crops.ts`'e bir satır (+ üreteci koş) **ve** iki YAML girdisi. Kanonik
+wire enum'da WHEAT zaten var, o yüzden contract turu GEREKMEZ. Sıra: önce edge eşikleri
+(teslim gerçekten çalışsın), sonra sunum — tersi, satılan ama eşiksiz bir ürün üretir.
 
 ## 2.2 Uçuş çerçevesi — 1 drone, günde 10-12 uçuş × 30 dk
 
