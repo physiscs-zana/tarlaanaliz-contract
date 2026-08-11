@@ -3286,3 +3286,46 @@ kapatmazdı**, iki ölçülmüş nedenle:
 | ✅ **AL-K17** · ~~Kanonik `outside_value`/`formula` ile worker'ın Python sabitinin hizasını hiçbir kapı ölçmüyor~~ → **KAPANDI (2026-08-11, worker PR #217)** | Çözüm önerilen yoldan geldi: worker'da `TestStressRatioKanonikSozlesmeyeBAGLI` — beklenen değerler vendored kanonik JSON'dan **TÜRETİLİR** (kopyalanmaz), sonra üretim koduyla davranışsal sınanır. **7 mutasyon, iki yönde**: kodu bozunca 5'er test, sözleşmeyi bozunca (kod doğru kalırken) **yalnız yeni bağ testi** kırılıyor — ayrıştırma kanıtı |
 | **AL-K18** 🟡 · Ön faz kapısı **canlı trafikte** doğrulanmadı | Ayakta yığın yoktu. Kabul ölçütü SESSION_HANDOFF §0.A/D-2'de yazılı (`summary` → `WATER_STRESS` yok · tile → 403 · `DONE` olunca 200) |
 | **AL-K19** 🟢 · Yeni parite kapısı **yalnız worker CI'ında** koşar | Contract CI'da kardeş depo checkout edilmez (D4-b tasarımı, bilinçli). Edge çiftleri de meşru olarak atlanır |
+
+---
+
+## 14.12 🔬 CERRAHİ KALİTE TURU (2026-08-11) — alan sızması · sözlük bağlama · CI kapı dürüstlüğü
+
+> **Kapandı:** contract PR [#69](https://github.com/physiscs-zana/tarlaanaliz-contract/pull/69)
+> (master `d930bcc`) — 3 bulgu kapatıldı, **3 yeni kapı** kuruldu, **2 iddia ölçümle
+> geri alındı**. Ayrıntı ve kanıt: `CHANGELOG.md` → `[Unreleased]` blokları.
+>
+> Kapatılanlar: ① alan sızması (19 şema / 27 düğüm; beyansız 28 → 1) ·
+> ② `threat_type` kanonik sözlüğe bağlandı (KR-073) · ③ `paths:` 13 → 21 kök +
+> `lint-openapi` özet kapısına.
+>
+> Yeni kapılar: `_check_object_policy` (validate.py, ağacın tamamı) ·
+> `test_enum_binding_ratchet.py` (12 satırlık baseline) · `test_ci_gate_honesty.py`
+> (filtre + `needs` TÜRETİLİR, ezberlenmez).
+
+### ⬜ Bu turdan AÇIK KALAN
+
+| Kalem | Durum / neden açık |
+|---|---|
+| **AL-K21** 🔴 · **`quarantine_decision` sözlüğü SIFIR KESİŞİMLİ — karar gerekiyor** | edge `{PASS, QUARANTINE, REJECT}` (`tarlaanaliz-edge/src/core/domain/quarantine_event.py:12-15`) ↔ kanonik 9 değer (`enums/quarantine_decision.enum.v1.json`) → **kesişim ∅**. `edge/quarantine_event.v1` `decision` alanını bağlamak edge çıktısının **%100'ünü** reddederdi, o yüzden BİLEREK bağlanmadı. Bu bir araç değil **KARAR** sorunu: hangi sözlük kazanacak? `crop_type`'ta 2026-07-31'de verilen *"dört depo AYNI standardı kullanır"* kararının karantina eksenindeki karşılığı henüz verilmedi. Borç görünür: şemadaki gerekçe + `test_enum_binding_ratchet.py` baseline satırı |
+| **AL-K22** 🟠 · **Vendored kopyalarda 5 politika sapması — iki kapının da kör noktası** | Kanonikte kapatılan 5 düğüm worker'ın vendored kopyalarında **beyansız** kaldı: `expert_feedback.v1` (`tile_coordinates`, `mask_correction.pixel_bbox`) · `analysis_job.v1` (`drone_metadata`) · `analysis_result.v1` (`artifacts.items`, `affected_zone`). ⚠️ `tools/propagate_vendored.py --check` bunları **görmüyor** (*"0 bekleyen yayılım"* — ölçüldü); araç yalnız enum değeri + opsiyonel alan yayılımını kapsar. Parite süiti de yeşil kaldı. Yayılım idiomu: vendored tarafta `additionalProperties`. **Daraltma olduğu için üretici ÖLÇÜLMEDEN uygulanmamalı** (aracın kendi kuralı, docstring 21-27). Worker oturumuna iletildi |
+| **AL-K23** 🟡 · **`Detection.bbox` parite-kilitli istisna** | Kapatma denendi, **ölçümle geri alındı**: worker'da alan opak taşınıyor (`src/core/domain/analysis_result.py:29,249` → `dict[str, float] \| None`), anahtar kümesini kısıtlayan satır yok; ayrıca kanoniğe **herhangi bir** politika anahtarı koymak I-4 çelişkisi üretiyor (`_strip_annotations` iki idiomu tek anahtara indirger, `test_vendored_parity.py:262-265`). `tools/validate.py → _PARITY_LOCKED_OPEN` içinde tek girişlik istisna; `test_object_drift_gate.py` listenin büyümesini yasaklıyor. **Çıkış sırası: önce vendored kopyayı kapat, sonra istisnayı sil** |
+| **AL-K24** 🟢 · **`paths:` filtresi tümden kaldırılsın mı?** | Filtre ölçülen kümeye genişletildi (13 → 21) ve `test_ci_gate_honesty.py` ile kapıya bağlandı. Ama **her filtre bir fail-open yüzeyidir** ve bu tur tam olarak onun rot ettiğini gösterdi (yeni kapı eklendi, filtre genişletilmedi, 9 kök dışarıda kaldı). Kaldırmak en dürüst seçenek; **karşı ağırlık:** deponun CI geçmişinde fatura limiti kaynaklı kırmızılar var (`reference-ci-billing-limit-failure`) ve filtreyi silmek koşum sayısını artırır. Koşum süresi ölçüldü: 44–58 sn. **Karar sahibinin** |
+
+### 📌 Bu turda ölçülüp ÇÜRÜTÜLEN iddialar (tekrar gündeme gelmesin)
+
+| İddia | Neden çürüdü |
+|---|---|
+| *"`Detection.bbox` kapatılabilir"* (benim ilk kararım) | Tüketicide alan opak `dict[str, float]`; anahtar kümesini kısıtlayan tek satır yok → kapatma ölçülemeyen bir üreticiyi reddedebilirdi. Ayrıca I-4 parite çelişkisi ölçüldü |
+| *"`calibration_type` tek-kaynak kapısı yok"* (ilk mutasyon sonucum) | **Yanlış mutasyon biçimi**: enum'a değer EKLEDİM; alt-küme kopyalar ancak **değer YENİDEN ADLANDIRILINCA** çelişir. Doğru mutasyon **6 testi** kırdı — kapı sağlam |
+| *"`x-compat-accepted` `$ref` daralmasını NON_BREAKING'e indirir"* (ilk CHANGELOG cümlem) | Mekanizma yalnız `ACCEPTABLE_TYPES` içindeki 5 tipe uygulanır; bu değişiklik `REF_CHANGED`. Dedektör `$ref`'i **çözmediğini kendi belgeliyor** (docstring 53-55) ve *"manual review required"* yazıyor — beyanlı sınır, gizli kör nokta değil |
+| *"contract `.sh` betikleri Linux'ta koşmaz (BOM + CRLF)"* (denetimdeki ilk okumam) | **Ölçüm aracının kusuruydu**: PowerShell `>` yönlendirmesi git blob'una BOM ekleyip LF→CRLF çevirdi. Gerçek blob tertemiz (`23 21 2f…`); Bash `od` ile çürütüldü |
+
+### ⚠️ Kalıcı sınır (kapatılmadı, beyan edildi)
+
+`tools/breaking_change_detector.py` **object-politikası daralmasını hiç görmüyor**:
+27 düğüm açıktan kapalıya geçti, dedektör `has_breaking=false` dedi ve o 27 kapatma
+için **sıfır değişiklik kaydı** üretti. `unevaluatedProperties`/`additionalProperties`
+yalnız `SUBSCHEMA_SINGLE` listesinde (satır 116-120) *alt-şema taşıyıcısı* olarak
+tanınıyor; sınıflandırma kuralı yok. Bu, `$ref` sınırından **farklıdır** — orada beyan
+var, burada yok. Sürüm kararı bu yüzden **elle ölçüldü** (5385 JSON + üretici kodu).
