@@ -775,7 +775,15 @@ class TestVendoredMetadataDoesNotContradict:
     #: **142** paylaşılan yaprak karşılaştırılıyor, 0 çelişki. Bu bir RATCHET'tir:
     #: kanonik büyüdükçe sayı artar; DÜŞMESİ kapının körleştiği anlamına gelir
     #: (ör. yürüyüş mantığı bozulup 0 karşılaştırma yaparsa test sessizce yeşil kalırdı).
-    MEASURED_SHARED_LEAVES = 142
+    #: 2026-08-11 ÖLÇÜMÜ — **KARDEŞ BAŞINA**. Eski `MEASURED_SHARED_LEAVES = 142`
+    #: küresel bir toplamdı ve bu kapı kardeş-başına koştuğu için edge CI'ında
+    #: `0 >= 142` yapısal kırmızı üretiyordu (edge oturumu bildirdi, ölçüldü).
+    #: Dağılım: 142'nin tamamı worker `analysis_type.enum.v1.json`'ından; edge'in
+    #: 7 MIRROR çifti 0 paylaşılan `metadata` yaprağı taşıyor.
+    MEASURED_LEAVES_BY_REPO = {
+        "tarlaanaliz-worker": 142,
+        "tarlaanaliz-edge": 0,
+    }
 
     @pytest.mark.parametrize(("canonical", "vendored"), MIRROR_PAIRS, ids=IDS)
     def test_shared_metadata_values_agree(self, canonical: str, vendored: str) -> None:
@@ -806,15 +814,36 @@ class TestVendoredMetadataDoesNotContradict:
             pytest.skip("kardeş depo yok — bu kapı kardeş CI'ında koşar (D4-b)")
 
         toplam = 0
+        gezilen = 0
         for canonical, vendored in mevcut_ciftler:
             cj = json.loads((ROOT / canonical).read_text(encoding="utf-8"))
             vj = json.loads((WORKSPACE / vendored).read_text(encoding="utf-8"))
             toplam += _shared_metadata_conflicts(cj, vj)[0]
-        assert toplam >= self.MEASURED_SHARED_LEAVES, (
-            f"karşılaştırılan paylaşılan yaprak sayısı DÜŞTÜ ({toplam} < "
-            f"{self.MEASURED_SHARED_LEAVES}). Ya kanonik `metadata` küçüldü, ya vendored "
-            "kopya alan attı, ya da yürüyüş mantığı bozuldu — üçünde de kapı körleşir. "
-            "Sayı meşru şekilde arttıysa eşiği yükselt (ratchet)."
+            gezilen += 1
+
+        # 🔴 KİLİT KARDEŞ-BAŞINA HESAPLANIR — küresel toplam DAYATILAMAZ.
+        # ÖLÇÜLDÜ (2026-08-11; edge oturumu bildirdi, contract tarafında doğrulandı):
+        # 142 yaprağın **tamamı** worker'ın `analysis_type.enum.v1.json`'ından geliyor;
+        # edge'in 7 MIRROR çifti **0** paylaşılan `metadata` yaprağı taşıyor. Bu dosyanın
+        # kendi tasarım notu (yukarıda) kapının **her kardeşin KENDİ CI'ında** koştuğunu
+        # söylüyor → edge CI'ında yalnız edge checkout'u olur, `toplam` 0 çıkar ve
+        # `0 >= 142` **YAPISAL KIRMIZI** üretirdi.
+        # Kusur v7.7.0 kaynaklı DEĞİL: `8c673e5` (v7.6.1 / PR #63) ile geldi ve
+        # v7.6.1 · v7.7.0 · master'da aynı sabit 142'ydi (ölçüldü).
+        mevcut_depolar = {v.split("/")[0] for _, v in mevcut_ciftler}
+        beklenen = sum(self.MEASURED_LEAVES_BY_REPO.get(depo, 0) for depo in mevcut_depolar)
+        assert toplam >= beklenen, (
+            f"karşılaştırılan paylaşılan yaprak sayısı DÜŞTÜ ({toplam} < {beklenen}; "
+            f"mevcut kardeş(ler): {sorted(mevcut_depolar)}). Ya kanonik `metadata` küçüldü, "
+            "ya vendored kopya alan attı, ya da yürüyüş mantığı bozuldu — üçünde de kapı "
+            "körleşir. Sayı meşru şekilde arttıysa `MEASURED_LEAVES_BY_REPO`'yu yükselt."
+        )
+
+        # Yaprak katkısı 0 olan kardeş için (bugün: edge) yukarıdaki kilit BOŞTUR.
+        # O yüzden yürüyüşün gerçekten koştuğu AYRICA ölçülür — "0 yaprak" ile
+        # "hiç gezmedim" birbirinden ayrılmalı, yoksa kapı kendi körlüğünü örter.
+        assert gezilen == len(mevcut_ciftler) and gezilen > 0, (
+            f"mevcut {len(mevcut_ciftler)} çiftten yalnız {gezilen} tanesi gezildi."
         )
 
     def test_prose_exception_list_does_not_grow_silently(self) -> None:
