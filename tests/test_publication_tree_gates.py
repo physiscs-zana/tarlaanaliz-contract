@@ -43,10 +43,22 @@ inline_refs = _load("inline_refs")
 
 
 class TestPublicationTreeIsValidated:
-    """ÖD-13 ① — kapsam iddiası kaynak koda bakarak değil ÖLÇÜLEREK doğrulanır."""
+    """ÖD-13 ① — kapsam iddiası kaynak koda bakarak değil ÖLÇÜLEREK doğrulanır.
+
+    ⚠️ 2026-08-11: bu sınıf uzun süre **AYNAYI** ölçtü. `validation_targets()` docstring'i
+    *"main() bu listeyi kullanır"* diyordu ama `main()` aynı dört ağacı kendi `rglob`
+    döngüleriyle yeniden geziyordu. Mutasyonla kanıtlandı (taze klon, master):
+    `main()`'den `dist` bloğu silinince doğrulanan dosya **165 → 97** düştü ve bu sınıf
+    **17 passed** ile yeşil kaldı. `main()` artık gerçekten bu listeyi dolaşıyor ve
+    `TestMainActuallyUsesTheTargetList` bunu ölçüyor.
+    """
+
+    @staticmethod
+    def _target_paths() -> set:
+        return {target.path.resolve() for target in validate.validation_targets(ROOT)}
 
     def test_dist_files_are_in_the_validation_targets(self) -> None:
-        targets = {path.resolve() for path in validate.validation_targets(ROOT)}
+        targets = self._target_paths()
         dist_files = list((ROOT / "dist" / "schemas").rglob("*.json"))
         assert dist_files, "yayın ağacı boş — `python tools/inline_refs.py --write` koşulmamış"
         missing = sorted(str(p.relative_to(ROOT)) for p in dist_files if p.resolve() not in targets)
@@ -58,13 +70,66 @@ class TestPublicationTreeIsValidated:
 
     def test_source_and_api_trees_are_still_covered(self) -> None:
         """Kapsam genişletilirken daralmasın (regresyon)."""
-        targets = {path.resolve() for path in validate.validation_targets(ROOT)}
+        targets = self._target_paths()
         for probe in (
             ROOT / "schemas" / "worker" / "analysis_job.v1.schema.json",
             ROOT / "enums" / "calibration_type.enum.v1.json",
             ROOT / "api" / "platform_public.v1.yaml",
         ):
             assert probe.resolve() in targets, f"{probe.name} kapsam dışına düşmüş"
+
+    def test_every_target_declares_a_known_validator(self) -> None:
+        """Hedefin `kind`'ı `_VALIDATORS` tablosunda YOKSA `main()` KeyError ile düşer."""
+        bilinmeyen = sorted(
+            {t.kind for t in validate.validation_targets(ROOT)} - set(validate._VALIDATORS)
+        )
+        assert not bilinmeyen, f"doğrulayıcısı olmayan hedef türü: {bilinmeyen}"
+
+    def test_each_tree_is_routed_to_the_right_validator(self) -> None:
+        """Yönlendirme ölçülür: enum dosyası şema doğrulayıcısına gitmemeli."""
+        beklenen = {
+            "schemas/worker/analysis_job.v1.schema.json": "schema",
+            "enums/calibration_type.enum.v1.json": "enum",
+            "dist/schemas/worker/analysis_job.v1.schema.json": "schema",
+            "api/platform_public.v1.yaml": "openapi",
+        }
+        gercek = {
+            t.path.relative_to(ROOT).as_posix(): t.kind for t in validate.validation_targets(ROOT)
+        }
+        for rel, kind in beklenen.items():
+            assert gercek.get(rel) == kind, (
+                f"{rel} -> {gercek.get(rel)!r}, beklenen {kind!r}. Yanlış doğrulayıcıya "
+                "giden dosya sessizce YANLIŞ kuralla denetlenir."
+            )
+
+
+class TestMainActuallyUsesTheTargetList:
+    """ÖD-13 ①-b — **AYNA KARŞITI**: kapı, `main()`'in GERÇEKTEN yaptığını ölçmeli.
+
+    Bu sınıf 2026-08-11'de eklendi çünkü yukarıdaki kapsam testleri `main()`'i değil
+    onun kopyasını ölçüyordu. Buradaki iki test o sınıfın geri gelmesini engeller:
+    `validation_targets()` daraltılırsa `main()` de daralmak ZORUNDA.
+    """
+
+    def test_main_validates_exactly_the_declared_targets(self, monkeypatch, capsys) -> None:
+        """`validation_targets` TEK hedef döndürürse `main()` TEK dosya doğrulamalı."""
+        tek = validate.validation_targets(ROOT)[0]
+        monkeypatch.setattr(validate, "validation_targets", lambda base_dir: [tek])
+        with pytest.raises(SystemExit):
+            validate.main()
+        cikti = capsys.readouterr().out
+        assert "Total files validated: 1" in cikti, (
+            "`main()` kendi dosya yürüyüşünü yapıyor — kapsam `validation_targets()`'tan "
+            "GELMİYOR. Bu tam olarak ÖD-13'ün ayna hatasıdır: kapı listeyi ölçer, araç "
+            "başka bir şey tarar.\n" + cikti[-400:]
+        )
+
+    def test_main_reports_zero_when_there_are_no_targets(self, monkeypatch, capsys) -> None:
+        """MUTASYON: hedef listesi boşsa `main()` de HİÇBİR ŞEY doğrulamamalı."""
+        monkeypatch.setattr(validate, "validation_targets", lambda base_dir: [])
+        with pytest.raises(SystemExit):
+            validate.main()
+        assert "Total files validated: 0" in capsys.readouterr().out
 
     def test_dist_inherits_the_pii_scope_of_its_source(self) -> None:
         """`user_pii` yayın ikizi meşrudur — kapı onu 'kapsam dışı' saymamalı.

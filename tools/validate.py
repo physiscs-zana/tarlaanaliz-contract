@@ -6,7 +6,7 @@ Validates all JSON Schema and OpenAPI files
 import json
 import sys
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, NamedTuple
 
 # Forbidden fields (per KR-050: NO email, NO TCKN, NO OTP)
 # ⚠️ TEK KAYNAK: `pyproject.toml → [tool.tarlaanaliz.schema].forbidden_fields` bu listeyi
@@ -301,28 +301,66 @@ def validate_enum_file(enum_path: Path) -> List[str]:
     return errors
 
 
-def validation_targets(base_dir: Path) -> List[Path]:
-    """Kapının FİİLEN taradığı dosyalar — kapsam iddiası burada ölçülebilir olsun.
+class Target(NamedTuple):
+    """Doğrulanacak TEK dosya: yolu · hangi doğrulayıcı · çıktıdaki etiketi."""
 
-    `main()` bu listeyi kullanır; `tests/test_publication_tree_gates.py` de aynı listeyi
-    okur. Böylece "yayın ağacı da taranıyor" iddiası kaynak koda bakarak değil
-    **ölçülerek** doğrulanır (ÖD-13).
+    path: Path
+    kind: str    # 'schema' | 'enum' | 'openapi'
+    label: str   # "Validating <yol><label>..."
+
+
+#: Hangi `kind` hangi doğrulayıcıya gider. `main()` bu tabloyu kullanır — ikinci bir
+#: `if/elif` zinciri yazmak, ÖD-13'ün düzelttiği "ayna" hatasının küçük hâli olurdu.
+_VALIDATORS: Dict[str, Any] = {
+    'schema': validate_json_schema,
+    'enum': validate_enum_file,
+    'openapi': validate_openapi_pii,
+}
+
+
+def validation_targets(base_dir: Path) -> List[Target]:
+    """Kapının FİİLEN taradığı dosyalar — **`main()` BU listeyi kullanır.**
+
+    ⚠️ 2026-08-11 · ÖD-13'ün kendi hatası düzeltildi: bu fonksiyonun docstring'i
+    *"main() bu listeyi kullanır"* diyordu ama **KULLANMIYORDU** — `main()` aynı dört
+    ağacı kendi `rglob` döngüleriyle yeniden geziyordu. Yani `tests/test_publication_
+    tree_gates.py` **aynayı** ölçüyordu, `main()`'i değil. Mutasyonla kanıtlandı
+    (taze klon, master): `main()`'den `dist` bloğu silindiğinde doğrulanan dosya
+    **165 → 97** düştü ve ÖD-13 kapısı **17 passed** ile YEŞİL kaldı; tüm süit de
+    yeşildi. Kapı, koruduğunu iddia ettiği davranışı hiç ölçmüyordu.
+
+    Artık **tek kaynak**: `main()` yalnız bu listeyi dolaşır, doğrulayıcıyı
+    `_VALIDATORS[kind]` tablosundan seçer. `tests/test_publication_tree_gates.py`
+    hem listeyi hem de *"main gerçekten bunu kullanıyor mu"* sorusunu ölçer.
     """
-    targets: List[Path] = []
-    targets.extend(sorted((base_dir / 'schemas').rglob('*.json')))
+    targets: List[Target] = []
+    targets.extend(
+        Target(path, 'schema', '') for path in sorted((base_dir / 'schemas').rglob('*.json'))
+    )
     enums_dir = base_dir / 'enums'
     if enums_dir.exists():
-        targets.extend(sorted(enums_dir.rglob('*.json')))
+        targets.extend(
+            Target(path, 'enum', '') for path in sorted(enums_dir.rglob('*.json'))
+        )
+    # ÖD-13: YAYIN AĞACI. `dist/schemas/` hava-boşluklu M1'in tükettiği biçimdir (harici
+    # `$ref` yok) ve bir zamanlar HİÇBİR kapıdan geçmiyordu: ne validate, ne PII taraması,
+    # ne checksum. Bayatlık ayrı bir kapının işidir (`inline_refs.py --check`); burada
+    # İÇERİK kuralları koşar.
     dist_dir = base_dir / 'dist' / 'schemas'
     if dist_dir.exists():
-        targets.extend(sorted(dist_dir.rglob('*.json')))
+        targets.extend(
+            Target(path, 'schema', ' (yayın ağacı)') for path in sorted(dist_dir.rglob('*.json'))
+        )
+    # D18/K4: `api/` ağacı önceden HİÇBİR PII kapısından geçmiyordu.
     api_dir = base_dir / 'api'
     if api_dir.exists():
-        targets.extend(sorted(api_dir.rglob('*.yaml')))
+        targets.extend(
+            Target(path, 'openapi', ' (PII scope)') for path in sorted(api_dir.rglob('*.yaml'))
+        )
     return targets
 
 
-def main():
+def main() -> None:
     """Main validation"""
     # Windows consoles default to a legacy code page (e.g. cp1254) that cannot
     # encode the status emoji below and raises UnicodeEncodeError. Force UTF-8.
@@ -334,46 +372,17 @@ def main():
     print("🔍 TarlaAnaliz Contracts Validator\n")
 
     base_dir = Path(__file__).parent.parent
-    schemas_dir = base_dir / 'schemas'
-    enums_dir = base_dir / 'enums'
 
     all_errors = []
     total_files = 0
 
-    # Validate all JSON Schema files
-    for schema_file in schemas_dir.rglob('*.json'):
+    # TEK KAYNAK: kapsam `validation_targets()`'ta tanımlıdır, burada YENİDEN yazılmaz.
+    # Eskiden burada dört ayrı `rglob` döngüsü vardı ve kapı o listeyi değil aynasını
+    # ölçüyordu (bkz. `validation_targets` docstring'indeki mutasyon kanıtı).
+    for target in validation_targets(base_dir):
         total_files += 1
-        print(f"Validating {schema_file.relative_to(base_dir)}...")
-        errors = validate_json_schema(schema_file)
-        all_errors.extend(errors)
-
-    # Validate enum files
-    if enums_dir.exists():
-        for enum_file in enums_dir.rglob('*.json'):
-            total_files += 1
-            print(f"Validating {enum_file.relative_to(base_dir)}...")
-            errors = validate_enum_file(enum_file)
-            all_errors.extend(errors)
-
-    # ÖD-13 (2026-08-01): YAYIN AĞACI da doğrulanır. `dist/schemas/` hava-boşluklu M1'in
-    # tükettiği biçimdir (harici `$ref` yok) ve bugüne kadar HİÇBİR kapıdan geçmiyordu:
-    # ne validate, ne PII taraması, ne checksum. Yani kaynağa giremeyen bir PII alanı
-    # yayın ağacına elle eklenebilir ya da bayat bir kopya orada yaşamaya devam edebilirdi.
-    # (Bayatlık `inline_refs.py --check` ile ayrıca ölçülür; burada İÇERİK kuralları koşar.)
-    dist_dir = base_dir / 'dist' / 'schemas'
-    if dist_dir.exists():
-        for dist_file in sorted(dist_dir.rglob('*.json')):
-            total_files += 1
-            print(f"Validating {dist_file.relative_to(base_dir)} (yayın ağacı)...")
-            all_errors.extend(validate_json_schema(dist_file))
-
-    # OpenAPI PII taraması (D18/K4) — `api/` ağacı önceden HİÇBİR kapıdan geçmiyordu.
-    api_dir = base_dir / 'api'
-    if api_dir.exists():
-        for spec_file in sorted(api_dir.rglob('*.yaml')):
-            total_files += 1
-            print(f"Validating {spec_file.relative_to(base_dir)} (PII scope)...")
-            all_errors.extend(validate_openapi_pii(spec_file))
+        print(f"Validating {target.path.relative_to(base_dir)}{target.label}...")
+        all_errors.extend(_VALIDATORS[target.kind](target.path))
 
     # Print results
     print(f"\n{'='*60}")
