@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-10 (**dokuzuncu oturum** — DK-43…DK-47: Aşama-1 NaN fail-open kapandı · `stress_ratio` ilk kez üretiliyor · fıstık ad ekseni + kök-çürüklüğü kartı · **worker = kart SSOT, platform bayt-özdeş** · tanıtım metni gerçeğe hizalandı. ⚠️ **COMMIT EDİLMEDİ** — üç depoda çalışma ağacı kirli)
+**Son güncelleme:** 2026-08-11 (**onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -22,7 +22,93 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-10, **dokuzuncu oturum: DK-43…DK-47 — sessiz kusurlar · indeks gerçeği · kart SSOT**)
+## 0.A EN GÜNCEL — (2026-08-11, **onuncu oturum: D12 `stress_ratio` kararı · KR-093 ön faz kapısı · D13 üç-repo 7.6.1 hizası**)
+
+> **Durum: HEPSİ MERGE EDİLDİ.** Beş PR, üç depo, hepsi CI'dan geçti. Çalışma ağaçları
+> temiz, üç depo da varsayılan dalında, turun beş dalı silindi.
+> İş listesi kalemleri: eylem planı **§14.11**.
+>
+> | PR | Depo | Konu |
+> |---|---|---|
+> | [#62](https://github.com/physiscs-zana/tarlaanaliz-contract/pull/62) | contract | D12 — `stress_ratio` TANIMLANDI + `delivery_rule` (7.6.1 re-pin) |
+> | [#63](https://github.com/physiscs-zana/tarlaanaliz-contract/pull/63) | contract | Öz-denetim bulgusu: vendored `metadata` çelişme kapısı |
+> | [#407](https://github.com/physiscs-zana/tarlaanaliz-platform/pull/407) | platform | KR-093 ön faz kapalı listesi **kapıya bağlandı** + contracts 7.6.1 |
+> | [#408](https://github.com/physiscs-zana/tarlaanaliz-platform/pull/408) | platform | submodule pini `v7.6.1` etiketli commit'e (I-3 onarımı) |
+> | [#216](https://github.com/physiscs-zana/tarlaanaliz_worker/pull/216) | worker | vendored `analysis_type` v1.4.1 → v1.4.4 + `v7.6.1` |
+
+### Sürüm durumu — **7.6.0 → 7.6.1** (PATCH, non-breaking)
+
+Beş değişmez varsayılan dallarda **komutla** ölçüldü (kapanışta):
+
+```
+I-1  contract 7.6.1 · platform 7.6.1 · worker v7.6.1
+I-2  v7.6.1 annotated · merge-base --is-ancestor v7.6.1 origin/master → EVET
+     (etiket 8a0a8e7 → c4b7b94'e TAŞINDI; gerekçe aşağıda)
+I-3  submodule pin c4b7b94 == etiketli commit · checksum c4551a06… birebir ayna
+I-4  worker öz-hash: OK (v7.6.1)
+I-5  availability 11/11 hizalı · stress_ratio değerleri birebir → ayrışma KAPANDI
+SSOT metni üç depoda BAYT-ÖZDEŞ (0 fark satırı)
+```
+
+### Ne yapıldı
+
+| Kod | Depo | İş |
+|---|---|---|
+| **D12** | contract | `indexDefinitions.stress_ratio` `UNDEFINED_PENDING_DECISION` → **`DEFINED`**. Formül **üretici koddan okundu**: `NDRE / NDVI`, NDVI ≤ 0 piksellerinde nötr `1.0`. Önceki *"ad var, üretim yok"* iddiası ⛔ çürütüldü — ölçüm yanlış dosyaya (`compute_indices_v2`) bakmıştı; üretici çıkarım hattındadır ve raster S3'e yüklenip manifest'te listelenir. Yeni makine-okunur alan: `delivery_rule.preliminary = false`. |
+| **D12** | platform | KR-093 ön faz **kapalı listesi kodda hiç tüketilmiyordu** (`x-preliminary-content` → 0 eşleşme) → `WATER_STRESS` vekil katmanı uzman onayından ÖNCE çiftçiye sunuluyordu. Yeni `preliminary_content_gate.py` listeyi **kanonikten okur** (kopyalamaz); kapı **üç yüzeyde**: katman listesi + `available_indices`, raster tile ucu, tile metadata. Uzman/admin kapsam dışı. |
+| **D12+** | platform | Aynı denetimde **iki ek delik**: (a) konsensüs RED sonrası özet ucu 409 derken **tile'lar servis edilmeye devam ediyordu**; (b) faz türetmesi `"FULL" if DONE else "PRELIMINARY"` idi — kanonik *"listelenmeyen = PRELIMINARY varsayımı YASAKTIR"* der. İkisi de fail-closed yapıldı. |
+| **D12** | worker | **Kod değişmedi (bilinçli).** `reporting_agent.py` + `src/indices/stress_ratio.py` başına "neden burada kalıyor" gerekçesi. |
+| **D13** | üç depo | Sürüm töreni: contract re-pin + annotated tag · platform submodule/checksum/`main.py` boot-pin · worker vendored kopya + KR-041 öz-hash. |
+
+**Neden worker'dan çıkarılmadı (seçenek (b) elendi):** `result_mode` ile `report_phase`
+**bağımsız eksenlerdir** (KR-093) — `FULL_REPORT` modundaki iş de uzman onayına kadar
+`PRELIMINARY` fazındadır, dolayısıyla `reporting_agent`'tan silmek sızıntıyı KAPATMAZDI.
+Ayrıca kanonik `x-removed-2026-07-31.still_computable` worker'ın hesaplamaya devam
+etmesine **açıkça izin verir**. Kısıt üretimde değil **sunumda**.
+
+### 🔬 SONRAKİ OTURUM — BU OTURUMUN İŞİNİ ÖNCE DENETLE
+
+**D-1 · Tazelik.** Üç depoda `git status --short` + `git log --oneline -1`. Bu oturumda
+paralel bir aktör worker'da iki kez commit attı (biri **benim commit'lenmemiş** düzenlemelerimi
+kendi commit'ine aldı: `22d6fc7`). Kirli ağaç varsa önce onu anla.
+
+**D-2 · Kapı gerçekten üretim yolunda mı?** Ön faz kapısı `_build_layers` + `tiles.py`
+üzerinden **birim testleriyle** doğrulandı ve gerçek manifest biçimiyle elle koşuldu
+(`PRELIMINARY → ['HEALTH','NITROGEN_STRESS']`). **Canlı trafikte doğrulanmadı** — ayakta
+yığın yoktu. Kabul ölçütü: `PENDING_REVIEW` bir mission için
+`GET /results/{id}/summary` → `layers` içinde `WATER_STRESS` **yok**;
+`GET /tiles/{id}/WATER_STRESS/…` → **403**; aynı sonuç `DONE` olunca **200**.
+
+**D-3 · Merge ≠ deploy.** Kod varsayılan dallarda; çalışan platform sürecinin yeni kodu
+içerdiği ÖLÇÜLMEDİ. Ön fazda katman kaybolduysa önce *"hangi sürüm koşuyor"* diye sor.
+
+**D-4 · Yeni kapının kapsamı.** `TestVendoredMetadataDoesNotContradict` **yalnız worker
+CI'ında** koşar (contract CI'da kardeş depo yok → atlanır, D4-b tasarımı). Contract
+deposu worker'ın **Python koduna** hâlâ bakamaz: `stress_ratio.py`'deki sabiti değiştiren,
+kanonik girdiyi de aynı turda değiştirmek zorundadır ve bunun **kapısı yoktur**.
+
+**D-5 · Bu oturumun kendi yöntem hataları** (tekrarlamamak için):
+- **Ölçtüğüm şey iddia ettiğim şey değildi:** dal silmeden önce "içerik master'da var mı?"
+  diye `git diff master...dal` (**üç nokta**) koştum — o komut "dalın merge-base'den beri
+  ne eklediğini" gösterir, master'da eksik olanı değil. Doğrusu iki-nokta ağaç
+  karşılaştırması + `log dal..master` / `log master..dal` ile **yön** ölçümü.
+- **Etiketi merge sonrasına bırakmak yanlıştı:** worker CI contract'ı **pinli etikete**
+  göre checkout ediyor; `v7.6.1` uzakta yokken iş `Checkout contract @ pinli etiket`
+  adımında düştü. Tag, tüketici PR'ları CI'a girmeden push edilmeli.
+- **Etiketi ileri taşımak I-3'ü kırdı:** platform pini eski hedefte kalınca `describe`
+  bulanıklaştı (`v7.6.0-13-g8a0a8e7`). Etiket taşındıysa tüketici pinleri de taşınmalı.
+- **CI'da olup yerelde koşmadığım kapı vardı:** worker'da `CONTRACTS_VERSION.md` değişen
+  her PR `CHANGELOG.md` de ister. Kapının **tam kabuk komutunu** workflow'dan okuyup
+  birebir yerelde koşturmak gerekiyordu.
+- **"PR merged" ≠ "commit'im indi":** #62 benim son push'umdan ÖNCEKİ head'de merge edildi
+  (üstelik squash değil); parite kapısı master'a girmedi, ayrı PR (#63) ile indirildi.
+
+### 📌 Karar bekleyenler (kullanıcıya)
+1. **AK-9 KAPANDI** (bu tur) — `stress_ratio` tanımlı; teslimat kısıtı sunum katmanında.
+2. Önceki turdan **devam edenler:** AL-K9 (üç üretici-ölü özellik) · AL-K16 (barley/potato) ·
+   AL-K8 (kartlardaki `THERMAL_REQUIRED`) · AL-K13 (kart ratchet'i CI'da zorlanmıyor).
+
+## 0.A-i ÖNCEKİ TUR — (2026-08-10, **dokuzuncu oturum: DK-43…DK-47 — sessiz kusurlar · indeks gerçeği · kart SSOT**)
 
 > **Durum: HEPSİ MERGE EDİLDİ** (kullanıcı talimatı: *"konu başına ayrı PR aç ve commit'le
 > push ve merge yap"*). İş listesi kalemleri: eylem planı **§14.10** (AL-K1…AL-K16 +
