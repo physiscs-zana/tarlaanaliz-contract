@@ -133,7 +133,8 @@
             },
             "results_summary": {
               "type": "object",
-              "description": "High-level summary of analysis results"
+              "additionalProperties": true,
+              "description": "High-level summary of analysis results. BİLİNÇLİ AÇIK (2026-08-11): analiz tipine göre değişen serbest biçimli özet; sabit bir alan kümesi yoktur. Ölçüldü: bu alanı üreten kod dört depoda YOK. Açıklık BEYAN EDİLMİŞTİR — sessiz bir boşluk değildir; alan kümesi netleşince kapatılır."
             }
           },
           "unevaluatedProperties": false

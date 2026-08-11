@@ -19,6 +19,16 @@ on:
     # Filtre, testlerin GERÇEKTEN okuduğu yollardan türetildi (ölçüm: tests/*.py içindeki
     # ROOT/WORKSPACE yolları). Dar filtre, yeni testlerin kaynaklarını kapsamadığı için
     # kapıyı sessizce karartıyordu (Q7).
+    # ⚠️ 2026-08-11: filtre YENİDEN TÜRETİLDİ ve **9 kök eksik** çıktı. Q7'de kapatılan
+    # sınıfın aynısı geri gelmişti: `tools/check_doc_links.py` (AL-K20, dün eklendi)
+    # `git ls-files` üzerinden TÜM izli `.md/.txt/.py/.yaml/.yml` dosyalarını tarıyor,
+    # ama filtre yalnız 13 kök taşıyordu → `denetim/`, `README.md`, `CLAUDE.md`,
+    # `PATCH_NOTES.md`, `drone_registry.yaml`, `.redocly*` değişen bir PR'da kapı
+    # HİÇ KOŞMUYORDU. `dist/**` de yoktu: yayın ağacı tüketicilerin vendor'ladığı
+    # biçimdir ve `validate.py` + `test_inline_refs` + `test_object_drift_gate` onu okur;
+    # yalnız `dist/` dokunan bir commit gerçekten var (d6de514, 2026-08-07).
+    # Bu liste artık `tests/test_ci_gate_honesty.py` tarafından TÜRETİLİP karşılaştırılıyor
+    # — elle güncel tutulmuyor, kapı ayrışmayı kırmızıya çeviriyor.
     paths:
       - 'schemas/**'
       - 'enums/**'
@@ -27,14 +37,24 @@ on:
       - 'tests/**'
       - 'ssot/**'                    # test_kr_reference_integrity → kr_registry.md
       - 'docs/**'                    # examples/, TARLAANALIZ_SSOT_v1_2_0.txt, versioning_policy
+      - 'denetim/**'                 # check_doc_links: sarkan atıf kaynağı VE hedefi
+      - 'dist/**'                    # yayın ağacı: validate.py + test_inline_refs + drift kapısı
       - 'drone_capability_matrix.yaml'  # test_calibrated_manifest_fields
+      - 'drone_registry.yaml'        # check_doc_links (.yaml tarama evreninde)
       - 'CONTRACTS_VERSION.md'
       - 'CHANGELOG.md'                  # AL-K20: sarkan atif kapisi CHANGELOG'u da tarar
+      - 'README.md'                  # check_doc_links
+      - 'CLAUDE.md'                  # check_doc_links
+      - 'PATCH_NOTES.md'             # check_doc_links
       - 'requirements-dev.txt'       # CI bağımlılıkları buradan kurulur
       - 'pyproject.toml'             # pytest markers/config
-      - '.github/workflows/contract_validation.yml'
+      - '.redocly.yaml'              # lint-openapi yapılandırması
+      - '.redocly.lint-ignore.yaml'  # test_publication_tree_gates: istisna listesi ratchet'i
+      - '.github/**'                 # kapının kendisi + auto_sync (check_doc_links tarar)
   push:
     branches: [master]
+    # İKİ LİSTE BİREBİR AYNI OLMALI — `tests/test_ci_gate_honesty.py` zorluyor.
+    # Ayrışırlarsa PR'da koşan kapı ile master'da koşan kapı FARKLI şeyi denetler.
     paths:
       - 'schemas/**'
       - 'enums/**'
@@ -43,12 +63,20 @@ on:
       - 'tests/**'
       - 'ssot/**'
       - 'docs/**'
+      - 'denetim/**'
+      - 'dist/**'
       - 'drone_capability_matrix.yaml'
+      - 'drone_registry.yaml'
       - 'CONTRACTS_VERSION.md'
       - 'CHANGELOG.md'                  # AL-K20: sarkan atif kapisi CHANGELOG'u da tarar
+      - 'README.md'
+      - 'CLAUDE.md'
+      - 'PATCH_NOTES.md'
       - 'requirements-dev.txt'
       - 'pyproject.toml'
-      - '.github/workflows/contract_validation.yml'
+      - '.redocly.yaml'
+      - '.redocly.lint-ignore.yaml'
+      - '.github/**'
 
 # Default GITHUB_TOKEN is read-only; the breaking-change job posts a PR comment
 # (issues.createComment) -> needs pull-requests: write. Without it the comment
@@ -413,7 +441,12 @@ jobs:
   summary:
     name: Validation Summary
     runs-on: ubuntu-latest
-    needs: [validate-schemas, test-schemas, detect-breaking-changes, verify-checksums, check-forbidden-fields, check-draft-2020-12, check-brand-guard]
+    # ⚠️ 2026-08-11: `lint-openapi` bu listede YOKTU. Bu, SD5'te `verify-checksums` için
+    # kapatılan hatanın aynısıydı: iş kırmızı olsa bile özet kapısı onu görmüyordu,
+    # yani OpenAPI lint'i düşen bir PR "Validation Summary: pass" gösteriyordu.
+    # Liste artık `tests/test_ci_gate_honesty.py` tarafından TÜRETİLİYOR — yeni bir iş
+    # eklenip buraya yazılmazsa kapı kırmızıya döner.
+    needs: [validate-schemas, test-schemas, detect-breaking-changes, verify-checksums, lint-openapi, check-forbidden-fields, check-draft-2020-12, check-brand-guard]
     if: always()
 
     steps:
@@ -425,6 +458,7 @@ jobs:
           echo "- Schema Tests: ${{ needs.test-schemas.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Breaking Changes: ${{ needs.detect-breaking-changes.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Checksum Verification: ${{ needs.verify-checksums.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- OpenAPI Lint: ${{ needs.lint-openapi.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Forbidden Fields: ${{ needs.check-forbidden-fields.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Draft 2020-12: ${{ needs.check-draft-2020-12.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Brand Guard: ${{ needs.check-brand-guard.result }}" >> $GITHUB_STEP_SUMMARY
@@ -437,6 +471,7 @@ jobs:
           needs.test-schemas.result == 'failure' ||
           needs.detect-breaking-changes.result == 'failure' ||
           needs.verify-checksums.result == 'failure' ||
+          needs.lint-openapi.result == 'failure' ||
           needs.check-forbidden-fields.result == 'failure' ||
           needs.check-draft-2020-12.result == 'failure' ||
           needs.check-brand-guard.result == 'failure'

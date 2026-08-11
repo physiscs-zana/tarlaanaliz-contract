@@ -102,6 +102,7 @@
       "type": "array",
       "items": {
         "type": "object",
+        "unevaluatedProperties": false,
         "properties": {
           "type": { "type": "string" },
           "url": { "type": "string", "format": "uri" },
@@ -149,7 +150,8 @@
     },
     "affected_zone": {
       "type": ["object", "null"],
-      "description": "GeoJSON polygon of affected area"
+      "additionalProperties": true,
+      "description": "GeoJSON polygon of affected area. BİLİNÇLİ AÇIK (2026-08-11): keyfi bir GeoJSON geometrisidir, alan kümesi geometri tipine göre değişir. Doğru çözüm `shared/geojson.v1.schema.json`'a bağlamaktır; o zamana kadar açıklık BEYAN EDİLMİŞTİR, sessiz değildir."
     },
     "field_baseline_deviation": {
       "type": ["number", "null"],
@@ -398,7 +400,11 @@
           "description": "Risk level (worker runtime form)"
         },
         "area_hectares": { "type": "number", "minimum": 0, "description": "Affected area (hectares, orchestration form)" },
-        "geometry": { "type": "object", "description": "GeoJSON geometry of affected area (orchestration form)" },
+        "geometry": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "GeoJSON geometry of affected area (orchestration form). BİLİNÇLİ AÇIK (2026-08-11): keyfi bir GeoJSON geometrisidir (Polygon/MultiPolygon/Point) ve alan kümesi geometri tipine göre değişir; kapatmak üretilebilir geometrileri keyfî olarak daraltırdı. Ölçüldü: bu alanı üreten kod dört depoda YOK (orkestrasyon formu). Üretici çıktığında doğru çözüm `shared/geojson.v1.schema.json` $defs'ine bağlamaktır — o zamana kadar açıklık BEYAN EDİLMİŞTİR, sessiz değildir."
+        },
         "description": { "type": "string", "maxLength": 500, "description": "Detection description (orchestration form)" },
         "bbox": {
           "type": ["object", "null"],

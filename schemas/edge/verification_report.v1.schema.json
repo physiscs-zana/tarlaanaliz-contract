@@ -33,6 +33,7 @@
       "type": "array",
       "items": {
         "type": "object",
+        "unevaluatedProperties": false,
         "required": [
           "filename",
           "match"

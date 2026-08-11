@@ -7,6 +7,251 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [Unreleased] — Alan sızması (field drift) kapatıldı: dizi öğeleri ve iç içe nesneler
+
+> **Sürüm önerisi: 7.7.0 (MINOR).** Re-pin + tag C8 töreninde; bu tur
+> `CONTRACTS_VERSION.md → **Checksum State:** PENDING_REPIN` ile beyanlı.
+
+### ÖLÇÜLEN SORUN (davranışsal kanıt, iddia değil)
+
+`tools/validate.py` `unevaluatedProperties` kuralını yalnız **kök şemada** ve
+**`$defs` birinci seviyesinde** zorluyordu. `schemas/` ağacındaki **310 object
+düğümünün 79'u** o iki konumun dışındaydı ve **28'i hiçbir koruma taşımıyordu** —
+yani dizi öğeleri (`items`) ve iç içe nesneler sözleşmede **tanımsız alanları
+sessizce kabul ediyordu**. KR-073 AV tarama raporunda ölçüldü
+(`datasets/scan_report.v1`, gerçek `Draft202012Validator` ile):
+
+```
+temiz belge                       -> 0 hata
+kök'e tanımsız alan               -> 1 hata   (kapı çalışıyordu)
+findings[]'e AYNI alan            -> 0 hata   (SESSİZCE GEÇİYORDU)
+scanned_files[]'e AYNI alan       -> 0 hata   (SESSİZCE GEÇİYORDU)
+```
+
+Etkilenen düğümlerin çoğu **gözetim zinciri** (chain of custody, KR-072/073)
+belgelerindeydi: `dataset_manifest.files[]` · `scan_report.scanned_files[]` /
+`findings[]` · `verification_report.computed_hashes[]` / `mismatches[]` ·
+`transfer_batch.datasets[]` · `qc_report.checks[]` · `evidence_bundle_ref.evidence_chain`.
+
+İlk tarayıcı ayrıca `"type": ["object", "null"]` **birleşik tiplerini** kaçırmıştı
+(7 düğüm daha) — ölçüm aracının kendi kusuru, düzeltildi.
+
+### Changed — şemalar (19 dosya, 27 düğüm)
+
+Sayım `origin/master` ile karşılaştırılarak ölçüldü (elle sayılmadı):
+**beyansız düğüm 28 → 1** (kalan tek düğüm aşağıdaki parite-kilitli istisnadır).
+
+- **23 düğüm KAPATILDI** (`unevaluatedProperties: false`).
+- **4 düğüm BİLİNÇLİ AÇIK BEYAN EDİLDİ** (`additionalProperties: true` + gerekçe):
+  `analysis_result.affected_zone` · `analysis_result.$defs.Detection.geometry` ·
+  `dataset_analyzed.payload.results_summary` · `training_feedback.correction_geometry` —
+  hepsi keyfi GeoJSON/serbest özet; kapatmak sözleşmeyi yanlış yerden daraltırdı.
+  Doğru çözüm `shared/geojson.v1`'e bağlamaktır (üretici çıkınca).
+- **`events/field_created.v1`**: `field.boundary` / `field.season` / `field.location`
+  alan adları `core/field.v1`'in `$defs.GeoRef` / `SeasonRef` / `LocationInfo`
+  tanımlarından **aynalandı** (12 opsiyonel alan beyanı). **DEĞER kısıtları
+  (`minLength`, `required`, `const`, enum) BİLEREK aynalanmadı** — üretici ölçüldü:
+  `tarlaanaliz-platform/src/core/domain/events/field_events.py:59-66,129` boş dize ve
+  savunmacı `{}` üretebiliyor; kısıtları aynalamak canlı olayları kırardı.
+  Bu tur **yalnız alan sızmasını** kapatır, kabulü daraltmaz.
+
+### KIRICILIK — ölçüldü, dedektöre GÜVENİLMEDİ
+
+`tools/breaking_change_detector.py --old origin/master --new . --json` →
+`has_breaking = false`, 0 breaking, 12 non-breaking. **Ama bu yeşil, kırıcı-değilliğin
+KANITI DEĞİLDİR:** dedektör `unevaluatedProperties`/`additionalProperties`'i yalnız
+*alt-şema taşıyıcısı* olarak tanıyor (`SUBSCHEMA_SINGLE`, satır 116-120); bir düğümün
+**açıktan kapalıya geçmesi** için sınıflandırma kuralı YOK — 27 kapatma **sıfır
+değişiklik kaydı** üretti. Bu kör nokta ayrıca kayda geçirildi.
+
+Kırıcılık bu yüzden **elle ölçüldü**:
+- Dört depodaki **5385 JSON** dosyası tarandı; etkilenen düğümlerde **fazladan alan
+  taşıyan tek bir yük bulunamadı** (pozitif kontrol: tarayıcı dikilmiş fazla alanı
+  görüyor). Uyarı: 12 şema için hiç eşleşen yük yok — o düğümler için bu "kanıt yok",
+  "temiz" değil.
+- Canlı üreticiler kaynaktan okundu: `field.created` (platform) · `drone_metadata`
+  (platform → worker) · `expert_feedback.tile_coordinates` (worker). Üçü de yalnız
+  beyan edilen alanları yazıyor.
+
+### GERİ ALINAN DEĞİŞİKLİK (kanıt öneriyi çürüttü)
+
+`analysis_result.$defs.Detection.bbox` kapatılmak istendi, **geri alındı**: tüketicide
+alan opak taşınıyor (`tarlaanaliz-worker/src/core/domain/analysis_result.py:29,249` →
+`dict[str, float] | None`) ve anahtar kümesini kısıtlayan tek satır yok. Ayrıca
+kapatma **I-4 parite çelişkisi** üretti (`test_vendored_parity` kırmızı döndü:
+`_strip_annotations` iki idiomu tek anahtara indirgediği için kanonikte **herhangi bir**
+politika anahtarı, vendored kopyada karşılığı yokken fark sayılıyor). Düğüm
+`tools/validate.py → _PARITY_LOCKED_OPEN` içinde **tek girişlik, çıkış koşulu yazılı**
+bir istisna olarak beyan edildi; `tests/test_object_drift_gate.py` listenin büyümesini
+yasaklıyor.
+
+### Added — kapı ve testler
+
+- **`tools/validate.py`**: `_check_unevaluated_in_defs` → **`_check_object_policy`**.
+  Kural: **her object düğümü politikasını BEYAN ETMELİ** — `unevaluatedProperties: false`
+  (kapalı) ya da `additionalProperties` (bilinçli açık). Yasak olan **sessizlik**.
+  Birleşik tipleri (`["object","null"]`) tanır; `examples`/`notes`/`x-` bloklarını
+  taramaz (oralar şema değil veri). Kök daha SIKI kalır (kökte "açık" seçeneği yok).
+- **`tests/test_object_drift_gate.py`** (14 test): kapsam · mutasyon (dizi öğesi ve
+  birleşik tip körlüğü) · **pozitif kontrol** (meşru serbest düğümler açık kalmalı;
+  annotation blokları taranmamalı) · istisna listesi ratchet'i · **davranışsal kanıt**
+  (dizi öğesine sızma gerçek doğrulayıcıda REDDEDİLİR).
+- Mutasyonla sınandı: gerçek şemadan (`scan_report.findings[]`) koruma kaldırılınca
+  `validate.py` 1 hata verdi ve süitte 2 test kırmızıya döndü; desen tutmazsa betik
+  durur (sahte yeşil yok).
+
+### Changed — yayın ağacı
+
+`dist/schemas/` yeniden üretildi (`python tools/inline_refs.py --write`, 68 dosya).
+Kapı yayın ağacını da denetliyor: bayat `dist` ile `validate.py` **28 hata** verdi,
+yeniden üretimden sonra **0**.
+
+---
+
+## `threat_type` kanonik sözlüğe BAĞLANDI + bağlama ratchet'i (KR-073)
+
+### ÖLÇÜLEN SORUN
+
+`enums/threat_type.enum.v1.json` 15 değerlik kanonik bir tehdit türü sözlüğü tanımlıyor;
+`datasets/scan_report.v1` (KR-073 AV tarama raporu) ise aynı alanı `{"type": "string"}`
+diye tanımlıyordu. Gerçek doğrulayıcıyla ölçüldü:
+`findings[0].threat_type = "UYDURMA_TEHDIT_TURU"` → **0 hata**.
+
+`edge/quarantine_event.v1` aynı alanda daha da inceydi: açıklaması kanonik enum'a
+**atıf yapıyordu** ama şema hiçbir şeyi zorlamıyordu — deponun 2026-07-31'de `crop_type`
+için adını koyduğu *"prose var, zorlanabilirlik yok"* sınıfının aynısı.
+
+Sınıf ölçüldü (ad tabanlı tarama, `schemas/`): **21 bağlı · 22 inline · 12 serbest**.
+Pozitif kontrol: aynı tarayıcı `crop_type`'ın bağlı olduğunu görüyor.
+
+### Changed
+
+- **`datasets/scan_report.v1` `findings[].threat_type`** → `$ref` kanonik enum.
+  Ayrıca `threat_name`'e *"bilerek kısıtsız"* gerekçesi yazıldı (AV motorunun serbest
+  imza adıdır; kanonik sözlüğü YOKTUR — ikisi karıştırılmasın).
+- **`edge/quarantine_event.v1` `threat_type`** → `$ref` kanonik enum.
+
+İkisine de `x-compat-accepted` beyanı yazıldı. ⚠️ **Bu beyan burada dedektörü
+ETKİLEMEZ — düzeltme:** mekanizma yalnız `ACCEPTABLE_TYPES` içindeki 5 tipe uygulanır
+(`MIN_MAX_TIGHTENED`, `PATTERN_TIGHTENED`, `ENUM_CONSTRAINT_ADDED`,
+`COMPOSITION_BRANCH_CHANGED`, `FIELD_MADE_REQUIRED`) ve bu değişiklik `REF_CHANGED`
+olarak sınıflanıyor. Dedektör `$ref`'i **çözmediğini** kendi belgeliyor (satır 53-55) ve
+raporda *"NOT resolved by this tool — manual review required"* yazıyor; yani bu bir
+**beyanlı sınır**, gizli bir kör nokta değil. İnsan kapısı SDLC_GATES §3E'dir.
+Beyan yine de duruyor: üretici ölçümünü değişikliğin **yanında** tutar.
+
+> Alternatif olarak enum'u satır içi yazmak dedektörü `ENUM_CONSTRAINT_ADDED`'a
+> döndürürdü, ama bu deponun DRY kuralını çiğnerdi
+> (`tests/test_inline_refs.py::test_source_still_uses_refs`) — `$ref` doğru seçim.
+
+**Kırıcılık ölçümü:** kanonik 15 değerin **hiçbiri** platform/worker/edge Python kodunda
+geçmiyor (pozitif kontrol: aynı tarayıcı `QUARANTINED` için edge'de 34 isabet buluyor);
+edge'in `QuarantineEvent` modelinde `threat_type` alanı **hiç yok**; dört depodaki
+5385 JSON içinde `scan_report.v1`'e uyan tek yük bulunamadı. Her iki şema da vendored
+**parite çiftinde değil** → I-4 sonucu yok.
+
+### 🔴 BAĞLANMADI — ölçüm bağlamayı ÇÜRÜTTÜ
+
+**`edge/quarantine_event.v1` `decision`**: edge'in ürettiği sözlük kanonikle **SIFIR
+KESİŞİMLİ**. Ölçüldü:
+
+```
+edge  (src/core/domain/quarantine_event.py:12-15) : PASS · QUARANTINE · REJECT
+kanonik (enums/quarantine_decision.enum.v1.json)  : QUARANTINED · RELEASED · DELETED ·
+    MANUAL_REVIEW_REQUIRED · PENDING_SCAN · SCAN_IN_PROGRESS · REJECTED ·
+    CONDITIONALLY_RELEASED · ESCALATED
+kesişim: ∅
+```
+
+Bağlamak edge çıktısının **%100'ünü** reddederdi. Bu bir araç değil **KARAR** sorunudur:
+hangi sözlük kazanacak? (`crop_type`'ta 2026-07-31'de verilen *"dört depo AYNI standardı
+kullanır"* kararının karantina eksenindeki karşılığı henüz verilmedi.) Gerekçe şemaya ve
+ratchet baseline'ına yazıldı; **karar kullanıcıya bırakıldı**.
+
+### Added — ratchet kapısı
+
+**`tests/test_enum_binding_ratchet.py`** (8 test): adı kanonik bir enum ile eşleşen her
+alanı tarar ve BAĞLI / INLINE / **SERBEST** diye ayırır. SERBEST kova yalnız **küçülür**:
+baseline'da olmayan yeni serbest alan → kırmızı; baseline'da olup artık serbest olmayan
+satır → kırmızı (bayat mazeret yasak). Baseline bugün **12 satır**, her biri
+*"ölçülmemiş ya da bilinçli ertelenmiş"* demektir.
+
+İki yönde mutasyonla sınandı:
+- bağlı alanı serbest bırak → **3 test** kırmızı (tarayıcı · ratchet · davranışsal kanıt)
+- baseline'daki alanı bağla → **1 test** kırmızı (bayat baseline)
+- desen tutmazsa betik durur (`assert`) — sahte yeşil yok.
+
+Ayrıca **pozitif kontrol**: `threat_name` serbest metin OLARAK KALMALI (bir sonraki tur
+onu da enum'a bağlamaya kalkmasın diye kilitlendi).
+
+⚠️ Bu kapı *"hepsini bağla"* demez — **görünür ve sayılabilir** kılar. Bağlamak
+daraltmadır; her satır kendi üretici ölçümünü gerektirir.
+
+---
+
+## CI kapısının kendi dürüstlüğü: `paths:` filtresi + `summary.needs`
+
+### ÖLÇÜLEN İKİ KUSUR — ikisi de daha önce bir kez kapatılmış sınıfın GERİ DÖNÜŞÜ
+
+**① `summary.needs` listesinde `lint-openapi` YOKTU.** Bu, SD5'te `verify-checksums`
+için kapatılan hatanın aynısı: iş kırmızı olsa bile özet kapısı onu görmüyordu, yani
+OpenAPI lint'i düşen bir PR *"Validation Summary: pass"* gösteriyordu.
+
+**② `paths:` filtresi 9 kök eksikti.** Q7'de *"filtre testlerin GERÇEKTEN okuduğu
+yollardan türetildi"* denmişti; ama `tools/check_doc_links.py` (AL-K20, bir gün önce
+eklendi) `git ls-files` üzerinden **tüm izli** `.md/.txt/.py/.yaml/.yml` dosyalarını
+tarıyor ve filtre onunla birlikte genişletilmemişti. Ölçüm:
+
+```
+doc-link kapısının tarayacağı ama filtrede OLMAYAN kökler:
+  .github/**  ·  .redocly.yaml  ·  .redocly.lint-ignore.yaml
+  CLAUDE.md   ·  PATCH_NOTES.md ·  README.md
+  denetim/**  ·  drone_registry.yaml
+```
+
+Yani bu köklerden birini değiştiren bir PR'da **workflow hiç koşmuyordu**.
+Ayrıca `dist/**` de yoktu: yayın ağacı tüketicilerin vendor'ladığı biçimdir,
+`validate.py` + `test_inline_refs` + `test_object_drift_gate` onu okur ve **yalnız
+`dist/` dokunan gerçek bir commit var** (`d6de514`, 2026-08-07).
+
+### Changed — `.github/workflows/contract_validation.yml`
+
+- `paths:` **13 → 21 kök** (PR ve push blokları birebir aynı).
+- `summary.needs`'e `lint-openapi` eklendi; özet çıktısına *"OpenAPI Lint"* satırı ve
+  **düşürme koşuluna** `needs.lint-openapi.result == 'failure'` eklendi.
+  (`needs`'e eklemek işi *bekletir*; koşula eklemek onu *zorunlu* kılar — ikisi ayrı
+  şeydir ve yalnız ilkini yapmak kapıyı yine kör bırakırdı.)
+
+### Added — `tests/test_ci_gate_honesty.py` (11 test)
+
+Liste artık **ezberlenmiyor, TÜRETİLİYOR**: gereken kök kümesi her koşumda
+`git ls-files` + `check_doc_links.SCANNED_SUFFIXES` (**tek kaynak** — ikinci kopya
+tutulmuyor) + şema kapılarının ağaçlarından hesaplanıp filtreyle karşılaştırılıyor.
+Yeni bir kapı eklenip filtre genişletilmezse test kırmızı döner.
+
+Kapsanan değişmezler: her iş `summary.needs`'te · `needs`'teki her iş düşürme
+koşulunda · **koşul `needs`'te olmayan işe atıf yapmıyor** · `needs` hayalet işe bağlı
+değil · PR ve push filtreleri birebir aynı · filtre türetilen her kökü kapsıyor.
+
+Dört yönde mutasyonla sınandı (desen tutmazsa betik durur):
+
+| Mutasyon | Kırılan test |
+|---|---|
+| `lint-openapi`'yi `needs`'ten çıkar | **2** (kapsam + hayalet atıf) |
+| yalnız düşürme koşulundan çıkar | 1 |
+| filtreden `denetim/**` çıkar | 3 |
+| PR/push filtrelerini ayrıştır | 2 |
+
+**Kapının ilk getirisi:** `.github/workflows/**` yazmıştım, türetme `.github/**` istedi
+ve testi kırmızıya çevirdi — kapı daha yazıldığı turda kendi yazarını denetledi.
+
+> ⚠️ Bu tur `paths:` filtresi **kaldırılmadı**. Kaldırmak en dürüst seçenek olurdu
+> (her filtre bir fail-open yüzeyidir) ama bu deponun CI geçmişinde **fatura limiti**
+> kaynaklı kırmızılar var; filtreyi silmek koşum sayısını artırır. Bunun yerine filtre
+> **ölçülen kümeye** genişletildi ve **kapıya bağlandı**. Kaldırma kararı sahibinindir.
+
+---
+
 ## [7.6.1] - 2026-08-11 — D12: `stress_ratio` TANIMLANDI + ön faz kapalı listesi KAPIYA bağlandı
 
 > ⛔ **Bu sürüm kendi önceki iddiasını çürütüyor.** v1.4.2–v1.4.3 `analysis_type.enum`

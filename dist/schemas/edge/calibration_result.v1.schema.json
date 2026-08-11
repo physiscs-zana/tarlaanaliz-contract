@@ -58,6 +58,7 @@
       ],
       "items": {
         "type": "object",
+        "unevaluatedProperties": false,
         "properties": {
           "band": {
             "type": "string"

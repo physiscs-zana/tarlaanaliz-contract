@@ -40,12 +40,18 @@
       "description": "Quarantine event type"
     },
     "threat_type": {
-      "type": "string",
-      "description": "Threat type if applicable (reference: enums/threat_type.enum.v1.json)"
+      "$ref": "../../enums/threat_type.enum.v1.json",
+      "description": "Threat type if applicable — kanonik vocabulary. 2026-08-11'de BAĞLANDI: alan `{\"type\": \"string\"}` idi ve açıklaması kanonik enum'a *atıf yapıyordu* ama şema hiçbir şeyi zorlamıyordu (deponun 2026-07-31'de crop_type için adını koyduğu 'prose var, zorlanabilirlik yok' sınıfı).",
+      "x-compat-accepted": {
+        "change": "serbest dize → kanonik tehdit türü vocabulary'si (enum, 15 değer)",
+        "date": "2026-08-11",
+        "rationale": "Ölçüldü: edge'in kendi `QuarantineEvent` modelinde (tarlaanaliz-edge/src/core/domain/quarantine_event.py:25-33) `threat_type` alanı HİÇ YOK — yalnız `threat_name` var; `threat_type` dört depoda hiçbir üretici tarafından yazılmıyor. Kanonik 15 değerin hiçbiri de kodda geçmiyor. Bağlama bugün hiçbir üreticiyi kırmaz.",
+        "ref": "denetim 2026-08-11 · KR-073"
+      }
     },
     "decision": {
       "type": "string",
-      "description": "Quarantine decision (reference: enums/quarantine_decision.enum.v1.json)"
+      "description": "Quarantine decision (reference: enums/quarantine_decision.enum.v1.json). ⚠️ BİLEREK BAĞLANMADI (2026-08-11) — ÖLÇÜLDÜ: edge'in ürettiği sözlük kanonikle **SIFIR KESİŞİMLİ**. edge `QuarantineDecision` = {PASS, QUARANTINE, REJECT} (src/core/domain/quarantine_event.py:12-15); kanonik `quarantine_decision.enum.v1.json` = {QUARANTINED, RELEASED, DELETED, MANUAL_REVIEW_REQUIRED, PENDING_SCAN, SCAN_IN_PROGRESS, REJECTED, CONDITIONALLY_RELEASED, ESCALATED}. Bağlamak edge'in çıktısının %100'ünü reddederdi. Bu bir ARAÇ değil KARAR sorunudur: hangi sözlük kazanacak? (crop_type'ta 2026-07-31'de verilen 'dört depo AYNI standardı kullanır' kararının karantina eksenindeki karşılığı henüz verilmedi.) Karar verilene kadar alan serbest kalır ve bu gerekçe `tests/test_enum_binding_ratchet.py` baseline'ında izlenir."
     },
     "severity": {
       "type": "string",

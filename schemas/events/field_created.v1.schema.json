@@ -112,6 +112,7 @@
       "properties": {
         "field": {
           "type": "object",
+          "unevaluatedProperties": false,
           "description": "Field snapshot at creation (reference: core/field.v1.schema.json)",
           "properties": {
             "field_id": {
@@ -123,7 +124,13 @@
             },
             "boundary": {
               "type": "object",
-              "description": "GeoJSON Polygon"
+              "unevaluatedProperties": false,
+              "description": "GeoJSON Polygon/MultiPolygon. Alan adları `core/field.v1 $defs.GeoRef` ile aynıdır; DEĞER kısıtları (type=const 'Polygon', required) BİLEREK aynalanmadı — üretici ölçüldü (tarlaanaliz-platform/src/core/domain/events/field_events.py:129 savunmacı `{}` üretebilir; entities/field.py:134 Polygon VE MultiPolygon kabul eder), o yüzden burada yalnız ALAN SIZMASI kapatıldı, kabul daraltılmadı.",
+              "properties": {
+                "type": { "type": "string", "description": "GeoJSON geometry type (Polygon | MultiPolygon)" },
+                "coordinates": { "type": "array", "description": "GeoJSON coordinates" },
+                "crs": { "type": "string", "description": "Coordinate reference system (EPSG:4326)" }
+              }
             },
             "area_hectares": {
               "type": "number",
@@ -152,11 +159,26 @@
             },
             "season": {
               "type": "object",
-              "description": "Season info"
+              "unevaluatedProperties": false,
+              "description": "Season info. Alan adları `core/field.v1 $defs.SeasonRef` ile aynıdır; DEĞER kısıtları (year aralığı, season_type enum, required) BİLEREK aynalanmadı — bkz. `boundary` gerekçesi.",
+              "properties": {
+                "year": { "type": "integer", "description": "Crop year" },
+                "season_type": { "type": "string", "description": "Season type (reference: core/field.v1 $defs.SeasonRef)" },
+                "planting_date": { "type": "string", "description": "Planting date (ISO 8601 date)" },
+                "harvest_date": { "type": "string", "description": "Harvest date (ISO 8601 date)" }
+              }
             },
             "location": {
               "type": "object",
-              "description": "Province, district, village"
+              "unevaluatedProperties": false,
+              "description": "Province, district, village. Alan adları `core/field.v1 $defs.LocationInfo` ile aynıdır; DEĞER kısıtları (minLength, region enum, required) BİLEREK aynalanmadı — üretici ölçüldü: field_events.py:59-66 `province`/`district`/`village` her zaman, `province_code` yalnız gerçek 2-hane kod varsa yazılır ve boş dize üretebilir; `minLength: 1` eklemek canlı olayları kırardı.",
+              "properties": {
+                "province": { "type": "string", "description": "Province (il) name" },
+                "province_code": { "type": "string", "description": "Province code (01-81)" },
+                "district": { "type": "string", "description": "District (ilçe) name" },
+                "village": { "type": "string", "description": "Village/neighborhood name" },
+                "region": { "type": "string", "description": "Geographic region (reference: core/field.v1 $defs.LocationInfo)" }
+              }
             }
           },
           "required": [

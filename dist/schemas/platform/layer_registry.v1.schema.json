@@ -239,6 +239,7 @@
         },
         "range": {
           "type": "object",
+          "unevaluatedProperties": false,
           "properties": {
             "min": {
               "type": "number"

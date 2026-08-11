@@ -38,6 +38,7 @@
           "type": "array",
           "items": {
             "type": "object",
+            "unevaluatedProperties": false,
             "properties": {
               "file": { "type": "string" },
               "threat_name": { "type": "string" },
