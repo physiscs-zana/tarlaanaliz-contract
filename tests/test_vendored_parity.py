@@ -775,14 +775,22 @@ class TestVendoredMetadataDoesNotContradict:
     #: **142** paylaşılan yaprak karşılaştırılıyor, 0 çelişki. Bu bir RATCHET'tir:
     #: kanonik büyüdükçe sayı artar; DÜŞMESİ kapının körleştiği anlamına gelir
     #: (ör. yürüyüş mantığı bozulup 0 karşılaştırma yaparsa test sessizce yeşil kalırdı).
-    #: 2026-08-11 ÖLÇÜMÜ — **KARDEŞ BAŞINA**. Eski `MEASURED_SHARED_LEAVES = 142`
-    #: küresel bir toplamdı ve bu kapı kardeş-başına koştuğu için edge CI'ında
-    #: `0 >= 142` yapısal kırmızı üretiyordu (edge oturumu bildirdi, ölçüldü).
-    #: Dağılım: 142'nin tamamı worker `analysis_type.enum.v1.json`'ından; edge'in
-    #: 7 MIRROR çifti 0 paylaşılan `metadata` yaprağı taşıyor.
-    MEASURED_LEAVES_BY_REPO = {
-        "tarlaanaliz-worker": 142,
-        "tarlaanaliz-edge": 0,
+    #: ÇİFT BAŞINA ölçülmüş taban çizgisi (ratchet) — 2026-08-11.
+    #:
+    #: Önce `MEASURED_SHARED_LEAVES = 142` diye **küresel** bir toplamdı; kapı ise
+    #: **her kardeşin KENDİ CI'ında** koşuyor (bu dosyanın tasarım notu, satır 60-76).
+    #: edge CI'ında yalnız edge checkout'u olduğu için toplam 0 çıkıyor ve `0 >= 142`
+    #: **YAPISAL KIRMIZI** üretiyordu — edge PR #70'te gerçekten düştü.
+    #: Kusur v7.7.0 kaynaklı DEĞİL: `8c673e5` (v7.6.1 / PR #63) ile geldi; edge 7.6.0'a
+    #: pinliydi, o yüzden ancak yeni sürüme geçerken görünür oldu.
+    #:
+    #: İlk düzeltmem REPO başınaydı; **edge oturumu daha iyisini önerdi ve alındı**:
+    #: taban ÇİFT başına tutulur, beklenen değer o an MEVCUT çiftlerden toplanır.
+    #: Ölçüm (kapının KENDİ tanımıyla — üst düzey `metadata` anahtarı):
+    #: 13 çiftin 12'sinde iki tarafta da üst düzey `metadata` YOK → 0 meşrudur;
+    #: 142 yaprağın tamamı `analysis_type.enum.v1.json`'dan gelir.
+    MEASURED_LEAVES_BY_PAIR = {
+        "tarlaanaliz-worker/interface/contracts/analysis_type.enum.v1.json": 142,
     }
 
     @pytest.mark.parametrize(("canonical", "vendored"), MIRROR_PAIRS, ids=IDS)
@@ -830,13 +838,13 @@ class TestVendoredMetadataDoesNotContradict:
         # `0 >= 142` **YAPISAL KIRMIZI** üretirdi.
         # Kusur v7.7.0 kaynaklı DEĞİL: `8c673e5` (v7.6.1 / PR #63) ile geldi ve
         # v7.6.1 · v7.7.0 · master'da aynı sabit 142'ydi (ölçüldü).
-        mevcut_depolar = {v.split("/")[0] for _, v in mevcut_ciftler}
-        beklenen = sum(self.MEASURED_LEAVES_BY_REPO.get(depo, 0) for depo in mevcut_depolar)
+        beklenen = sum(self.MEASURED_LEAVES_BY_PAIR.get(v, 0) for _, v in mevcut_ciftler)
+        mevcut_depolar = sorted({v.split("/")[0] for _, v in mevcut_ciftler})
         assert toplam >= beklenen, (
             f"karşılaştırılan paylaşılan yaprak sayısı DÜŞTÜ ({toplam} < {beklenen}; "
             f"mevcut kardeş(ler): {sorted(mevcut_depolar)}). Ya kanonik `metadata` küçüldü, "
             "ya vendored kopya alan attı, ya da yürüyüş mantığı bozuldu — üçünde de kapı "
-            "körleşir. Sayı meşru şekilde arttıysa `MEASURED_LEAVES_BY_REPO`'yu yükselt."
+            "körleşir. Sayı meşru şekilde arttıysa `MEASURED_LEAVES_BY_PAIR`'i yükselt."
         )
 
         # Yaprak katkısı 0 olan kardeş için (bugün: edge) yukarıdaki kilit BOŞTUR.
@@ -844,6 +852,47 @@ class TestVendoredMetadataDoesNotContradict:
         # "hiç gezmedim" birbirinden ayrılmalı, yoksa kapı kendi körlüğünü örter.
         assert gezilen == len(mevcut_ciftler) and gezilen > 0, (
             f"mevcut {len(mevcut_ciftler)} çiftten yalnız {gezilen} tanesi gezildi."
+        )
+
+    def test_zero_baseline_pairs_really_have_no_canonical_metadata(self) -> None:
+        """POZİTİF KONTROL — tabanı 0 olan çift GERÇEKTEN karşılaştıracak şey taşımamalı.
+
+        Bunu **edge oturumu istedi ve haklıydı**: taban 0 olunca yukarıdaki kilit
+        `0 >= 0` olur ve **hiçbir şey kanıtlamaz**. Sessiz körlük tam buradan girer —
+        yürüyüş bozulup her çift 0 döndürse bile taban 0 olan kardeşte kapı yeşil kalır.
+
+        Bu test 0'ın **sebebini** kilitler: kanonik tarafta üst düzey `metadata` düğümü
+        YOKSA karşılaştıracak yaprak da yoktur, 0 meşrudur. Kanoniğe bir gün `metadata`
+        eklenirse test kırmızıya döner ve taban **ölçülerek** güncellenir.
+
+        ÖLÇÜLDÜ (2026-08-11, kapının kendi tanımıyla): 13 MIRROR çiftinin 12'sinde iki
+        tarafta da üst düzey `metadata` yok; 142 yaprağın tamamı tek çiftten geliyor.
+        """
+        mevcut_ciftler = [(c, v) for c, v in MIRROR_PAIRS if (WORKSPACE / v).exists()]
+        if not mevcut_ciftler:
+            pytest.skip("kardeş depo yok — bu kapı kardeş CI'ında koşar (D4-b)")
+
+        sifir_tabanli = [
+            (c, v) for c, v in mevcut_ciftler if self.MEASURED_LEAVES_BY_PAIR.get(v, 0) == 0
+        ]
+        assert sifir_tabanli, (
+            "Mevcut çiftlerin HEPSİ sıfırdan büyük tabana sahip — bu pozitif kontrol "
+            "hiçbir şey ölçmüyor demektir; taban sözlüğü MIRROR_PAIRS ile ayrışmış olabilir."
+        )
+
+        acik_kanonikler = []
+        for canonical, vendored in sifir_tabanli:
+            cj = json.loads((ROOT / canonical).read_text(encoding="utf-8"))
+            if isinstance(cj.get("metadata"), dict) and cj["metadata"]:
+                acik_kanonikler.append(f"{canonical}  (eş: {vendored})")
+
+        assert not acik_kanonikler, (
+            f"{len(acik_kanonikler)} çiftin tabanı 0 ama KANONİKTE üst düzey `metadata` VAR:\n  "
+            + "\n  ".join(acik_kanonikler)
+            + "\n\nBu, `0 >= 0` kilidinin artık BOŞ olduğu anlamına gelir: karşılaştırılacak "
+            "yaprak varken sayaç 0 diyorsa ya vendored kopya `metadata` taşımıyordur (I-4 "
+            "gereği meşru — çifti bilinçli olarak gerekçelendirin) ya da yürüyüş körelmiştir. "
+            "`MEASURED_LEAVES_BY_PAIR`'i ÖLÇEREK güncelleyin."
         )
 
     def test_prose_exception_list_does_not_grow_silently(self) -> None:
@@ -877,6 +926,55 @@ class TestVendoredMetadataDoesNotContradict:
             f"anlamsal alan(lar) prose istisnasına kaçmış: {sorted(kacanlar)} — bu kapı "
             "tam olarak bu alanlardaki sessiz ayrışma için yazıldı."
         )
+
+
+class TestWalkMechanismItselfWorks:
+    """Yürüyüşü DEPO VERİSİNDEN BAĞIMSIZ sına — sentetik girdiyle.
+
+    NEDEN (2026-08-11, mutasyonla ÖLÇÜLDÜ — kalan delik böyle bulundu):
+        Sayaç kilidi ve pozitif kontrolün ikisi de **depo verisini** okur. edge'in
+        MIRROR çiftlerinde paylaşılan `metadata` yaprağı **yok** (ölçüm: 7 çiftin
+        7'sinde iki tarafta da üst düzey `metadata` yok). Dolayısıyla edge CI'ında:
+
+            `_shared_metadata_conflicts`'i tamamen körelttim (`vendored_meta = {}`)
+            → iki test de YEŞİL kaldı (`2 passed`).
+
+        Yani ölçecek veri olmayan kardeşte, mekanizmanın bozulması görünmüyordu.
+        Aynı boşluk bu deponun KENDİ CI'ında daha da büyük: kardeş checkout'u hiç
+        olmadığı için yukarıdaki testlerin ikisi de **atlanıyor**.
+
+    Bu sınıf mekanizmayı sentetik sözlüklerle sınar: kardeş depo gerekmez, her CI'da
+    koşar, bozulma anında kırmızıya döner.
+    """
+
+    def test_shared_leaves_are_counted(self) -> None:
+        cj = {"metadata": {"a": 1, "ic": {"b": 2, "c": 3}}}
+        sayi, celisen = _shared_metadata_conflicts(cj, cj)
+        assert sayi == 3, f"3 paylaşılan yaprak beklendi, {sayi} sayıldı"
+        assert celisen == [], celisen
+
+    def test_contradiction_is_reported(self) -> None:
+        cj = {"metadata": {"ic": {"b": 2}}}
+        vj = {"metadata": {"ic": {"b": 99}}}
+        sayi, celisen = _shared_metadata_conflicts(cj, vj)
+        assert sayi == 1 and celisen == [("ic.b", 2, 99)], (sayi, celisen)
+
+    def test_vendored_omission_is_not_a_contradiction(self) -> None:
+        """I-4: vendored EKSİK tutabilir — eksiklik çelişki değildir, sayılmaz da."""
+        cj = {"metadata": {"a": 1, "b": 2}}
+        vj = {"metadata": {"a": 1}}
+        sayi, celisen = _shared_metadata_conflicts(cj, vj)
+        assert sayi == 1 and celisen == [], (sayi, celisen)
+
+    def test_list_values_compare_by_content(self) -> None:
+        cj = {"metadata": {"bantlar": ["R", "G"]}}
+        assert _shared_metadata_conflicts(cj, {"metadata": {"bantlar": ["R", "G"]}})[1] == []
+        assert _shared_metadata_conflicts(cj, {"metadata": {"bantlar": ["R"]}})[1] != []
+
+    def test_missing_metadata_on_either_side_yields_zero(self) -> None:
+        """POZİTİF KONTROL — 0 yalnız GERÇEKTEN boşken çıkmalı (edge'in durumu)."""
+        assert _shared_metadata_conflicts({}, {"metadata": {"a": 1}}) == (0, [])
+        assert _shared_metadata_conflicts({"metadata": {"a": 1}}, {}) == (0, [])
 
 
 class TestVendoredAheadDebtIsBounded:
