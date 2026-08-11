@@ -47,6 +47,7 @@ Kullanim:
   python -m scripts.check_doc_links                   # CI kapisi
   python -m scripts.check_doc_links --write-baseline  # baseline'i yeniden uret
 """
+
 from __future__ import annotations
 
 import argparse
@@ -93,9 +94,10 @@ TRAILING_RE = re.compile(r"(?::\d+(?:-\d+)?|#[\w-]+|\s*§[\w.\d]+)+\s*$")
 
 
 def tracked_files() -> list[str]:
-    out = subprocess.run(  # noqa: S603
-        ["git", "-C", str(REPO_ROOT), "ls-files", "-z"],  # noqa: S607
-        capture_output=True, check=True,
+    out = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "ls-files", "-z"],
+        capture_output=True,
+        check=True,
     ).stdout.decode("utf-8")
     return [p for p in out.split("\0") if p]
 
@@ -107,9 +109,10 @@ def submodule_files() -> list[str]:
     yapilan mesru atiflar bu yuzden 'cozulemedi' sanilir. OLCULDU (2026-08-11):
     bu duzeltme olmadan platformda 158 isabetin cogunlugu bu tek nedenden.
     """
-    out = subprocess.run(  # noqa: S603
-        ["git", "-C", str(REPO_ROOT), "ls-files", "-s", "-z"],  # noqa: S607
-        capture_output=True, check=True,
+    out = subprocess.run(
+        ["git", "-C", str(REPO_ROOT), "ls-files", "-s", "-z"],
+        capture_output=True,
+        check=True,
     ).stdout.decode("utf-8")
     extra: list[str] = []
     for entry in out.split("\0"):
@@ -122,10 +125,14 @@ def submodule_files() -> list[str]:
         # exit 0 + bos cikti verir. Yani "returncode == 0" burada kanit DEGILDIR
         # (olculdu 2026-08-11 — ilk yazimda tam bu yuzden fail-closed tetiklenmedi).
         populated = (sub / ".git").exists()
-        sub_out = subprocess.run(  # noqa: S603
-            ["git", "-C", str(sub), "ls-files", "-z"],  # noqa: S607
-            capture_output=True,
-        ) if populated else None
+        sub_out = (
+            subprocess.run(
+                ["git", "-C", str(sub), "ls-files", "-z"],
+                capture_output=True,
+            )
+            if populated
+            else None
+        )
         if sub_out is None or sub_out.returncode != 0:
             # FAIL-CLOSED: submodule doldurulmamis bir agacta bu kapi YANLIS cevap
             # verir (submodule icindeki 60+ dokumana yapilan mesru atiflari
@@ -207,7 +214,7 @@ def _sibling_resolves(cand: str) -> bool | None:
             sibling = REPO_ROOT.parent / prefix.rstrip("/")
             if not (sibling / ".git").exists():
                 return None
-            rel = cand[len(prefix):]
+            rel = cand[len(prefix) :]
             if (sibling / rel).is_file():
                 return True
             # ciplak ad eslemesi kardes depoda da gecerli
@@ -309,8 +316,14 @@ def write_baseline(hits: set[str]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Sarkan dokuman atifi kapisi")
-    parser.add_argument("--write-baseline", action="store_true",
-                        help="Baseline'i canli duruma gore yeniden uret")
+    parser.add_argument(
+        "--write-baseline",
+        action="store_true",
+        # Sondaki virgul BILEREK: "magic trailing comma" iki formatlayiciyi de
+        # bu satiri BOLUNMUS tutmaya zorlar. Onsuz worker (line-length 100)
+        # bolerken edge (120) birlestiriyor ve dosya artik BAYT-OZDES kalmiyor.
+        help="Baseline'i canli duruma gore yeniden uret",
+    )
     args = parser.parse_args()
 
     live, skipped = scan()
