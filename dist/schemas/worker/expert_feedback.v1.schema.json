@@ -90,6 +90,7 @@
         "object",
         "null"
       ],
+      "unevaluatedProperties": false,
       "properties": {
         "x": {
           "type": "integer"
@@ -153,6 +154,7 @@
             "object",
             "null"
           ],
+          "unevaluatedProperties": false,
           "description": "Tile-local pixel bbox (origin top-left) for the corrected polygon. Mirrors tile_coordinates shape; preserved for UI overlay alignment when CRS metadata is unavailable.",
           "properties": {
             "x": {

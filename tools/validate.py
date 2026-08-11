@@ -114,24 +114,107 @@ def validate_openapi_pii(spec_path: Path) -> List[str]:
     return _check_forbidden_recursive(document, "$", spec_path)
 
 
-def _check_unevaluated_in_defs(schema: dict, schema_path: Path) -> List[str]:
-    """Check that all object-type $defs have unevaluatedProperties: false."""
-    errors = []
-    defs = schema.get('$defs', {})
-    if not isinstance(defs, dict):
-        return errors
-    for def_name, def_schema in defs.items():
-        if not isinstance(def_schema, dict):
-            continue
-        if def_schema.get('type') == 'object':
-            if 'unevaluatedProperties' not in def_schema:
-                errors.append(
-                    f"Missing unevaluatedProperties in $defs.{def_name} in {schema_path}"
-                )
-            elif def_schema['unevaluatedProperties'] is not False:
-                errors.append(
-                    f"unevaluatedProperties must be false in $defs.{def_name} in {schema_path}"
-                )
+# --- ALAN SIZMASI (field drift) kapısı — AĞACIN TAMAMI --------------------------
+# 2026-08-11: bu kapı yalnız KÖK şemayı ve `$defs` altındaki BİRİNCİ seviye object'leri
+# denetliyordu. Ölçüldü: `schemas/` ağacındaki 310 object düğümünün 79'u o iki konumun
+# dışındaydı ve **28'i hiçbir koruma taşımıyordu** — yani dizi öğeleri (`items`) ve iç içe
+# nesneler sözleşmede TANIMSIZ alanları sessizce kabul ediyordu. Davranışsal kanıt
+# (KR-073 AV tarama raporu, `datasets/scan_report.v1`):
+#     kök'e tanımsız alan  -> 1 hata (kapı çalışıyor)
+#     findings[]'e aynı alan -> 0 hata (SESSİZCE GEÇİYOR)
+# İlk tarayıcı `"type": ["object", "null"]` BİRLEŞİK tiplerini de kaçırmıştı (7 düğüm daha).
+#
+# KURAL: her object düğümü politikasını **BEYAN ETMEK ZORUNDADIR** —
+#   * `unevaluatedProperties: false`  → kapalı (tercih edilen), ya da
+#   * `additionalProperties` (true/false) → bilinçli, gerekçesi yazılı karar.
+# Yasak olan **sessizlik**tir: beyansız object, sızmayı kaza eseri kabul eder.
+#
+# NEDEN `additionalProperties: true` kabul ediliyor: bazı düğümler gerçekten serbest
+# biçimlidir (`metadata` uzantı blokları, keyfi GeoJSON geometrileri). Onları kapatmak
+# sözleşmeyi yanlış yere daraltırdı. Ama açıklık bir KARAR olmalı, kaza değil — bu yüzden
+# anahtarın AÇIKÇA yazılması gerekir.
+#
+# ⚠️ `additionalProperties: false` kompozisyon (allOf/oneOf/anyOf) içinde kardeş şemaların
+# tanımladığı alanları GÖREMEZ ve yanlış reddeder. Ölçüldü (2026-08-11): bu depodaki
+# `additionalProperties: false` taşıyan 19 düğümün **hiçbiri** kompozisyon içinde değil.
+# Yeni bir kompozisyon düğümünde `unevaluatedProperties` tercih edin.
+
+#: Şema İÇİNDE yaşayan ama şema OLMAYAN bloklar — içleri örnek/açıklama verisidir,
+#: kural oralarda koşmaz (yoksa bir örnek payload'daki `"type": "object"` yanlış alarm üretir).
+_NON_SCHEMA_KEYS = frozenset({'examples', 'example', 'default', 'const', 'enum', 'notes'})
+
+# --- PARİTE-KİLİTLİ İSTİSNA — TEK GİRİŞ, GEREKÇESİ ÖLÇÜLDÜ ----------------------
+# I-4: worker `analysis_result.v1`'i dar bir alt küme olarak vendor'lar ve
+# `tests/test_vendored_parity.py::TestSubsetPairsMayOmitButNotContradict` ortak `$defs`
+# alanlarının doğrulama anlamının AYNI kalmasını zorlar. O kapı `_strip_annotations` ile
+# `additionalProperties` ve `unevaluatedProperties`'i TEK anahtara (`__no_extra__`)
+# indirger (test_vendored_parity.py:262-265) — yani kanonik tarafa **hangi politika
+# anahtarını koyarsak koyalım**, vendored kopyada karşılığı yokken çelişki üretir.
+# Ölçüldü (2026-08-11): `unevaluatedProperties: false` denendi → parite kapısı kırmızı;
+# `additionalProperties: true` denendi → yine kırmızı (anahtarın VARLIĞI fark sayılıyor).
+#
+# Daraltmanın kendisi de ölçümle desteklenmiyordu: tüketicide alan opak taşınıyor
+# (`tarlaanaliz-worker/src/core/domain/analysis_result.py:29` → `bbox: dict[str, float] | None`,
+# `:249` → doğrudan aktarım) ve anahtar kümesini kısıtlayan tek satır yok.
+#
+# ÇIKIŞ KOŞULU (bu istisna kalıcı DEĞİLDİR — I-5): worker'ın vendored kopyasına aynı
+# politika anahtarı yayılır (`tools/propagate_vendored.py`), sonra bu giriş SİLİNİR.
+# Not: yayılım bu turda YAPILMADI çünkü worker deposunda eşzamanlı başka bir aktör
+# çalışıyordu (`denetim/cerrahi-kalite-2026-08-11` dalı, kirli ağaç).
+_PARITY_LOCKED_OPEN: Dict[str, tuple] = {
+    'schemas/worker/analysis_result.v1.schema.json': (
+        '$.$defs.Detection.properties.bbox',
+    ),
+}
+
+
+#: "anahtar hiç yok" ile "anahtar var ama değeri None" ayrımı — ikincisi de bir HATADIR.
+_MISSING = object()
+
+
+def _is_object_node(node: Any) -> bool:
+    """`type` doğrudan 'object' ya da 'object' içeren bir BİRLEŞİK tip mi?"""
+    declared = node.get('type')
+    if declared == 'object':
+        return True
+    return isinstance(declared, list) and 'object' in declared
+
+
+def _check_object_policy(schema: Any, schema_path: Path) -> List[str]:
+    """Ağacın TAMAMINDA: her object düğümü sızma politikasını beyan etmeli."""
+    errors: List[str] = []
+    locked = _PARITY_LOCKED_OPEN.get(_rel(schema_path), ())
+
+    def walk(node: Any, pointer: str) -> None:
+        if isinstance(node, dict):
+            if pointer in locked:
+                pass
+            elif pointer != "$" and _is_object_node(node):
+                declared = node.get('unevaluatedProperties', _MISSING)
+                if declared is not _MISSING and declared is not False:
+                    # Yazılmış ama YANLIŞ yazılmış: `unevaluatedProperties: true` kuralı
+                    # kapatmaz, açar. Bunu "beyansız" saymak teşhisi gizlerdi.
+                    errors.append(
+                        f"unevaluatedProperties must be false (got {declared!r}) "
+                        f"at {pointer} in {schema_path}"
+                    )
+                elif declared is _MISSING and 'additionalProperties' not in node:
+                    errors.append(
+                        f"UNDECLARED object policy at {pointer} in {schema_path}: "
+                        "her object düğümü ya `unevaluatedProperties: false` (kapalı) ya da "
+                        "`additionalProperties` (bilinçli açık, gerekçesi description'da) "
+                        "beyan etmelidir. Beyansız düğüm, sözleşmede tanımsız alanları "
+                        "sessizce kabul eder (alan sızması)."
+                    )
+            for key, value in node.items():
+                if key in _NON_SCHEMA_KEYS or key.startswith('x-'):
+                    continue
+                walk(value, f"{pointer}.{key}")
+        elif isinstance(node, list):
+            for index, value in enumerate(node):
+                walk(value, f"{pointer}[{index}]")
+
+    walk(schema, "$")
     return errors
 
 
@@ -173,8 +256,10 @@ def validate_json_schema(schema_path: Path) -> List[str]:
             elif schema['unevaluatedProperties'] is not False:
                 errors.append(f"unevaluatedProperties must be false in {schema_path}")
 
-        # Check unevaluatedProperties in $defs
-        errors.extend(_check_unevaluated_in_defs(schema, schema_path))
+        # Alan sızması: AĞACIN TAMAMI ($defs birinci seviyesi değil — dizi öğeleri,
+        # iç içe nesneler ve birleşik tipler dahil). Kök yukarıda ayrıca ve DAHA SIKI
+        # denetlenir (kökte "bilinçli açık" seçeneği yoktur), bu yüzden walker kökü atlar.
+        errors.extend(_check_object_policy(schema, schema_path))
 
         # Check for forbidden fields recursively (KR-050)
         errors.extend(_check_forbidden_recursive(schema, "$", schema_path))

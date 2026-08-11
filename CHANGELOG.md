@@ -7,6 +7,107 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [Unreleased] — Alan sızması (field drift) kapatıldı: dizi öğeleri ve iç içe nesneler
+
+> **Sürüm önerisi: 7.7.0 (MINOR).** Re-pin + tag C8 töreninde; bu tur
+> `CONTRACTS_VERSION.md → **Checksum State:** PENDING_REPIN` ile beyanlı.
+
+### ÖLÇÜLEN SORUN (davranışsal kanıt, iddia değil)
+
+`tools/validate.py` `unevaluatedProperties` kuralını yalnız **kök şemada** ve
+**`$defs` birinci seviyesinde** zorluyordu. `schemas/` ağacındaki **310 object
+düğümünün 79'u** o iki konumun dışındaydı ve **28'i hiçbir koruma taşımıyordu** —
+yani dizi öğeleri (`items`) ve iç içe nesneler sözleşmede **tanımsız alanları
+sessizce kabul ediyordu**. KR-073 AV tarama raporunda ölçüldü
+(`datasets/scan_report.v1`, gerçek `Draft202012Validator` ile):
+
+```
+temiz belge                       -> 0 hata
+kök'e tanımsız alan               -> 1 hata   (kapı çalışıyordu)
+findings[]'e AYNI alan            -> 0 hata   (SESSİZCE GEÇİYORDU)
+scanned_files[]'e AYNI alan       -> 0 hata   (SESSİZCE GEÇİYORDU)
+```
+
+Etkilenen düğümlerin çoğu **gözetim zinciri** (chain of custody, KR-072/073)
+belgelerindeydi: `dataset_manifest.files[]` · `scan_report.scanned_files[]` /
+`findings[]` · `verification_report.computed_hashes[]` / `mismatches[]` ·
+`transfer_batch.datasets[]` · `qc_report.checks[]` · `evidence_bundle_ref.evidence_chain`.
+
+İlk tarayıcı ayrıca `"type": ["object", "null"]` **birleşik tiplerini** kaçırmıştı
+(7 düğüm daha) — ölçüm aracının kendi kusuru, düzeltildi.
+
+### Changed — şemalar (19 dosya, 27 düğüm)
+
+Sayım `origin/master` ile karşılaştırılarak ölçüldü (elle sayılmadı):
+**beyansız düğüm 28 → 1** (kalan tek düğüm aşağıdaki parite-kilitli istisnadır).
+
+- **23 düğüm KAPATILDI** (`unevaluatedProperties: false`).
+- **4 düğüm BİLİNÇLİ AÇIK BEYAN EDİLDİ** (`additionalProperties: true` + gerekçe):
+  `analysis_result.affected_zone` · `analysis_result.$defs.Detection.geometry` ·
+  `dataset_analyzed.payload.results_summary` · `training_feedback.correction_geometry` —
+  hepsi keyfi GeoJSON/serbest özet; kapatmak sözleşmeyi yanlış yerden daraltırdı.
+  Doğru çözüm `shared/geojson.v1`'e bağlamaktır (üretici çıkınca).
+- **`events/field_created.v1`**: `field.boundary` / `field.season` / `field.location`
+  alan adları `core/field.v1`'in `$defs.GeoRef` / `SeasonRef` / `LocationInfo`
+  tanımlarından **aynalandı** (12 opsiyonel alan beyanı). **DEĞER kısıtları
+  (`minLength`, `required`, `const`, enum) BİLEREK aynalanmadı** — üretici ölçüldü:
+  `tarlaanaliz-platform/src/core/domain/events/field_events.py:59-66,129` boş dize ve
+  savunmacı `{}` üretebiliyor; kısıtları aynalamak canlı olayları kırardı.
+  Bu tur **yalnız alan sızmasını** kapatır, kabulü daraltmaz.
+
+### KIRICILIK — ölçüldü, dedektöre GÜVENİLMEDİ
+
+`tools/breaking_change_detector.py --old origin/master --new . --json` →
+`has_breaking = false`, 0 breaking, 12 non-breaking. **Ama bu yeşil, kırıcı-değilliğin
+KANITI DEĞİLDİR:** dedektör `unevaluatedProperties`/`additionalProperties`'i yalnız
+*alt-şema taşıyıcısı* olarak tanıyor (`SUBSCHEMA_SINGLE`, satır 116-120); bir düğümün
+**açıktan kapalıya geçmesi** için sınıflandırma kuralı YOK — 27 kapatma **sıfır
+değişiklik kaydı** üretti. Bu kör nokta ayrıca kayda geçirildi.
+
+Kırıcılık bu yüzden **elle ölçüldü**:
+- Dört depodaki **5385 JSON** dosyası tarandı; etkilenen düğümlerde **fazladan alan
+  taşıyan tek bir yük bulunamadı** (pozitif kontrol: tarayıcı dikilmiş fazla alanı
+  görüyor). Uyarı: 12 şema için hiç eşleşen yük yok — o düğümler için bu "kanıt yok",
+  "temiz" değil.
+- Canlı üreticiler kaynaktan okundu: `field.created` (platform) · `drone_metadata`
+  (platform → worker) · `expert_feedback.tile_coordinates` (worker). Üçü de yalnız
+  beyan edilen alanları yazıyor.
+
+### GERİ ALINAN DEĞİŞİKLİK (kanıt öneriyi çürüttü)
+
+`analysis_result.$defs.Detection.bbox` kapatılmak istendi, **geri alındı**: tüketicide
+alan opak taşınıyor (`tarlaanaliz-worker/src/core/domain/analysis_result.py:29,249` →
+`dict[str, float] | None`) ve anahtar kümesini kısıtlayan tek satır yok. Ayrıca
+kapatma **I-4 parite çelişkisi** üretti (`test_vendored_parity` kırmızı döndü:
+`_strip_annotations` iki idiomu tek anahtara indirgediği için kanonikte **herhangi bir**
+politika anahtarı, vendored kopyada karşılığı yokken fark sayılıyor). Düğüm
+`tools/validate.py → _PARITY_LOCKED_OPEN` içinde **tek girişlik, çıkış koşulu yazılı**
+bir istisna olarak beyan edildi; `tests/test_object_drift_gate.py` listenin büyümesini
+yasaklıyor.
+
+### Added — kapı ve testler
+
+- **`tools/validate.py`**: `_check_unevaluated_in_defs` → **`_check_object_policy`**.
+  Kural: **her object düğümü politikasını BEYAN ETMELİ** — `unevaluatedProperties: false`
+  (kapalı) ya da `additionalProperties` (bilinçli açık). Yasak olan **sessizlik**.
+  Birleşik tipleri (`["object","null"]`) tanır; `examples`/`notes`/`x-` bloklarını
+  taramaz (oralar şema değil veri). Kök daha SIKI kalır (kökte "açık" seçeneği yok).
+- **`tests/test_object_drift_gate.py`** (14 test): kapsam · mutasyon (dizi öğesi ve
+  birleşik tip körlüğü) · **pozitif kontrol** (meşru serbest düğümler açık kalmalı;
+  annotation blokları taranmamalı) · istisna listesi ratchet'i · **davranışsal kanıt**
+  (dizi öğesine sızma gerçek doğrulayıcıda REDDEDİLİR).
+- Mutasyonla sınandı: gerçek şemadan (`scan_report.findings[]`) koruma kaldırılınca
+  `validate.py` 1 hata verdi ve süitte 2 test kırmızıya döndü; desen tutmazsa betik
+  durur (sahte yeşil yok).
+
+### Changed — yayın ağacı
+
+`dist/schemas/` yeniden üretildi (`python tools/inline_refs.py --write`, 68 dosya).
+Kapı yayın ağacını da denetliyor: bayat `dist` ile `validate.py` **28 hata** verdi,
+yeniden üretimden sonra **0**.
+
+---
+
 ## [7.6.1] - 2026-08-11 — D12: `stress_ratio` TANIMLANDI + ön faz kapalı listesi KAPIYA bağlandı
 
 > ⛔ **Bu sürüm kendi önceki iddiasını çürütüyor.** v1.4.2–v1.4.3 `analysis_type.enum`

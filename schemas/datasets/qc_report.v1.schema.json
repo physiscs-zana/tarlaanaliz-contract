@@ -33,6 +33,7 @@
     },
     "metrics": {
       "type": "object",
+      "unevaluatedProperties": false,
       "properties": {
         "spatial_resolution_cm": {
           "type": [

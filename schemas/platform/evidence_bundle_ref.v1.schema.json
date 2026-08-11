@@ -13,6 +13,7 @@
     "field_id": {"type": ["string", "null"], "pattern": "^field_[a-z0-9]{24}$", "description": "İlişkili tarla kimliği."},
     "evidence_chain": {
       "type": "object",
+      "unevaluatedProperties": false,
       "properties": {
         "intake_manifest_id": {"type": ["string", "null"]},
         "edge_scan_report_id": {"type": ["string", "null"]},

@@ -60,6 +60,7 @@
       "minItems": 1,
       "items": {
         "type": "object",
+        "unevaluatedProperties": false,
         "required": [
           "filename",
           "size_bytes",

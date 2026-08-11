@@ -29,6 +29,7 @@
       "type": "array",
       "items": {
         "type": "object",
+        "unevaluatedProperties": false,
         "required": [
           "check_name",
           "status"

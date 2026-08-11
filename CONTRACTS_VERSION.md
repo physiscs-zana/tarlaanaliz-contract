@@ -4,7 +4,8 @@
 
 **Release Date:** 2026-08-10T22:55:22.968917Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `c4551a0683db6b0dc3152dcd1ff3406a268a923111ecd88824cfb40ccfaac965`
+**Contracts Checksum (SHA-256):** `c4551a0683db6b0dc3152dcd1ff3406a268a923111ecd88824cfb40ccfaac965`  
+**Checksum State:** PENDING_REPIN — 2026-08-11 alan sızması (field drift) turu: 15 şemada 27 object düğümü sızma politikasını beyan eder hâle geldi (`unevaluatedProperties: false` ya da gerekçeli `additionalProperties`). Şema içeriği değişti, dolayısıyla checksum tur içinde uyuşmuyor; re-pin C8 release töreninde yapılır (tur içi ara re-pin, yayımlanmış `v7.6.1` etiketinin checksum anlamını bozardı). Sürüm önerisi **7.7.0 (MINOR)**: `events/field_created.v1`'e 12 opsiyonel alan beyanı eklendi; kırıcılık ölçüldü → aşağıya bakın.
 
 ---
 

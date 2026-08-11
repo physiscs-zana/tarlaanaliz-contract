@@ -31,6 +31,7 @@
       "type": "array",
       "items": {
         "type": "object",
+        "unevaluatedProperties": false,
         "required": [
           "filename",
           "expected_hash",
@@ -59,6 +60,7 @@
       "type": "array",
       "items": {
         "type": "object",
+        "unevaluatedProperties": false,
         "properties": {
           "filename": {
             "type": "string"

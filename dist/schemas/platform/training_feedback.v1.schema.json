@@ -89,7 +89,8 @@
             "object",
             "null"
           ],
-          "description": "GeoJSON geometri (segmentasyon düzeltmesi için)."
+          "additionalProperties": true,
+          "description": "GeoJSON geometri (segmentasyon düzeltmesi için). BİLİNÇLİ AÇIK (2026-08-11): keyfi GeoJSON geometrisi; alan kümesi geometri tipine göre değişir. Ölçüldü: bu alanı üreten kod dört depoda YOK. Doğru çözüm `shared/geojson.v1.schema.json`'a bağlamaktır."
         }
       },
       "unevaluatedProperties": false

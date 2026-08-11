@@ -37,6 +37,7 @@
         "object",
         "null"
       ],
+      "unevaluatedProperties": false,
       "properties": {
         "red": {
           "type": "number"

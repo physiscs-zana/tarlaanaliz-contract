@@ -114,7 +114,8 @@
         "object",
         "null"
       ],
-      "description": "Drone metadata embedded by Platform (ADR-002: Worker never reads drone_registry.yaml directly)",
+      "unevaluatedProperties": false,
+      "description": "Drone metadata embedded by Platform (ADR-002: Worker never reads drone_registry.yaml directly). Alan sızmasına kapalı (2026-08-11); ÖLÇÜLDÜ: üretici tarlaanaliz-platform/src/infrastructure/messaging/worker_job_publisher.py:222-225 yalnız `available_bands` + `has_lwir` yazar, tüketici tarlaanaliz-worker/src/core/domain/analysis_job.py:81-87 `DroneMetadata` tam olarak bu dört alanı taşır — kapatma iki tarafı da kırmaz.",
       "properties": {
         "sensor_model": {
           "type": "string"

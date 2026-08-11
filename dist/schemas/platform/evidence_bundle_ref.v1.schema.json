@@ -39,6 +39,7 @@
     },
     "evidence_chain": {
       "type": "object",
+      "unevaluatedProperties": false,
       "properties": {
         "intake_manifest_id": {
           "type": [

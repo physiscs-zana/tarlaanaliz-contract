@@ -26,6 +26,7 @@
       "minItems": 1,
       "items": {
         "type": "object",
+        "unevaluatedProperties": false,
         "required": [
           "dataset_id",
           "manifest_hash"

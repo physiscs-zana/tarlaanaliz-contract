@@ -69,6 +69,7 @@
           "type": "array",
           "items": {
             "type": "object",
+            "unevaluatedProperties": false,
             "properties": {
               "file": {
                 "type": "string"
