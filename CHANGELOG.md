@@ -7,6 +7,53 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.7.2] - 2026-08-11 — Aynı kusur KARDEŞ DOSYADA da vardı: sınıfı kapattığımı sanmıştım
+
+> **PATCH.** Sözleşme yüzeyi değişmedi; `schemas/` ve `enums/` ağaçlarına dokunulmadı.
+> `api/` içinde yalnız üç `info.version` damgası değişti → checksum `2d9f7475…` → `aded57d3…`.
+
+### 🔴 Bu sürüm bir ÖZ-KUSURUN düzeltmesidir
+
+`v7.7.1`'de `test_vendored_parity.py`'nin küresel tabanını çift başına çevirdim ve
+*"aynı sınıfın tamamını kapattım"* dedim. **Kapatmamışım.** Kardeş dosya
+`test_vendored_policy_parity.py` **aynı kusuru** taşıyordu ve onu saymadım —
+`v7.7.1` notunda yazdığım "sınıfı say, hepsini aynı PR'da kapat" kuralını kendim ihlal ettim.
+**Worker oturumu yakaladı** (o testi `--deselect` ile dışarıda bırakmak zorunda kalmışlar).
+
+Bildirdiklerinden **daha geniş** çıktı — ölçüldü:
+
+```
+worker CI :  8 çift /  35 düğüm   →   8 >= 18   YANLIŞ
+edge   CI : 10 çift /  13 düğüm   →  10 >= 18   YANLIŞ
+```
+
+Yani `MEASURED_PAIRS = 18` / `MEASURED_NODES = 48` eşiği **iki kardeşte de** yapısal
+olarak ulaşılamazdı; kapı yalnız bu makinedeki gibi **dört depo birden** duran bir
+ortamda geçiyordu.
+
+### Fixed
+
+- **`MEASURED_NODES_BY_PAIR`** — taban çift başına (18 giriş, ölçülerek). Beklenen çift
+  sayısı ve düğüm sayısı o an **mevcut** çiftlerden türetilir. Doğrulama: eski eşik iki
+  kardeşte de kırmızı, yeni eşik ikisinde de geçer.
+
+### Added — iki katman (altı mutasyonla sınandı, hepsi öldürdü)
+
+| Katman | Mutasyon → sonuç |
+|---|---|
+| `test_zero_baseline_pairs_really_have_no_object_nodes` — taban 0 olan çiftin kanonik tarafında `type: object` düğümü olmadığını iddia eder (üç enum çifti; sebep yapısal) | kanonik enum'a object düğümü dik → **1 kırmızı** · tabandan bir çift düş → **1 kırmızı** |
+| `TestPolicyWalkMechanismItselfWorks` (6) — yürüyüş + politika normalizasyonu **sentetik girdiyle**, kardeş depo gerekmez | yürüyüşü körelt → **6** · her şeyi `KAPALI` say → **4** · `BEYANSIZ`→`KAPALI` (fail-open) → **3** · `x-` bloklarını da tara → **1** |
+
+> `BEYANSIZ`'ı `KAPALI` saymak sessiz bir **fail-open**'dır: politikasız düğüm kapalı
+> görünür ve alan sızması kapısı boşa düşer. Mutasyon bunu üç testten geçiremedi.
+
+> ⚠️ **Kalıcı ders:** *"sınıfı gördüm"* demek, sınıfı **saymak** değildir. Bu turda sınıf
+> aramasını süitin tamamına yaydım (`MEASURED_*` sabiti + kardeş-farkındalı dosya
+> kesişimi); kalan iki sabit ölçüldü ve **tavan** oldukları için (`<=`, statik sözlüğe
+> bakıyorlar) kardeşten bağımsız, güvenli.
+
+---
+
 ## [7.7.1] - 2026-08-11 — Vendored parite sayacı kardeş CI'ında YAPISAL KIRMIZI veriyordu
 
 > Bu sürüm **PATCH**: sözleşme yüzeyi (alan · tip · zorunluluk · sözlük değeri) değişmedi.
