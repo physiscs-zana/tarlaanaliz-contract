@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.6.0
+## Version: 7.6.1
 
-**Release Date:** 2026-08-07T10:36:32.556871Z  
+**Release Date:** 2026-08-10T22:55:22.968917Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `f3f331be481105aa4d3c697d08b7dc1a0f23b3a77277462e3aedc871a2c29387`
+**Contracts Checksum (SHA-256):** `c4551a0683db6b0dc3152dcd1ff3406a268a923111ecd88824cfb40ccfaac965`
 
 ---
 
@@ -51,7 +51,7 @@ Individual file hashes for verification:
 ### Enums
 
 - `enums/analysis_type.enum.v1.json`  
-  `7f470beebd06c02049c2d8fe182ab9d6f62e58f11be34442368f3054d965c3f1`
+  `aa68f4ad6d32a2cedb30f3974513a4310cd5e7db2ac9fb953596a4de29588c8c`
 - `enums/calibration_type.enum.v1.json`  
   `8c35271314e57a936dd1cf7c6fa62badea272a551b1d172e4456f7fe2d649f29`
 - `enums/crop_type.enum.v1.json`  
@@ -83,7 +83,7 @@ Individual file hashes for verification:
 - `enums/radiometric_mode.enum.v1.json`  
   `da7c319fa30be25fb42db9cc03d777815a9975c48ae46580582da9e861546ae9`
 - `enums/report_phase.enum.v1.json`  
-  `1769ebc86fdcfbd4343951e21a01d6df872981a907eef7af8bcfdd90d0175cb2`
+  `ed65ed8137545fa984aa9fb7c21082200d82cb0b54657a06c81ce743ee9afdd9`
 - `enums/role.enum.v1.json`  
   `c978f07a112deabb74c62ba229599d4946a9fa3e2a9bb14162accc802d490c22`
 - `enums/scan_stage.enum.v1.json`  
@@ -255,15 +255,21 @@ Individual file hashes for verification:
 ### API Specs
 
 - `api/edge_local.v1.yaml`  
-  `e071bffab39438d9cd9b98185645da83f09c6c281a7ec2002b610491094d67e1`
+  `7077a3722a8d68a3e2b5e20da91bcae790465e5e7bad7602a44f88c7fd434a04`
 - `api/platform_internal.v1.yaml`  
-  `a46b1c8bd8bd385737f68b7a741495d7480a578b66fe5b4a48fa06b1efd1d6d1`
+  `51f78af076bb44203aacda0cbbbadf399266158f01c2036444486a74108521bf`
 - `api/platform_public.v1.yaml`  
-  `27d330cb06e5cb941f8f92daafcf74a144000803c63cf05df5aec1f78225ceee`
+  `901434ecb196064c6c094d13d4433de4af4e7df9d2fe87847a2d1e71fd13ee51`
 
 ---
 
 ## Changelog
+
+### v7.6.1 (2026-08-10)
+
+**Breaking:** NO
+
+D12: stress_ratio kanonik olarak TANIMLANDI (NDRE/NDVI, NDVI<=0 -> notr 1.0); yanlis 'uretim yok' iddiasi curutuldu; teslimat kurali makine-okunur (delivery_rule.preliminary=false) ve ON FAZ kapali listesi platformda kapiya baglandi.
 
 ### v7.6.0 (2026-08-07)
 
@@ -389,7 +395,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("f3f331be481105aa4d3c697d08b7dc1a0f23b3a77277462e3aedc871a2c29387"), "Contracts checksum mismatch!"
+assert verify_contracts("c4551a0683db6b0dc3152dcd1ff3406a268a923111ecd88824cfb40ccfaac965"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -402,7 +408,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("f3f331be481105aa4d3c697d08b7dc1a0f23b3a77277462e3aedc871a2c29387"), "Contracts checksum mismatch!");
+assert(verifyContracts("c4551a0683db6b0dc3152dcd1ff3406a268a923111ecd88824cfb40ccfaac965"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -453,4 +459,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-08-07T10:36:32.556871Z
+**Last Updated:** 2026-08-10T22:55:22.968917Z

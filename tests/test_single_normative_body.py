@@ -349,33 +349,164 @@ class TestDualBodyDebtIsFrozen:
         )
 
 
-class TestUndefinedQuantitiesAreDeclared:
-    """A3 — atıf alan ama tanımı olmayan büyüklükler AÇIKÇA işaretli olmalı."""
+class TestDerivedQuantitiesAreDefined:
+    """A3 → D12 — atıf alan her TÜRETİLMİŞ büyüklük tanımlı olmalı VE teslimat
+    kuralı, ön fazın kapalı listesiyle makine düzeyinde ANLAŞMALI.
 
-    def test_stress_ratio_status_is_declared(self) -> None:
-        enum_doc = json.loads(
+    Kapının iki ayrı hayatı oldu:
+
+    * **A3 (2026-07-31):** `stress_ratio` 3 yerde atıf alıyordu, 0 yerde tanımlıydı.
+      O günkü kapı yalnız "beyan var mı" diye bakıyordu (`status`, `problem`,
+      `until_then` alanları dolu mu).
+    * **D12 (2026-08-11):** beyanın KENDİSİ yanlış çıktı. *"ad var, üretim yok"*
+      diyordu; ölçüm tersini gösterdi — üretici `feature_extraction.compute_indices_v2`
+      içinde değil, worker'ın çıkarım hattındaydı (`inference/pipeline.py`) ve raster
+      nesne deposuna yüklenip manifest'te listeleniyordu. Yani beyan-varlığını denetleyen
+      kapı, İÇERİĞİ yanlış bir beyanı sorunsuz geçirdi.
+
+    Bu yüzden kapı artık **beyan varlığını değil, iki makine-okunur kaynağın
+    tutarlılığını** ölçer: `indexDefinitions[*].delivery_rule.preliminary` ile
+    `report_phase.enum` → `x-preliminary-content.stage_b_post_analysis.fields`
+    aynı şeyi söylemek ZORUNDADIR. Bu liste artık platformda gerçek bir kapıyı
+    besliyor (`preliminary_content_gate.py`), yani ayrışma bir belge tutarsızlığı
+    değil, doğrudan bir davranış hatasıdır.
+    """
+
+    def _enum_doc(self) -> dict:
+        return json.loads(
             (ROOT / "enums" / "analysis_type.enum.v1.json").read_text(encoding="utf-8")
         )
-        definitions = enum_doc["metadata"].get("indexDefinitions", {})
-        entry = definitions.get("stress_ratio")
-        assert entry, (
-            "`stress_ratio` KR-093'ün zorunlu teslimat kaleminin kaynağı olarak anılıyor "
-            "ama hiçbir yerde TANIMLI değil (A3: 3 atıf / 0 tanım). Tanımsız büyüklük ne "
-            "üretilebilir ne denetlenebilir."
+
+    def _stage_b_fields(self) -> list[str]:
+        report_phase = json.loads(
+            (ROOT / "enums" / "report_phase.enum.v1.json").read_text(encoding="utf-8")
         )
-        for key in ("status", "problem", "why_not_guessed", "blocked_on", "until_then"):
-            assert str(entry.get(key, "")).strip(), f"beyanda eksik alan: {key}"
+        return list(
+            report_phase["x-preliminary-content"]["stage_b_post_analysis"]["fields"]
+        )
+
+    def test_stress_ratio_is_defined_from_measured_code(self) -> None:
+        """Tanım TAHMİNLE değil, ÜRETİCİ koddan ölçülerek yazılmış olmalı."""
+        entry = self._enum_doc()["metadata"]["indexDefinitions"].get("stress_ratio")
+        assert entry, (
+            "`stress_ratio` KR-093 metinlerinde anılıyor ama `indexDefinitions`'ta yok. "
+            "Tanımsız büyüklük ne üretilebilir ne denetlenebilir."
+        )
+        assert entry.get("status") == "DEFINED", (
+            "D12 kararı: `stress_ratio` ÖLÇÜLEREK tanımlandı. Statü geri alınıyorsa "
+            "gerekçesi ve yeni ölçüm bu kapıyla birlikte yazılmalı."
+        )
+        # Beklenen değer LİTERAL yazılır (uygulamadan türetilmez): 2026-08-11'de
+        # `src/indices/stress_ratio.py` okunarak ölçüldü. Yön DE bağlayıcıdır —
+        # `NDVI / NDRE` başka bir büyüklüktür ve eşikleri ters çevirir.
+        assert entry.get("formula") == "stress_ratio = NDRE / NDVI", (
+            f"formül ölçülen uygulamayla birebir olmalı, bulunan: {entry.get('formula')!r}"
+        )
+        # Sınır davranışı MAKİNE-OKUNUR: "yazı var mı" denetimi, D12'de görüldüğü gibi
+        # içeriği yanlış bir beyanı da geçirir. Değerler uygulamadan ölçüldü
+        # (`stress_ratio.py:59-60` → `np.where(ndvi > 0.0, ratio, 1.0)`); değiştirmek
+        # için önce kodu yeniden ÖLÇMEK gerekir.
+        guard = entry.get("domain_guard")
+        assert isinstance(guard, dict), (
+            "`domain_guard` yapılandırılmış olmalı (valid_where + outside_value); düz "
+            "metin, tüketicinin sınır davranışını uydurmasına açık kapı bırakır."
+        )
+        assert guard.get("valid_where") == "NDVI > 0", (
+            f"geçerlilik koşulu ölçülenle uyuşmuyor: {guard.get('valid_where')!r}"
+        )
+        assert guard.get("outside_value") == 1.0, (
+            "geçerlilik dışı piksellerde NÖTR 1.0 yazılmalı — 0.0 yazmak 'tam stresli' "
+            f"demektir ve su/gölge/toprağı hasta bitki gibi gösterir. Bulunan: "
+            f"{guard.get('outside_value')!r}"
+        )
+        producers = entry.get("measured_producers") or []
+        assert producers, "tanımın dayandığı ÜRETİCİ yollar yazılmalı (iddia = ölçüm)"
+        for yol in producers:
+            assert re.search(r":\d+", str(yol)), (
+                f"üretici atfı `dosya:satır` taşımalı, bulunan: {yol!r} — 'şu dosyada var' "
+                "demek ölçüm değildir."
+            )
+
+    def test_delivery_rule_agrees_with_preliminary_closed_list(self) -> None:
+        """MAKİNE ↔ MAKİNE: teslimat bayrağı ile ön fazın kapalı listesi aynı şeyi demeli.
+
+        Bu iki kaynak ayrışırsa, biri belgeyi diğeri kodu yönlendirdiği için sözleşme
+        iki farklı davranış vaat eder. Kapı her iki yönü de yakalar: bayrağı `true`
+        yapmak da, katmanı listeye eklemek de tek başına kırmızıya döndürür.
+        """
+        stage_b = self._stage_b_fields()
+        definitions = self._enum_doc()["metadata"]["indexDefinitions"]
+        kontrol_edilen = 0
+        for ad, entry in definitions.items():
+            if not isinstance(entry, dict):
+                continue  # `description` gibi düz metin alanları
+            rule = entry.get("delivery_rule")
+            if not isinstance(rule, dict):
+                continue
+            katman = rule.get("feeds_layer")
+            assert isinstance(katman, str) and katman, (
+                f"{ad}: `delivery_rule` var ama hangi katmanı beslediği yazılmamış"
+            )
+            bayrak = rule.get("preliminary")
+            assert isinstance(bayrak, bool), (
+                f"{ad}: `delivery_rule.preliminary` bool olmalı (bulunan: {bayrak!r})"
+            )
+            assert bayrak == (katman in stage_b), (
+                f"{ad}: `delivery_rule.preliminary={bayrak}` ile ön faz kapalı listesi "
+                f"çelişiyor (`{katman}` stage_b'de {'VAR' if katman in stage_b else 'YOK'}). "
+                "İkisi aynı commit'te güncellenmelidir — biri belgeyi, diğeri platformdaki "
+                "`preliminary_content_gate` kapısını yönlendiriyor."
+            )
+            kontrol_edilen += 1
+        # Sayaç kilidi: döngü hiç koşmazsa test boşuna geçmesin.
+        assert kontrol_edilen > 0, (
+            "hiçbir `indexDefinitions` girdisinde `delivery_rule` bulunamadı — kapı "
+            "sessizce hiçbir şey ölçmüyor olabilir (anahtar adı mı değişti?)"
+        )
+
+    def test_proxy_layer_is_never_deliverable_in_preliminary(self) -> None:
+        """`proxy_only` bir katmanı besleyen indeks ön fazda teslim EDİLEMEZ (D17)."""
+        enum_doc = self._enum_doc()
+        by_layer = enum_doc["metadata"]["bandRequirements"]["byLayer"]
+        definitions = enum_doc["metadata"]["indexDefinitions"]
+        kontrol_edilen = 0
+        for ad, entry in definitions.items():
+            if not isinstance(entry, dict):
+                continue
+            rule = entry.get("delivery_rule")
+            if not isinstance(rule, dict):
+                continue
+            katman = rule.get("feeds_layer")
+            if by_layer.get(katman, {}).get("availability") != "proxy_only":
+                continue
+            assert rule.get("preliminary") is False, (
+                f"{ad}: `{katman}` bir VEKİL katman (`proxy_only`) — doğrudan ölçümü bu "
+                "donanımda yok. Vekil gösterge uzman kapısı ÖNCESİNDE çiftçiye "
+                "sunulamaz: doğrulanmış bir bulgu sanılır (KR-093 + KR-019)."
+            )
+            kontrol_edilen += 1
+        assert kontrol_edilen > 0, (
+            "hiçbir vekil-katman indeksi denetlenmedi — `byLayer` availability değerleri "
+            "ya da `feeds_layer` adları değişmiş olabilir; kapı kör kalmış."
+        )
 
     def test_no_silent_undefined_quantity_in_preliminary_mapping(self) -> None:
-        """Ön faz eşlemesi TANIMSIZ bir büyüklüğe dayanamaz."""
+        """Ön faz eşlemesi ham indeks adına dayanamaz (D17'de çıkarıldı, öyle kalmalı)."""
         report_phase = json.loads(
             (ROOT / "enums" / "report_phase.enum.v1.json").read_text(encoding="utf-8")
         )
         stage_b = report_phase["x-preliminary-content"]["stage_b_post_analysis"]
-        text = json.dumps(stage_b, ensure_ascii=False)
-        assert "stress_ratio" not in text, (
-            "ön faz stage_b hâlâ tanımsız `stress_ratio`'ya dayanıyor — D17 ile "
-            "WATER_STRESS çıkarıldı, eşleme de çıkmalıydı"
+        # `x-removed-…` / `x-enforcement-…` blokları KARARIN KAYDIDIR; yasak olan,
+        # eşlemenin `fields` içinde YAŞAMASIDIR. Bu yüzden yalnız `fields` denetlenir —
+        # aksi hâlde kararın gerekçesini yazmak kapıyı kırardı.
+        alanlar = json.dumps(stage_b["fields"], ensure_ascii=False)
+        assert "stress_ratio" not in alanlar, (
+            "ön faz stage_b yine `stress_ratio`'ya dayanıyor — D17 ile WATER_STRESS "
+            "çıkarıldı, eşleme de çıkmalıydı"
+        )
+        assert "WATER_STRESS" not in alanlar, (
+            "D17/D12: `WATER_STRESS` vekil katmandır, ön fazın kapalı listesine geri "
+            "eklenemez (geri ekleme kararı termal/SWIR donanım kararına bağlıdır)"
         )
 
 
@@ -419,13 +550,19 @@ class TestMachineAndProseAgree:
                 "metin ayrışmış — ikisi aynı commit'te güncellenmelidir."
             )
 
-    def test_undefined_quantity_is_not_mandated_in_prose(self) -> None:
-        """`stress_ratio` tanımsız olduğu sürece hiçbir gövde onu ZORUNLU sayamaz."""
+    def test_proxy_quantity_is_not_mandated_in_prose(self) -> None:
+        """Hiçbir normatif gövde `stress_ratio`'yu ZORUNLU teslimat kaynağı sayamaz.
+
+        Gerekçe D12'de (2026-08-11) DEĞİŞTİ, kural değişmedi: büyüklük artık tanımlıdır
+        (`NDRE/NDVI`), ama beslediği katman VEKİLDİR (`proxy_only`) ve ön fazın kapalı
+        listesi dışındadır. Yani yasağın dayanağı "tanımsız" değil, "doğrulanmamış vekil".
+        Tanım geldi diye eşlemeyi geri yazmak, D17 kararını sessizce iptal ederdi.
+        """
         for relative, label in self.SOURCES:
             text = (ROOT / relative).read_text(encoding="utf-8")
             assert "←stress_ratio" not in text, (
-                f"{label}: tanımsız `stress_ratio` bir teslimat kaleminin kaynağı olarak "
-                "zorunlu tutuluyor (A3). Tanım gelene kadar eşleme askıdadır."
+                f"{label}: `stress_ratio` bir teslimat kaleminin zorunlu kaynağı olarak "
+                "yazılmış. Beslediği katman `proxy_only`; ön fazda teslim edilemez."
             )
 
 

@@ -7,6 +7,54 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.6.1] - 2026-08-11 — D12: `stress_ratio` TANIMLANDI + ön faz kapalı listesi KAPIYA bağlandı
+
+> ⛔ **Bu sürüm kendi önceki iddiasını çürütüyor.** v1.4.2–v1.4.3 `analysis_type.enum`
+> içinde *"`stress_ratio`: ad var, üretim yok — hiçbir üretici bu adı emit ETMEMELİDİR"*
+> yazıyordu. Ölçüm (2026-08-11) bunun **yanlış** olduğunu gösterdi: iddia tek bir dosyaya
+> (`feature_extraction.compute_indices_v2`) bakıp "yok" demişti; üretici worker'ın çıkarım
+> hattındadır ve çıktı nesne deposuna yüklenip `manifest.json`'da listelenir.
+
+### Changed (PATCH — metadata/açıklama; enum değerleri ve `byLayer` DEĞİŞMEDİ)
+
+- **`enums/analysis_type.enum.v1.json` (metadata v1.4.3 → v1.4.4)** —
+  `indexDefinitions.stress_ratio`: `UNDEFINED_PENDING_DECISION` → **`DEFINED`**.
+  - `formula`: **`stress_ratio = NDRE / NDVI`** (uygulama okunarak ölçüldü, tahmin değil).
+  - `domain_guard` artık **makine-okunur**: `valid_where = "NDVI > 0"`,
+    `outside_value = 1.0` (bitki örtüsü olmayan piksellerde nötr — bir ölçüm değil,
+    ölçüm YOKLUĞU işareti).
+  - `measured_producers`: 7 üretici yol `dosya:satır` ile yazıldı.
+  - `delivery_rule` **yeni ve makine-okunur**: `preliminary = false`,
+    `feeds_layer = "WATER_STRESS"`. **Teslimat kuralı DEĞİŞMEDİ** — katman `proxy_only`
+    olduğu için uzman kapısı öncesinde çiftçiye sunulmaz. *Tanımlılık ≠ geçerlilik:*
+    formülün yazılı olması onu doğrulanmış bir su-stresi ölçümü yapmaz.
+  - `superseded_claim`: çürütülen metin, neden yanlış olduğu ve dersi kayıtta tutulur.
+- **`enums/report_phase.enum.v1.json`** — `PRELIMINARY` açıklamasındaki *"kaynağı
+  `stress_ratio` TANIMSIZDIR"* ifadesi düzeltildi; `x-removed-2026-07-31` bloğuna
+  `x-enforcement-2026-08-11` eklendi. `stage_b_post_analysis.fields` **DEĞİŞMEDİ**.
+- **`docs/TARLAANALIZ_SSOT_v1_2_0.txt`** (KR-093 Aşama B satırı) — aynı düzeltme; metin
+  ile makine-okunur liste aynı commit'te hizalandı (AR1 dersi).
+
+### Gate (yeni — belgelenen kural artık uygulanıyor)
+
+- `tests/test_single_normative_body.py` → `TestDerivedQuantitiesAreDefined`:
+  `delivery_rule.preliminary` ile `report_phase` → `x-preliminary-content.
+  stage_b_post_analysis.fields` **makine düzeyinde anlaşmak zorunda**; `proxy_only` bir
+  katmanı besleyen indeks ön fazda teslim edilemez. Eski kapı yalnız "beyan alanı dolu mu"
+  diye bakıyordu ve **içeriği yanlış** bir beyanı sorunsuz geçirmişti — D12'nin kök nedeni
+  buydu. Yeni kapı 9 mutasyonla sınandı (bayrağı çevirmek, katmanı listeye eklemek,
+  formülü ters çevirmek, nötr değeri 0.0 yapmak, satır numarasını silmek → hepsi kırmızı).
+  ⚠️ Kapının sınırı: contract deposu worker koduna BAKAMAZ — `outside_value = 1.0`
+  literali kanonik metni sessiz düzenlemeye karşı korur, worker'ın sabiti değişirse
+  fark etmez. Bu yüzden `stress_ratio.py` başına "kanonik girdiyi aynı turda güncelle"
+  uyarısı yazıldı; çapraz-repo kapı YOK.
+- **Tüketici tarafı:** `tarlaanaliz-platform/src/application/services/
+  preliminary_content_gate.py` bu kapalı listeyi **okur** (kopyalamaz) ve çiftçi yolunda
+  hem katman/indeks listesini hem raster tile ucunu kısıtlar. Ölçüldü: bu kapıdan önce
+  `WATER_STRESS` ön fazda fiilen sunulabiliyordu.
+
+---
+
 ## [7.6.0] - 2026-08-07 — INGEST UCU: kalibre manifest kabulü (DK-28/DK-29 son halka)
 
 ### Added

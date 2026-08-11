@@ -9,7 +9,7 @@
     "FULL"
   ],
   "x-enum-descriptions": {
-    "PRELIMINARY": "Ön rapor — uzman doğrulaması BEKLEMEDE. İki aşamalı içerik (bkz. x-preliminary-content): (A) kalibrasyon sonrası, worker sonucu HENÜZ YOKKEN öncelik bölgeleri (poligon + ndvi_value + priority_level + ndvi_overlay görseli); (B) worker sonucu geldiğinde ek olarak deterministik indeks katmanları (NDVI→HEALTH, NDRE→NITROGEN_STRESS) + overall_health_index ⚠️ WATER_STRESS 2026-07-31/D17 ile ÖN FAZDAN ÇIKARILDI (vekil katman: doğrudan ölçümü CWSI/LWIR veya NDMI/SWIR ister, ikisi de referans donanımda yok) ve kaynağı `stress_ratio` TANIMSIZDIR (bkz. analysis_type.enum → metadata.indexDefinitions). Tespitler (hastalık/zararlı/yabancı-ot findings) HİÇBİR aşamada İÇERİLMEZ (fail-closed, KR-019 önü). Ödeme kapısı (KR-033) her iki aşamada geçerlidir. mission UPLOADED / IN_ANALYSIS / PENDING_REVIEW durumlarından türetilir.",
+    "PRELIMINARY": "Ön rapor — uzman doğrulaması BEKLEMEDE. İki aşamalı içerik (bkz. x-preliminary-content): (A) kalibrasyon sonrası, worker sonucu HENÜZ YOKKEN öncelik bölgeleri (poligon + ndvi_value + priority_level + ndvi_overlay görseli); (B) worker sonucu geldiğinde ek olarak deterministik indeks katmanları (NDVI→HEALTH, NDRE→NITROGEN_STRESS) + overall_health_index ⚠️ WATER_STRESS 2026-07-31/D17 ile ÖN FAZDAN ÇIKARILDI ve ÇIKARILMIŞ KALIR: katman VEKİLDİR (doğrudan ölçümü CWSI/LWIR veya NDMI/SWIR ister, ikisi de referans donanımda yok). Kaynağı `stress_ratio` 2026-08-11'de (D12) ölçülerek TANIMLANDI — `NDRE/NDVI`, bkz. analysis_type.enum → metadata.indexDefinitions — ama tanımlılık teslim edilebilirlik DEĞİLDİR: `delivery_rule.preliminary = false` olduğu için ön fazda yine sunulmaz. Tespitler (hastalık/zararlı/yabancı-ot findings) HİÇBİR aşamada İÇERİLMEZ (fail-closed, KR-019 önü). Ödeme kapısı (KR-033) her iki aşamada geçerlidir. mission UPLOADED / IN_ANALYSIS / PENDING_REVIEW durumlarından türetilir.",
     "FULL": "Tam rapor — uzman konsensüs kapısı ONAY (KR-019 yayın). Uzman-doğrulanmış tüm bulgular açılır. mission DELIVERED durumundan türetilir (platform-içi ad: DONE)."
   },
   "x-preliminary-content": {
@@ -37,7 +37,8 @@
         "field": "WATER_STRESS",
         "why": "D17/A1: katman VEKİLDİR (analysis_type.availability = proxy_only) — doğrudan ölçümü CWSI (LWIR) veya NDMI (SWIR) ister, ikisi de referans donanımda YOK. Vekil bir gösterge, uzman kapısı ÖNCESİNDE 'ön rapor' olarak teslim edilemez: çiftçi bunu doğrulanmış bir teşhis sanır. KR-019 zayıflamasın diye stage_b kapalı listesinden çıkarıldı.",
         "still_computable": "Katman worker tarafından hesaplanmaya devam edebilir; yalnız ÖN FAZDA sunulmaz. Uzman doğrulamasından sonra (FULL) sunumu bu kararın kapsamı dışındadır.",
-        "reversible_when": "Termal yük (LWIR) veya SWIR sensörü referans donanıma girerse yeniden değerlendirilir."
+        "reversible_when": "Termal yük (LWIR) veya SWIR sensörü referans donanıma girerse yeniden değerlendirilir.",
+        "x-enforcement-2026-08-11": "D12: bu kapalı liste 2026-08-11'e kadar BELGELENMİŞ ama UYGULANMAMIŞTI. Ölçüldü: worker `stress_ratio` rasterini üretip nesne deposuna yüklüyor (`reporting_agent.py:55-56` → `result_artifact_sink.py`), platform `results_service_impl._build_layers` manifest'teki her indeksi faz ayrımı YAPMADAN katmana çeviriyor ve `tiles.py` raster ucunda faz kapısı hiç yoktu — yani WATER_STRESS ön fazda fiilen sunuluyordu. Kapı artık kod: `platform/src/application/services/preliminary_content_gate.py` aşağıdaki `fields` listesini OKUR (kopyalamaz) ve çiftçi yolunda hem katman/indeks listesini hem raster tile ucunu kısıtlar. Sonuç: bu listeye bir katman EKLEMEK onu ön fazda otomatik AÇAR; liste artık bir dilek değil, bir anahtardır."
       }
     },
     "never": [
@@ -74,5 +75,5 @@
     "KR-033"
   ],
   "x-ssot-version": "1.2.0",
-  "x-updated": "2026-07-31"
+  "x-updated": "2026-08-11"
 }
