@@ -60,6 +60,21 @@ KNOWN_POLICY_DIVERGENCE: tuple[tuple[str, str], ...] = ()
 
 #: Kardeş depo yoksa atlama gerekçesi — `tests/conftest.py::ALLOWED_SKIP_REASONS`
 #: bu dizeyi ve BU DOSYAYI beyanlı sayar. Beyansız atlama oturumu düşürür.
+#:
+#: 🔴 **DÜZELTME (2026-08-11): "kardeş CI'ında koşar" İDDİASI BUGÜN YANLIŞTI.**
+#: Bu dosya yazılırken `test_vendored_parity.py` ile aynı D4-b desenine güvendim ve
+#: "kardeş depoda koşar" dedim. Worker oturumu düzeltti, ben de bağımsız ÖLÇTÜM —
+#: iki ayrı engel var ve ikisi de bağımsız olarak yeterli:
+#:   (a) worker `contracts_gate.yml::sibling-parity` contract'ı **pinli etikette**
+#:       checkout ediyor (`ref: ${{ steps.pin.outputs.version }}` = `v7.6.1`);
+#:       ölçüldü: `git ls-tree -r v7.6.1 | grep policy_parity` → **0**,
+#:       `origin/master` → 1. Dosya o checkout'a hiç girmiyor.
+#:   (b) pin düzelse bile koşmaz: o iş pytest'e **dosya adlarını tek tek** veriyor
+#:       (`tests/test_vendored_parity.py`), glob değil.
+#: Yani bu kapı BUGÜN **yalnız geliştirici-zamanı** çalışıyor: contract CI'da beyanlı
+#: atlanır, worker CI'ında hiç çağrılmaz. "Koşuyor" varsaymak, olmayan bir kapıya
+#: güvenmektir (worker'ın kendi kuralı: *"kapsamı ölçülmeyen kapı, olmayan kapıdır"*).
+#: Kapanışı worker'ın re-pin turunda: pin `v7.7.0` + pytest çağrısına glob/ikinci dosya.
 SKIP_REASON = "kardeş depo yok"
 
 
@@ -132,7 +147,12 @@ def scan() -> tuple[list[tuple[str, str, str, str]], int, int]:
 def measurement():
     divergences, pairs_seen, nodes_compared = scan()
     if pairs_seen == 0:
-        pytest.skip(f"{SKIP_REASON} — bu kapı kardeş CI'ında koşar (D4-b)")
+        pytest.skip(
+            f"{SKIP_REASON} — bu kapı BUGÜN yalnız geliştirici-zamanı koşar "
+            "(worker CI pinli etikette checkout ediyor ve pytest'e dosya adlarını "
+            "tek tek veriyor; ölçüldü 2026-08-11). Kardeş depoları yan yana "
+            "tutup yerelde koşun."
+        )
     return divergences, pairs_seen, nodes_compared
 
 
