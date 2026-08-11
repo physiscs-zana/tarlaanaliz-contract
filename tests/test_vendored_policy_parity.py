@@ -373,22 +373,139 @@ class TestRefInlineAsymmetryIsVisible:
         )
 
 
+class TestPolicyWalkMechanismItselfWorks:
+    """Mekanizmayı DEPO VERİSİNDEN BAĞIMSIZ sına — sentetik girdiyle.
+
+    NEDEN (2026-08-11, `test_vendored_parity.py`'de mutasyonla ölçülen dersin ikizi):
+        Yukarıdaki iki kilit de **depo verisini** okur. Taban 0 olan çiftte kilit boştur;
+        kardeş depo hiç yoksa (bu deponun KENDİ CI'ı) her şey atlanır. İki durumda da
+        yürüyüşün ya da politika normalizasyonunun bozulması **görünmez**.
+
+        Bu sınıf kardeş depo gerektirmez, her CI'da koşar ve bozulma anında kırmızıya
+        döner. `test_vendored_parity.TestWalkMechanismItselfWorks` ile aynı gerekçe.
+    """
+
+    def test_object_nodes_are_found_at_every_depth(self) -> None:
+        doc = {
+            "type": "object",
+            "properties": {"ic": {"type": "object", "properties": {}}},
+            "$defs": {"D": {"type": ["object", "null"]}},
+        }
+        bulunan = _object_nodes(doc)
+        assert set(bulunan) == {"$", "$.properties.ic", "$.$defs.D"}, sorted(bulunan)
+
+    def test_data_blocks_are_not_walked(self) -> None:
+        """`examples`/`enum`/`x-` blokları ŞEMA değil VERİ taşır — taranmamalı."""
+        doc = {"type": "object", "examples": [{"type": "object"}], "x-not": {"type": "object"}}
+        assert set(_object_nodes(doc)) == {"$"}, sorted(_object_nodes(doc))
+
+    def test_policy_normalises_the_i4_idiom(self) -> None:
+        assert _policy({"unevaluatedProperties": False}) == "KAPALI"
+        assert _policy({"additionalProperties": False}) == "KAPALI"
+        assert _policy({"additionalProperties": True}) == "AÇIK"
+
+    def test_undeclared_is_its_own_state(self) -> None:
+        """POZİTİF KONTROL — beyansızlık `KAPALI` sayılırsa kapı sessizce fail-open olur."""
+        assert _policy({"type": "object"}) == "BEYANSIZ"
+        assert _policy({"type": "object"}) != _policy({"unevaluatedProperties": False})
+
+    def test_shared_pointer_with_different_policy_is_a_divergence(self) -> None:
+        kanonik = {"type": "object", "properties": {"a": {"type": "object", "unevaluatedProperties": False}}}
+        vendored = {"type": "object", "properties": {"a": {"type": "object"}}}
+        cn, vn = _object_nodes(kanonik), _object_nodes(vendored)
+        ortak = sorted(set(cn) & set(vn))
+        assert "$.properties.a" in ortak
+        assert _policy(cn["$.properties.a"]) != _policy(vn["$.properties.a"])
+
+    def test_node_missing_on_one_side_is_not_compared(self) -> None:
+        """I-4: vendored EKSİK tutabilir — kesişim dışı düğüm sapma değildir."""
+        kanonik = {"type": "object", "properties": {"a": {"type": "object"}}}
+        vendored = {"type": "object"}
+        assert sorted(set(_object_nodes(kanonik)) & set(_object_nodes(vendored))) == ["$"]
+
+
 class TestGateActuallyCompares:
     """POZİTİF KONTROL — "sapma yok" çıktısı çoğu zaman kapının kendi körlüğüdür."""
 
-    #: 2026-08-11 ÖLÇÜMÜ (tahmin DEĞİL): 18 çift · 48 ortak düğüm. İlk yazımda eşiği
-    #: 50 diye **uydurmuştum** ve test kırmızı döndü — kapının kendisi değil, benim
-    #: ölçmeden yazdığım sayı yanlıştı. Ratchet: sayı DÜŞERSE kapı körelmiştir.
-    MEASURED_PAIRS = 18
-    MEASURED_NODES = 48
+    #: ÇİFT BAŞINA ölçülmüş taban (ratchet) — 2026-08-11.
+    #:
+    #: 🔴 Önce `MEASURED_PAIRS = 18` / `MEASURED_NODES = 48` diye **küresel** iki tabandı.
+    #: Ama bu kapı **her kardeşin KENDİ CI'ında** koşar (D4-b) ve orada yalnız O kardeşin
+    #: checkout'u bulunur. Ölçüldü (2026-08-11):
+    #:
+    #:     worker CI :  8 çift /  35 düğüm   →   8 >= 18   YANLIŞ
+    #:     edge   CI : 10 çift /  13 düğüm   →  10 >= 18   YANLIŞ
+    #:
+    #: Yani eşik **iki kardeşte de yapısal olarak ulaşılamazdı**; worker o testi
+    #: `--deselect` ile dışarıda bırakmak zorunda kaldı (bildirdiler).
+    #:
+    #: Bu, `test_vendored_parity.py`'de `v7.7.1` ile kapatılan kusurun **aynı sınıfıdır**.
+    #: O turda "sınıfın tamamını kapat" dedim ama **kardeş dosyayı atladım** — sınıfı
+    #: saymadan kapattığımı sandım. Worker oturumu yakaladı.
+    MEASURED_NODES_BY_PAIR = {
+        "tarlaanaliz-edge/interface/contracts/schemas/edge/attestation_record.v1.schema.json": 1,
+        "tarlaanaliz-edge/interface/contracts/schemas/edge/calibrated_dataset_manifest.v1.schema.json": 5,
+        "tarlaanaliz-edge/interface/contracts/schemas/edge/evidence_bundle_ref.v1.schema.json": 1,
+        "tarlaanaliz-edge/interface/contracts/schemas/edge/upload_receipt.v1.schema.json": 1,
+        "tarlaanaliz-edge/interface/contracts/schemas/edge/worker_result.v1.schema.json": 2,
+        "tarlaanaliz-edge/interface/contracts/schemas/edge/intake_manifest.v1.schema.json": 1,
+        "tarlaanaliz-edge/interface/contracts/schemas/edge/scan_report.v1.schema.json": 1,
+        "tarlaanaliz-edge/interface/contracts/schemas/edge/transfer_batch.v1.schema.json": 1,
+        "tarlaanaliz-edge/interface/contracts/enums/calibration_type.enum.v1.json": 0,
+        "tarlaanaliz-edge/interface/contracts/enums/radiometric_mode.enum.v1.json": 0,
+        "tarlaanaliz-worker/interface/contracts/calibrated_dataset.v1.schema.json": 1,
+        "tarlaanaliz-worker/interface/contracts/calibration_metadata.v1.schema.json": 2,
+        "tarlaanaliz-worker/interface/contracts/expert_feedback.v1.schema.json": 4,
+        "tarlaanaliz-worker/interface/contracts/expert_review_queue.v1.schema.json": 3,
+        "tarlaanaliz-worker/interface/contracts/expert_labeling_card.v1.schema.json": 5,
+        "tarlaanaliz-worker/interface/contracts/analysis_job.v1.schema.json": 6,
+        "tarlaanaliz-worker/interface/contracts/analysis_result.v1.schema.json": 14,
+        "tarlaanaliz-worker/interface/contracts/analysis_type.enum.v1.json": 0,
+    }
+
+    def _present(self) -> list[tuple[str, str]]:
+        return [(c, v) for c, v in _pairs() if (WORKSPACE / v).exists() and (ROOT / c).exists()]
 
     def test_it_compared_something(self, measurement) -> None:
         _, pairs_seen, nodes_compared = measurement
-        assert pairs_seen >= self.MEASURED_PAIRS and nodes_compared >= self.MEASURED_NODES, (
+        mevcut = self._present()
+        beklenen_cift = len(mevcut)
+        beklenen_dugum = sum(self.MEASURED_NODES_BY_PAIR.get(v, 0) for _, v in mevcut)
+        kardesler = sorted({v.split("/")[0] for _, v in mevcut})
+        assert pairs_seen >= beklenen_cift and nodes_compared >= beklenen_dugum, (
             f"Karşılaştırma DÜŞTÜ: {pairs_seen} çift / {nodes_compared} ortak düğüm "
-            f"(ölçülen taban: {self.MEASURED_PAIRS} / {self.MEASURED_NODES}). Ya vendored "
-            "kopya düğüm attı, ya kanonik küçüldü, ya yürüyüş mantığı bozuldu — üçünde de "
-            "kapı körleşir. Meşru şekilde arttıysa tabanı yükseltin (ratchet)."
+            f"(bu ortamın tabanı: {beklenen_cift} / {beklenen_dugum}; mevcut kardeş(ler): "
+            f"{kardesler}). Ya vendored kopya düğüm attı, ya kanonik küçüldü, ya yürüyüş "
+            "mantığı bozuldu — üçünde de kapı körleşir. Meşru şekilde arttıysa "
+            "`MEASURED_NODES_BY_PAIR`'i ÖLÇEREK yükseltin (ratchet)."
+        )
+
+    def test_zero_baseline_pairs_really_have_no_object_nodes(self) -> None:
+        """POZİTİF KONTROL — tabanı 0 olan çift GERÇEKTEN karşılaştıracak şey taşımamalı.
+
+        Taban 0 olunca yukarıdaki kilit `0 >= 0` olur ve **hiçbir şey kanıtlamaz**.
+        Bu test 0'ın **sebebini** kilitler: enum dosyalarında `type: object` düğümü yok
+        (ölçüldü: üç enum çiftinin ikisinde de 0 düğüm). Kanoniğe bir gün object düğümü
+        girerse test kırmızıya döner ve taban **ölçülerek** güncellenir.
+        """
+        mevcut = self._present()
+        if not mevcut:
+            pytest.skip(SKIP_REASON)
+        sifir = [(c, v) for c, v in mevcut if self.MEASURED_NODES_BY_PAIR.get(v, 0) == 0]
+        assert sifir, (
+            "Mevcut çiftlerin hepsinin tabanı sıfırdan büyük — bu pozitif kontrol hiçbir "
+            "şey ölçmüyor demektir; taban sözlüğü çift listesiyle ayrışmış olabilir."
+        )
+        dolu = []
+        for canonical, vendored in sifir:
+            nodes = _object_nodes(json.loads((ROOT / canonical).read_text(encoding="utf-8")))
+            if nodes:
+                dolu.append(f"{canonical} → {len(nodes)} object düğümü")
+        assert not dolu, (
+            f"{len(dolu)} çiftin tabanı 0 ama KANONİKTE object düğümü VAR:\n  "
+            + "\n  ".join(dolu)
+            + "\n\nKilit `0 >= 0` olduğu için bu çiftlerde kapı hiçbir şey ölçmüyor. "
+            "`MEASURED_NODES_BY_PAIR`'i ÖLÇEREK güncelleyin."
         )
 
     def test_idiom_difference_is_not_a_divergence(self) -> None:

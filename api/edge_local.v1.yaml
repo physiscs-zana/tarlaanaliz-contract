@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TarlaAnaliz Edge Local API
-  version: 7.7.1
+  version: 7.7.2
   description: |
     Local API for kiosk/edge station (offline-capable).
     UI ↔ Kiosk communication for batch creation, scanning, signing.

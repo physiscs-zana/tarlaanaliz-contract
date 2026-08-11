@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.7.1
+## Version: 7.7.2
 
-**Release Date:** 2026-08-11T19:14:27.922381Z  
+**Release Date:** 2026-08-11T19:55:57.167964Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `2d9f7475f3e31140446b6d006f222ec8b97cc4c9c2f454a9e55fc8d437023dd3`
+**Contracts Checksum (SHA-256):** `aded57d3926459a12a45d1004f16aee80e55de1e5bb6e310cbad563753b7a2b0`
 
 ---
 
@@ -255,15 +255,21 @@ Individual file hashes for verification:
 ### API Specs
 
 - `api/edge_local.v1.yaml`  
-  `3d1bdf7d0a103c6e078d1052c9423c0bb21149df71f13b152625833c374eecfd`
+  `2398d485425103abfc6a2973a72a267473d3f04e72a68327286c15ebfde5d4f5`
 - `api/platform_internal.v1.yaml`  
-  `4f356ac8d027bd89f67cd6bee98f6b0520fa3799ec53d7f32bb13ff6057ca97f`
+  `35ce36f7d37fa7609a242fef52ed5e85d5cf77a2aa5d7a3071cd67ff692dd1cb`
 - `api/platform_public.v1.yaml`  
-  `0f5c4b9d38126553b63775fcb5917c94c91c1b203a74b78f8c07a208d6988835`
+  `37657c1bb007786472a61390c67ad2888d1fcb38b9c5dc7141b3c4a7678ef03a`
 
 ---
 
 ## Changelog
+
+### v7.7.2 (2026-08-11)
+
+**Breaking:** NO
+
+Version pinned automatically.
 
 ### v7.7.1 (2026-08-11)
 
@@ -407,7 +413,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("2d9f7475f3e31140446b6d006f222ec8b97cc4c9c2f454a9e55fc8d437023dd3"), "Contracts checksum mismatch!"
+assert verify_contracts("aded57d3926459a12a45d1004f16aee80e55de1e5bb6e310cbad563753b7a2b0"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -420,7 +426,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("2d9f7475f3e31140446b6d006f222ec8b97cc4c9c2f454a9e55fc8d437023dd3"), "Contracts checksum mismatch!");
+assert(verifyContracts("aded57d3926459a12a45d1004f16aee80e55de1e5bb6e310cbad563753b7a2b0"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -471,4 +477,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-08-11T19:14:27.922381Z
+**Last Updated:** 2026-08-11T19:55:57.167964Z
