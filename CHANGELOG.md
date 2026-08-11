@@ -295,9 +295,14 @@ gitmemeli).
 
 ### Ölçüldü ama değiştirilmedi (dürüstlük)
 
-`mypy tools/validate.py` → master'da **2**, şimdi **2** (aynı iki hata; biri satır
-kaydı yüzünden yer değiştirdi, biri düzeltildi ve yerine yenisi gelmedi).
-`ruff` → dokunduğum iki dosyada **0/0**. CI ikisini de koşturmuyor (workflow'da 0 isabet).
+`mypy tools/validate.py` → master'da **2**, şimdi **1**: eksik `-> None` düzeltildi,
+geriye önceden de var olan tek kalem kaldı (`:104 unused "type: ignore"`).
+`ruff` → dokunduğum iki dosyada **0/0**. CI ikisini de koşturmuyor (workflow'da 0 isabet),
+yani bu iki araç burada tavsiye niteliğinde — **ölçüldü, kapı değil**.
+
+> Öz-denetim notu: bu paragrafı önce *"master'da 2, şimdi 2"* diye yazmıştım; `-> None`
+> eklendikten sonra yeniden ölçünce **1** çıktı. Sayıyı değil onu üreten komutu yazma
+> kuralı burada da işe yaradı.
 
 ---
 
