@@ -434,6 +434,19 @@ jobs:
           # This guard fails the build if that sibling brand/region leaks back in.
           python3 tools/check_no_egeanaliz.py
 
+      - name: Script tree gate (syntax + forbidden commands)
+        run: |
+          # AL-K32. Bu deponun betik agaci TUMDEN KAPISIZDI: 3 dosya / 1021 satir ve
+          # workflow'larda onlari ayristiran 0 isabet. Dort yesil kapi o satirlarin
+          # hicbirini gormuyordu. Uyari edge oturumundan geldi (onlarin yeni kapisi,
+          # dokunulmamis bir dosyada gercek bir sozdizimi hatasi buldu).
+          #
+          # Olcum burada DURUST NEGATIF sonuc verdi -- sozdizimi kusuru yok. Ama kok
+          # dizinde yetim ve KOSARSA ZARARLI bir betik vardi: calisma agacinin tamamini
+          # bir ZIP'le eziyor ve kullaniciya kok CLAUDE.md'nin yasakladigi toplu ekleme
+          # komutunu yazdiriyordu. Dosya kaldirildi; bu kapi sinifi kapatir.
+          python3 tools/check_scripts.py
+
       - name: I-1 version alignment gate (canonical mode)
         run: |
           # AL-K30. Uc deponun CLAUDE.md'sinde "I-1: surum uc depoda ayni" yaziyor ama

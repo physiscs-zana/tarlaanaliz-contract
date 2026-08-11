@@ -227,9 +227,43 @@ checksum + vendored bayt-paritesi + `dist` tazeliği ona bağlıdır.
 `.github/workflows/contract_validation.yml` — 8 iş: `validate-schemas` ·
 `test-schemas` · `detect-breaking-changes` · `verify-checksums` · `lint-openapi` ·
 `check-forbidden-fields` · `check-draft-2020-12` · `check-brand-guard` (+ doc-link
-kapısı **+ I-1 sürüm hizası kapısı**, AL-K30). Hepsi `summary` işinde toplanır. **Tek bir `npm run ci:gate` komutu yoktur** —
+kapısı **+ I-1 sürüm hizası kapısı** AL-K30 **+ betik ağacı kapısı** AL-K32). Hepsi `summary` işinde toplanır. **Tek bir `npm run ci:gate` komutu yoktur** —
 öyle bir script hiç çalışmadı. Kapsam ve `needs` bütünlüğü
 `tests/test_ci_gate_honesty.py` ile türetilip zorlanır.
+
+### Betik ağacı kapısı (AL-K32, 2026-08-11) — `tools/check_scripts.py`
+
+```bash
+python tools/check_scripts.py
+```
+
+Bu deponun betik ağacı **tümden kapısızdı**: 3 dosya / 1021 satır ve workflow'larda onları
+ayrıştıran **0 isabet**. Dört yeşil kapı (validate · pytest · redocly · checksum) o
+satırların hiçbirini görmüyordu. Ölçüm **dürüst negatif** sonuç verdi — sözdizimi kusuru
+yoktu — ama kök dizinde yetim ve **koşarsa zararlı** bir betik bulundu ve kaldırıldı:
+`Downloads` içindeki bir ZIP'i çalışma ağacının tamamının üstüne kopyalıyor, bitince de
+kök `CLAUDE.md`'nin **yasakladığı** toplu ekleme komutunu kullanıcıya yazdırıyordu.
+
+İki katman: ① **sözdizimi** (`.sh` → `bash -n`, `.ps1` → PowerShell ayrıştırıcısı;
+betik **çalıştırılmaz**) ② **yasaklı komut** — toplu ekleme · çalışma ağacını ezen
+özyinelemeli kopyalama · çalışma dizini kökünü silme. Ayrıca **indekste CRLF** taşıyan
+betik reddedilir (Linux'ta ayrıştırılamaz).
+
+Tasarım kararları — hepsi ölçümle:
+
+- **Desenler dar tutuldu.** `sync_to_repos.sh`'teki 4 `git add` kullanımının hepsi
+  yol-sınırlı, `generate_types.sh` yalnız kendi üretim dizinini siliyor → kapı meşru koda
+  takılmıyor (pozitif kontrol testte).
+- ⚠️ **Yorum satırları taranmaz.** Bu oturumda **dört kez** bir kusuru *yasaklayan* kapı,
+  kusuru *anlatan* metne takıldı; bir kuralı betiğin içinde gerekçelendirmek mümkün olmalı.
+- 🔴 **Ayrıştırma CR'siz metin üzerinde, stdin'e BAYT olarak yapılır.** İlk hâl çalışma
+  ağacını ayrıştırıyordu ve `core.autocrlf=true` olan makinede her betikte **yanlış
+  kırmızı** verdi; `git ls-files --eol` indeks tarafını `lf` gösterip iddiayı çürüttü.
+  Metin kipinde Python `
+`'i boruda geri `
+` yapıyor — bayt kipi şart (mutasyon: 4 test).
+- **Fail-closed:** hiç betik bulunamazsa hata döner; *"0 bulgu"* ile *"0 dosya taradım"*
+  aynı şey değildir. Taranan dosya sayısı her koşumda basılır.
 
 ### Breaking Change Detection
 ```bash
