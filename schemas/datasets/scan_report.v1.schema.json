@@ -86,10 +86,19 @@
             "type": "string"
           },
           "threat_name": {
-            "type": "string"
+            "type": "string",
+            "description": "AV motorunun verdiği SERBEST tehdit adı (ör. 'Eicar-Test-Signature'). Bilerek kısıtsız: motor imza veritabanından gelir, kanonik bir sözlüğü yoktur. Türü taşıyan alan `threat_type`'tır — ikisini karıştırmayın."
           },
           "threat_type": {
-            "type": "string"
+            "$ref": "../../enums/threat_type.enum.v1.json",
+            "description": "Tehdit TÜRÜ — kanonik vocabulary (`enums/threat_type.enum.v1.json`, 15 değer). 2026-08-11'de bağlandı; öncesinde `{\"type\": \"string\"}` idi, yani KR-073 tarama raporu serbest metin kabul ediyordu ve `threat_type: \"temiz\"` gibi bir değer sözleşmeden geçiyordu.",
+            "x-compat-accepted": {
+              "change": "serbest dize → kanonik tehdit türü vocabulary'si (enum, 15 değer)",
+              "date": "2026-08-11",
+              "rationale": "Biçimsel daraltma, ama ölçüldü: kanonik 15 değerin HİÇBİRİ platform/worker/edge Python kodunda geçmiyor (pozitif kontrol: aynı tarayıcı `QUARANTINED` için edge'de 34 isabet buluyor). Bu şemayı üreten kod da yok — dört depodaki 5385 JSON içinde `scan_report.v1`'e uyan tek yük bulunamadı. Ayrıca `datasets/scan_report.v1` vendored parite çiftinde DEĞİL (yalnız `edge/scan_report.v1` ve `edge/intake_manifest.v1` çiftli), dolayısıyla I-4 sonucu yok.",
+              "risk_note": "Bilinen ileri risk: platform `av2_orchestrator.py:199,208` kendi domain olayında `threat_type=report.threat_name` yazıyor — yani TÜR alanına AD koyuyor. O olay bu şemaya bağlı DEĞİL (platform olayı düz zarflı ve `events/dataset_quarantined.v1` `threat_type` alanı taşımıyor), ama iki yüzey birleştirilirse bu bağlama sızıntıyı SESSİZ değil GÜRÜLTÜLÜ hâle getirir — istenen davranış budur.",
+              "ref": "denetim 2026-08-11 · KR-073"
+            }
           }
         }
       }

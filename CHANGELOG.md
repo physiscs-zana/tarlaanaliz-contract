@@ -108,6 +108,75 @@ yeniden üretimden sonra **0**.
 
 ---
 
+## `threat_type` kanonik sözlüğe BAĞLANDI + bağlama ratchet'i (KR-073)
+
+### ÖLÇÜLEN SORUN
+
+`enums/threat_type.enum.v1.json` 15 değerlik kanonik bir tehdit türü sözlüğü tanımlıyor;
+`datasets/scan_report.v1` (KR-073 AV tarama raporu) ise aynı alanı `{"type": "string"}`
+diye tanımlıyordu. Gerçek doğrulayıcıyla ölçüldü:
+`findings[0].threat_type = "UYDURMA_TEHDIT_TURU"` → **0 hata**.
+
+`edge/quarantine_event.v1` aynı alanda daha da inceydi: açıklaması kanonik enum'a
+**atıf yapıyordu** ama şema hiçbir şeyi zorlamıyordu — deponun 2026-07-31'de `crop_type`
+için adını koyduğu *"prose var, zorlanabilirlik yok"* sınıfının aynısı.
+
+Sınıf ölçüldü (ad tabanlı tarama, `schemas/`): **21 bağlı · 22 inline · 12 serbest**.
+Pozitif kontrol: aynı tarayıcı `crop_type`'ın bağlı olduğunu görüyor.
+
+### Changed
+
+- **`datasets/scan_report.v1` `findings[].threat_type`** → `$ref` kanonik enum.
+  Ayrıca `threat_name`'e *"bilerek kısıtsız"* gerekçesi yazıldı (AV motorunun serbest
+  imza adıdır; kanonik sözlüğü YOKTUR — ikisi karıştırılmasın).
+- **`edge/quarantine_event.v1` `threat_type`** → `$ref` kanonik enum.
+
+İkisi de `x-compat-accepted` ile beyan edildi (dedektörün beyanlı-daraltma mekanizması).
+**Kırıcılık ölçümü:** kanonik 15 değerin **hiçbiri** platform/worker/edge Python kodunda
+geçmiyor (pozitif kontrol: aynı tarayıcı `QUARANTINED` için edge'de 34 isabet buluyor);
+edge'in `QuarantineEvent` modelinde `threat_type` alanı **hiç yok**; dört depodaki
+5385 JSON içinde `scan_report.v1`'e uyan tek yük bulunamadı. Her iki şema da vendored
+**parite çiftinde değil** → I-4 sonucu yok.
+
+### 🔴 BAĞLANMADI — ölçüm bağlamayı ÇÜRÜTTÜ
+
+**`edge/quarantine_event.v1` `decision`**: edge'in ürettiği sözlük kanonikle **SIFIR
+KESİŞİMLİ**. Ölçüldü:
+
+```
+edge  (src/core/domain/quarantine_event.py:12-15) : PASS · QUARANTINE · REJECT
+kanonik (enums/quarantine_decision.enum.v1.json)  : QUARANTINED · RELEASED · DELETED ·
+    MANUAL_REVIEW_REQUIRED · PENDING_SCAN · SCAN_IN_PROGRESS · REJECTED ·
+    CONDITIONALLY_RELEASED · ESCALATED
+kesişim: ∅
+```
+
+Bağlamak edge çıktısının **%100'ünü** reddederdi. Bu bir araç değil **KARAR** sorunudur:
+hangi sözlük kazanacak? (`crop_type`'ta 2026-07-31'de verilen *"dört depo AYNI standardı
+kullanır"* kararının karantina eksenindeki karşılığı henüz verilmedi.) Gerekçe şemaya ve
+ratchet baseline'ına yazıldı; **karar kullanıcıya bırakıldı**.
+
+### Added — ratchet kapısı
+
+**`tests/test_enum_binding_ratchet.py`** (8 test): adı kanonik bir enum ile eşleşen her
+alanı tarar ve BAĞLI / INLINE / **SERBEST** diye ayırır. SERBEST kova yalnız **küçülür**:
+baseline'da olmayan yeni serbest alan → kırmızı; baseline'da olup artık serbest olmayan
+satır → kırmızı (bayat mazeret yasak). Baseline bugün **12 satır**, her biri
+*"ölçülmemiş ya da bilinçli ertelenmiş"* demektir.
+
+İki yönde mutasyonla sınandı:
+- bağlı alanı serbest bırak → **3 test** kırmızı (tarayıcı · ratchet · davranışsal kanıt)
+- baseline'daki alanı bağla → **1 test** kırmızı (bayat baseline)
+- desen tutmazsa betik durur (`assert`) — sahte yeşil yok.
+
+Ayrıca **pozitif kontrol**: `threat_name` serbest metin OLARAK KALMALI (bir sonraki tur
+onu da enum'a bağlamaya kalkmasın diye kilitlendi).
+
+⚠️ Bu kapı *"hepsini bağla"* demez — **görünür ve sayılabilir** kılar. Bağlamak
+daraltmadır; her satır kendi üretici ölçümünü gerektirir.
+
+---
+
 ## [7.6.1] - 2026-08-11 — D12: `stress_ratio` TANIMLANDI + ön faz kapalı listesi KAPIYA bağlandı
 
 > ⛔ **Bu sürüm kendi önceki iddiasını çürütüyor.** v1.4.2–v1.4.3 `analysis_type.enum`
