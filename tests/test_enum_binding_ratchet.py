@@ -77,7 +77,16 @@ FIELD_TO_ENUM: dict[str, str] = {
 KNOWN_UNBOUND: tuple[tuple[str, str], ...] = (
     ("schemas/core/user.v1.schema.json", "$.properties.roles.items"),
     ("schemas/edge/quarantine_event.v1.schema.json", "$.$defs.DecisionMaker.properties.user_role"),
-    # ⚠️ KARAR BEKLİYOR: edge sözlüğü kanonikle sıfır kesişimli (dosyadaki nota bakın).
+    # ✅ KARAR VERİLDİ (2026-08-11, edge oturumu + kullanıcı): **BAĞLANMAYACAK** — ve bu
+    # bir borç DEĞİL, KAVRAM AYRIMI. edge `decision` AV1'in EYLEM kararı
+    # (`{PASS, QUARANTINE, REJECT}`), kanonik enum ise karantina kaydının YAŞAM DÖNGÜSÜ
+    # DURUMU. Sıfır kesişim uyumsuzluk değil, iki farklı eksenin işareti.
+    # Üç ölçüm bağımsız doğrulandı (bkz. şemadaki gerekçe): edge bu şemayı vendor'lamıyor ·
+    # karar platforma `scan_report.v1 → result` üzerinden gidiyor ve kanoniğe TAM uyuyor ·
+    # `quarantine_events` tablosuna yazan üretim kodu yok.
+    # Satır listede KALIR (alan hâlâ serbest dize) ama artık "ölçülmemiş borç" değil,
+    # **gerekçesi yazılı bilinçli karar**. Bağlanması ancak edge ayrı bir `lifecycle_state`
+    # alanı yayınlarsa gündeme gelir — o zaman bu satır silinir, `decision` yine bağlanmaz.
     ("schemas/edge/quarantine_event.v1.schema.json", "$.properties.decision"),
     ("schemas/events/analysis_completed.v1.schema.json",
      "$.$defs.AnalysisCompletedData.properties.analysis_type"),

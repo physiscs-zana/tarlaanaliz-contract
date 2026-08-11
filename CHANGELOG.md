@@ -247,6 +247,47 @@ ve testi kırmızıya çevirdi — kapı daha yazıldığı turda kendi yazarın
 
 ---
 
+## `quarantine_decision` KARARI: bağlanmayacak — çünkü **iki ayrı eksen**
+
+AL-K21 kapandı (edge oturumu + kullanıcı kararı). **Benim çerçevem yanlıştı:** *"hangi
+sözlük kazanacak?"* diye sormuştum; doğru soru *"bunlar aynı şey mi?"*ymiş — değiller.
+
+```
+edge    `QuarantineDecision`      PASS | QUARANTINE | REJECT
+        -> AV1'in EYLEM kararı (dosya geçsin mi, karantinaya mı, reddedilsin mi)
+kanonik `quarantine_decision.v1`  QUARANTINED | RELEASED | DELETED | ...
+        -> bir karantina KAYDININ yaşam döngüsü DURUMU
+```
+
+Sıfır kesişim bir uyumsuzluk işareti değil, **iki farklı kavramın aynı adı taşıması**.
+
+**Üç ölçüm bağımsız doğrulandı** (edge bildirdi, contract tarafında yeniden ölçüldü):
+① edge bu şemayı **vendor'lamıyor** (`interface/contracts/schemas/edge/` = 8 şema,
+`quarantine_event` yok) · ② karar platforma bu eksenden gitmiyor:
+`scan_report_writer._DECISION_TO_RESULT` onu `scan_report.v1 → result`'a eşliyor
+(`PASS→PASS`, `QUARANTINE→QUARANTINE`, `REJECT→FAIL`) ve `OperationalForm.result` enum'u
+zaten `[PASS, FAIL, QUARANTINE]` → **edge çıktısı kanoniğe TAM UYUYOR** ·
+③ `quarantine_events` tablosuna yazan/okuyan üretim kodu **yok** (yalnız DDL).
+
+### Changed
+
+- `schemas/edge/quarantine_event.v1` `decision` açıklaması: *"karar bekliyor / hangi
+  sözlük kazanacak"* çerçevesi **kaldırıldı**; yerine ölçülmüş eksen ayrımı ve
+  **ileriye dönük kural** yazıldı — edge bir gün yaşam döngüsü durumu yayınlarsa o
+  **ayrı bir alan** olur (`lifecycle_state`), `decision` değil.
+- `tests/test_enum_binding_ratchet.py`: satır baseline'da **kalıyor** (alan hâlâ serbest
+  dize) ama artık *"ölçülmemiş borç"* değil, **gerekçesi yazılı bilinçli karar**.
+
+> Ölçüm notu: edge'in *"`quarantine_events` grep 0"* iddiasını doğrularken **1 isabet**
+> buldum — tek isabet onların **kendi docstring'iydi** (bulguyu belgeleyen satır).
+> Özyinelemeli isabet; iddia doğru. Sayı tutmadığında önce isabete bakmak gerekiyor.
+
+Ayrıca edge'in bildirdiği **etiket-kapılı CI tuzağı** contract'a karşı ölçüldü:
+bu depoda `labels.*.name` koşullu iş **yok** (`grep` → 0), tetikleyiciler yalnız
+`pull_request` + `push` → o tuzak burada geçerli değil.
+
+---
+
 ## Vendored parite kapısı: kör nokta görünür kılındı + **hataya yol açan tavsiye** düzeltildi
 
 Worker oturumu kapımın pointer-tabanlı karşılaştırmasında bir kör nokta bildirdi;
