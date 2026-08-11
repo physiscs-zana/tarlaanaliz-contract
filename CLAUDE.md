@@ -46,16 +46,24 @@ tarlaanaliz-contracts/
 
 ## Tech Stack
 
-### Node.js / TypeScript (package.json)
+### Node.js (package.json) — **TEK ARAÇ**
 - **Runtime**: Node >= 18, npm >= 9
-- **Module system**: ESM (`"type": "module"`)
-- **Ajv** ^8.12.0 — JSON Schema Draft 2020-12 validator
-- **json-schema-to-typescript** ^13.1.2 — TS type generation
-- **@redocly/cli** — OpenAPI bundling and validation
-- **Jest** ^29.7.0 + ts-jest — Test runner (configured in package.json)
-- **ESLint** ^8.56.0 + @typescript-eslint + prettier — Linting
-- **Prettier** ^3.1.1 — Formatting
-- **Husky** + **lint-staged** — Pre-commit hooks
+- **@redocly/cli** — OpenAPI lint + bundle. **Bu deponun tek Node aracıdır.**
+
+> ⛔ **Burada bir TypeScript zinciri YOKTUR ve HİÇ OLMADI.** 2026-08-11'e kadar bu
+> bölüm Ajv · json-schema-to-typescript · Jest · ESLint · Prettier · Husky ·
+> lint-staged sayıyordu ve `package.json` 30 script taşıyordu. Ölçüldü: depoda **0
+> adet `.ts`/`.js`** dosyası var, `tools/*.ts` hedeflerinin **hiçbiri hiç commit
+> edilmemiş** (`git log --all` → 0), `tests/` 42 `.py` + 0 `.ts`, `.husky/` yok.
+> `package.json` ilk commit'ten (2026-01-30) beri iskeleydi.
+>
+> En kritiği: `npm run format` = `prettier --write "**/*.{…,json,yaml,…}"` ve
+> `.prettierignore` YOKTU → checksum kapsamındaki **97 dosyanın 94'ünü** yeniden
+> biçimlendirirdi (ölçüldü). Bu ölü değil **zararlı** bir komuttu.
+>
+> Zincir kaldırıldı (676 → 263 paket, `npm audit` 38 → 30 açık) ve
+> `tests/test_node_toolchain_honesty.py` geri gelmesini yasaklıyor.
+> **Doğrulama/test/tip üretimi Python tarafındadır** — aşağıya bakın.
 
 ### Python (pyproject.toml)
 - **Python**: >= 3.10
@@ -171,63 +179,66 @@ Key KRs for this repo:
 
 ## Development Commands
 
+> ⚠️ **Aşağıdaki komutların hepsi ÖLÇÜLDÜ (2026-08-11) ve koşuyor.** Bu bölüm daha önce
+> 9 adet `npm run …` komutu belgeliyordu; hiçbiri koşmuyordu (bkz. Tech Stack notu).
+> Kapı: `tests/test_node_toolchain_honesty.py` — hedefi olmayan script eklenemez.
+
 ### Validation
 ```bash
-# Full schema validation (Python)
 python tools/validate.py
-
-# Node.js validation scripts
-npm run validate              # All validations
-npm run validate:schemas      # Schemas only
-npm run validate:forbidden    # Check forbidden PII fields
-npm run validate:unevaluated  # Check unevaluatedProperties enforcement
 ```
+Tek doğrulayıcı budur: `schemas/` + `enums/` + **`dist/schemas/`** (yayın ağacı) +
+`api/` (PII kapsamı). Draft 2020-12 zorunlulukları, KR-050 yasak alanları ve
+**alan sızması politikası** (her object düğümü `unevaluatedProperties: false` ya da
+gerekçeli `additionalProperties` beyan etmeli) burada koşar.
 
 ### Testing
 ```bash
-# Python tests (primary)
-pytest tests/ -v
-
-# Node.js tests
-npm test                      # Jest with coverage
-npm run test:ci               # CI mode (coverage, limited workers)
+pytest tests/ -q
 ```
+Süit **Python**'dur. Beklenen tek yerel kırmızı, `requirements-dev.txt`'teki pytest
+pininden sapmış bir yerel kurulumdur (`test_toolchain_pinning`).
 
 ### Type Generation
 ```bash
-npm run types:gen             # Generate TypeScript types
-npm run types:gen:ts          # TS types only
+bash tools/generate_types.sh --python        # datamodel-code-generator
+bash tools/generate_types.sh --typescript    # json-schema-to-typescript (npm -g kurar)
 ```
+⚠️ Bu betiğin **CI'da çağıranı yoktur**; araçlarını **global** kurar, bu deponun
+`package.json`'ına bağlı değildir. Tüketiciler tipi kendi depolarında üretir.
 
 ### OpenAPI
 ```bash
-npm run openapi:validate      # Lint OpenAPI specs
-npm run openapi:bundle        # Bundle all OpenAPI specs to dist/
+npm run openapi:validate      # redocly lint (CI aynı işi `npx @redocly/cli@1 lint` ile yapar)
+npm run openapi:bundle        # dist/openapi/ altına bundle
 ```
 
 ### Linting & Formatting
 ```bash
-# Node.js
-npm run lint                  # ESLint
-npm run format                # Prettier
-
-# Python
-black .                       # Format
-ruff check .                  # Lint
-mypy tools/                   # Type check
+black .            # Python biçim
+ruff check .       # Python lint
+mypy tools/        # Python tip
 ```
+⛔ **Depo genelinde `prettier` KOŞTURMAYIN.** `schemas/` · `enums/` · `api/` · `dist/`
+`.prettierignore` ile korunuyor: bu ağaçların biçimi elle bakımlıdır ve
+checksum + vendored bayt-paritesi + `dist` tazeliği ona bağlıdır.
 
-### Full CI Gate (what runs in CI)
-```bash
-npm run ci:gate               # validate + test:ci + breaking-change:detect + openapi:validate
-```
+### CI'da GERÇEKTEN ne koşuyor
+`.github/workflows/contract_validation.yml` — 8 iş: `validate-schemas` ·
+`test-schemas` · `detect-breaking-changes` · `verify-checksums` · `lint-openapi` ·
+`check-forbidden-fields` · `check-draft-2020-12` · `check-brand-guard` (+ doc-link
+kapısı). Hepsi `summary` işinde toplanır. **Tek bir `npm run ci:gate` komutu yoktur** —
+öyle bir script hiç çalışmadı. Kapsam ve `needs` bütünlüğü
+`tests/test_ci_gate_honesty.py` ile türetilip zorlanır.
 
 ### Breaking Change Detection
 ```bash
-npm run breaking-change:detect
-# or
-python tools/breaking_change_detector.py --old <base> --new .
+python tools/breaking_change_detector.py --old <dizin|git-ref> --new .
 ```
+⚠️ Bilinen sınırlar (kapı bunları gördüğünü iddia ETMEZ): `$ref` çözülmez
+(`REF_CHANGED` → insan incelemesi, SDLC_GATES §3E) · **object politikası daralması
+hiç sınıflandırılmaz** (2026-08-11: 27 kapatma → 0 değişiklik kaydı). Sürüm kararı
+bu iki sınıfta **elle ölçülür**.
 
 ### Version Pinning
 ```bash
@@ -286,7 +297,15 @@ All tests are in `tests/` and use Python's pytest:
 | `test_examples_match_schemas.py` | Example JSON files validate against their schemas |
 | `test_no_breaking_changes.py` | Breaking change detection between versions |
 
-Coverage threshold: 80% (branches, functions, lines, statements) for the `tools/` directory.
+> ⚠️ **Bu tablo TAM LİSTE DEĞİLDİR** — süitte bugün **43** test dosyası var. Sayı
+> ezberlemeyin; `git ls-files 'tests/*.py' | wc -l` koşun.
+>
+> ⛔ **"Coverage threshold: 80%" iddiası KALDIRILDI (2026-08-11, ölçüldü).** O eşik
+> `package.json`'daki jest yapılandırmasındaydı ve jest `tools/**/*.ts` üzerinde
+> koşuyordu — depoda **0 adet `.ts`** var, yani eşik hiç uygulanmadı. Python tarafında
+> `--cov-fail-under` **hiçbir yerde tanımlı değil** (`git grep -i fail_under` → yalnız
+> eylem planındaki bir cümle). Gerçek ölçülen kapsam: `tools/` için **%51**.
+> Bir eşik istenirse `pyproject.toml → addopts`'a eklenmeli ve o zaman GERÇEK bir kapı olur.
 
 ## When Modifying Schemas
 

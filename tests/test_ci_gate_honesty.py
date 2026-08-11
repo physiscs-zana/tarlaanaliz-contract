@@ -92,6 +92,26 @@ def _tracked() -> list[str]:
     return [line for line in out.stdout.splitlines() if line]
 
 
+#: Testlerin KÖK DÜZEYDE okuduğu dosyaları yakalayan desen — `ROOT / "package.json"`,
+#: `ROOT / ".prettierignore"` gibi. 2026-08-11'de eklendi: türetme yalnız doc-link
+#: sonek evrenini (.md/.txt/.py/.yaml/.yml) + şema ağaçlarını kapsıyordu, dolayısıyla
+#: `package.json` / `package-lock.json` / `.prettierignore` **filtre dışındaydı** —
+#: oysa `tests/test_node_toolchain_honesty.py` üçünü de okuyor. Yani yalnız
+#: `package.json` değiştiren bir PR'da o kapı HİÇ KOŞMAZDI. Kapı kendi kör noktasını
+#: ölçümle buldu; liste yerine TÜRETME eklendi.
+_ROOT_FILE_READ = re.compile(r'ROOT\s*/\s*"([^"/]+\.[A-Za-z0-9]+|\.[A-Za-z][A-Za-z0-9.-]*)"')
+
+
+def _files_read_by_tests() -> set[str]:
+    """`tests/*.py` içinde `ROOT / "<kök dosya>"` diye okunan dosyalar."""
+    found: set[str] = set()
+    for path in (ROOT / "tests").rglob("*.py"):
+        for name in _ROOT_FILE_READ.findall(path.read_text(encoding="utf-8", errors="replace")):
+            if (ROOT / name).is_file():
+                found.add(name)
+    return found
+
+
 def required_path_patterns() -> set[str]:
     """Kapıların okuduğu her kök için GitHub `paths:` deseni — TÜRETİLİR."""
     suffixes = {s.lower() for s in _load_doc_links().SCANNED_SUFFIXES}
@@ -100,6 +120,8 @@ def required_path_patterns() -> set[str]:
         if Path(path).suffix.lower() not in suffixes:
             continue
         patterns.add(f"{path.split('/')[0]}/**" if "/" in path else path)
+    # Sonek evrenine girmeyen ama bir KAPININ okuduğu kök dosyalar (package.json gibi)
+    patterns |= _files_read_by_tests()
     return patterns
 
 

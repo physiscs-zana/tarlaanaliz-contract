@@ -247,6 +247,88 @@ ve testi kırmızıya çevirdi — kapı daha yazıldığı turda kendi yazarın
 
 ---
 
+## Node/TS zinciri kaldırıldı — ölü değil **ZARARLI** bir komut vardı
+
+### ÖLÇÜLEN SORUN
+
+**① Hiç var olmamış bir TypeScript zinciri belgeleniyordu.** `package.json` 30 script
+taşıyordu; 6'sı doğrudan var olmayan bir dosyaya işaret ediyordu
+(`tools/validate.ts` · `generate-types.ts` · `generate-schema-index.ts` ·
+`breaking-change-detector.ts` · `pin-version.ts` · `sync-to-repos.sh`).
+**O dosyalar depoda HİÇ VAR OLMADI** — `git log --all -- <yol>` dördü için de **0 commit**;
+`package.json` ilk commit'ten (2026-01-30) beri iskeleydi.
+
+Geri kalanı ya bunlara zincirleniyordu (`ci:gate`, `build`, `prebuild`, `validate:*`)
+ya da çalışacağı dosya yoktu: jest `tests/**/*.ts` arıyordu ama `tests/` **42 `.py` +
+0 `.ts`**; eslint 0 `.ts/.js`; `prepare: husky install` ama `.husky/` yok.
+`CLAUDE.md` bunları *"Full CI Gate (what runs in CI)"* başlığıyla belgeliyordu —
+**CI `npm run ci:gate`'i hiç çağırmıyordu.**
+
+**② `format` script'i ölü değil ZARARLIYDI.**
+
+```
+"format": "prettier --write \"**/*.{ts,js,json,yaml,yml,md}\""   +   .prettierignore YOK
+
+npx prettier@3 --check "schemas/**/*.json" "enums/**/*.json" "api/**/*.yaml"
+  -> "Code style issues found in 94 files"      (checksum kapsamındaki 97 dosyanın 94'ü)
+```
+
+Koşsaydı **üç değişmez aynı anda** kırılırdı: agrega checksum (`pin_version`;
+kapsam `schemas/`+`enums/`+`api/`) · vendored bayt-paritesi · `dist/` tazeliği.
+
+### Changed — `package.json` gerçeğe indirgendi
+
+| | önce | sonra |
+|---|---|---|
+| script | 30 | **6** (`validate:brand` + `openapi:*`) |
+| `dependencies` | `ajv`, `ajv-formats` | **0** |
+| `devDependencies` | 16 | **1** (`@redocly/cli`) |
+| lockfile paketi | 677 | **263** |
+| `npm audit` | **38** açık (2 kritik · 21 yüksek) | **30** (2 kritik · 14 yüksek) |
+| yapılandırma bloğu | `jest`, `prettier`, `eslintConfig`, `lint-staged` | **hiçbiri** |
+| `repository`/`bugs`/`homepage` | `tarlaanaliz/tarlaanaliz-contracts` (yanlış hesap+ad) | `physiscs-zana/tarlaanaliz-contract` |
+
+Kaldırılan paketlerin **hiçbirinin tüketicisi yoktu** (ölçüldü). `json-schema-to-typescript`
+ve `typescript` yalnız `tools/generate_types.sh`'te geçiyor — o da **`npm install -g`**
+ile global kuruyor, yani devDependency'ye bağlı değil (ve betiğin de çağıranı yok).
+Kalan 30 açık `@redocly/cli` ağacından geliyor: **azaltıldı, sıfırlanmadı.**
+
+### Added — `.prettierignore`
+
+Script kaldırıldı ama **elle** `npx prettier --write .` koşan bir geliştiriciye karşı da
+koruma gerekiyordu. Kanıt (geçici kaldırıp ölçüldü):
+
+```
+korumasız : 228 dosya değişirdi — bunlardan 162'si schemas/enums/api/dist
+korumalı  :  64 dosya           — bunlardan   0'ı schemas/enums/api/dist
+```
+
+### Added — `tests/test_node_toolchain_honesty.py` (13 test)
+
+Zorlananlar: her script'in dosya hedefi **var** · `npm run X` zinciri tanımlı bir
+script'e gidiyor · hiçbir script depo genelinde biçimlendirme yapmıyor ·
+`.prettierignore` dört sözleşme ağacını da kapsıyor · beyan edilen her bağımlılığın
+**tüketicisi var** · çalışacağı dosyası olmayan araç yapılandırması (jest/eslint/
+lint-staged) geri gelemiyor.
+
+Beş yönde mutasyonla sınandı — **her biri tam 1 kırmızı**, taban 0:
+ölü script ekle · zararlı `format`'ı geri getir · tüketicisiz bağımlılık ekle ·
+jest yapılandırmasını geri getir · `.prettierignore`'dan `schemas/` çıkar.
+
+### Changed — `CLAUDE.md` gerçeğe hizalandı
+
+*Tech Stack* Node bölümü, *Development Commands*'ın 9 ölü `npm run …` satırı ve
+*"Full CI Gate"* başlığı düzeltildi; yerine **CI'da gerçekten koşan 8 iş** yazıldı.
+Dedektörün iki bilinen sınırı (`$ref` çözülmez · object politikası daralması
+sınıflandırılmaz) komutun yanına not düşüldü.
+
+⛔ **"Coverage threshold: 80%" iddiası da kaldırıldı:** o eşik jest'in `tools/**/*.ts`
+yapılandırmasındaydı — depoda **0 `.ts`** var, yani eşik **hiç uygulanmadı**. Python
+tarafında `--cov-fail-under` hiçbir yerde tanımlı değil (ölçüldü); gerçek kapsam `tools/`
+için **%51**. Test tablosunun *"tam liste"* olmadığı da yazıldı (43 dosya).
+
+---
+
 ## Vendored politika paritesi — **kendi öz-denetimimin bulduğu boşluk kapatıldı**
 
 ### NEDEN — bir kör noktayı kapatırken yerine ikincisini bırakmışım

@@ -1,0 +1,39 @@
+# Prettier bu depoda SÖZLEŞME AĞAÇLARINA DOKUNAMAZ.
+#
+# NEDEN (2026-08-11, ölçüldü): `package.json` bir zamanlar
+#     "format": "prettier --write \"**/*.{ts,js,json,yaml,yml,md}\""
+# script'i taşıyordu ve bu dosya YOKTU. Ölçüm:
+#     npx prettier@3 --check "schemas/**/*.json" "enums/**/*.json" "api/**/*.yaml"
+#     -> "Code style issues found in 94 files"   (kapsamdaki 97 dosyanın 94'ü)
+#
+# O komut koşsaydı üç değişmez aynı anda kırılırdı:
+#   * `tools/pin_version.py` agrega checksum'ı (kapsam: schemas/ + enums/ + api/)
+#   * vendored bayt-paritesi (MIRROR çiftleri — `tests/test_vendored_parity.py`)
+#   * `dist/` tazeliği (`tools/inline_refs.py --check`)
+#
+# Script kaldırıldı, ama bu dosya **elle** `npx prettier --write .` koşan bir
+# geliştiriciye karşı da korur. Şemaların biçimi ELLE bakımlıdır ve bilinçlidir:
+# tek satıra sığan `enum` dizileri, hizalanmış `$defs`, tüketicilerle bayt-özdeşlik.
+#
+# Kapı: `tests/test_node_toolchain_honesty.py` — hem script'lerin hedefinin var
+# olmasını hem de hiçbir script'in bu ağaçları yeniden biçimlendirmemesini zorlar.
+
+# Sözleşmenin kendisi — checksum + parite kapsamı
+schemas/
+enums/
+api/
+
+# Yayın ağacı (üretilmiş; üreteci tools/inline_refs.py)
+dist/
+
+# Makine-okunur kanonik kaynaklar
+drone_registry.yaml
+drone_capability_matrix.yaml
+CONTRACTS_VERSION.md
+
+# Üretilmiş / dış
+node_modules/
+coverage_html/
+coverage.xml
+package-lock.json
+poetry.lock
