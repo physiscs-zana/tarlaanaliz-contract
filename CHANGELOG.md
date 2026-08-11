@@ -245,6 +245,58 @@ Dört yönde mutasyonla sınandı (desen tutmazsa betik durur):
 **Kapının ilk getirisi:** `.github/workflows/**` yazmıştım, türetme `.github/**` istedi
 ve testi kırmızıya çevirdi — kapı daha yazıldığı turda kendi yazarını denetledi.
 
+---
+
+## Vendored politika paritesi — **kendi öz-denetimimin bulduğu boşluk kapatıldı**
+
+### NEDEN — bir kör noktayı kapatırken yerine ikincisini bırakmışım
+
+Yukarıdaki tur kanonikte 27 düğüme sızma politikası ekledi. Öz-denetimde şunu ölçtüm:
+
+```
+tools/propagate_vendored.py --check  ->  "Bekleyen yayılım YOK" (exit 0)
+tests/test_vendored_parity.py        ->  185 passed
+elle ölçüm                           ->  5 SAPMA (kanonik kapalı, vendored beyansız)
+```
+
+Sebep ikisinin de kapsamı: `propagate_vendored` yalnız **enum değeri** ve **opsiyonel
+alan** yayılımını ölçer; parite süiti ise ortak `$defs` **alanlarının** alt şemalarını
+karşılaştırır, `$.properties.*` altındaki iç içe düğümlerin **politika anahtarına**
+bakmaz. Sapmayı bulup **plana yazmıştım** — ama plan kalemi kapı değildir; kendi
+standardımla *"belgelenmiş ama uygulanmayan kural bir dilektir."*
+
+Bu, worker için kozmetik değil: worker'ın **gelen doğrulaması bloklayıcıdır** (şema
+tutmazsa `REJECTED`), yani iki taraf farklı şeyi kabul ediyordu.
+
+### Added — `tests/test_vendored_policy_parity.py` (8 test)
+
+Parite çiftlerinde (**tek kaynak:** `test_vendored_parity.MIRROR_PAIRS`/`SUBSET_PAIRS`)
+**iki tarafta da var olan** her object düğümünün politikasını karşılaştırır.
+I-4 idiomu normalize edilir: `unevaluatedProperties: false` ≡ `additionalProperties:
+false` → KAPALI. **`DÜĞÜM YOK` sapma değildir** — vendored kopyanın alt küme hakkı.
+
+Ratchet iki yönde: yeni sapma → kırmızı · bayat baseline satırı → kırmızı.
+
+**Baseline 3 satır** — üçü de `analysis_result.v1`'de (`index_maps`, `model_metadata`,
+`thermal_results`) ve **bu turdan ÖNCE de vardı**; benim değişikliğim üretmedi.
+İlk ölçtüğüm 5 sapma **worker oturumu tarafından bu tur içinde hizalandı** (ölçüldü),
+o yüzden baseline'a girmedi.
+
+Üç yönde mutasyonla sınandı: vendored'da hizalı düğümü gevşet → *yeni sapma* kırmızı ·
+baseline'dakini hizala → *bayat baseline* kırmızı · karşılaştırma mantığını boz →
+*sayaç kilidi* kırmızı.
+
+⚠️ **Kapı kardeş depo checkout'u ister** (D4-b): kardeş yoksa 3 test **beyanlı** atlanır
+(`tests/conftest.py::ALLOWED_SKIP_REASONS` kapsamı bilinçli olarak genişletildi),
+5 saf test yine koşar. Ölçüldü: kardeşli 1345 passed · kardeşsiz 1176 passed +
+169 beyanlı atlama, **beyansız atlama YOK**.
+
+> Öz-denetim notu: pozitif kontrolün eşiğini önce **ölçmeden 50 diye yazdım**, test
+> kırmızı döndü ve gerçek sayının 48 olduğunu gösterdi. Sayı artık ölçülen değere
+> sabit (`MEASURED_PAIRS=18`, `MEASURED_NODES=48`) ve ratchet olarak korunuyor.
+
+---
+
 > ⚠️ Bu tur `paths:` filtresi **kaldırılmadı**. Kaldırmak en dürüst seçenek olurdu
 > (her filtre bir fail-open yüzeyidir) ama bu deponun CI geçmişinde **fatura limiti**
 > kaynaklı kırmızılar var; filtreyi silmek koşum sayısını artırır. Bunun yerine filtre

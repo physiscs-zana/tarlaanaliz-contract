@@ -37,7 +37,17 @@ import pytest
 ALLOWED_SKIP_REASONS: tuple[tuple[str, tuple[str, ...], str], ...] = (
     (
         "kardeş depo yok",
-        ("tests/test_vendored_parity.py", "tests/test_c11_sorties_absorption.py"),
+        (
+            "tests/test_vendored_parity.py",
+            "tests/test_c11_sorties_absorption.py",
+            # 2026-08-11 · KAPSAM GENİŞLETME KARARI: `test_vendored_policy_parity.py`
+            # aynı D4-b desenindedir — kanonik ile vendored kopyanın ALAN SIZMASI
+            # POLİTİKASINI karşılaştırır ve kardeş depo checkout'u ister. Neden ayrı bir
+            # dosya: mevcut parite süiti ortak `$defs` ALANLARINI karşılaştırıyor,
+            # `$.properties.*` altındaki iç içe düğümlerin politika anahtarına bakmıyor —
+            # ölçüldü, 5 sapma iki kapının da (propagate --check dahil) kör noktasındaydı.
+            "tests/test_vendored_policy_parity.py",
+        ),
         "Bu iki süit kardeş depoları okur; bu deponun Actions'ında yalnız kendisi checkout "
         "edilir → CI'da atlanırlar. D4-b KARARI: kapı bu depoda değil KARŞI TARAFTA koşar — "
         "bu depo PUBLIC, kardeşlerin üçü de PRIVATE, dolayısıyla kardeş CI'ı burayı sırsız "
