@@ -116,7 +116,7 @@ kurallar; daima buradaki kurallara kıdemli SDLC uzmanı, Technical Writer / SSO
 | Çiftçi | Kendi tarlalarını kaydeder, bitki türlerini tanımlar, analiz talebi oluşturur, sonuçları görür |
 | Kooperatif/Üreticiler Birliği | Kurumsal hesapla üye olur; üye çiftçileri davet eder/aktarır; yetkisine göre tarlaları yönetir ve analiz talebi açabilir |
 | Drone Pilotu | Desteklenen drone/sensör kombinasyonlarından biriyle (drone_registry.yaml'a kayıtlı) uçuş yapar; görüntüleri her gün hafıza kartıyla yerel istasyona aktarır; **sonuç raporunu GÖRMEZ** |
-| İl Operatörü (temsilci) | **PII görmeden** ticari KPI + kapasite planlama metriklerini izler; sözleşmeye göre gelir payı alır |
+| İlçe Temsilcisi (DISTRICT_REP) | **PII görmeden** ticari KPI + kapasite planlama metriklerini izler; sözleşmeye göre gelir payı alır |
 | Merkez Yönetim | KVKK/PII erişimi olan tek yetkili katman; kullanıcı/kooperatif doğrulama ve sistem politikalarını yönetir |
 | İstasyon Operatörü (STATION_OPERATOR) | M1/M2 fiziksel istasyon operasyonu: kart alım, AV+Pix4D pipeline yönetimi, M1→M2 devir teslim. **PII GÖRMEZ. Analiz sonuçlarına erişim YOK.** Hata durumlarında CENTRAL_ADMIN'e eskalasyon yapar. Detay: **[KR-063]** |
 | Ödeme Yöneticisi (BILLING_ADMIN) | IBAN dekont onayı, geri ödeme işlemleri, İl Operatör kar payı raporlama. Telefonu yalnızca makbuz eşleştirme için maskeli görür. Limit üstü işlemlerde CENTRAL_ADMIN'e eskalasyon zorunludur. Detay: **[KR-033]**, **[KR-083]** |
@@ -485,7 +485,7 @@ Her iki sensör de Pix4Dfields'te tam radyometrik kalibrasyon desteğindedir.
 
 > GOVERNANCE (2026-06-26): Rol "İl Operatörü / ProvinceOperator / IL_OPERATOR" → "İlçe
 > Temsilcisi / DISTRICT_REP" olarak hizalandı (canlı kod bu ilçe-bazlı modeli uyguluyordu;
-> karar kaydı: docs/governance/kr083_district_rep_2026-06.md). Audit event adı
+> karar kaydı: docs/governance/kr083_net_profit_2026-06.md §Önceki karar — ayrı not 2026-08-03'te oraya devredildi). Audit event adı
 > `PROVINCE_OPERATOR.RATE_CHANGED` → `DISTRICT_REP.RATE_CHANGED`.
 
 > GOVERNANCE (2026-06-27): Kar payı modeli ürün sahibi kararıyla **BRÜT → NET** ve ödeme
@@ -1283,7 +1283,7 @@ Hesaplama ve ödeme mekanizması için bkz. **[KR-083]**.
 
 | Güvenlik Katmanı | Kabul Kriteri (DoD) | Test Kanıtı | SDLC Gate |
 |------------------|---------------------|-------------|-----------|
-| Kimlik & Yetki (RBAC) + PII ayrımı | İl Operatörü ve saha rolleri PII görmez; sadece FieldID/özet KPI görür. Admin işlemleri audit log üretir. | RBAC unit + API yetki e2e; negatif test: yetkisiz erişim 403. Audit log kaydı doğrulanır. | PR + CI |
+| Kimlik & Yetki (RBAC) + PII ayrımı | İlçe Temsilcisi ve saha rolleri PII görmez; sadece FieldID/özet KPI görür. Admin işlemleri audit log üretir. | RBAC unit + API yetki e2e; negatif test: yetkisiz erişim 403. Audit log kaydı doğrulanır. | PR + CI |
 | Cihaz kimliği + mTLS | Sadece kayıtlı kiosk cihazı, sertifikalı mTLS ile ingest endpoint'ine erişebilir; sertifika iptali anında bloklar. | Integration test: mTLS başarılı/başarısız senaryolar; sertifika revocation testi. | CI + Release |
 | Veri bütünlüğü: SHA-256 manifest + imza | Her ingest paketi için manifest (dosya listesi + hash) ve imza zorunlu; hash uyuşmazsa karantina. | Unit test (hash/manifest), e2e: bozuk dosya → karantina + alarm. | PR + CI |
 | Allowlist / içerik doğrulama | Sadece izinli uzantı/MIME; maksimum boyut/çözünürlük limitleri; zip-slip ve path traversal engelli. | Unit test: uzantı/MIME; fuzz test örnekleri; e2e negatif senaryo. | PR + CI |
@@ -1304,7 +1304,7 @@ Hesaplama ve ödeme mekanizması için bkz. **[KR-083]**.
 | SC-02: Hash uyuşmazlığı | Manifestteki bir dosyayı değiştir → ingest | Karantina; olay kaydı; işleme alınmaz | Karantina kaydı + alarm kaydı |
 | SC-03: Yetkisiz cihaz | mTLS sertifikası olmayan cihazla ingest dene | Erişim reddi; audit log + alarm | Integration test çıktısı + log |
 | SC-04: EICAR/zararlı içerik | Test imzası bulunan dosyayı ingest et | AV blok + karantina | AV raporu + karantina kaydı |
-| SC-05: PII sızma testi | İl Operatörü rolüyle PII endpoint'ine erişmeyi dene | 403; veri dönmez; deneme audit log'a düşer | RBAC e2e raporu |
+| SC-05: PII sızma testi | İlçe Temsilcisi (DISTRICT_REP) rolüyle PII endpoint'ine erişmeyi dene | 403; veri dönmez; deneme audit log'a düşer | RBAC e2e raporu |
 | SC-06: Contract breaking change | Schema'da alan sil/isim değiştir | CI breaking-change detector fail; merge/release blok | CI artefaktı + diff raporu |
 
 ---
@@ -1316,7 +1316,7 @@ Hesaplama ve ödeme mekanizması için bkz. **[KR-083]**.
 - **Giriş:** Telefon Numarası + 6 haneli PIN ile yapılır
 - **Doğrulama adımı yoktur**; süreç bilinçli olarak sadeleştirilmiştir
 - Tek satırlık “SMS OTP / tek kullanımlık kod yoktur
-- **PIN unutulursa:** Merkez/Kooperatif/İl Operatörü panelinden PIN sıfırlanır; kullanıcı ilk girişte yeni PIN belirler
+- **PIN unutulursa:** Merkez/Kooperatif/İlçe Temsilcisi panelinden PIN sıfırlanır; kullanıcı ilk girişte yeni PIN belirler
 - Kullanıcıyı yormayan minimum korumalar: giriş deneme sınırı (rate limit) ve kısa süreli kilitleme (lockout)
 
 ---
@@ -1681,8 +1681,8 @@ Bu bölüm; ana iş akışlarının iş planı anlatısında zaten bulunan kıs�
 - Eşleştirme zorunlu: Yüklenen çekimler kayıtlı tarla ile eşleşmezse işlenmez
 - Pilot sonuç raporunu görmez; sadece operasyon durumu görür
 
-**İl Operatörü:**
-- İl operatörü PII görmez; sadece ticari KPI ve kapasite planlama metrikleri görür
+**İlçe Temsilcisi (DISTRICT_REP):**
+- İlçe Temsilcisi PII görmez; sadece ticari KPI ve kapasite planlama metrikleri görür
 - Coğrafya: ilçe düzeyi veya 1-2 km grid yoğunluk katmanı (pseudonymous)
 
 ---
@@ -1929,10 +1929,9 @@ Bu bölüm, güvenlik kurallarını **tekrar etmek** için değil; SSOT içinde 
 - **Saha güvenlik checklist:** EK-SOP-SEC
 - **Ödeme akışı + manuel onay + BILLING_ADMIN operasyonları:** [KR-033]
 - **Çiftçi ön raporu (iki-fazlı teslimat, KR-019 önü — tespit-içermeyen indeks fazı):** [KR-093]
-- **İl Operatörü kar payı mekanizması:** [KR-083]
+- **İlçe Temsilcisi kar payı mekanizması:** [KR-083]
 - **Pilot hakediş doğrulama (expected vs observed):** [KR-065]
 - **Mimari Karar Kayıtları:** ADR-001 (9 durumlu state machine), ADR-002 (graceful degradation modeli)
-- **Platform derin denetim raporu:** `docs/migration_guides/PLATFORM_DEEP_AUDIT_v1_2_0.md`
 
 
 # BÖLÜM 6: TEST SENARYOLARI
