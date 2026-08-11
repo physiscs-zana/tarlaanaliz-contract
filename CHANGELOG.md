@@ -189,6 +189,69 @@ daraltmadır; her satır kendi üretici ölçümünü gerektirir.
 
 ---
 
+## CI kapısının kendi dürüstlüğü: `paths:` filtresi + `summary.needs`
+
+### ÖLÇÜLEN İKİ KUSUR — ikisi de daha önce bir kez kapatılmış sınıfın GERİ DÖNÜŞÜ
+
+**① `summary.needs` listesinde `lint-openapi` YOKTU.** Bu, SD5'te `verify-checksums`
+için kapatılan hatanın aynısı: iş kırmızı olsa bile özet kapısı onu görmüyordu, yani
+OpenAPI lint'i düşen bir PR *"Validation Summary: pass"* gösteriyordu.
+
+**② `paths:` filtresi 9 kök eksikti.** Q7'de *"filtre testlerin GERÇEKTEN okuduğu
+yollardan türetildi"* denmişti; ama `tools/check_doc_links.py` (AL-K20, bir gün önce
+eklendi) `git ls-files` üzerinden **tüm izli** `.md/.txt/.py/.yaml/.yml` dosyalarını
+tarıyor ve filtre onunla birlikte genişletilmemişti. Ölçüm:
+
+```
+doc-link kapısının tarayacağı ama filtrede OLMAYAN kökler:
+  .github/**  ·  .redocly.yaml  ·  .redocly.lint-ignore.yaml
+  CLAUDE.md   ·  PATCH_NOTES.md ·  README.md
+  denetim/**  ·  drone_registry.yaml
+```
+
+Yani bu köklerden birini değiştiren bir PR'da **workflow hiç koşmuyordu**.
+Ayrıca `dist/**` de yoktu: yayın ağacı tüketicilerin vendor'ladığı biçimdir,
+`validate.py` + `test_inline_refs` + `test_object_drift_gate` onu okur ve **yalnız
+`dist/` dokunan gerçek bir commit var** (`d6de514`, 2026-08-07).
+
+### Changed — `.github/workflows/contract_validation.yml`
+
+- `paths:` **13 → 21 kök** (PR ve push blokları birebir aynı).
+- `summary.needs`'e `lint-openapi` eklendi; özet çıktısına *"OpenAPI Lint"* satırı ve
+  **düşürme koşuluna** `needs.lint-openapi.result == 'failure'` eklendi.
+  (`needs`'e eklemek işi *bekletir*; koşula eklemek onu *zorunlu* kılar — ikisi ayrı
+  şeydir ve yalnız ilkini yapmak kapıyı yine kör bırakırdı.)
+
+### Added — `tests/test_ci_gate_honesty.py` (11 test)
+
+Liste artık **ezberlenmiyor, TÜRETİLİYOR**: gereken kök kümesi her koşumda
+`git ls-files` + `check_doc_links.SCANNED_SUFFIXES` (**tek kaynak** — ikinci kopya
+tutulmuyor) + şema kapılarının ağaçlarından hesaplanıp filtreyle karşılaştırılıyor.
+Yeni bir kapı eklenip filtre genişletilmezse test kırmızı döner.
+
+Kapsanan değişmezler: her iş `summary.needs`'te · `needs`'teki her iş düşürme
+koşulunda · **koşul `needs`'te olmayan işe atıf yapmıyor** · `needs` hayalet işe bağlı
+değil · PR ve push filtreleri birebir aynı · filtre türetilen her kökü kapsıyor.
+
+Dört yönde mutasyonla sınandı (desen tutmazsa betik durur):
+
+| Mutasyon | Kırılan test |
+|---|---|
+| `lint-openapi`'yi `needs`'ten çıkar | **2** (kapsam + hayalet atıf) |
+| yalnız düşürme koşulundan çıkar | 1 |
+| filtreden `denetim/**` çıkar | 3 |
+| PR/push filtrelerini ayrıştır | 2 |
+
+**Kapının ilk getirisi:** `.github/workflows/**` yazmıştım, türetme `.github/**` istedi
+ve testi kırmızıya çevirdi — kapı daha yazıldığı turda kendi yazarını denetledi.
+
+> ⚠️ Bu tur `paths:` filtresi **kaldırılmadı**. Kaldırmak en dürüst seçenek olurdu
+> (her filtre bir fail-open yüzeyidir) ama bu deponun CI geçmişinde **fatura limiti**
+> kaynaklı kırmızılar var; filtreyi silmek koşum sayısını artırır. Bunun yerine filtre
+> **ölçülen kümeye** genişletildi ve **kapıya bağlandı**. Kaldırma kararı sahibinindir.
+
+---
+
 ## [7.6.1] - 2026-08-11 — D12: `stress_ratio` TANIMLANDI + ön faz kapalı listesi KAPIYA bağlandı
 
 > ⛔ **Bu sürüm kendi önceki iddiasını çürütüyor.** v1.4.2–v1.4.3 `analysis_type.enum`
