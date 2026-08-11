@@ -5,7 +5,7 @@
 **Statü:** UYGULANMADI — bu tur platform tarafında çalışıldı; kanonik depo tek-taraflı
 düzenlenmez (KESİN KURAL). Bu dosya kanonik oturumun karar-hazır devridir.
 **Kardeş kayıt:** `tarlaanaliz-worker/denetim/birlesik_devir_spec_arsivi_2026.md` §2
-(2026-08-11'e kadar ayrı dosya: `b4_worker_contract_devir_spec_2026_06_30.md`; E2/E3
+(2026-08-11'e kadar ayrı dosya: `b4_worker_contract_devir_spec_2026_06_30`; E2/E3
 kalemlerinin kökeni — arşiv ölçümü §2'yi **KISMEN AÇIK** işaretliyor) ·
 `tarlaanaliz-platform/docs/security/open_items_decisions_2026-06.md` (CHERRY satırı).
 

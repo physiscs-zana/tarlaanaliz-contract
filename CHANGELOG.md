@@ -630,7 +630,7 @@ gidiyor — aynı adlı iki SSOT metni **ayrışmış** (hizalama ayrı kalem).
 `breaking_change_detector`: **0 breaking**).
 
 **Kaynak:** worker `denetim/birlesik_devir_spec_arsivi_2026.md` §9 — karar-hazır devir
-(2026-08-11'e kadar ayrı dosya: `audit_escalation_reason_devir_spec_2026_07_19.md`).
+(2026-08-11'e kadar ayrı dosya: `audit_escalation_reason_devir_spec_2026_07_19`).
 Worker'ın `audit_set_sampler` + `propagation_metrics` kodu **landed ama uykuda**; canlıya bağlanması
 platform kararı bekliyordu (§2.1: worker enum'a değer **uyduramaz**).
 

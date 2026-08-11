@@ -373,7 +373,7 @@ alanları ilk kez orada). Portal ekranını bir kez gözle doğrula.
 > 1. 🔴 **AK-4 aynası:** kanonik `analysis_job.v1` → `drone_metadata.available_bands`
 >    hâlâ serbest string. Worker önden gitti (vendored enum); kanonik ayna inmeli.
 >    Gerekçe + istek: `tarlaanaliz-worker/denetim/birlesik_devir_spec_arsivi_2026.md` §1
->    (2026-08-11'e kadar ayrı dosya: `band_sozlugu_devir_spec_2026_08_08.md` §3).
+>    (2026-08-11'e kadar ayrı dosya: `band_sozlugu_devir_spec_2026_08_08` §3).
 > 2. 🟡 **mTLS: sertifika engeli KALKTI (2026-08-08), kalan iş proxy + kayıt.** Bkz. §0.A-mtls.
 > 3. 🟠 **AV2 servisi deploy edilmemiş** (`TARLA_AV2_ENABLED=false`, `av2-scanner` konteyneri yok)
 >    → `is_ready_for_analysis` sağlanamıyor, yani **tam meşru** dispatch yolu kapalı.
@@ -1677,7 +1677,7 @@ zonasyon/VRA **ürün** olacaksa → Fields. Tam gerekçe ve kaynaklar: eylem pl
 > *(C4 düştü — contract kalemi değil · C5 düştü — zaten yapılmış · AL-C1/C2 Tur 2'den Tur 1'e alındı)*
 >
 > **Kaynak devir spesi:** `tarlaanaliz-worker/denetim/birlesik_devir_spec_arsivi_2026.md` §9
-> (2026-08-11'e kadar ayrı dosya: `audit_escalation_reason_devir_spec_2026_07_19.md`;
+> (2026-08-11'e kadar ayrı dosya: `audit_escalation_reason_devir_spec_2026_07_19`;
 > worker'ın karar-hazır devri — **platform seçer, worker uydurmaz**).
 > **Neden değiştiği:** `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (kanıt arşivi).
 

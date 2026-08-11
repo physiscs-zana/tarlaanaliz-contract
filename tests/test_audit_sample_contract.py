@@ -6,7 +6,7 @@ Neden bu test var (2026-07-31):
     (B) gerektiriyordu. Worker bunu tek taraflı ekleyemez (§2.1 platform-otoriter), bu yüzden
     karar-hazır devredilmişti:
     `tarlaanaliz-worker/denetim/birlesik_devir_spec_arsivi_2026.md` §9
-    (2026-08-11'e kadar ayrı dosya: `audit_escalation_reason_devir_spec_2026_07_19.md`).
+    (2026-08-11'e kadar ayrı dosya: `audit_escalation_reason_devir_spec_2026_07_19`).
 
     Bilimsel çekirdek: denetim tile'ı **güvene/kümeye BAKILMAKSIZIN** seçilir. Bu yüzden
       * onu güven-temelli bir neden altında yollamak yansızlığı bozar → ayrı `AUDIT_SAMPLE`
