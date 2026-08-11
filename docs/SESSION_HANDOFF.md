@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-11 (**onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
+**Son güncelleme:** 2026-08-11 (**on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -22,7 +22,84 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-11, **onuncu oturum: D12 `stress_ratio` kararı · KR-093 ön faz kapısı · D13 üç-repo 7.6.1 hizası**)
+## 0.A EN GÜNCEL — (2026-08-11, **on birinci oturum: docs öz-denetimi · sarkan-atıf kapısı · çeltik sunumdan çıktı**)
+
+> **Durum: HEPSİ MERGE EDİLDİ (9 PR, dört depo).** Merge sonrası CI dört depoda da yeşil;
+> I-1 üçlü hiza **7.6.1**; SSOT üç depoda bayt-özdeş `d3c65d62…`.
+> `docs`+`denetim` izli dosya: **184 → 183**.
+>
+> | PR | Depo | Konu |
+> |---|---|---|
+> | [#66](https://github.com/physiscs-zana/tarlaanaliz-contract/pull/66) | contract | 8 çapraz-repo sarkan atıf + kapı + **eylem planı §2.1 matrisi koddan sapmıştı** |
+> | [#67](https://github.com/physiscs-zana/tarlaanaliz-contract/pull/67) | contract | kapı çıktısı makine-okunur (`SKIPPED_CROSS_REPO`) |
+> | [#409](https://github.com/physiscs-zana/tarlaanaliz-platform/pull/409) | platform | 12 sarkan atıf + kapı + `test_ops_scripts_in_image` **I-3 yönü eklendi** |
+> | [#410](https://github.com/physiscs-zana/tarlaanaliz-platform/pull/410) | platform | **çeltik sunumdan çıktı** (5→4 ürün) + "SUNULAN ⇒ bookable" kapısı |
+> | [#411](https://github.com/physiscs-zana/tarlaanaliz-platform/pull/411) | platform | kapı betiği senkron |
+> | [#218](https://github.com/physiscs-zana/tarlaanaliz_worker/pull/218) | worker | kapı + **aktif_ogrenme ikilisi birleşti** (62→61 dosya) + K4/K6 |
+> | [#219](https://github.com/physiscs-zana/tarlaanaliz_worker/pull/219) | worker | çapraz-repo ayağı CI'da bağlayıcı + 2 yetim belge bağlandı |
+> | [#66](https://github.com/physiscs-zana/tarlaanaliz_edgekiosk/pull/66) | edge | kapı |
+> | [#67](https://github.com/physiscs-zana/tarlaanaliz_edgekiosk/pull/67) | edge | çapraz-repo ayağı + yetim belge bağlandı |
+
+### 🔴 CANLIDA OLMAYAN TEK ŞEY — çeltik (merge ≠ deploy)
+
+`main`'de `offered_crops.generated.json` = `['CORN','COTTON','PISTACHIO','GRAPE']` (ölçüldü),
+ama `curl https://tarlaanaliz.com/` **hâlâ `RICE` içeriyor**. Yayın elle yapılır:
+`tarlaanaliz-platform/docs/operations/WEB_RELEASE_RUNBOOK.md` (üretim sunucusunda
+`docker compose build web` +
+Cloudflare "Purge Everything"). **Sunucu erişimi olan makinede yapılmalı.**
+
+**Neden çıkarıldı:** `missions.py` sipariş yolunda İKİ kapı koşuyor ve ayrı kaynaklardan
+okuyor — SUNUM (`is_gap_offered` ← `crops.ts`) ⟂ TESLİM (`is_bookable` ← `crop_readiness.json`).
+Çeltik birincide vardı, ikincide `bookable:false` → çiftçi ana sayfada görüyor, tarla
+açabiliyor (`fields.py` yalnız SUNUM'a bakar), sipariş verince **409** alıyordu.
+Değişmez artık testle kilitli: `test_every_offered_crop_is_bookable_in_readiness`.
+
+### Yeni kapı: sarkan doküman atıfı (AL-K20)
+
+Dört depoda `check_doc_links` + ratchet baseline + CI adımı. Betik **bayt-özdeş**
+(blob `58ea575d…`; yollar `__file__`'dan türetilir — dördünü de aynı baytlarla güncelle,
+`cmp` ile doğrula). Baseline: contract 98 · platform 96 · worker 182 · edge 24.
+
+**Çapraz-repo ayağı worker+edge CI'ında BAĞLAYICI** (`contracts_gate.yml` → `sibling-parity`
+işi contract'ı zaten yan yana checkout ediyordu). CI log'uyla kanıtlandı: önceden worker 2 /
+edge 1 atlanan atıf → şimdi `SKIPPED_CROSS_REPO_COUNT 0`.
+⛔ contract→worker/edge ve platform→worker bağlanamaz: o depolar **PRIVATE**, çapraz-repo
+token'ı gerekir (ölçüldü: `gh repo view --json visibility`).
+
+### ⚠️ SONRAKİ OTURUM / DİĞER MAKİNE İÇİN
+
+1. **AL-K19 bir sonraki sürüm törenine BİNMELİ.** `schemas/worker/expert_review_queue.v1.schema.json:463`
+   silinmiş bir worker dosyasını `source` gösteriyor; `schemas/` checksum kapsamında olduğu için
+   tek başına düzeltmek üç-depo töreni ister. Bu oturumda contract'ta **39 şema dosyalık**
+   `unevaluatedProperties` işi commit'lendi (`contract/uneval-array-items`) — tören ORADA açılacak,
+   AL-K19 o turda düzeltilsin (`dist/` kopyası da yeniden üretilmeli).
+2. **Kök `.txt`'ler git DIŞINDA (K4) ve bu makinede EKSİK.**
+   `Tarama_Protokolu_v1.6_Birlesik` bu bilgisayarda **YOK** (pozitif kontrollü `find`; yalnız
+   v1.3 var). Üç 2026-07 denetiminin referans belgesi ve worker `phenology_registry.yaml`
+   sezon uzunlukları ona hizalanmıştı → **F-8 hizalaması bu makinede doğrulanamıyor.**
+   Diğer bilgisayarda duruyorsa oradan alıp kalıcı bir yere koyun; kalıcı seçenek
+   `tarlaanaliz-contract/docs/` altına almak (worker `denetim/kalan_isler.txt` §2/K4).
+3. **Bu klasör git deposu değil** — kök `CLAUDE.md` ve beş `.claude/settings.json`
+   **push ile taşınmaz**; yeni makinede elle kopyalanır (kök `CLAUDE.md` §7).
+   Yerel hafıza (`~/.claude/memory/tarlaanaliz/`) de taşınmaz — devir yalnız bu dosyayla olur.
+4. **Birleştirme sırası BİTTİ.** Kalan 7 adayın 6'sı ölçümle çürütüldü (üretim kodundan adıyla
+   anılan canlı referanslar / eşi olmayan / ilgisiz konu = grab-bag riski). Yeni kural:
+   **koddan adla anılan belge birleştirilmez; birleştirilecekse ADI KORUNUR.**
+5. **Kapının bakımı:** baseline **elle yamanmaz** — `--write-baseline` + diff incelemesi.
+   Tarihsel bir dosya adını `.md` uzantısıyla anmak onu baseline'a sokup kapıyı o dosyada
+   gevşetir; köken notlarında uzantı yazmayın.
+
+### Paralel oturum uyarısı (bu turda yaşandı)
+
+Paylaşılan checkout'ta `git checkout -b` ile dal açıp çalışırken paralel oturum **dalı
+değiştirdi**; iki commit'im onların dalına düştü (`gh pr create` *"No commits between…"*
+diyene kadar fark edilmedi). Kurtarma: `git branch -f <dalım> <sha>` → `git reset --soft HEAD~1`
+→ yalnız kendi dosyalarını `git restore`. **Kalıcı korunma: izole `git worktree` kullanın**
+(bu turda worker'da öyle yapıldığı için worker hiç etkilenmedi).
+
+---
+
+## 0.B — (2026-08-11, **onuncu oturum: D12 `stress_ratio` kararı · KR-093 ön faz kapısı · D13 üç-repo 7.6.1 hizası**)
 
 > **Durum: HEPSİ MERGE EDİLDİ.** Beş PR, üç depo, hepsi CI'dan geçti. Çalışma ağaçları
 > temiz, üç depo da varsayılan dalında, turun beş dalı silindi.
