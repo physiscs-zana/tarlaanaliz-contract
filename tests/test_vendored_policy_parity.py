@@ -44,14 +44,19 @@ WORKSPACE = ROOT.parent
 
 sys.path.insert(0, str(ROOT / "tests"))
 
-#: 2026-08-11 ÖLÇÜMÜ — bu turdan ÖNCE de var olan sapmalar (benim değişikliğim üretmedi).
-#: Üçü de `analysis_result.v1`'de: kanonik `unevaluatedProperties: false`, vendored beyansız.
-#: Worker oturumuna bildirildi; hizalanınca bu satırlar SİLİNMELİ (ratchet zorlar).
-KNOWN_POLICY_DIVERGENCE: tuple[tuple[str, str], ...] = (
-    ("schemas/worker/analysis_result.v1.schema.json", "$.properties.index_maps"),
-    ("schemas/worker/analysis_result.v1.schema.json", "$.properties.model_metadata"),
-    ("schemas/worker/analysis_result.v1.schema.json", "$.properties.thermal_results"),
-)
+#: ✅ **BOŞ — ve boş KALMALI (2026-08-11).**
+#:
+#: Kapı kurulduğunda burada 3 satır vardı (`analysis_result.v1` → `index_maps` ·
+#: `model_metadata` · `thermal_results`); üçü de bu turdan ÖNCE vardı ve hiçbir kapı
+#: görmüyordu. Worker oturumuna bildirildi, **aynı gün hizalandı**
+#: (worker `2139987` → 5 düğüm, `7e18abe` → 3 düğüm) ve ratchet'in "bayat baseline"
+#: yönü beni bu satırları silmeye ZORLADI — kapı kendini temizledi.
+#:
+#: 🔒 Liste sıfırdan büyütülemez: yeni bir sapma buraya EKLENEREK geçirilemez.
+#: Ya kanonikle hizalayın (idiom: vendored tarafta `additionalProperties`), ya da
+#: bilinçli bir ayrışmaysa gerekçesini yazıp `test_baseline_is_empty`'yi bilerek
+#: değiştirin — o değişiklik incelemede GÖRÜNÜR olur.
+KNOWN_POLICY_DIVERGENCE: tuple[tuple[str, str], ...] = ()
 
 #: Kardeş depo yoksa atlama gerekçesi — `tests/conftest.py::ALLOWED_SKIP_REASONS`
 #: bu dizeyi ve BU DOSYAYI beyanlı sayar. Beyansız atlama oturumu düşürür.
@@ -164,10 +169,13 @@ class TestPolicyDivergenceOnlyShrinks:
             "satırları SİLİN:\n  " + "\n  ".join(f"{rel}  {pointer}" for rel, pointer in stale)
         )
 
-    def test_baseline_does_not_grow(self) -> None:
-        assert len(KNOWN_POLICY_DIVERGENCE) <= 3, (
-            f"Baseline {len(KNOWN_POLICY_DIVERGENCE)} satır (2026-08-11 ölçümü: 3). "
-            "Liste yalnız KÜÇÜLÜR — yeni sapma buraya eklenerek geçirilemez."
+    def test_baseline_is_empty(self) -> None:
+        """Ratchet SIFIRA indi — borç listesi artık bir kaçış deliği değil."""
+        assert len(KNOWN_POLICY_DIVERGENCE) == 0, (
+            f"Baseline {len(KNOWN_POLICY_DIVERGENCE)} satır; 2026-08-11'de **0**'a indi. "
+            "Yeni bir sapma buraya EKLENEREK geçirilemez: ya vendored kopyayı kanonikle "
+            "hizalayın, ya da ayrışma bilinçliyse gerekçesini yazıp bu testi kasıtlı "
+            "olarak değiştirin — o değişiklik incelemede görünür olur."
         )
 
 
