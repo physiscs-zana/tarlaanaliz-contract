@@ -7,6 +7,85 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [Unreleased] — Belgelenmiş ama koşmayan kuralların kapıya bağlanması
+
+> Bu blok **checksum-nötr**: `schemas/` · `enums/` · `api/` ağaçlarına dokunulmadı,
+> `v7.7.0` pini bozulmadı (`pin_version.py --verify` → 0). Sürüm gerektiren tek kalem
+> (`payment_target_type` bağlaması) **bilerek ertelendi** — aşağıya bakın.
+
+### ÖLÇÜLEN ÜÇ SORUN
+
+**① `drone_type` ↔ `drone_registry.yaml` senkron kuralının KAPISI YOKTU.**
+Kanonik enum'un **kendi üstverisi** kapıyı adıyla çağırıyordu —
+`x-registry-sync.ci_check` = *"tools/validate.py — drone_type enum değerleri
+drone_registry.yaml ile eşleşmeli"* — ama `validate.py` içinde `drone_registry` geçen
+**0 satır** vardı, dosyayı okuyan test **0** (2 isabetin ikisi de prose) ve
+`SDLC_GATES.md` ayrıca **3 yerde** (§56 · §88 · §133) kapı olarak listeliyordu.
+Veri o gün hizalıydı (**5/5/5**, sıfır fark) → eksik olan **kural değil KAPIYDI**.
+
+**② `poetry.lock` ÜÇÜNCÜ bir bağımlılık kaynağı olarak sessizce çelişiyordu.**
+
+```
+poetry.lock       ->  pytest 7.4.4      (2026-03-22'den kalma)
+pyproject.toml    ->  pytest 9.0.2
+requirements-dev  ->  pytest 9.0.2
+```
+
+`poetry install` diyen biri kapıları **7.4.4** ile koştururdu — AK-4'ün tam olarak
+yasakladığı sapma; D4/Q2'de bir kez kapatılan sınıfın üçüncü kopyası.
+
+**③ Belgelerde YAYIMLANAN komutlar koşmuyordu** (ÖD-16'nın kapsanmamış kalanı):
+`versioning_policy.md` **5 yerde** bash betiğini `python` ile çağırıyor ve betikte
+betikte olmayan üç bayrak (*version* · *notify* · *repos*) kullanıyordu · `README.md` ise `validate.py`'ye var olmayan bir *check-forbidden* bayrağı ve
+olmayan bir `tools.generate_types` modülü belgeliyordu — ikisi de yok. Ölçüm: betiğe o bayraklardan biri verildiğinde `✗ Unknown option` + exit 1.
+
+### Added — üç yeni kapı (hepsi mutasyonla sınandı)
+
+| Kapı | Mutasyon sonucu |
+|---|---|
+| `tools/validate.py → validate_drone_registry_sync` + `cross_file_checks` · `tests/test_drone_registry_sync_gate.py` (9) | enum'a kayıtsız model → **2 hata**; 3 sapma yönü + fail-closed + pozitif kontrol |
+| `tests/test_dependency_sources_agree.py` (6) | eski lock → **2 kırmızı** · kaynakları ayrıştır → **2 kırmızı** |
+| `tests/test_published_commands_run.py` (7) | *python ile bash* → **4** · olmayan araç → **2** · desteklenmeyen bayrak → **3** · hayalî doğrulayıcı bayrağı → **2** |
+
+`main()` artık dosya-başına kuralların yanında **çapraz-dosya değişmezlerini** de koşuyor
+(`cross_file_checks`); ayna karşıtı test `main()`'in bunu gerçekten çağırdığını ölçüyor.
+
+### Fixed
+
+- **`poetry.lock` yeniden üretildi** (`poetry lock`, izole venv) → pytest **9.0.2**.
+  Üç kaynak artık aynı şeyi söylüyor ve kapı geri gelmesini yasaklıyor.
+- **`README.md` 9 düzeltme**: `FORBIDDEN_FIELD_NAMES`→`FORBIDDEN_FIELDS` (3→**6 değer**) ·
+  hayalî *check-forbidden* bayrağı · olmayan *tools.generate_types* modülü · ölü
+  `npm run types:gen` · **3 sarkan checklist atfı** → `SDLC_GATES.md` · `pytest ^7.4.3`→`9.0.2` ·
+  yanlış `sha256sum -c` kullanımı → `pin_version.py --verify` · doldurulmamış lisans ·
+  tarih 2026-01-26 → 2026-08-11.
+- **`docs/versioning_policy.md`**: 5 koşmayan komut + 1 hayalî doğrulayıcı bayrağı.
+- **`docs/REPO_BOUNDARY_RULES.txt`** (kendini *"BAGLAYICI"* ilan ediyor, 2026-03-07'den
+  bayattı): worker *"gelecekte ayrı repo"* → **zaten ayrı** · web *"AYRILACAK"* → **hâlâ
+  platform içinde** · §8/8 *"Evet (file pattern check)"* → **kapı YOK**, dürüstçe
+  işaretlendi + bayatlık notu §10 eklendi.
+- `paths:` filtresine `poetry.lock` (24 kök) — **türetme istedi**, elle eklenmedi.
+- `doc_link_baseline.yaml`: README'de düzelen **3 sarkan atıf** silindi (ratchet zorladı).
+
+> ⚠️ **Kapı yazarını da denetledi:** bu bölümü ilk yazışımda kusurları *komut biçiminde*
+> alıntıladım ve yeni kapı **kendi CHANGELOG'umu** kırmızıya çevirdi (2 test).
+> Aynı tuzak `check_doc_links` kurulurken de yaşanmıştı ("köken notlarında uzantı yazma").
+> Kural: bir kusuru belgelerken **çalıştırılabilir biçimde yazma** — düz metinle anlat.
+
+### ⏭️ BİLEREK ERTELENDİ — sürüm gerektiriyor
+
+`payment_target_type` bağlaması ölçüldü ve **güvenli**: kanonik `payment_intent.v2`
+(canlı) ve `.v1` (deprecated) `["MISSION","SUBSCRIPTION"]` değerlerini **inline** yazıyor;
+kanonik enum ile **birebir aynı**; platform `PaymentTargetType(str, Enum)` da aynı iki
+değer; şema **hiçbir vendored parite çiftinde değil** → I-4 sonucu yok.
+
+Yapılmadı çünkü `schemas/` değişikliği **checksum'ı kırar** ve `v7.7.0` etiketi
+10 dakika önce yayımlandı; worker ve edge **tam o pine geçiyor**. Sürüm töreninin
+sıralamasını bozmamak için bir sonraki MINOR turunun ilk kalemi olarak bırakıldı —
+ölçümü hazır.
+
+---
+
 ## [7.7.0] - 2026-08-11 — Kapı dürüstlüğü turu: alan sızması · sözlük bağlama · ölü/zararlı araç zinciri
 
 > **MINOR, non-breaking.** Kırıcılık **elle ölçüldü** (dedektörün iki beyanlı sınırı var:
@@ -426,7 +505,7 @@ yani bu iki araç burada tavsiye niteliğinde — **ölçüldü, kapı değil**.
 
 **① Hiç var olmamış bir TypeScript zinciri belgeleniyordu.** `package.json` 30 script
 taşıyordu; 6'sı doğrudan var olmayan bir dosyaya işaret ediyordu
-(`tools/validate.ts` · `generate-types.ts` · `generate-schema-index.ts` ·
+(TS uzantılı `validate` · `generate-types` · `generate-schema-index` ·
 `breaking-change-detector.ts` · `pin-version.ts` · `sync-to-repos.sh`).
 **O dosyalar depoda HİÇ VAR OLMADI** — `git log --all -- <yol>` dördü için de **0 commit**;
 `package.json` ilk commit'ten (2026-01-30) beri iskeleydi.

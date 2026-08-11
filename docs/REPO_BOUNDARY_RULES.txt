@@ -15,7 +15,7 @@ tarlaanaliz-workspace/
 │   └── contracts/            #   → git submodule → tarlaanaliz-contract (READ-ONLY)
 ├── tarlaanaliz-web/          # [CONSUMER]  Frontend PWA (Next.js/TypeScript)
 │   └── contracts/            #   → git submodule → tarlaanaliz-contract (READ-ONLY)
-└── (tarlaanaliz-worker/)     # [CONSUMER]  YZ Worker (gelecekte ayri repo)
+└── tarlaanaliz-worker/       # [CONSUMER]  YZ Worker (AYRI DEPO - 2026-08-11'de olculdu)
 ```
 
 ---
@@ -71,7 +71,11 @@ tarlaanaliz-workspace/
 - Ham is kurali metni (KR referansi ile gosterilir, kopyalanmaz)
 - Object storage icindeki dosyalar (S3/MinIO blob'lari)
 
-### 2.3 tarlaanaliz-web (Frontend PWA) — AYRILACAK
+### 2.3 tarlaanaliz-web (Frontend PWA) — HENUZ AYRILMADI (2026-08-11 olcumu)
+
+> ⚠️ Bu bolum bir HEDEF mimariyi anlatir, bugunku durumu DEGIL. Web/PWA su an
+> `tarlaanaliz-platform` icinde yasiyor (kok CLAUDE.md: "Ana backend + web/PWA").
+> Ayri bir `tarlaanaliz-web` deposu ve onun `contracts/` submodule'u YOKTUR.
 
 **SADECE su icerikler bu repoda bulunur:**
 
@@ -212,7 +216,7 @@ EdgeKiosk ──HTTPS+mTLS──→ Platform/Ingress ──→ Storage/Queue
 | 5 | Submodule versiyon kontrolu | platform, web | Evet |
 | 6 | Frontend'te backend import yok | web | Evet (lint rule) |
 | 7 | Backend'te frontend import yok | platform | Evet (lint rule) |
-| 8 | Contract'ta uygulama kodu yok | contract | Evet (file pattern check) |
+| 8 | Contract'ta uygulama kodu yok | contract | HAYIR - kapi YOK (2026-08-11 olcumu) |
 | 9 | Type generation guncel | web | Evet (CI step) |
 | 10 | OpenAPI spec uyumlulugu | platform | Evet |
 
@@ -228,5 +232,18 @@ Her repo **bagimsiz** git gecmisine, CI/CD pipeline'ina ve deploy surecine sahip
 
 ---
 
-_Son Guncelleme: 2026-03-07_
-_Versiyon: 1.0.0_
+_Son Guncelleme: 2026-08-11 (bayatlik denetimi)_
+_Versiyon: 1.1.0_
+
+## 10. Bu belgenin BAYATLIK notu (2026-08-11)
+
+Belge kendini "BAGLAYICI" ilan ediyor ama 2026-03-07'den beri guncellenmemisti;
+uc iddiasi olcumle duzeltildi:
+  * worker "gelecekte ayri repo" deniyordu -> ZATEN ayri depo
+  * web ayri depo + kendi submodule'u gibi anlatiliyordu -> henuz platform icinde
+  * §8/8 "file pattern check" ile otomatik denetlendigini soyluyordu -> BOYLE BIR
+    KAPI YOK (olculdu: workflow'da dosya-deseni kontrolu eden adim yok)
+
+Kural: bu tabloda "Otomatik: Evet" yazan her satirin KOSAN bir kapisi olmali.
+Kapisi olmayan satir "HAYIR - kapi YOK" diye isaretlenir; belgelenmis ama
+uygulanmayan kural bir dilektir.

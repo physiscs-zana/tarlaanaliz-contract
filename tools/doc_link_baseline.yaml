@@ -22,9 +22,6 @@ accepted:
 - CHANGELOG.md|docs/checklists/RELEASE_GATE_CHECKLIST.md
 - CHANGELOG.md|docs/migration_guides/crop_type_v1_to_v2.md
 - CLAUDE.md|CONTRACTS_SHA256.txt
-- README.md|docs/checklists/CI_GATE_CHECKLIST.md
-- README.md|docs/checklists/PR_GATE_CHECKLIST.md
-- README.md|docs/checklists/RELEASE_GATE_CHECKLIST.md
 - denetim/denetim_raporu_2026-07-31_10disiplin.md|SSOT_v1_2_0.txt
 - denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md|ADR-009-dev-station-profile.md
 - denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md|Haritası.txt
