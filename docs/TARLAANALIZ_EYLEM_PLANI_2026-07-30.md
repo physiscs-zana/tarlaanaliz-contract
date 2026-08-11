@@ -64,22 +64,34 @@ durum güncellemesi · `open_items_decisions_2026-06.md`'ye COORDINATE/DEFER kay
 
 ## 2.1 Ürün hazırlık matrisi — hangi ürünle ne gösterilebilir
 
-**Kanonik kaynak:** `tarlaanaliz-platform/data/crop_readiness.json`
-(üretildiği yer: `tarlaanaliz-worker/config/crop_readiness.yaml`, 2026-07-11).
-⚠️ **`config/*_datasets.yaml` dosyasının varlığı hazırlık göstergesi DEĞİLDİR** — tek yetkili
-sinyal `crop_readiness.json`'dır (zeytin buna örnek: `olive_datasets.yaml` var ama `bookable: False`).
+⛔ **DÜZELTİLDİ (2026-08-11 — bu matris koddan SAPMIŞTI, üç üründe.)** Eski hâli tek bir
+"kanonik kaynak" (`crop_readiness.json`) ve tek bir `bookable` sütunu gösteriyordu. Ölçüm
+bunun yanlış olduğunu gösterdi: **iki ayrı kapı vardır ve `missions.py` İKİSİNİ DE koşar.**
 
-| Ürün | stage1 | data_status | bookable | Edge NDVI eşiği + fenoloji | Demo uygunluğu |
-|---|---|---|---|---|---|
-| **GRAPE (üzüm/bağ)** | pilot | **strong** | ✅ | ✅ | ✅✅ **en iyi — tam** |
-| **CORN (mısır)** | pilot | **strong** | ✅ | ✅ | ✅✅ **tam** |
-| **PISTACHIO (antep fıstığı)** | pilot | **limited** | ✅ | ✅ | ✅ **yapılabilir** — tespit kalitesi zayıf olur, ÖN RAPOR sorunsuz |
-| COTTON (pamuk) | pilot | critical_gap | ✅ | ✅ | ⚠️ koşar ama tespit güvenilmez |
-| CHERRY (kiraz) | pilot | limited | ✅ | ❌ | ⚠️ eşik tablosu yok |
-| **WHEAT (buğday)** | pilot | **strong** | ✅ | ❌ **eksik** | ⚠️ **veri güçlü, tek engel iki YAML girdisi** → E8 |
-| OLIVE (zeytin) | research | critical_gap | ❌ | ❌ | ❌ |
-| RICE (çeltik) | research | critical_gap | ❌ | ✅ | ❌ `bookable:False` |
-| SUNFLOWER (ayçiçeği) | research | critical_gap | ❌ | ❌ | ❌ |
+| Kapı | Ne demek | Tek kaynağı | Kapıyı uygulayan |
+|---|---|---|---|
+| **SUNUM** (`is_gap_offered`) | ana sayfada gösterilir / seçilebilir mi | `tarlaanaliz-platform/web/src/lib/crops.ts` → `OFFERED_CROPS` (üreteç: `scripts/gen_offered_crops.py` → `config/offered_crops.generated.json`; FE+BE testleri pinler) | `fields.py` · `missions.py` · `subscriptions.py` · `change_crop_type.py` |
+| **TESLİM** (`is_bookable`) | worker o ürün için model koşabilir mi | `tarlaanaliz-platform/data/crop_readiness.json` (üretildiği yer: `tarlaanaliz-worker/config/crop_readiness.yaml`) | `missions.py` · `subscriptions.py` (**`fields.py` DEĞİL**) |
+
+**Değişmez:** SUNUM ⊆ TESLİM. Bir ürün sunuluyor ama readiness'te `bookable:false` ise
+çiftçi ana sayfada görür, tarlasını açabilir, sipariş verince **409** alır — 2026-08-11'e
+kadar ÇELTİK'te tam bu oluyordu. Değişmez artık testle kilitli:
+`tests/unit/domain/value_objects/test_crop_type.py::test_every_offered_crop_is_bookable_in_readiness`.
+
+⚠️ **`config/*_datasets.yaml` dosyasının varlığı hazırlık göstergesi DEĞİLDİR** — teslim
+sinyali `crop_readiness.json`'dır (zeytin buna örnek: `olive_datasets.yaml` var ama `bookable: False`).
+
+| Ürün | stage1 | data_status | SUNUM | TESLİM | Edge NDVI eşiği + fenoloji | Demo uygunluğu |
+|---|---|---|---|---|---|---|
+| **GRAPE (üzüm/bağ)** | pilot | **strong** | ✅ | ✅ | ✅ | ✅✅ **en iyi — tam** |
+| **CORN (mısır)** | pilot | **strong** | ✅ | ✅ | ✅ | ✅✅ **tam** |
+| **PISTACHIO (antep fıstığı)** | pilot | **limited** | ✅ | ✅ | ✅ | ✅ **yapılabilir** — tespit kalitesi zayıf olur, ÖN RAPOR sorunsuz |
+| COTTON (pamuk) | pilot | critical_gap | ✅ | ✅ | ✅ | ⚠️ koşar ama tespit güvenilmez |
+| RICE (çeltik) | research | critical_gap | ❌ **2026-08-11'de kaldırıldı** | ❌ | ✅ | ❌ — sunuluyordu ama TESLİM kapısı 409 veriyordu; kalibre veri gelince ikisi birlikte açılır |
+| CHERRY (kiraz) | pilot | limited | ❌ **GAP dışı** | ✅ | ❌ | ❌ — readiness "hazır" diyor ama ürün GAP'ta sunulmuyor; eşik tablosu da yok |
+| **WHEAT (buğday)** | pilot | **strong** | ❌ **sunulmuyor** | ✅ | ❌ **eksik** | ⚠️ veri güçlü ama **iki** engel var → aşağıdaki nota bak |
+| OLIVE (zeytin) | research | critical_gap | ❌ | ❌ | ❌ | ❌ |
+| SUNFLOWER (ayçiçeği) | research | critical_gap | ❌ | ❌ | ❌ | ❌ |
 
 **İki ayrı "ön rapor" kavramını karıştırmayın:**
 
@@ -103,8 +115,16 @@ Demoda ayrımı **açıkça söyleyin:** *"indeks katmanı bookable ürünlerin 
 kalitesi ürün bazlı veri olgunluğuna bağlı — üzüm ve mısır `strong`, fıstık `limited` ve pilot
 aşamasında."* Bu zayıflık değil **yol haritası** olarak okunur.
 
-**En ucuz kazanç:** BUĞDAY `data_status: strong` ve `bookable: True` ama **edge eşik/fenoloji
-tablosunda yok** — iki YAML girdisi (birkaç saat) güçlü verili bir ürünü daha açar (§3-E8).
+**En ucuz kazanç — DÜZELTİLDİ (2026-08-11):** BUĞDAY `data_status: strong` ve TESLİM kapısında
+`bookable: True`, ama **iki** engeli var, bir değil:
+1. **SUNUM kapısında yok** — `crops.ts::OFFERED_CROPS` buğday içermiyor, yani bugün ana sayfada
+   seçilemiyor. (Eski metin *"`bookable: True`"* deyip bunu tek engel sanmıştı; ölçüm iki ayrı
+   kapı olduğunu gösterdi — yukarıdaki kapı tablosuna bak.)
+2. **Edge eşik/fenoloji tablosunda yok** — iki YAML girdisi (§3-E8).
+
+Yani buğdayı açmak = `crops.ts`'e bir satır (+ üreteci koş) **ve** iki YAML girdisi. Kanonik
+wire enum'da WHEAT zaten var, o yüzden contract turu GEREKMEZ. Sıra: önce edge eşikleri
+(teslim gerçekten çalışsın), sonra sunum — tersi, satılan ama eşiksiz bir ürün üretir.
 
 ## 2.2 Uçuş çerçevesi — 1 drone, günde 10-12 uçuş × 30 dk
 
@@ -746,7 +766,8 @@ Güneş >30° penceresi Ağustos'ta GAP'ta ~09:00-17:00 (8-9 saat). **İlk hafta
 > **İstek:** kanonik `schemas/worker/analysis_job.v1.schema.json` →
 > `drone_metadata.available_bands.items` alanına `intake_manifest.v1` ile **aynı enum**.
 > Daraltma güvenli: tek üretici (platform `build_analysis_job_v1`) zaten kanonik gönderiyor.
-> Tam gerekçe: `tarlaanaliz-worker/denetim/band_sozlugu_devir_spec_2026_08_08.md` §3.
+> Tam gerekçe: `tarlaanaliz-worker/denetim/birlesik_devir_spec_arsivi_2026.md` §1
+> (2026-08-11'e kadar ayrı dosya: `band_sozlugu_devir_spec_2026_08_08` §3).
 > Kanonik ayna inince worker'ın I-5 sapması kapanır.
 >
 > ---
@@ -1849,9 +1870,11 @@ yama görselleri `object_key` taşıyacak (C2 + E10 + P4). ⚠️ **Statü yüks
 
 # 10. AKTİF ÖĞRENME DOSYALARIYLA ÇAPRAZ ANALİZ (2026-07-30)
 
-**Karşılaştırılan kaynaklar:** `aktif_ogrenme_secim_tasarimi_S1_S2_dedup.md` (tasarım, 787 satır) +
-`aktif_ogrenme_S1_S2_dedup_worker_uygulanabilirlik_denetimi_2026-07-18.md` (kod-doğrulamalı
-denetim, 375 satır) ⟷ bu eylem planı.
+**Karşılaştırılan kaynaklar:** `tarlaanaliz-worker/denetim/aktif_ogrenme_secim_tasarimi_S1_S2_dedup.md`
+⟷ bu eylem planı. (2026-08-11'de o dosya İKİ kaynağın birleşimi hâline geldi: **BÖLÜM A** =
+tasarım, 787 satır · **BÖLÜM B** = kod-doğrulamalı denetim, 375 satır — eskiden ayrı dosyaydı,
+adı `aktif_ogrenme_S1_S2_dedup_worker_uygulanabilirlik_denetimi_2026-07-18`. Çelişkide
+**BÖLÜM B otoriterdir**.)
 **Yöntem:** Her iddia bugünkü kod/config ile teyit edildi; doküman değil **kod otoritatif** alındı.
 
 ## 10.1 🔴 BİRBİRİNİ YALANLAYAN — 1 kritik
@@ -2061,7 +2084,8 @@ Artık yapılacak işler için **bu bölüm otoriterdir**; o iki dosya gerekçe/
 | **AL-C3** 🟡 | **(YENİ, 2026-07-31)** `confidence_score`'u denetim satırında da tel üzerinden kaldır — tam anti-anchoring fail-closed. Bu turda YAPILMADI: alan `required` + `type: number`; nullable'a genişletmek `breaking_change_detector`'a göre **MAJOR** (ölçüldü) ve tur MINOR'du. Sınıf etiketleri (predicted_class/detection_type/sub_specialty) **zaten kaldırıldı**. Kalan risk yalnız skaler güvenin uzmana gösterilmesi → **AL-P1 portal yükümlülüğü** ile örtülüyor | Devir spesi §3-B; `x-anti-anchoring.residual_portal_obligation` | 🟡 v2/MAJOR |
 | — | ⚠️ AL-C1/C2 **C8 sürüm törenine** dahildir (annotated tag + SHA256 + 3 repo pin). **TUR 1'e dâhildir** (2026-07-31 kararı — eski *"C-Tur-2 ile birleştirilebilir"* ifadesi **yürürlükten kalktı**; Tur 2 demo sonrası olduğu için [0] ölçüm temelini bloke ediyordu). Bkz. §3.1 "TUR TANIMI" | — | — |
 
-**Kaynak devir spesi:** `tarlaanaliz-worker/denetim/audit_escalation_reason_devir_spec_2026_07_19.md`
+**Kaynak devir spesi:** `tarlaanaliz-worker/denetim/birlesik_devir_spec_arsivi_2026.md` §9
+(2026-08-11'e kadar ayrı dosya: `audit_escalation_reason_devir_spec_2026_07_19`)
 — worker'ın karar-hazır devri; **platform seçer, worker uydurmaz.**
 
 ## 11.3 PLATFORM işleri
@@ -3193,6 +3217,8 @@ Bunlar **kendi kurulumunuzda** ölçülür, kaynaktan öğrenilemez:
 | **AL-K16** 🟡 | platform | **`barley_cards` / `potato_cards` öksüz.** BARLEY/POTATO iki deponun da crop enum'unda yok (platformda yorum satırında, "ARŞİV"). Kartlar silinmedi (ürün açılırsa hazır), worker'a taşınmadı (enum ihlali olurdu). Katalog drift baseline'ındaki **kalan 2 sapma** bunlar. | Ürün kararı: bu iki ürün açılacak mı |
 | **AL-K17** 🟠 | worker + contract + platform | **`tile_counts` muhasebesi artık kapanmıyor.** DK-43 üçüncü bir kova (hariç tutulan) yarattı: `_anomaly_filter` düşük kaplamalı karoyu `continue` ile atlıyor (`pipeline.py:2337`), ama `tile_count_total` hâlâ `len(tiles)`. **Ölçüldü:** 3 karo → total=3 · anomaly=1 · healthy=0 → **2 karo hiçbir alanda yok**. Pozitif kontrol: DK-43 öncesi aynı fonksiyonda `continue` **yok** (0 adet) → `total == healthy + anomaly` değişmezi tutuyordu; DK-43 onu kırdı. Kanonik şema (`analysis_result.v1.schema.json:221`) hâlâ **ikili** çerçeve tanımlıyor (*"green-vs-problem"*, `total` = *"tiles scanned"*) — üçüncü kovanın sözleşmede adı yok. **Bugün canlı yanlış rapor YOK** (ölçüldü: platform `src/` **ve** `web/src` bu üçlüyü yalnız saklıyor/taşıyor, türetme yapmıyor — pozitif kontrollü). Risk: `healthy = total − anomaly` diyen herhangi bir tüketici DK-43'ün sildiği hatayı yeniden doğurur. | Kalıcı çözüm **contract-first** (KR-081): şema alanı → worker `PipelineResponse` taşıma → platform sütunu + tüketici → test; MINOR sürüm + üç depo turu. **W8-b ile komşu ama aynı değil** (**§14.9** *Turdan BAĞIMSIZ kuyruk* tablosundaki, `tile_count_total/healthy/anomaly` üçlüsünü açıkça anan kalem): o, denetim çekilişinin popülasyonu; bu, muhasebenin kapanışı — birlikte tasarlanmalı |
 | **AL-K18** 🟡 | worker | **`np.errstate(invalid="ignore")` amaçladığı uyarıyı bastırmıyor.** `pipeline.py:2348`: `np.nanmean`'in *"Mean of empty slice"* uyarısı kayan-nokta hata durumundan (`errstate`'in kapsamı) değil `warnings` modülünden gelir. **Ölçüldü:** `pytest tests/unit/test_pipeline_helpers.py -W error::RuntimeWarning` → `test_non_finite_mean_is_never_healthy` **FAILED**; aynı dosya uyarısız **96 passed**. DK-43 bu dosyaya **4 yeni** `np.nanmean` ekledi (diff +4 / −0; 7→11). **Şiddet dürüstçe daraltıldı:** bu yol bugün üretimde **ULAŞILAMAZ** — testin kendi docstring'i söylüyor (`safe_divide` + `_valid_pixel_ratio` + `clip_index` birlikte kapatıyor); uyarı yalnız testin `monkeypatch`'lediği sahte hesaplayıcıyla üretiliyor. Gerçek etki: (a) `filterwarnings = error` açılırsa test kırılır ve `errstate` kurtarmaz; (b) kod niyetini yanlış ifade ediyor — okuyan "bastırılıyor" sanır. | Doğru düzeltme bir davranış kararı ister: uyarıyı `warnings.catch_warnings()` ile hedefli susturmak mı, boş dilimi `nanmean`'den önce elemek mi. Tek satırlık yama yerine, testin öngördüğü gün (kırpma yapmayan yeni indeks, ör. CWSI) ile birlikte ele alınmalı |
+| **AL-K19** 🟡 | contract | **Bayt-kilitli şema, silinmiş bir worker dosyasını kaynak gösteriyor.** `schemas/worker/expert_review_queue.v1.schema.json:463` → `"source"` alani `worker denetim/audit_escalation_reason_devir_spec_2026_07_19` §3-B/§4 diyor (gercek dizede `.md` uzantisi VAR; burada kapiyi gevsetmemek icin yazilmadi); o dosya 2026-08-11'de `birlesik_devir_spec_arsivi_2026.md` §9'da birleşti ve **dört deponun hiçbirinde yok** (ölçüldü: `git ls-tree -r` × 4 → 0 isabet). Aynı dize `dist/` kopyasında da var. **Bu turda BİLEREK düzeltilmedi:** `schemas/` checksum kapsamındadır (`tools/pin_version.py:94` `schemas_dir.rglob('*.json')`) → tek karakterlik açıklama değişikliği agrega checksum'ı değiştirir, yeniden pin + platform submodule + worker KR-041 öz-hash'i, yani **tam üç-depo sürüm töreni** ister. Bugün zarar YOK: arşivin §-tablosu eski adı satır başında taşıyor, arayan bulur. | Bir sonraki PATCH/MINOR sürüm törenine **bindirilmeli** — tek başına sürüm yükseltmeyi hak etmiyor. Aynı turda `dist/` kopyası da yeniden üretilmeli |
+| **AL-K20** 🔴 | dört depo | **"Sarkan atıf bırakma" kuralının KAPISI YOK — kural bir dilek.** Kök `CLAUDE.md` *"diff olmadan iş yapmak"* diyor ve `tarlaanaliz-docs-cleanup` reçetesi sarkan-atıf taramasını *"en yüksek sinyalli mekanik kontrol"* sayıyor, ama **hiçbir depoda bunu koşturan bir CI adımı ya da test yok** (ölçüldü: `git grep -l "docs/architecture\|docs/README\|DIRECTORY_TREE" -- tests scripts .github` → platformda yalnız `scripts/gen_directory_tree.py`, o da üreteç). Sonuç ampirik: 2026-08-11 turu 83 dosya sildi ve **12 sarkan atıf** hayatta kaldı — 9'u tek bir canlı mimari belgede (`end_to_end_workflow.md`), biri **açık bir DEFER kaleminin** hedefiydi (`open_items_decisions_2026-06.md` #4). Elle tarama üç turda üç kez kaçırdı; sorun dikkat değil **kapı yokluğu**. | ✅ **KURULDU (2026-08-11, DÖRT DEPODA):** `check_doc_links` + ratchet baseline + CI adımı; dört kopya **bayt-özdeş** (blob `91dc7d71…` — yollar `__file__`'dan türetiliyor, elle yazılmıyor). Baseline: contract 99 · platform 96 · worker 185 · edge 24. **İKİ SINIR ÖLÇÜLDÜ ve AÇIK KALDI:** ① **çapraz-repo atıfı CI'da denetlenmiyor** — mutasyonla gösterildi: contract'ın 7 bulgusunun sınıfı (`tarlaanaliz-worker/denetim/…`) kardeş depo checkout DEĞİLKEN atlanıyor (kapı yeşil kalır), kardeş depolar VARKEN kırmızıya döner. Yani bu ayak bugün **geliştirici-zamanı**; CI'da bağlayıcı kılmak **E17 deseni** (karşı depo checkout + token) ister — **AL-K13 ile aynı aile, birlikte yapılmalı**. Atlanan sayı ekrana basılır → sessiz fail-open yok. ② **kısaltılmış ad** yakalanmıyor (`DENETIM_2026-05-31` vs tam kök `..._pentest_ve_kurulum`); önek taraması dört depoda **933 yanlış pozitif** üretiyor (veri seti kimlikleri önek paylaşıyor) → kapıya konulamaz, elle taramayla kapatılır |
 
 > **AL-K17/AL-K18'in kaynağı farklıdır:** bu iki kalem turun kendi öz-denetiminde değil,
 > **sonraki oturumun bağımsız denetiminde** bulundu (2026-08-10). İkisi de öz-denetimin
@@ -3215,7 +3241,7 @@ Bunlar **kendi kurulumunuzda** ölçülür, kaynaktan öğrenilemez:
 
 ## 14.11 🔬 D12/D13 TURU (2026-08-11) — `stress_ratio` tanımlandı · ön faz kapısı kuruldu · üç-repo 7.6.1
 
-> **Tetikleyici:** worker `denetim/kalan_isler.txt` §4 **D12** — kanonik
+> **Tetikleyici:** `tarlaanaliz-worker/denetim/kalan_isler.txt` §4 **D12** — kanonik
 > `analysis_type.enum` *"hiçbir üretici bu adı emit ETMEMELİDİR"* diyordu ama worker
 > üretiyordu. Ölçüm iddiayı çürüttü ve asıl kusurun **başka yerde** olduğunu gösterdi.
 

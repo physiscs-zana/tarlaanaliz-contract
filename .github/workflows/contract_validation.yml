@@ -29,6 +29,7 @@ on:
       - 'docs/**'                    # examples/, TARLAANALIZ_SSOT_v1_2_0.txt, versioning_policy
       - 'drone_capability_matrix.yaml'  # test_calibrated_manifest_fields
       - 'CONTRACTS_VERSION.md'
+      - 'CHANGELOG.md'                  # AL-K20: sarkan atif kapisi CHANGELOG'u da tarar
       - 'requirements-dev.txt'       # CI bağımlılıkları buradan kurulur
       - 'pyproject.toml'             # pytest markers/config
       - '.github/workflows/contract_validation.yml'
@@ -44,6 +45,7 @@ on:
       - 'docs/**'
       - 'drone_capability_matrix.yaml'
       - 'CONTRACTS_VERSION.md'
+      - 'CHANGELOG.md'                  # AL-K20: sarkan atif kapisi CHANGELOG'u da tarar
       - 'requirements-dev.txt'
       - 'pyproject.toml'
       - '.github/workflows/contract_validation.yml'
@@ -392,6 +394,21 @@ jobs:
           # tarlaanaliz-contracts is synced from a sibling contracts repo.
           # This guard fails the build if that sibling brand/region leaks back in.
           python3 tools/check_no_egeanaliz.py
+
+      - name: Dangling doc-reference gate — ratchet
+        run: |
+          # AL-K20. The root CLAUDE.md rule "work without drift" says a deleted
+          # document must leave no pointer behind. That rule was WRITTEN in all
+          # four repos but RUN nowhere: the 2026-08-11 cleanup removed 83
+          # documents and 12 dangling references survived — seven of them in THIS
+          # repo, pointing at worker handover specs that had been merged away.
+          # Manual scanning missed them three rounds in a row.
+          #
+          # Ratchet: a reference not in tools/doc_link_baseline.yaml FAILS, and a
+          # baseline entry that no longer dangles ALSO fails (delete the line).
+          # Cross-repo paths are skipped when the sibling repo is not checked out,
+          # but the skipped COUNT is printed — no silent fail-open.
+          python3 tools/check_doc_links.py
 
   summary:
     name: Validation Summary

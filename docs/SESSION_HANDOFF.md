@@ -458,7 +458,8 @@ alanları ilk kez orada). Portal ekranını bir kez gözle doğrula.
 >
 > 1. 🔴 **AK-4 aynası:** kanonik `analysis_job.v1` → `drone_metadata.available_bands`
 >    hâlâ serbest string. Worker önden gitti (vendored enum); kanonik ayna inmeli.
->    Gerekçe + istek: `tarlaanaliz-worker/denetim/band_sozlugu_devir_spec_2026_08_08.md` §3.
+>    Gerekçe + istek: `tarlaanaliz-worker/denetim/birlesik_devir_spec_arsivi_2026.md` §1
+>    (2026-08-11'e kadar ayrı dosya: `band_sozlugu_devir_spec_2026_08_08` §3).
 > 2. 🟡 **mTLS: sertifika engeli KALKTI (2026-08-08), kalan iş proxy + kayıt.** Bkz. §0.A-mtls.
 > 3. 🟠 **AV2 servisi deploy edilmemiş** (`TARLA_AV2_ENABLED=false`, `av2-scanner` konteyneri yok)
 >    → `is_ready_for_analysis` sağlanamıyor, yani **tam meşru** dispatch yolu kapalı.
@@ -1761,8 +1762,9 @@ zonasyon/VRA **ürün** olacaksa → Fields. Tam gerekçe ve kaynaklar: eylem pl
 > **TUR 1 = C0 + C1′ + C2′ + C2″ + C3′ + C9 + C10 + AL-C1 + AL-C2** *(+C6 koşullu)*
 > *(C4 düştü — contract kalemi değil · C5 düştü — zaten yapılmış · AL-C1/C2 Tur 2'den Tur 1'e alındı)*
 >
-> **Kaynak devir spesi:** `tarlaanaliz-worker/denetim/audit_escalation_reason_devir_spec_2026_07_19.md`
-> (worker'ın karar-hazır devri — **platform seçer, worker uydurmaz**).
+> **Kaynak devir spesi:** `tarlaanaliz-worker/denetim/birlesik_devir_spec_arsivi_2026.md` §9
+> (2026-08-11'e kadar ayrı dosya: `audit_escalation_reason_devir_spec_2026_07_19`;
+> worker'ın karar-hazır devri — **platform seçer, worker uydurmaz**).
 > **Neden değiştiği:** `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` (kanıt arşivi).
 
 ### Doğrulama (bu oturumda geçti)
@@ -1771,7 +1773,8 @@ zonasyon/VRA **ürün** olacaksa → Fields. Tam gerekçe ve kaynaklar: eylem pl
 
 ### Depo hijyeni
 - `aktif_ogrenme_*.md` (2 dosya) proje kökünden → **`tarlaanaliz-worker/denetim/`** taşındı
-  (sürüm kontrolüne alındı; onlara atıf yapan `audit_escalation_reason_devir_spec` ile aynı dizin).
+  (sürüm kontrolüne alındı; onlara atıf yapan devir spesiyle aynı dizin — o spes
+  2026-08-11'de `birlesik_devir_spec_arsivi_2026.md` §9'da birleşti).
 - Eylem planı proje kökünden → **`tarlaanaliz-contract/docs/`** taşındı (kök artık temiz).
 
 ### 📌 Sonraki oturum — önerilen sıra *(2026-07-31 denetimine göre güncellendi)*
