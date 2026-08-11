@@ -260,7 +260,7 @@ Tasarım kararları — hepsi ölçümle:
   ağacını ayrıştırıyordu ve `core.autocrlf=true` olan makinede her betikte **yanlış
   kırmızı** verdi; `git ls-files --eol` indeks tarafını `lf` gösterip iddiayı çürüttü.
   Metin kipinde Python `
-`'i boruda geri `
+`'i boruda geri `
 ` yapıyor — bayt kipi şart (mutasyon: 4 test).
 - **Fail-closed:** hiç betik bulunamazsa hata döner; *"0 bulgu"* ile *"0 dosya taradım"*
   aynı şey değildir. Taranan dosya sayısı her koşumda basılır.
