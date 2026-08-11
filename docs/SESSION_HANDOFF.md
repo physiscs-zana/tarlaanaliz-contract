@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-11 (**on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
+**Son güncelleme:** 2026-08-11 (**on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **14 PR MERGE EDİLDİ**, **v7.7.0** ve **v7.7.1** etiketlendi. ⚠️ I-1 üçlü hiza **şu an tutmuyor** — re-pin uçuşta, platform hiç başlamadı; bkz. §0.A. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -22,7 +22,67 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-11, **on birinci oturum: docs öz-denetimi · sarkan-atıf kapısı · çeltik sunumdan çıktı**)
+## 0.A EN GÜNCEL — (2026-08-11, **on ikinci oturum: contract cerrahi kalite denetimi · v7.7.0 + v7.7.1**)
+
+> **Durum: contract tarafı KAPANDI (14 PR merge, iki sürüm etiketlendi).**
+> **I-1 üçlü hiza ŞU AN TUTMUYOR — re-pin uçuşta.** Ölçüm (çalışma ağacı, 2026-08-11):
+>
+> | Depo | Sürüm | Dal | Durum |
+> |---|---|---|---|
+> | contract | **7.7.1** | `master` | ✅ etiketli (`v7.7.1`, annotated), temiz |
+> | worker | `v7.7.0` | `sync/contracts-v7.7.0-repin` | 🟠 re-pin dalda — **7.7.1'e çekilmeli** |
+> | edge | `7.6.0` | `fix/deployment-scripts-kapisi` | 🟠 PR #70 açık — pin `7.7.1` yapılıp yeniden koşacak |
+> | platform | `7.6.1` | `main` | 🔴 **hiç re-pin edilmedi** — submodule pini `v7.6.1` (`c4b7b94`) |
+>
+> **platform'un geride kalması bu oturumda bilinçli değil, sadece sıra gelmedi** —
+> bu oturumda platform'da çalışan bir aktör yoktu. Bir sonraki oturumun ilk işi.
+>
+> Sürüm dizeleri: contract `7.7.1` · checksum `2d9f7475f3e31140446b6d006f222ec8b97cc4c9c2f454a9e55fc8d437023dd3`
+> (7.7.0'da `bf269235…` idi; **yalnız `api/` içindeki üç `info.version` damgası** değiştiği
+> için yenilendi — `schemas/` ve `enums/` ağaçlarına dokunulmadı).
+
+### Ne yapıldı — 14 PR (#69…#82)
+
+Tema: **"belgelenmiş ama koşmayan kural bir dilektir"**. Denetim, sözleşme metnini değil
+**kapıların kendisini** hedef aldı; bulunanların çoğu *var sanılan* kapılardı.
+
+| Küme | PR | Özet |
+|---|---|---|
+| Alan sızması | #69 | 19 şemada **27 object düğümü** politikasız açıktı; `validate.py` artık **tüm ağacı** gezip her object düğümünden politika beyanı istiyor (sessizlik yasak) |
+| Sözlük bağlama | #69, #78 | `threat_type` kanoniğe bağlandı + bağlama ratchet'i · `quarantine_decision` **bilinçli bağlanmadı** (iki ayrı eksen — AL-K21 kapandı) |
+| CI dürüstlüğü | #69 | `paths:` 13 → **24 kök**, `summary.needs` eksik iş taşıyordu; ikisi de artık **türetiliyor**, elle yazılmıyor |
+| Parite kapıları | #71, #72, #74, #77, #81, #82 | politika paritesi kapısı · "kardeş CI'ında koşuyor" iddiası **yanlıştı** · kapının **tavsiyesi hataya yol açıyordu** · sayaç kilidi **küreseldi** |
+| Ayna kusurları | #75, #76 | ÖD-13 kapısı `main()` yerine **kopyasını** ölçüyordu; düzeltmenin kendi kör noktası da ayrıca bulundu |
+| Ölü/zararlı araç | #73 | Node/TS zinciri **hiç var olmamıştı**; `npm run format` checksum kapsamındaki **94 dosyayı** yeniden biçimlendirirdi — ölü değil **zararlı** |
+| Koşmayan kurallar | #80 | `drone_type` senkron kapısı **yoktu** · `poetry.lock` üçüncü kaynak olarak **çelişiyordu** (pytest 7.4.4 ↔ 9.0.2) · belgelerde koşmayan komutlar |
+| Sürüm | #79, #82 | **v7.7.0** (MINOR) ve **v7.7.1** (PATCH) |
+
+### 🔴 v7.7.1 neden gerekti — etiket değişmez
+
+`v7.7.0` yayımlandıktan **sonra** edge pin PR'ında tek bir kapı kırmızı verdi:
+parite sayacı **küresel** bir taban tutuyordu (142) ama kapı **her kardeşin kendi
+CI'ında** koşuyor (D4-b). edge checkout'unda toplam 0 çıkıyor → `0 >= 142` **yapısal
+kırmızı**. Kusur v7.7.0 kaynaklı değil, **v7.6.1** ile gelmişti; edge 7.6.0'a pinli
+olduğu için ancak yeni pine geçerken göründü. Düzeltmenin `master`'a inmesi yetmez —
+kardeş CI sözleşmeyi **pinli etiketten** checkout eder ve etiket değişmez (I-2).
+
+Düzeltmenin tasarımı **edge oturumundan geldi** (taban çift başına + pozitif kontrol).
+Uygularken kendi ölçümüm **kalan bir delik** daha buldu: iki kilit de depo verisini
+okuduğu için, ölçecek verisi olmayan kardeşte yürüyüşün bozulması görünmüyordu
+(*edge-only CI + körelmiş yürüyüş → `2 passed`*). Aynı boşluk contract'ın **kendi**
+CI'ında daha büyüktü. Çözüm: yürüyüşü **sentetik girdiyle** sınayan 5 test.
+
+### Bu oturumun kalıcı dersi
+
+Yanlış ölçüm iki kez gerçek iddiaya dönüşmek üzereyken yakalandı: PowerShell `>`
+yönlendirmesi git blob'una BOM+CRLF ekleyip *"betik Linux'ta koşmaz"* diye **yanlış
+bir HIGH bulgu** üretecekti; alt-dize taraması kapının kendi tanımı sanılıp edge'e
+*"öneriniz çalışmaz"* denecekti. İkisi de kanıt istenince eridi. Kural, kök
+`CLAUDE.md`'ye eklendi: **tek seferde bul, tek seferde çöz — sonsuz döngü yok.**
+
+---
+
+## 0.B — (2026-08-11, **on birinci oturum: docs öz-denetimi · sarkan-atıf kapısı · çeltik sunumdan çıktı**)
 
 > **Durum: HEPSİ MERGE EDİLDİ (9 PR, dört depo).** Merge sonrası CI dört depoda da yeşil;
 > I-1 üçlü hiza **7.6.1**; SSOT üç depoda bayt-özdeş `d3c65d62…`.
