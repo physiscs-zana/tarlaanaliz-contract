@@ -44,10 +44,22 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
   diye bakıyordu ve **içeriği yanlış** bir beyanı sorunsuz geçirmişti — D12'nin kök nedeni
   buydu. Yeni kapı 9 mutasyonla sınandı (bayrağı çevirmek, katmanı listeye eklemek,
   formülü ters çevirmek, nötr değeri 0.0 yapmak, satır numarasını silmek → hepsi kırmızı).
-  ⚠️ Kapının sınırı: contract deposu worker koduna BAKAMAZ — `outside_value = 1.0`
-  literali kanonik metni sessiz düzenlemeye karşı korur, worker'ın sabiti değişirse
-  fark etmez. Bu yüzden `stress_ratio.py` başına "kanonik girdiyi aynı turda güncelle"
-  uyarısı yazıldı; çapraz-repo kapı YOK.
+  ⚠️ Kapının sınırı: contract deposu worker **KODUNA** bakamaz — `outside_value = 1.0`
+  literali kanonik metni sessiz düzenlemeye karşı korur, worker'ın Python sabiti
+  değişirse fark etmez. Bu yüzden `stress_ratio.py` başına "kanonik girdiyi aynı turda
+  güncelle" uyarısı yazıldı.
+- **`tests/test_vendored_parity.py` → `TestVendoredMetadataDoesNotContradict` (YENİ).**
+  ⛔ Bu turun ilk yazımında *"çapraz-repo kapı YOK"* demiştim — **ifade fazla genişti ve
+  öz-denetimde düzeltildi.** Ölçüm: kardeş-CI parite kapısı VARDI ama `metadata`
+  değerlerine **kördü**. Üç mutasyon (worker'da `proxy_only`→`available`,
+  `NDRE/NDVI`→`NDVI/NDRE`, `1.4.4`→`1.4.1`) **169 passed** ile hayatta kaldı; yani
+  D12'de elle kapattığım ayrışmanın geri kaymasını engelleyen hiçbir şey yoktu.
+  Yeni kapı: vendored `metadata`, iki tarafta da bulunan bir yolda kanonikle
+  **ÇELİŞEMEZ** (I-4 gereği EKSİK tutabilir). 142 paylaşılan yaprak denetleniyor;
+  serbest-metin anahtarları ölçülerek dışlandı (6 ad + `availabilityValues` alt ağacı)
+  ve `availability`/`formula`/`preliminary` gibi anlamsal alanların istisnaya kaçmasını
+  yasaklayan ayrı bir pozitif kontrol var. 6 mutasyonla sınandı; ayrıca kapının kendi
+  sayaç kilidi de mutasyonla sınandı — ilk hâli körlüğü `skip` ile örtüyordu, düzeltildi.
 - **Tüketici tarafı:** `tarlaanaliz-platform/src/application/services/
   preliminary_content_gate.py` bu kapalı listeyi **okur** (kopyalamaz) ve çiftçi yolunda
   hem katman/indeks listesini hem raster tile ucunu kısıtlar. Ölçüldü: bu kapıdan önce
