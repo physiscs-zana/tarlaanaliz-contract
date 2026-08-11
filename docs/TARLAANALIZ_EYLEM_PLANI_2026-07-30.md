@@ -1870,7 +1870,7 @@ yama görselleri `object_key` taşıyacak (C2 + E10 + P4). ⚠️ **Statü yüks
 
 # 10. AKTİF ÖĞRENME DOSYALARIYLA ÇAPRAZ ANALİZ (2026-07-30)
 
-**Karşılaştırılan kaynaklar:** worker `denetim/aktif_ogrenme_secim_tasarimi_S1_S2_dedup.md`
+**Karşılaştırılan kaynaklar:** `tarlaanaliz-worker/denetim/aktif_ogrenme_secim_tasarimi_S1_S2_dedup.md`
 ⟷ bu eylem planı. (2026-08-11'de o dosya İKİ kaynağın birleşimi hâline geldi: **BÖLÜM A** =
 tasarım, 787 satır · **BÖLÜM B** = kod-doğrulamalı denetim, 375 satır — eskiden ayrı dosyaydı,
 adı `aktif_ogrenme_S1_S2_dedup_worker_uygulanabilirlik_denetimi_2026-07-18`. Çelişkide
@@ -3241,7 +3241,7 @@ Bunlar **kendi kurulumunuzda** ölçülür, kaynaktan öğrenilemez:
 
 ## 14.11 🔬 D12/D13 TURU (2026-08-11) — `stress_ratio` tanımlandı · ön faz kapısı kuruldu · üç-repo 7.6.1
 
-> **Tetikleyici:** worker `denetim/kalan_isler.txt` §4 **D12** — kanonik
+> **Tetikleyici:** `tarlaanaliz-worker/denetim/kalan_isler.txt` §4 **D12** — kanonik
 > `analysis_type.enum` *"hiçbir üretici bu adı emit ETMEMELİDİR"* diyordu ama worker
 > üretiyordu. Ölçüm iddiayı çürüttü ve asıl kusurun **başka yerde** olduğunu gösterdi.
 
