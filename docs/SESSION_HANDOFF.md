@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-11 (**on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **14 PR MERGE EDİLDİ**, **v7.7.0** ve **v7.7.1** etiketlendi. ⚠️ I-1 üçlü hiza **şu an tutmuyor** — re-pin uçuşta, platform hiç başlamadı; bkz. §0.A. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
+**Son güncelleme:** 2026-08-11 (**on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Kapanışta contract·worker·edge **7.7.2'de hizalı**, yalnız **platform 7.6.1'de** (AL-K26); bkz. §0.A. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -29,10 +29,15 @@
 >
 > | Depo | Sürüm | Dal | Durum |
 > |---|---|---|---|
-> | contract | **7.7.2** | `master` | ✅ etiketli (`v7.7.2`, annotated), temiz |
-> | worker | `v7.7.1` | `master` | 🟠 pin indi; **7.7.2'ye çekilmeli** (A8 `--deselect`'i o zaman kalkar) |
-> | edge | `7.6.0` | `fix/deployment-scripts-kapisi` | 🟠 PR #70 açık — **doğrudan `7.7.2`'ye** pinlenecek (7.7.1 ile ikinci bir kırmızı alırdı) |
+> | contract | **7.7.2** | `master` @ `2a5eec5` | ✅ etiketli (`v7.7.2`, annotated), temiz, 0 açık PR |
+> | worker | **7.7.2** | `master` @ `608e561` | ✅ hizalı; I-1 kapısını **kendi CI'ına kurdu** |
+> | edge | **7.7.2** | `main` @ `87830db` | ✅ hizalı; PR #70/#71/#72 merge, I-1 kapısını **kurdu** |
 > | platform | `7.6.1` | `main` | 🔴 **hiç re-pin edilmedi** — submodule pini `v7.6.1` (`c4b7b94`) |
+>
+> **I-1 artık ÖLÇÜLÜYOR.** `tools/check_version_alignment.py` (AL-K30) contract CI'ında
+> kanonik kipte, worker ve edge CI'ında tüketici kipinde koşuyor — üçü de **uçtan uca
+> doğrulandı** (workflow'daki gerçek çağrı okundu, commit başlığına güvenilmedi).
+> Kapının ilk koşumu platform'un geride kaldığını hemen yakaladı; **sessizce kalamaz.**
 >
 > **platform'un geride kalması bu oturumda bilinçli değil, sadece sıra gelmedi** —
 > bu oturumda platform'da çalışan bir aktör yoktu. Bir sonraki oturumun ilk işi.
@@ -42,7 +47,7 @@
 > `info.version` damgası** değişti — `schemas/` ve `enums/` ağaçlarına hiç dokunulmadı,
 > yani kardeşlerin vendored öz-hash'i sabit kaldı.
 
-### Ne yapıldı — 17 PR (#69…#85), üç sürüm etiketi
+### Ne yapıldı — **19 PR** (#69…#89), üç sürüm etiketi
 
 Tema: **"belgelenmiş ama koşmayan kural bir dilektir"**. Denetim, sözleşme metnini değil
 **kapıların kendisini** hedef aldı; bulunanların çoğu *var sanılan* kapılardı.
@@ -57,6 +62,8 @@ Tema: **"belgelenmiş ama koşmayan kural bir dilektir"**. Denetim, sözleşme m
 | Ölü/zararlı araç | #73 | Node/TS zinciri **hiç var olmamıştı**; `npm run format` checksum kapsamındaki **94 dosyayı** yeniden biçimlendirirdi — ölü değil **zararlı** |
 | Koşmayan kurallar | #80 | `drone_type` senkron kapısı **yoktu** · `poetry.lock` üçüncü kaynak olarak **çelişiyordu** (pytest 7.4.4 ↔ 9.0.2) · belgelerde koşmayan komutlar |
 | Sürüm | #79, #82, #85 | **v7.7.0** (MINOR) · **v7.7.1** ve **v7.7.2** (PATCH) |
+| I-1 kapısı | #87 | *"Sürüm üç depoda aynı"* kuralı üç `CLAUDE.md`'de yazılıydı, **doğrulayan tek komut yoktu**; edge `7.6.1`'i hiç pinlememişti ve kimse fark etmemişti |
+| Betik ağacı | #89 | `.sh`/`.ps1` ağacı **tümden kapısızdı** (3 dosya / 1021 satır, 0 isabet); yetim ve koşarsa zararlı bir betik silindi + iki katmanlı kapı |
 | Öz-kusur | #85 | `v7.7.1`'de *"sınıfın tamamını kapattım"* dedim; **kardeş dosyayı saymamıştım** — worker yakaladı, `v7.7.2` düzeltti |
 
 ### 🔴 v7.7.1 neden gerekti — etiket değişmez
@@ -73,6 +80,15 @@ Uygularken kendi ölçümüm **kalan bir delik** daha buldu: iki kilit de depo v
 okuduğu için, ölçecek verisi olmayan kardeşte yürüyüşün bozulması görünmüyordu
 (*edge-only CI + körelmiş yürüyüş → `2 passed`*). Aynı boşluk contract'ın **kendi**
 CI'ında daha büyüktü. Çözüm: yürüyüşü **sentetik girdiyle** sınayan 5 test.
+
+### Kapanışta açık kalan TEK iş
+
+**platform `7.6.1`'de** (`AL-K26`) — bu oturumda platform'da çalışan aktör yoktu.
+Sonraki oturumun ilk işi; artık bir kapı bunu ölçüyor.
+
+Diğer açık kalemler **karar** bekliyor, iş beklemiyor: `AL-K24` (`paths:` kaldırılsın mı) ·
+`AL-K27` (`payment_target_type`, sonraki MINOR) · `AL-K28` (`field_created` kapısı) ·
+`AL-K29` (`sync_to_repos.py` ölü, silme onayı).
 
 ### Bu oturumun kalıcı dersi
 
