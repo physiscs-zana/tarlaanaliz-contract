@@ -133,7 +133,7 @@ kurallar; daima buradaki kurallara kıdemli SDLC uzmanı, Technical Writer / SSO
 
 **[KR-013-1] Asgari Tarla Büyüklüğü:** Bir tarla en az **5 dönüm** (5.000 m² = 0,5 ha) olmalıdır. Backend, 5 dönümün altındaki tarla kaydını reddeder (hard-gate). Gerekçe: drone tarama operasyonunun teknik/ekonomik alt eşiği.
 
-**[KR-013-2] Tarama için Komşu Tarla Şartı:** Bir tarlada **tarama/analiz (görev)** başlatılabilmesi için, çiftçinin **aynı mahallede** (il+ilçe+mahalle/köy) en az bir **başka** kayıtlı tarlasının daha olması gerekir. **İlk tarla girişi engellenmez**; ancak tek tarla için görev/tarama oluşturulamaz. Bu bilgi, çiftçiye tarla ekleme sayfasında kalıcı bilgi notu ile bildirilir. Gerekçe: drone izole tek tarla için değil, aynı bölgedeki tarla kümesi için uçurulur.
+**[KR-013-2] Tarama için Komşu Tarla Şartı:** Bir tarlada **tarama/analiz (görev)** başlatılabilmesi için, **aynı mahallede** (il+ilçe+mahalle/köy) en az bir **başka kayıtlı tarla** bulunmalıdır. Bu komşu tarla **başka bir çiftçiye ait olabilir** — kümeyi oluşturan komşuluktur, sahiplik değil. **İlk tarla girişi engellenmez**; ancak mahallesinde tek olan tarla için görev/tarama oluşturulamaz. Bu bilgi, çiftçiye tarla ekleme sayfasında kalıcı bilgi notu ile bildirilir. Gerekçe: drone izole tek tarla için değil, aynı bölgedeki tarla kümesi için uçurulur.
 
 **Tekil Kayıt Kuralı:**
 [EK: Kod/Şema örnekleri bu sürümden çıkarıldı. (Contracts repo’da kanonik)]
@@ -1664,7 +1664,7 @@ Bu bölüm; ana iş akışlarının iş planı anlatısında zaten bulunan kıs�
 - il/ilçe/mahalle/köy + ada/parsel + alan (m²); sistem FieldID üretir
 - Tekil kayıt kuralı: il+ilçe+mahalle/köy+ada+parsel kombinasyonu tekrar edemez
 - Asgari tarla büyüklüğü: en az 5 dönüm (5.000 m²); altındaki kayıt backend'de reddedilir (hard-gate) [KR-013-1]
-- Tarama/görev şartı: aynı mahallede (il+ilçe+mahalle/köy) en az bir başka kayıtlı tarla gerekir; ilk tarla girişi muaf, çiftçiye bilgi notu ile bildirilir [KR-013-2]
+- Tarama/görev şartı: aynı mahallede (il+ilçe+mahalle/köy) en az bir başka kayıtlı tarla gerekir — sahibi başka bir çiftçi olabilir; ilk tarla girişi muaf, çiftçiye bilgi notu ile bildirilir [KR-013-2]
 - Bitki türü tanımı (tarla bazında); birden fazla bitki varsa alan (m²) ile ayrı ayrı
 - Analiz talebi: bitki türü bazında; Sezonluk Paket veya tek seferlik
 - Bitki türü değişimi: yılda 1 defa, sadece 1 Ekim - 31 Aralık (backend kuralı)
