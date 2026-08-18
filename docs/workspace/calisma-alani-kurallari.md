@@ -103,6 +103,18 @@ Her kuralın gerekçesi ve ölçülmüş örnekleri parantezdeki hafıza dosyas�
 - **Çoklu makine.** Devir **yalnız git ile**. `.claude/` dört depoda da gitignore'da →
   oraya konan hiçbir şey diğer makineye gitmez. (`coklu-makine-calisma`)
 - **Commit/push yalnız açıkça istendiğinde.** Dosya silme, force push, hard reset → onay.
+- **Küçük bulguları TEK PR'da topla — her PR ayrı bir maliyettir.** Aynı oturumda aynı
+  depoda birden fazla küçük/bağımsız düzeltme (bayat satır, dosya taşıma, tek-satır kanıt
+  düzeltmesi) çıktıysa AYRI dal/PR açma — hepsini **tek dal, tek commit (ya da mantıksal
+  gruplara ayrılmış az sayıda commit), tek PR**'da topla ve öyle push et. Gerekçe: her
+  PR açılışı bir CI koşumu (contract'ta 8-9 iş) + bir merge-sonrası ana-dal koşumu daha
+  demektir — N küçük bulguyu N ayrı PR'a bölmek Actions dakikasını ve oturum
+  araç-çağrısı/token maliyetini **N kat** büyütür, kullanıcıya aylık fatura olarak döner.
+  **İstisna:** değişiklikler birbirini bekliyorsa (biri mergelenmeden diğeri test
+  edilemiyorsa) veya kullanıcı ayrı ayrı inceleme istiyorsa ayrı PR meşrudur — aksi hâlde
+  varsayılan **toplama**. Bir denetim/tarama turu birden fazla düzeltilebilir bulgu
+  çıkarıyorsa, PR açmadan önce **tur bitene kadar bekle**, sonra tek seferde topla.
+  (`kredi-tasarrufu-pr-toplama`)
 
 ## 5. Ortam gerçekleri (bu makine)
 
