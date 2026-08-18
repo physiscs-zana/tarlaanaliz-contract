@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "autoMemoryDirectory": "~/.claude/memory/tarlaanaliz",
+  "_claudeMdExcludes_notu": "dist/ maddesi 2026-08-18 kaldirildi: kok neden build_package.py:_GELISTIRICI_DOSYALARI ile kapatildi (git ile tasinir). Kalan madde submodule kaynakli, kodda cozulemez.",
+  "claudeMdExcludes": [
+    "**/tarlaanaliz-platform/contracts/CLAUDE.md"
+  ],
+  "permissions": {
+    "deny": [
+      "Read(//**/git_token.txt)",
+      "Edit(//**/git_token.txt)",
+      "PowerShell(Get-Content *git_token*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe",
+            "args": [
+              "-NoProfile",
+              "-ExecutionPolicy",
+              "Bypass",
+              "-File",
+              "C:\\Users\\Bilgisayar\\Desktop\\TARLA-ANALİZ\\tarlaanaliz-contract\\docs\\workspace\\oturum-basi-hook.ps1"
+            ],
+            "timeout": 10,
+            "statusMessage": "TarlaAnaliz oturum kurallari yukleniyor..."
+          }
+        ]
+      }
+    ]
+  },
+  "_kanca_notu": "Kanca govdesi git'te: tarlaanaliz-contract/docs/workspace/oturum-basi-hook.ps1. Boylece kanca da surumlenir ve ikinci makineye gider. Bu settings.json'in kendisi kapsayici klasorde ve git DISI -- sablonu ayni klasorde."
+}
