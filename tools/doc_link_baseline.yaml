@@ -89,6 +89,8 @@ accepted:
 - docs/versioning_policy.md|docs/checklists/PR_GATE_CHECKLIST.md
 - docs/versioning_policy.md|docs/migration_guides/user_v1_to_v2.md
 - docs/versioning_policy.md|mission_v2_to_v3.md
+- docs/workspace/calisma-alani-kurallari.md|MEMORY.md
+- docs/workspace/calisma-alani-kurallari.md|git_token.txt
 - ssot/kr_registry.md|edgekiosk_ssot.md
 - ssot/kr_registry.md|platform_ssot.md
 - ssot/kr_registry.md|worker_ssot.md
