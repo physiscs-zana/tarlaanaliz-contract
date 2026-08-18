@@ -475,6 +475,24 @@ jobs:
           # but the skipped COUNT is printed — no silent fail-open.
           python3 tools/check_doc_links.py
 
+      - name: CLAUDE.md reference integrity (identifiers + code paths)
+        run: |
+          # 2026-08-18. check_doc_links is a DOCUMENT gate (DOC_SUFFIXES =
+          # .md/.txt) -- it leaves code paths and IDENTIFIER references out of
+          # scope; its own docstring says so. Measured: two defects of this class
+          # survived for months -- CLAUDE.md carried a wrong path
+          # (`services/security/av_engines.py`; the real one is
+          # src/core/services/...) and a code sample documenting a constant that
+          # does not exist (MISSION_ID). This gate closes both classes: every
+          # KR-/HC-/ADR-/K-/KARAR- identifier in CLAUDE.md must appear in another
+          # tracked file, and every backticked source path must resolve.
+          # Fail-closed; cross-repo and placeholder skips are printed WITH COUNTS.
+          # The script runs the SAME LOGIC in all four repos; formatting differs per
+          # each repo's linter (contract sets lines-after-imports=2) -- compare with
+          # blank lines normalised, not with `cmp`. Mutation-tested (5/5 mutations killed; `--self-test`
+          # runs positive + negative controls).
+          python3 tools/check_claude_md_refs.py
+
   summary:
     name: Validation Summary
     runs-on: ubuntu-latest
