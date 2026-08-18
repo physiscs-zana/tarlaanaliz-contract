@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-11 (**on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Kapanışta contract·worker·edge **7.7.2'de hizalı**, yalnız **platform 7.6.1'de** (AL-K26); bkz. §0.A. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
+**Son güncelleme:** 2026-08-18 (**on üçüncü/on dördüncü oturum** — KR-013-2 komşuluk kapısı sahipten bağımsız hâle getirildi (#91) · CLAUDE.md dört depoda Opus 5 rehberine göre yeniden yapılandırıldı + `check_claude_md_refs.py` atıf bütünlüğü kapısı kuruldu (#92) · kök `CLAUDE.md` + oturum-başı kanca kalıcılık için contract'a taşındı (#93) · dört depoda `docs/`+`denetim/` (191 dosya) tam-okuma denetimi: platform+worker sıfır aday, contract'ta 2 alansız dosya silindi/taşındı (#94). **AL-K26 (I-1 hizası) bu turda platformun 7.6.1'de kaldığı iddiasıyla açık görünüyordu — ölçüldü, 2026-08-13'te KAPANMIŞ ve dört depo bugün de 7.7.2'de hizalı** (bkz. §0.A, önceki turun bu satırı düzeltildi). Önceki: **on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -22,17 +22,27 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-11, **on ikinci oturum: contract cerrahi kalite denetimi · v7.7.0 + v7.7.1**)
+## 0.A EN GÜNCEL — (2026-08-18, **on üçüncü/on dördüncü oturum: KR-013-2 bağımsızlığı · CLAUDE.md Opus 5 yeniden yapılandırması · kalıcılık mimarisi · docs/denetim takip denetimi**)
 
-> **Durum: contract tarafı KAPANDI (14 PR merge, iki sürüm etiketlendi).**
-> **I-1 üçlü hiza ŞU AN TUTMUYOR — re-pin uçuşta.** Ölçüm (çalışma ağacı, 2026-08-11):
+> **Durum: I-1 dört depoda HİZALI (7.7.2), önceki turun "platform geride" iddiası bayattı.**
+> Ölçüm (2026-08-18, `origin/*` + `check_version_alignment.py` sonucu):
 >
 > | Depo | Sürüm | Dal | Durum |
 > |---|---|---|---|
-> | contract | **7.7.2** | `master` @ `2a5eec5` | ✅ etiketli (`v7.7.2`, annotated), temiz, 0 açık PR |
-> | worker | **7.7.2** | `master` @ `608e561` | ✅ hizalı; I-1 kapısını **kendi CI'ına kurdu** |
-> | edge | **7.7.2** | `main` @ `87830db` | ✅ hizalı; PR #70/#71/#72 merge, I-1 kapısını **kurdu** |
-> | platform | `7.6.1` | `main` | 🔴 **hiç re-pin edilmedi** — submodule pini `v7.6.1` (`c4b7b94`) |
+> | contract | **7.7.2** | `master` (tag'in 16 commit ilerisi, docs-only: #91-#94) | ✅ etiketli, temiz |
+> | worker | **7.7.2** | `master` | ✅ hizalı; I-1 kapısı kendi CI'ında |
+> | edge | **7.7.2** | `main` | ✅ hizalı; I-1 kapısı kendi CI'ında |
+> | platform | **7.7.2** | `main` | ✅ **2026-08-13'te re-pin edildi** (`eaf62e21`), I-1 kapısı `ci.yml:109`'da bağlı |
+>
+> Bu turda: (1) contract PR #91 — KR-013-2 komşu-tarla kapısı SSOT sahipten bağımsız
+> hâle getirildi, üç depoda uygulama noktası ayrı işaretle bulunur oldu. (2) contract PR
+> #92 — dört depoda `CLAUDE.md` Opus 5 rehberine göre yeniden yapılandırıldı (edge 903→386,
+> worker 611→256, contract 452→198 satır) + `check_claude_md_refs.py` atıf bütünlüğü kapısı
+> dört depoda CI'a bağlandı. (3) contract PR #93 — kök `TARLA-ANALİZ/CLAUDE.md` (git dışı
+> kapsayıcı klasör) ve oturum-başı PowerShell kancasının gövdesi contract'a taşındı; kök artık
+> ince işaretçi, kalıcılık git ile sağlanıyor. (4) contract PR #94 — dört depoda `docs/`+
+> `denetim/` (191 dosya) tam-okuma denetimi: platform (34) ve worker (62) **sıfır aday**,
+> edge (23) tek zayıf aday (dokunulmadı), contract (72) 2 alansız dosya silindi/taşındı.
 >
 > **I-1 artık ÖLÇÜLÜYOR.** `tools/check_version_alignment.py` (AL-K30) contract CI'ında
 > kanonik kipte, worker ve edge CI'ında tüketici kipinde koşuyor — üçü de **uçtan uca
@@ -46,6 +56,14 @@
 > (`bf269235…` 7.7.0 · `2d9f7475…` 7.7.1). Üç sürümde de **yalnız `api/` içindeki üç
 > `info.version` damgası** değişti — `schemas/` ve `enums/` ağaçlarına hiç dokunulmadı,
 > yani kardeşlerin vendored öz-hash'i sabit kaldı.
+
+---
+
+## 0.A-j ÖNCEKİ TUR — (2026-08-11, **on ikinci oturum: contract cerrahi kalite denetimi · v7.7.0 + v7.7.1**)
+
+> ⚠️ Bu bölümdeki "platform 7.6.1'de kaldı, AL-K26 açık" iddiası **2026-08-13'te KAPANDI**
+> (platform `eaf62e21` ile re-pin edildi) — bkz. yukarıdaki §0.A EN GÜNCEL tablosu. Aşağısı
+> bu turun kendi kapanış anındaki (henüz platform kapanmamış) durumudur, tarihsel kayıt.
 
 ### Ne yapıldı — **19 PR** (#69…#89), üç sürüm etiketi
 
@@ -85,6 +103,7 @@ CI'ında daha büyüktü. Çözüm: yürüyüşü **sentetik girdiyle** sınayan
 
 **platform `7.6.1`'de** (`AL-K26`) — bu oturumda platform'da çalışan aktör yoktu.
 Sonraki oturumun ilk işi; artık bir kapı bunu ölçüyor.
+✅ **Güncelleme (2026-08-13):** platform re-pin edildi, AL-K26 kapandı — yukarıdaki uyarı kutusuna bakın.
 
 Diğer açık kalemler **karar** bekliyor, iş beklemiyor: `AL-K24` (`paths:` kaldırılsın mı) ·
 `AL-K27` (`payment_target_type`, sonraki MINOR) · `AL-K28` (`field_created` kapısı) ·
