@@ -103,10 +103,7 @@ Gorevi: Repo'lara ait olmayan ust duzey dokumanlar.
 
 Icindekiler:
 - REPO_BOUNDARY_RULES.txt                          hangi kodun hangi repo'da olacaginin kesin kurallari
-- SECURITY_AUDIT_REPORT.txt                         guvenlik denetim raporu
-- TARLAANALIZ — KONSOLIDE DERIN DENETIM RAPORU.txt  konsolide denetim raporu
-- OTURUM DENETIM RAPORU.txt                         oturum raporlari
-- TarlaAnaliz_Etkilesim_Haritasi                    sistem etkilesim diyagrami
+- denetim/SECURITY_AUDIT_REPORT.txt                 guvenlik denetim raporu (2026-08-18'de denetim/'e tasindi)
 
 
 Uctan Uca Veri Akisi

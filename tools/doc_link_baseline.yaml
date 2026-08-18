@@ -31,7 +31,6 @@ accepted:
 - denetim/denetim_raporu_2026-08-01_ozdenetim_6lens.md|grep -nE "^  v[0-9]+\.[0-9]+\.[0-9]+ \(" CONTRACTS_VERSION.md
 - docs/DEMO_GUNU_YAPILACAKLAR.txt|AT/report/report.md
 - docs/DEMO_GUNU_YAPILACAKLAR.txt|NOTLAR.txt
-- docs/Görev Haritası.txt|RAPORU.txt
 - docs/README.md|GUNCELLEMELER.md
 - docs/REPO_BOUNDARY_RULES.txt|CONTRACTS_SHA256.txt
 - docs/REPO_BOUNDARY_RULES.txt|REPO_BOUNDARY_RULES.md
