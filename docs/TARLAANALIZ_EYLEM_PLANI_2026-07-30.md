@@ -3337,3 +3337,60 @@ için **sıfır değişiklik kaydı** üretti. `unevaluatedProperties`/`addition
 yalnız `SUBSCHEMA_SINGLE` listesinde (satır 116-120) *alt-şema taşıyıcısı* olarak
 tanınıyor; sınıflandırma kuralı yok. Bu, `$ref` sınırından **farklıdır** — orada beyan
 var, burada yok. Sürüm kararı bu yüzden **elle ölçüldü** (5385 JSON + üretici kodu).
+
+---
+
+## 14.13 ⬜ UZMAN EKRANI — REFERANS KARTLARI DAHA DETAYLI OLSUN (2026-08-19, kullanıcı isteği)
+
+**Durum: AÇIK.** Sonraki oturumda ele alınacak; bu turda ölçüm yapıldı, uygulama yapılmadı.
+
+### İstek (kullanıcının kendi ifadesi)
+
+> *"Referans Kartları (Antep Fıstığı — 23 kart)" altındakiler için daha detaylı
+> bilgilerin yazılması"*
+
+Uzman, karar ekranında (`/expert-portal/reviews/{id}`) mahsule göre referans
+kartlarını görüyor. Antep fıstığında **23 kart** listeleniyor: hastalık, zararlı,
+abiyotik stres ve yabancı ot.
+
+### Bugün ekranda ÖLÇÜLEN kart içeriği (gerçek çıktı)
+
+Her kart şu alanları taşıyor: **ad · sınıf** (Hastalık/Zararlı/Abiyotik Stres/Yabancı
+Ot) **· etmen (latin adı) · kısa açıklama · Eşik (bazılarında) · Karıştırma**
+(ayırıcı tanı adayları).
+
+Örnek — *Fıstık Psillidi*: `Agonoscena pistaciae` · eşik *"bileşik yaprak başına
+25-30 nimf (TAGEM EZE)"* · karıştırma `water_stress, alternaria_blight`.
+
+**Yani iskelet iyi; eksik olan derinlik.** Kartların bir kısmında eşik yok
+(ör. *Verticillium Solgunluğu*, *Septoria*), bazılarında izleme penceresi metin
+içine gömülü (*"Ergin uçuşu Nisan-Mayıs ortasında"*) ve yapısal bir alanı yok.
+
+### 🔴 ÖNCE ÖLÇÜLECEK — kart kataloğunun SSOT'u worker'dadır
+
+`kart-katalogu-worker-ssot` (2026-08-10, DK-46): **platform kartların bayt-özdeş
+kopyasını tutar, ikinci değer üretmez.** Dolayısıyla:
+
+* İçerik zenginleştirmesi **worker'daki kanonik katalogda** yapılır, platformda DEĞİL.
+* Platform tarafı yalnızca **sunum** (hangi alan gösteriliyor, nasıl yerleşiyor).
+* Ratchet kapısı **geliştirici-zamanı**; CI'da zorlanmıyor (AL-K13) → senkronu elle ölç.
+
+Uygulamadan önce şu üçü ölçülmeli:
+1. Kanonik kart şeması hangi alanları **zaten** destekliyor (eklemeye gerek var mı)?
+2. Ekran hangi alanları **gösteriyor**, hangileri şemada var ama sunulmuyor?
+   (Bu oturumda üç kez çıkan sınıf: *"alan var, tüketici yok"*.)
+3. Kart sayısı ve içerik platform ↔ worker arasında bayt-özdeş mi?
+
+### Kapsam sınırı (KR-025)
+
+Kartlar **tanı desteği**dir. İlaçlama/müdahale önerisi **eklenmez** — yapay zekâ
+analiz yapar, müdahale kararı vermez. Derinleştirme; etiyoloji, fenoloji, ayırıcı
+tanı, izleme yöntemi ve eşik yönünde olur.
+
+### Bu isteğin çıktığı bağlam
+
+Uzman ekranı gerçek bir incelemede açıldı (`548673e0`, Ferda Yarpuzlu) ve ekran
+**fail-honest davrandı**: *"Bu inceleme için görüntü bulunamadı … Görüntüyü
+görmeden karar vermeyin"*. Ölçüldü: `analysis_priority_zones` **0 kayıt**,
+`layer` tablosu **0 kayıt** — çünkü o analiz sonucu (`08b3cac3`) **gerçek worker
+koşmadan** üretilmişti. Kartlar o yüzden ekranın tek içeriğiydi; istek oradan doğdu.
