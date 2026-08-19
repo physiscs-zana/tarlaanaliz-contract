@@ -22,7 +22,73 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-18, **on üçüncü/on dördüncü oturum: KR-013-2 bağımsızlığı · CLAUDE.md Opus 5 yeniden yapılandırması · kalıcılık mimarisi · docs/denetim takip denetimi**)
+## 0.A EN GÜNCEL — (2026-08-19, **on beşinci oturum: uçuş öncesi platform turu — üretim kesintisi sınıfı üç kusur + admin görünürlüğü + ÖZ-DENETİM**)
+
+> **Durum: platform `main` @ `2715808f`; kod ÜRETİMDE DOĞRULANDI** (rota tablosu
+> çalışan konteynerden okundu, `git log` değil).
+> Bağlam: **1-2 gün içinde gerçek antep fıstığı bahçesinde uçuş** — bu turun tamamı
+> "simülasyonda hata çıkmasın" amacına bağlı.
+
+### Merge edilen ve DAĞITILAN (platform)
+
+| PR | Ne | Neden kritik |
+|---|---|---|
+| #428 | RabbitMQ `hostname:` sabitlendi | Her dağıtımda Mnesia düğüm kimliği değişiyor, **kuyruğa alınmış tüm işler siliniyordu** (`Recovering 0 queues` + 6 yetim düğüm dizini). Force-recreate ile kanıtlandı: 0 → 12 kuyruk |
+| #430 | "Görev başına tek veri seti" varsayımının **üçüncü** örneği | Çiftçi **haritayı hiç göremiyordu** |
+| #431 | Uzman 6sa cevap vermezse inceleme aynı branş uzmanına DEVREDİLİR | Silinmiş uzmanda `PENDING` kalan inceleme konsensüsü **kalıcı kilitliyordu** (üretimde yaşandı: `6a1ce099`) |
+| #432 | Admin uzman görünürlüğü (işler · kararlar · elle devir · PIN sıfırlama) | Admin uzman incelemelerini **hiçbir yerden** göremiyordu |
+
+### ⚠️ ÖZ-DENETİM: #432'de sekiz kusur bulundu, hepsi aynı turda kapatıldı
+
+Kullanıcı, React ekranı yazılmadan önce öz-denetim istedi. Sonuç — **kendi işimde**:
+
+1. **PR gövdemde yanlış iddia.** "`must_change_pin` ile uzman ilk girişte kendi PIN'ini
+   koyar" dedim; **tüketicisi yoktu** (`auth.py`de bayrak hiç okunmuyor, `AuthTokenResponse`
+   taşımıyor, web'de geçmiyor). Testim bir mock'ta bool'un set edildiğini doğruluyordu →
+   **sahte-yeşil**. Zincir kapatıldı: claim → `jwt_middleware` → `403 PIN_CHANGE_REQUIRED`,
+   dar muafiyet listesiyle (change-pin · refresh · logout).
+2. **İş kuralını kanonikten okumak yerine yeniden yazmışım — 4 örnek.** En ağırı:
+   `consensus_conflict = farklı verdict sayısı > 1`. Kanonik kural (`expert_portal.py:681`)
+   **"herhangi biri RED derse"**. İki yönde de yanlıştı: `confirmed`+`corrected` → ben
+   "yayın durdu" diyordum, gerçekte **yayınlanıyor**; `rejected`+`rejected` → ben "çelişki
+   yok" diyordum, gerçekte **yayın duruyor** (görülmesi gereken hâl gizleniyordu).
+   Kural artık `src/core/domain/services/expert_review_rules.py`de tek yerde;
+   yayın kapısı da oradan okuyor (mutasyonla doğrulandı: yüklemi bozunca **kapı testleri**
+   kırmızıya döndü, no-op mutasyon hayatta kaldı).
+   Dördüncüsü: `expert_unreachable` kanonik üç-koşullu yüklemin `deletion_requested_at`
+   ayağını **atlıyordu** → KVKK silme talebi vermiş uzman "sorunlu" filtresinde gizleniyordu.
+3. **"HEMEN" istendi, sistem 12 saate kadar bekliyordu.** Devir 6 saatlik
+   `stuck_mission_scan` işine iliştirilmişti (SLA 6sa + tarama 0-6sa). Kendi işine alındı:
+   **15 dk + dağıtımda ilk tur hemen** (`next_run_time`).
+4. **Yöneticiyi kimse denetlemiyordu.** Uzmanı izleyen yüzeyi kurup admin işlemlerini
+   WORM'a yazmamışım. `ADMIN.EXPERT_REVIEW_REASSIGNED` + `EXPERT.PIN_RESET` eklendi
+   (kardeş modül `admin_field_location` bunu 2026-06'dan beri yapıyordu — desen oradaydı).
+5. **Mükerrer modül.** `/admin/expert-reviews/{id}/location` ucu **zaten vardı**
+   (`admin_field_location.py`) ve aynı yol uzayını kullanıyordu; ben yanına ikinci bir
+   modül açmışım. Birleştirildi, dosya silindi — **yol, yanıt modeli, RBAC, audit olay adı
+   değişmedi**. Ayrıca elle yazdığım yetki kapısı yerine kanonik `require_roles` kullanıldı.
+6. **Kök neden: 19 testin tamamı mock'tu.** Üretim yolundan geçen katman eklendi —
+   gerçek `create_app()` + `TestClient` (jetonsuz → 401) ve gerçek SQLite motoru.
+   İlk koşumda **üç gerçek hata** yakaladı: `expert_reviews`ta `updated_at` kolonu yok,
+   `users`ta `role` kolonu yok, SLA yüklemi naive datetime'da `TypeError` fırlatıyordu.
+
+**Dürüstlük notu:** `reset-pin` hız sınırı eklendi ama bu bir kaba-kuvvet açığı **değildi**
+(uç CENTRAL_ADMIN kapılı) — politika tutarlılığı için yapıldı. `_load_users` JOIN'i gerçek-SQL
+testiyle **kapsanmıyor** (SQLite'a ARRAY bağlanamıyor); onu `alembic check` +
+`check_orm_schema_conformance.py` taşıyor.
+
+### Açık kalemler
+
+- 🔴 **Admin WEB EKRANI yok.** Bu tur yalnız API. Uçlar hazır, React yazılmadı.
+- 🔴 **Yetim inceleme `6a1ce099`** — dağıtımdan sonra 15 dk içinde otomatik devredilmeli;
+  edilmezse `POST /admin/expert-reviews/{id}/reassign` ile elle tetiklenir.
+- `result_hash` üreticisi yok (ANALYZED durumu istiyor) · `layer_refs` ölü kolon ·
+  `SchemaRegistry` boş → worker mesaj doğrulaması fail-open · `users.failed_login_attempts`
+  ve `locked_until` ölü kolonlar.
+
+---
+
+## 0.A-k ÖNCEKİ TUR — (2026-08-18, **on üçüncü/on dördüncü oturum: KR-013-2 bağımsızlığı · CLAUDE.md Opus 5 yeniden yapılandırması · kalıcılık mimarisi · docs/denetim takip denetimi**)
 
 > **Durum: I-1 dört depoda HİZALI (7.7.2), önceki turun "platform geride" iddiası bayattı.**
 > Ölçüm (2026-08-18, `origin/*` + `check_version_alignment.py` sonucu):
