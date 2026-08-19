@@ -38,7 +38,34 @@
 | #431 | Uzman 6sa cevap vermezse inceleme aynı branş uzmanına DEVREDİLİR | Silinmiş uzmanda `PENDING` kalan inceleme konsensüsü **kalıcı kilitliyordu** (üretimde yaşandı: `6a1ce099`) |
 | #432 | Admin uzman görünürlüğü (işler · kararlar · elle devir · PIN sıfırlama) | Admin uzman incelemelerini **hiçbir yerden** göremiyordu |
 
-### ⚠️ ÖZ-DENETİM: #432'de sekiz kusur bulundu, hepsi aynı turda kapatıldı
+### ⚠️ ÖZ-DENETİM ZİNCİRİ: #432 → #433 → #434 (toplam **13 kusur**)
+
+> **Bu başlık 2026-08-19'da iki kez düzeltildi.** Önce "sekiz kusur, hepsi kapatıldı"
+> yazıyordu; **yanlıştı**. (a) #433'ün CI koşumu **dokuzuncu** kusuru gösterdi
+> (`create_app()` CI'da rotasız uygulama üretiyor — kök neden AÇIK). (b) #433'ün
+> kendisi denetlendi ve **dört kusur daha** çıktı (#434). Devir notunun bayat kalması,
+> notsuzluktan kötüdür.
+
+**#434 — öz-denetimin öz-denetimi (MERGED, `ed83ad08`):** üçü aynı sınıfın tekrarıydı,
+*"üretici ya da zincir sınanmamış"*:
+1. #433 `must_change_pin` zorlamasını kurdu ama **claim'i YAZAN kodu sınamadı** —
+   claim hiç üretilmese zorlama sessizce ölürdü, testler yeşil kalırdı.
+2. Hız sınırı **tanımlıydı**, middleware'de **uygulandığı sınanmamıştı**.
+3. 🔴 **`escalation_round` ölü kolonuna TÜKETİCİ eklenmişti.** Devir **sınırsızdır**:
+   uzman A cevap vermezse iş B'ye, B de vermezse **tekrar A'ya** gidebilir —
+   6 saatte bir, sonsuza kadar. Sayaç artırılmadığı için bu **salınım GÖRÜNMEZDİ**.
+   Sayaç bağlandı; **üst sınır/alarm bilinçli olarak EKLENMEDİ** — "kaç devirden
+   sonra ne olacağı" bir ÜRÜN kararıdır, SSOT'ta kuralı yok.
+   ⚠️ **Uçuş sırasında buna bakın:** bir uzman cevap vermiyorsa iş sessizce iki
+   uzman arasında dönebilir; admin listesindeki sayaç tek göstergedir.
+4. Docstring'imde yanlış iddia (silinen test dosyası "değiştirilmeden geçer" diyordu).
+
+Mutasyon oturum toplamı: **15 ölen / 5 no-op kontrol**. ⛔ Bir önceki kapanışta
+"10/10 öldü, üç no-op" demiştim — **iki sayı da yanlıştı** (doğrusu o an 9/2 idi).
+
+---
+
+### #432'de bulunan sekiz kusur (hepsi #433 ile kapatıldı)
 
 Kullanıcı, React ekranı yazılmadan önce öz-denetim istedi. Sonuç — **kendi işimde**:
 
