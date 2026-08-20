@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-18 (**on üçüncü/on dördüncü oturum** — KR-013-2 komşuluk kapısı sahipten bağımsız hâle getirildi (#91) · CLAUDE.md dört depoda Opus 5 rehberine göre yeniden yapılandırıldı + `check_claude_md_refs.py` atıf bütünlüğü kapısı kuruldu (#92) · kök `CLAUDE.md` + oturum-başı kanca kalıcılık için contract'a taşındı (#93) · dört depoda `docs/`+`denetim/` (191 dosya) tam-okuma denetimi: platform+worker sıfır aday, contract'ta 2 alansız dosya silindi/taşındı (#94). **AL-K26 (I-1 hizası) bu turda platformun 7.6.1'de kaldığı iddiasıyla açık görünüyordu — ölçüldü, 2026-08-13'te KAPANMIŞ ve dört depo bugün de 7.7.2'de hizalı** (bkz. §0.A, önceki turun bu satırı düzeltildi). Önceki: **on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
+**Son güncelleme:** 2026-08-19/20 (**on altıncı oturum** — uzman ekranı zinciri: sonuç↔veri seti bağı sınıfı tamamen kapatıldı (#441/#443) · **üretimde ölü döşeme servisi** bulundu ve düzeltildi (#446 — NumPy x86-64-v2 uyumsuzluğu, 7770 log satırı) · CI asılma kapakları (#442) · alan adı + BOUND kapısı (#444) · dağıtımda submodule kapısı + simülasyon bağımsızlığı (#445) · kartlar alt uzmanlık duyarlı (#447). ✅ **7 PR MERGE EDİLDİ ve DAĞITILDI**. Önceki: 2026-08-18 (**on üçüncü/on dördüncü oturum** — KR-013-2 komşuluk kapısı sahipten bağımsız hâle getirildi (#91) · CLAUDE.md dört depoda Opus 5 rehberine göre yeniden yapılandırıldı + `check_claude_md_refs.py` atıf bütünlüğü kapısı kuruldu (#92) · kök `CLAUDE.md` + oturum-başı kanca kalıcılık için contract'a taşındı (#93) · dört depoda `docs/`+`denetim/` (191 dosya) tam-okuma denetimi: platform+worker sıfır aday, contract'ta 2 alansız dosya silindi/taşındı (#94). **AL-K26 (I-1 hizası) bu turda platformun 7.6.1'de kaldığı iddiasıyla açık görünüyordu — ölçüldü, 2026-08-13'te KAPANMIŞ ve dört depo bugün de 7.7.2'de hizalı** (bkz. §0.A, önceki turun bu satırı düzeltildi). Önceki: **on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -22,7 +22,131 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-19, **on beşinci oturum: uçuş öncesi platform turu — üretim kesintisi sınıfı üç kusur + admin görünürlüğü + ÖZ-DENETİM**)
+## 0.A EN GÜNCEL — (2026-08-19/20, **on altıncı oturum: uzman ekranı zinciri — kayıtlı bağ sınıfı, ÜRETİMDE ÖLÜ döşeme servisi, kart önceliklendirmesi**)
+
+> **Durum: platform `main` @ `d7c22160`; 7 PR merge edildi ve DAĞITILDI.**
+> Sunucu aynı commit'te, servisler sağlıklı, `main` merge sonrası yeşil.
+> Bağlam: gerçek antep fıstığı uçuşu yaklaşıyor. Tur "uzman ekranı gerçekten çalışıyor
+> mu" sorusuna bağlı yürüdü ve **üç ayrı ölü zincir** ortaya çıkardı.
+
+### 🔴 Turun en ağır bulgusu: döşeme (tile) üretimi ÜRETİMDE HİÇ ÇALIŞMIYORDU
+
+```
+Sunucu CPU: "Common KVM processor"
+  x86-64-v2 için gereken 4 bayraktan yalnız cx16 var (sse4_2 YOK · popcnt YOK · ssse3 YOK)
+numpy 2.5.1 (x86-64-v2 tabanlı tekerlek) → import ANINDA düşüyor
+  → rasterio + rio-tiler de düşüyor → XYZ döşeme üretimi TÜMDEN ölü
+Üretim loglarında bu hata: 7770 satır
+```
+
+Üretimde gerçek kod yolu koşturuldu: `CogTileService.get_metadata()` → `RuntimeError`.
+Uzmanın gördüğü "harita" **boş bir çerçeveydi**.
+
+**Hiçbir kapı yakalamadı**, çünkü raster içe-aktarmaları fonksiyon içinde (tembel):
+uygulama açılıyor, `/health` 200 dönüyor, testler yeşil. Arıza yalnız **hedef makinenin
+işlemcisinde** ortaya çıkıyor. *"Açılış logu temiz" ile "çalışıyor" ayrı şeylerdir* —
+bunun ders kitabı örneği.
+
+Düzeltme: `numpy>=1.26,<2` (PR #446); kilit yeniden üretildi (numpy 1.26.4,
+rasterio 1.5.0→1.4.4). Üretimde doğrulandı: z17/z18/z19 döşemeleri 35–200 KB gerçek PNG.
+
+⚠️ **Daha iyi kalıcı çözüm KODDA DEĞİL, SUNUCUDADIR:** VM işlemci modelini
+`host-passthrough` yapmak. O yapılmazsa numpy 2.x'e geçiş **mümkün değildir** ve bu pin
+kalıcı borçtur. Kod bunu çözemez, yalnız etrafından dolaşır.
+
+### Merge edilen ve DAĞITILAN (platform)
+
+| PR | Ne | Neden kritik |
+|---|---|---|
+| #441 | `analysis_results.dataset_id` — sonuç↔veri seti bağı artık **kaydedilir** | Uzman ekranı "görüntü bulunamadı" diyordu: 5 veri setli görevde `.first()` boş `result_uri` taşıyan satırı seçiyordu. Üretimde 0 → **2 katman** |
+| #442 | CI asılma kapakları (`apt`/playwright `timeout` + öksüz kilit temizliği) | `apt-get` üç koşumda **360'ar dakika** asılmıştı (≈18 saat Actions dakikası) |
+| #443 | **Kayıtlı bağ sınıfının TAMAMI** + 3 kalıcı kapı | #441 sınıfı kapatmamıştı: 8 tüketiciden 7'si açık kaldı. Yayın kapısı **en eski** (hiç analiz edilmemiş) veri setini damgalıyordu |
+| #444 | `mission_imagery_available` → `review_imagery_available`; BOUND kapısı `src/` dışına | Alan adı kapsamı yanlış anlatıyordu; BOUND kapısı 22 dosyayı görmüyordu |
+| #445 | Dağıtımda submodule kapısı; simülasyon kendi verisini üretir | `git pull` submodule'ü güncellemez — 2026-08-18 kesinti sınıfının aynısı |
+| #446 | **numpy CPU uyumu** (yukarıda) | Döşeme servisi ölüydü |
+| #447 | Referans kartları **alt uzmanlık + bitki** duyarlı | Zararlı uzmanı 23 fıstık kartının 23'ünü de aynı ağırlıkta görüyordu |
+
+### Kurulan kalıcı kapılar (hepsi CI'da bağlı; koştuğu logla doğrulandı)
+
+| Kapı | Ne yapar | Kurulduğunda ne yakaladı |
+|---|---|---|
+| `scripts/check_kanonik_bag_tuketicileri.py` | AST tabanlı **iki yönlü mandal**: yeni tahmin yolu → kırmızı; düzeltilip listeden silinmeyen kalem → kırmızı | liste 5 → **2** kaleme daraldı |
+| `scripts/check_ci_butce.py` | en kötü adım bütçesi ≤ `timeout-minutes` | `lock-install-smoke`: kapak 20 dk, gerçek bütçe **28,5 dk** |
+| `scripts/check_bound_headers.py` | `src/` sıfır tolerans + alembic/tests/scripts mandalı | 22 dosya başlıksızdı, borç **2'ye** indi |
+| `scripts/mutasyon_kos.py` + `tests/mutasyon/*.yaml` | mutasyon kanıtı **commit'li ve yeniden koşturulabilir** | 5/5 beklendiği gibi kırmızı |
+| `deploy_prod.sh` adım 0b + 3b | submodule senkronu · raster yığını **hedef işlemcide** | ikisi de gerçek dağıtımda koştu |
+
+### ⭐ Sonraki oturum için ÖLÇÜLMÜŞ gerçekler (tahmin yok)
+
+**1. Worker "0 tespit" döndürdü — bulamadığı için DEĞİL, sakladığı için.**
+
+```
+result 08b3cac3 → trigger_confidence 0.430 · tahmin PEST
+result 1dd6691f → trigger_confidence 0.302 · tahmin PEST
+```
+
+Worker kanonik tablosu (`tarlaanaliz-worker/CLAUDE.md`):
+`0.25–0.45 → INDICES_ONLY (sadece NDVI/NDRE haritası, tanı SAKLANIR)`.
+İkisi de o banttadır. Saklama sonucun kendi metninde yazıyor:
+*"YZ analizi tamamlandı (0 bulgu, mod=INDICES_ONLY)"*.
+Eşikler `confidence_calculator.py:394-454`. **Sistem tasarlandığı gibi çalışıp uzmana
+gönderdi** — yani ürün sahibinin tarif ettiği "karar veremediğini uzmana yolla" akışının
+karar verme ayağı ÇALIŞIYOR; eksik olan **görüntüyü taşıma** ayağı (madde 2-4).
+
+**2. Uzmana "modelin kararsız olduğu" HİÇ gösterilmiyor.** `trigger_confidence` yalnız
+ADMIN ekranında. Uzman "model %30 emindi ve zararlı sandı" bilgisini görmeden karar
+veriyor. `expert_portal.py` içinde `findings`/`detections` **0 atıf** — tespitler uzman
+yanıtına hiç girmiyor.
+
+**3. Karo başına MS+RGB adresi SÖZLEŞMEDE VAR, kullanılmıyor.**
+`analysis_result.v1.schema.json:438,443` → `Detection.rgb_uri` + `Detection.ms_uri`
+(ayrıca `tile_id`, `confidence`, `confidence_components`, `sub_specialty`).
+Platform bunları `findings` JSONB'sine **ham** yazıyor; **yalnız ÇİFTÇİ yolunda**
+siliniyor (`results_service_impl.py:145`, KR-071 — yorumun kendisi kapsamı
+*"çiftçi yanıtı yalnız tarımsal gözlem taşır"* diye tanımlıyor). **Uzman yolunda kısıt YOK.**
+Yani uzmana karo görüntüsü göstermek yeni sözleşme gerektirmez.
+
+**4. Ham kare (raw frame) zinciri HİÇ YAZILMAMIŞ.** `raw_frames` üretici/tüketici sayımı:
+platform 0 · worker 0 · edge 0 · web 0 dosya (pozitif kontrol: sözleşmede 2 dosya bulundu,
+yani arama deseni çalışıyor). `tarlaanaliz-edge/src/core/services/frames/` **dizini yok**.
+Şemanın kendi açıklaması: *"Bu alan hiç ÜRETİLMEMİŞTİ (E11 yazılmadı)"*.
+Akış KARAR 0.c ile **onaylı**, ama DALGA 3'te (4-6 gün, C8'e kilitli).
+
+**5. Yama (priority_zones) üretimi de üretimde bağlı değil.** `analysis_priority_zones`
+sistem genelinde **0 satır**; `INGEST.PRIORITY_ZONES_PERSISTED` logu **0 kez** düştü;
+`ENABLE_NDVI_PRIORITIZATION` varsayılanı **False**. Ayrıca sorunlu alanı DJI Terra
+belirlemiyor — edge'in kendi `NdviPrioritizer`'ı belirliyor ve eşik tablosunun başlığı
+*"general literature averages… must be calibrated"* diyor.
+
+**6. "Gerçek Görünüm" taban görüntüsü boş.** `rgb_ortho_uri` ile `calibrated_ortho_uri`
+**aynı dosyayı** gösteriyor ve o dosya **5 bantlı** kalibre ortofoto — 3 bantlı RGB değil.
+Kod dürüst davranıp boş dönüyor (sahte renk üretmiyor). Kusur ingest tarafında.
+
+**7. Faydalı böcek kartı YOK.** Katalog 210 kart: disease 84 · pest 56 · abiotic 50 ·
+weed 20 · **beneficial 0**. `BENEFICIAL` geçerli bir alt uzmanlık kodudur ve #447'de
+PEST'e **yoldaş** olarak bağlandı — kart yazıldığı gün kendiliğinden görünür (ölü kolona
+tüketici eklemek değil, ölü **korumayı bağlamak**).
+
+### Üretimin şu anki hâli (uçuş öncesi fotoğraf)
+
+```
+Görev 0903ba16 (ANTEP FISTIĞI) : PENDING_REVIEW
+  Sonuç 08b3cac3 (1. analiz)      → iki uzman da REDDETTİ (görüntüsüz karar verdiler)
+  Sonuç 1dd6691f (yeniden analiz) → 2 inceleme BEKLİYOR (ŞENER KURT · Mehmet karacaoğlu)
+  Uzman ekranı : 2 katman (HEALTH, NITROGEN_STRESS) + döşemeler ÇALIŞIYOR
+  Yama görselleri : YOK (madde 5)        findings : 0 tespit (madde 1)
+  analysis_priority_zones : 0 satır
+```
+
+### Süreç kusuru — kayda geçiyor
+
+2026-07-29 devir notu **"inceleme kapsamı veri seti mi görev mi"** sorusunu İNSANA
+bırakmıştı ve daraltma daha önce **kullanıcı vetosuyla** yapılmamıştı. Asistan bunu
+#443'te **sormadan** uygulayıp üretime indirdi. Kusur uygulamada değil **SIRADA**: önce
+sorulmalıydı. Onay sonradan alındı (2026-08-19) ve gerekçesiyle
+`docs/security/open_items_decisions_2026-06.md`'ye işlendi.
+
+## 0.A-l ÖNCEKİ TUR — (2026-08-19, **on beşinci oturum: uçuş öncesi platform turu — üretim kesintisi sınıfı üç kusur + admin görünürlüğü + ÖZ-DENETİM**)
 
 > **Durum: platform `main` @ `2715808f`; kod ÜRETİMDE DOĞRULANDI** (rota tablosu
 > çalışan konteynerden okundu, `git log` değil).

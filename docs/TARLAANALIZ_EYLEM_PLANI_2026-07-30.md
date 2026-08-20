@@ -2418,7 +2418,8 @@ Anahtar ilke: **"Yeşil ama yalan bir kapı, kırmızı bir kapıdan tehlikelidi
 >
 > | Bölüm | Statü | Neden korunuyor |
 > |---|---|---|
-> | **§14.10 (2026-08-10)** | 🟢 **CANLI GİRİŞ NOKTASI** | En yeni tur; DK-43…DK-47 + AL-K13…AL-K18 |
+> | **§14.14 (2026-08-19/20)** | 🟢 **CANLI GİRİŞ NOKTASI** | En yeni tur; DK-48…DK-55 (uzman ekranı zinciri) |
+> | **§14.10 (2026-08-10)** | 🟠 süperseded, **korunuyor** | **AL-K8…AL-K18 kalemleri hâlâ AÇIK** — kart/indeks borçları orada yaşıyor |
 > | **§▶️ GİRİŞ NOKTASI (2026-08-02)** | 🟡 canlı ama kısmi | **P-1…P-6 kalemleri hâlâ açık** (ENGEL 1/2/3 donanım-bloke); 🔴 ile işaretli |
 > | §14.9 (2026-08-01) | 🟠 süperseded, **korunuyor** | *Turdan BAĞIMSIZ kuyruk* 6 açık kalemi burada yaşıyor |
 > | §14.8 (2026-08-01) | 🟠 süperseded, **korunuyor** | 3 ⬜ kalem taşıyor |
@@ -3394,3 +3395,62 @@ Uzman ekranı gerçek bir incelemede açıldı (`548673e0`, Ferda Yarpuzlu) ve e
 görmeden karar vermeyin"*. Ölçüldü: `analysis_priority_zones` **0 kayıt**,
 `layer` tablosu **0 kayıt** — çünkü o analiz sonucu (`08b3cac3`) **gerçek worker
 koşmadan** üretilmişti. Kartlar o yüzden ekranın tek içeriğiydi; istek oradan doğdu.
+
+---
+
+## 14.14 🟢 UZMAN EKRANI ZİNCİRİ TURU (2026-08-19/20) — **CANLI GİRİŞ NOKTASI**
+
+> **Bu bölüm §14.10'un yerine geçer.** Yukarıdaki "TEK YETKİLİ GİRİŞ NOKTASI"
+> tablosunda §14.10 🟢 idi; bu turda ölçülen kalemler onu süperseded ediyor.
+> §14.10'un AL-K kalemleri **hâlâ açıktır**, oradan silinmedi.
+>
+> **Turun uygulananları** platform PR #441…#447'de (hepsi merge + dağıtıldı);
+> durum fotoğrafı `docs/SESSION_HANDOFF.md` §0.A. Aşağıdakiler **kalanlardır**.
+
+### 🔴 Turun ana bulgusu — ürün sahibinin istediği akışın nerede koptuğu
+
+Ürün sahibi (2026-08-20) akışı şöyle tarif etti: *worker tüm görüntüleri analiz eder,
+sorunlu alanları tespit eder, kaynakları hakkında öğrenir ve **tam karar veremediği**
+tekli görüntüleri uzmana tam teşhis için gönderir.*
+
+Ölçüm: **karar verme ayağı ÇALIŞIYOR, taşıma ayağı YOK.**
+
+```
+worker  : trigger_confidence 0.302 / 0.430  → INDICES_ONLY bandı (0.25-0.45)
+          → "tanı SAKLANIR" (confidence_calculator.py:394-454)
+          → findings = []  (bastırılan tespitler DIŞA HİÇ VERİLMİYOR)
+platform: expert_portal.py içinde findings/detections → 0 atıf
+web     : uzman ekranı yalnız katman haritası görüyor
+```
+
+Yani worker "karar veremedim" deyip uzmana yolluyor, ama **neye karar veremediğini
+göstermiyor**. Bastırma KR-019/KARAR-13 gereği doğrudur; kusur bastırılan bilginin
+**uzman kanalına** hiç açılmamasıdır. Uzman bugün görüntüsüz karar veriyor —
+üretimdeki ilk iki inceleme (`08b3cac3`) tam da böyle **REDDEDİLDİ**.
+
+**Bu, E11 (ham kare seçici) ile aynı iş DEĞİLDİR.** E11 uçuş kareleri hakkındadır ve
+DALGA 3'te, C8'e kilitlidir (D10-E4). Aşağıdaki DK-48/49 ise **bugün var olan** karo
+görüntülerini uzmana açar; yeni sözleşme gerektirmez (kanıt: DK-48).
+
+### Yeni kalemler
+
+| # | İş | Depo / dosya | Ne zaman |
+|---|---|---|---|
+| **DK-48** 🔴 | **Bastırılan tespitler uzman kanalına açılmalı.** Worker INDICES_ONLY/PARTIAL modunda tespitleri `findings`'ten düşürüyor; uzman "modelin kararsız kaldığı karo"yu hiç görmüyor. Sözleşme **hazır**: `analysis_result.v1.schema.json:438,443` → `Detection.rgb_uri` + `Detection.ms_uri` (+ `tile_id`, `confidence`, `confidence_components`, `sub_specialty`). KR-071 kısıtı **yalnız çiftçi yolunda** (`results_service_impl.py:145`, yorum kapsamı açıkça *"çiftçi yanıtı yalnız tarımsal gözlem taşır"*) → **uzman yolunda kısıt yok**. Yapılacak: (a) worker bastırılan tespitleri ayrı bir uzman-alanında dışa versin (b) platform uzman ucunda taşısın (c) web karo görüntüsünü göstersin. ⚠️ Aynı turda: çiftçi yolunun hâlâ sildiğini kanıtlayan **pozitif kontrol** testi | worker `reporting_agent.py` → contract → platform `expert_portal.py` → web | **uçuş sonrası ilk iş** |
+| **DK-49** 🟠 | **`trigger_confidence` uzmana gösterilmiyor** — yalnız ADMIN ekranında. Uzman "model %30 emindi ve **zararlı** sandı" bilgisini görmeden karar veriyor. Değer `expert_reviews.trigger_confidence` + `predicted_sub_specialty` olarak **zaten kayıtlı**; iş yalnız uzman ucuna + ekrana taşımak. ⚠️ KR-025 sınırı: bu bir *tanı* değil, *modelin belirsizliği* olarak sunulmalı — uzmanı yönlendirmemeli | platform `expert_portal.py` · web inceleme sayfası | DK-48 ile aynı tur |
+| **DK-50** 🔴 | **Sunucu CPU borcu — `numpy<2` pini KALICI DEĞİL, kod bunu çözemez.** Üretim VM'i "Common KVM processor": x86-64-v2 için gereken 4 bayraktan yalnız `cx16` var. numpy 2.5.1 **import anında** düşüyordu → rasterio + rio-tiler ölü → **döşeme üretimi tümden çalışmıyordu** (7770 log satırı). #446 ile `numpy>=1.26,<2` pinlendi ve üretimde doğrulandı. **Asıl çözüm koddaki değil sunucudaki:** VM işlemci modelini `host-passthrough` yap; sonra pin kaldırılabilir. Yapılmazsa numpy 2.x'e geçiş **imkânsızdır** | hosting / VM ayarı → sonra platform `pyproject.toml` | **uçuştan önce değil, ama borç olarak izlenir** |
+| **DK-51** 🟠 | **"Gerçek Görünüm" taban görüntüsü boş.** `rgb_ortho_uri` ile `calibrated_ortho_uri` **aynı dosyayı** gösteriyor ve o dosya **5 bantlı** kalibre ortofoto — 3 bantlı RGB değil. Tile servisi dürüst davranıp boş dönüyor (sahte renk üretmiyor, doğru davranış). Kusur **ingest tarafında**: ya ayrı bir RGB kompoziti üretilmeli ya da alan boş bırakılmalı (aynı dosyayı iki alana yazmak sessiz yalan) | platform ingest · edge manifest | demo sonrası |
+| **DK-52** 🟠 | **Yama (priority_zones) üretimi üretimde bağlı değil.** `analysis_priority_zones` sistem genelinde **0 satır**, `INGEST.PRIORITY_ZONES_PERSISTED` logu **0 kez** düştü, `ENABLE_NDVI_PRIORITIZATION` varsayılanı **False**. Ayrıca sorunlu alanı **DJI Terra belirlemiyor** — edge'in kendi `NdviPrioritizer`'ı belirliyor ve eşik tablosunun başlığı *"general literature averages… must be calibrated"* diyor. Yani bayrağı açmak yetmez; **eşikler ilk gerçek uçuşla kalibre edilmeli** (ölçüm #5 ile aynı tur) | edge `NdviPrioritizer` · platform ingest bayrağı | ilk uçuş verisiyle |
+| **DK-53** 🟡 | **Faydalı böcek kartı YOK.** Katalog 210 kart: disease 84 · pest 56 · abiotic 50 · weed 20 · **beneficial 0**. `BENEFICIAL` geçerli bir alt uzmanlık kodudur ve #447'de PEST'e **yoldaş** bağlandı (zararlı kararı doğal düşman elenmeden verilemez) — kart yazıldığı gün kendiliğinden görünür. Bu bir *ölü koruma bağlama* örneğidir, ölü kolona tüketici ekleme değil | worker kart katalogu (SSOT) → platform aynası | §14.13 ile aynı tur |
+| **DK-54** 🟡 | **Kanonik bağ mandalında 2 kalem kaldı.** `scripts/check_kanonik_bag_tuketicileri.py` listesi 5 → 2'ye indi. Mandal **iki yönlü**: düzeltilip listeden silinmeyen kalem de kırmızı verir, yani kalanlar sessizce unutulamaz | platform | demo sonrası |
+| **DK-55** 🟡 | **`lock-install-smoke` bütçesi kapağını aşıyor:** `check_ci_butce.py` ölçtü — kapak 20 dk, en kötü adım bütçesi **28,5 dk**. Ya kapak yükseltilmeli ya adım bölünmeli; bugünkü hâlde kapak **yanlış güven** veriyor | platform `.github/workflows/ci.yml` | demo sonrası |
+
+### Bu turda kapanan ve bir daha açılmaması için kapıya bağlanan
+
+`analysis_results.dataset_id` (#441) · kanonik bağ sınıfının tamamı + AST mandalı (#443) ·
+CI asılma kapakları (#442) · BOUND kapısı `src/` dışına (#444) · dağıtımda submodule
+fail-closed + simülasyon bağımsızlığı (#445) · numpy CPU uyumu (#446) · kartların alt
+uzmanlık + bitki duyarlı sunumu (#447).
+
+⚠️ **"Görev başına tek veri seti" varsayımı bu turda DÖRDÜNCÜ kez çıktı.** Artık AST
+mandalıyla korunuyor; yeni bir tahmin yolu yazılırsa CI kırmızı verir.
