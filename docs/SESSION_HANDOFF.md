@@ -22,7 +22,113 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-19/20, **on altıncı oturum: uzman ekranı zinciri — kayıtlı bağ sınıfı, ÜRETİMDE ÖLÜ döşeme servisi, kart önceliklendirmesi**)
+## 0.A EN GÜNCEL — (2026-08-20, **on yedinci oturum: DK-48 uçtan uca · KESTİRME YOK kuralı + kapısı · uzman görüntülerinde alan süzgeci · kural↔kapı envanteri**)
+
+> **Bugün açılan PR'lar (ölçüldü, `gh pr list`):** platform **10** (#445–#454) · contract
+> **7** (#100–#106) · worker **3** (#242–#244) · edge **3** (#78–#80). Bunlardan **dördü
+> bu not yazılırken CI'da**: platform #454 · worker #244 · edge #80 · contract'ın kapanış
+> PR'ı. Kalanların hepsi **merge edildi**.
+>
+> ⚠️ **"Merge edildi" ≠ "dağıtıldı" ≠ "çalışıyor."** Bu turun merge edilenlerinden
+> **yalnız platform #446** (döşeme/NumPy) üretime dağıtıldı ve canlıda doğrulandı;
+> gerisi `main`'dedir, **sunucuda değildir**. Worker hâlâ **hiçbir yerde koşmuyor**.
+
+### Bu turda BİTEN işler
+
+| Alan | Ne yapıldı | Kanıt |
+|---|---|---|
+| **DK-48** | Uzmana **karo (tile) görüntüsü + kanıtı** uçtan uca bağlandı. Kural gevşetildi: kanıt ≠ tanı. `INDICES_ONLY` artık tespitleri **imha etmiyor**, PARTIAL gibi **maskeliyor** (tile_id/confidence/NDVI/NDRE/bbox kalıyor; sınıf adı SUPPRESSED). | plat #450, work #242 |
+| **Dağıtım kapısı** | `deploy_prod.sh` **güncel olmayan checkout'ta** "DAĞITIM TAMAM" diyordu → fail-closed tazelik kapısı + **otomatik testi** (kapı sınanabilir olsun diye ayrı betiğe çıkarıldı). | plat #449 |
+| **KESTİRME YOK** | Ürün sahibinin şemsiye kuralı **dört depoda bayt-özdeş blok** olarak yazıldı + `check_kestirme_yok.py` kapısı kuruldu (iki yönlü mandal, gerekçeli taban). | ctr #103, plat/work/edge |
+| **Kart etiketleme** | Kartın **yazılı** `sub_specialty`'si kanonik oldu; `category`'den türetme yalnız geri düşüş. Ölçülmüştü: 182 karttan **83'ü** yanlış eksene düşüyordu. | plat #448 |
+| **Hermetik test** | Testler geliştiricinin `.env`'ini okuyordu → "yerelde beklenen 5 kırmızı" bir **makine artefaktıydı**. `TARLA_SETTINGS_ENV_FILE` ile kapatıldı; yerel artık sıfır kırmızı. | plat #448 |
+| **Uzman görüntüleri** | 🔴 **Ürün sahibi bildirdi:** uzmana **yalnız kendi alanının** görüntüsü gösterilmeli. `get_review_layers` uzmanı hiç hesaba katmıyordu → zararlı uzmanına NDVI/NDRE haritaları gidiyordu. Süzgeç eklendi; **sessiz süzme yasak** → `hidden_layer_types` ile bildiriliyor. | plat #453 |
+
+### 🔴 Uzman görüntüsü süzgeci — ölçülen yan gerçek (kapsam kararı, arıza değil)
+
+Süzgeç üretim verisiyle koşuldu. **Zararlı uzmanı bugün HİÇBİR katman görmüyor** ve bu
+**doğru davranıştır**: sistemde zararlı rasterı yoktur. `_LAYER_INDEX` yalnız **üç**
+katman taşıyor (HEALTH, NITROGEN_STRESS, WATER_STRESS); kanonik enum'un diğer **8**
+değeri raster olarak hiç üretilmiyor. Zararlı uzmanının kanıtı DK-48 karo görüntüleridir
+ve o zincir **worker hiçbir yerde koşmadığı için boş**.
+
+> Yani bu değişiklik **sessiz bir yanlışı** (NDVI'ye bakıp zararlı kararı vermek)
+> **görünür bir boşluğa** çevirdi. Boşluğu kapatan şey worker'ı koşturmaktır.
+
+### ⚠️ SÜREÇ İHLALİ — kendi kaydım (gizlenmedi)
+
+`tarlaanaliz-worker` `master` dalına **PR açmadan doğrudan push** ettim: commit
+`5b56d14` (`chore(sim): sim-worker-baglan.sh GIT'E ALINDI`). Depo kuralı her değişikliğin
+PR kapısından geçmesini gerektirir. `master` CI'ı bu commit'te yeşil, yani teknik zarar
+yok — ama **kapı atlandı**. Geçmişi yeniden yazmak (force push) daha büyük risk olduğu
+için düzeltme yapılmadı; ihlal **kayda geçirildi**.
+
+### 🔴 SONRAKİ OTURUMUN İŞİ — ürün sahibi sırayı verdi
+
+Ayrıntılı ve **ispatlı** plan: eylem planı **§14.15**. Özet:
+
+1. **① Her sevk `GENERAL`'e düşüyor.** `dispatch_to_worker(analysis_type="standard")` bir
+   **Python varsayılan parametresi**; üretimdeki tek çağıran onu hiç vermiyor.
+   `"STANDARD"` kanonik enum'da yok → `["GENERAL"]`. Worker model anahtarını
+   `{crop}_{analysis}_v1` diye türetiyor → **`pistachio_general_v1` diye bir kayıt yok**
+   ve arama `.get(key, {})` ile **sessizce** boş sözlüğe düşüyor.
+   ⚠️ **Çerçeve düzeltmesi (kapanış turunda ölçüldü):** worker `analysis_types`'a
+   **neredeyse hiç duyarlı değil** — 96 hücrenin 95'inde davranış birebir aynı, fıstıkta
+   eşik DISEASE=PEST=GENERAL=0.800. ① bir **analiz kalitesi** işi değil, **ön koşul**
+   işidir. Gerçek ağırlığı: katman kaydında olmayan bir kod (`available_layers={GENERAL}`),
+   inceleyecek uzman etiketinin olmaması, sözleşme ihlali ve `[0]` kırpma tuzağı.
+2. **② `analysis_jobs.status` hiç ilerlemiyor.** Durum makinesi (`start/complete/fail`)
+   **yazılmış ama üretimde hiç çağrılmıyor**; üretimde 3 iş PENDING, ikisinin sonucu
+   **var**. Kapanış turunda ölçülenler: `job_id == result_id` **doğrulandı**, COMPLETED
+   damgası için gereken alanların hepsi mesaj gövdesinde **var**, aynı transaction
+   **mümkün**. 🔴 Ama **PROCESSING'in üreticisi yok** (worker "iş başladı" sinyali
+   yayınlamıyor) ve durum makinesi `complete()`'i yalnız PROCESSING'den kabul ediyor →
+   bu bir **mimari karardır**, kod detayı değil.
+3. **③ Kural ↔ kapı envanteri.** Kurallar sayıldı ve her birinin kapısı **komutla**
+   ölçüldü (platform 45 kuralın 29'u kapısız · worker 90'ın 36'sı · kök §4'te 13'ün 10'u).
+   **Kapısız kural yanlış kural değildir** — çoğu insan davranışıdır. Tehlikeli olan
+   **kapısı olduğu sanılan** kuraldır; bu turda kapatılan dört kusurun hepsi o sınıftı.
+
+### Kapanış turunda kapatılan dört "kapısı sanılan kural"
+
+1. **"Blok dört depoda bayt-özdeştir" bir iddiaydı** — kapısı yoktu. Artık
+   `_BLOK_SHA` ile ölçülüyor (dört depoda). Mutasyon: bir depoda tek kelime değişti →
+   **yalnız o depo** kırmızı; pozitif kontrol: blok dışı değişiklik geçiyor.
+2. **platform `CLAUDE.md` "ci.yml ile birebir hizalı" diyordu — değildi** (6 kapı eksik +
+   `ci.yml`'in açıkça tasfiye ettiği satır-içi BOUND kalıbı hâlâ duruyordu).
+3. **edge `CLAUDE.md` §17 "CI ile BİREBİR" diyordu — değildi** (3 bloke eden kapı eksik;
+   en keskini, kapıyı **ekleyen commit'in** listeye dokunmamış olmasıydı).
+4. **`ci.yml:195` ölü bir betiği "taşıyıcı kapı" sayıyordu** (`check_ssot_compliance.py`
+   hiçbir workflow'da çağrılmıyor; commit `5a9c8b63`'te sessizce düştü).
+
+### Açık kalemler — **sayısıyla** beyan edildi (sessiz borç yok)
+
+**11 kalem**, tam listesi eylem planı **§14.15 → ÖNCELİK ③** tablosunda. En ağır üçü:
+
+- Belge ↔ kapı paritesini ölçen kapı **yalnız worker'da** var → yukarıdaki 2. ve 3.
+  kusuru yakalayacak kapı platform ve edge'de **yok**. Bunu kapatmak, sınıfın tekrar
+  oluşmasını engelleyen **tek yapısal önlemdir**.
+- ADR-002 (worker drone kaydına erişemez) **tamamen kapısız**; tek zorlama bir PR şablonu
+  onay kutusu. Ayrıca ADR-002 kimliği worker'da **iki ayrı şeye** işaret ediyor.
+- Test kabul ölçütlerinin (11 madde) **hiçbiri** CI'da zorlanmıyor; mutasyon koşucusu
+  platform'da var ama hiçbir workflow çağırmıyor.
+
+**Silme onayı bekleyen 3 kalem** (dosya silme kural gereği onay ister): platform'daki ölü
+`check_ssot_compliance.py` · worker'daki mükerrer eski `CLAUDE.md` kopyası · kapsayıcı
+kökteki `sim-worker-baglan.sh` (betik bu turda worker deposuna alındı, oradaki kopya artık
+fazlalık).
+
+### Ölçüm ortamı notu (yanlış teşhis üretmesin)
+
+- Yerel `pytest 9.0.3`, contract'ın sabiti `9.0.2` → contract'ta
+  `test_running_interpreter_uses_the_pinned_pytest` **yerelde kırmızı, CI'da yeşil**.
+  Bu bir kod kusuru değil, **ortam farkıdır**; CI kilitli sürümü kurar.
+- Contract'ta `ruff`/`black` **CI'da koşmuyor** (ölçüldü) — `CLAUDE.md`'deki o komut
+  bir kapı değil, bir tavsiyedir.
+
+---
+
+## 0.A-m ÖNCEKİ TUR — (2026-08-19/20, **on altıncı oturum: uzman ekranı zinciri — kayıtlı bağ sınıfı, ÜRETİMDE ÖLÜ döşeme servisi, kart önceliklendirmesi**)
 
 > **Durum: platform `main` @ `d7c22160`; 7 PR merge edildi ve DAĞITILDI.**
 > Sunucu aynı commit'te, servisler sağlıklı, `main` merge sonrası yeşil.

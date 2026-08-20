@@ -3596,3 +3596,260 @@ uzmanlık + bitki duyarlı sunumu (#447).
 
 ⚠️ **"Görev başına tek veri seti" varsayımı bu turda DÖRDÜNCÜ kez çıktı.** Artık AST
 mandalıyla korunuyor; yeni bir tahmin yolu yazılırsa CI kırmızı verir.
+
+---
+
+## 14.15 ▶️ SONRAKİ OTURUM — **İSPATLI PLAN** (2026-08-20 kapanışında yazıldı)
+
+> **Öncelik sırası ürün sahibi tarafından verildi:** önce ①, sonra ②.
+> Her satır ölçülmüştür; kanıtsız cümle yoktur. *"Ölçülmedi"* diye işaretlenenler
+> gerçekten ölçülmemiştir — tahmin edilmemiştir.
+
+---
+
+### 🔴 ÖNCELİK ① — Her sevk `GENERAL`'e düşüyor (ve **yanlış model** seçiliyor)
+
+**Kök neden tek cümle:** `analysis_type` bir ürün kararı değil, bir **Python
+varsayılan parametresidir** — üretimdeki tek çağıran onu hiç vermiyor.
+
+#### Ölçülmüş zincir
+
+| # | Ne oluyor | Kanıt |
+|---|---|---|
+| 1 | `dispatch_to_worker(analysis_type: str = "standard")` — varsayılan | `worker_dispatch_service.py:102` |
+| 2 | Tek üretim çağıranı bu parametreyi **hiç vermiyor** | `worker_dispatch_handler.py:198-204` |
+| 3 | `"STANDARD"` ∉ `{DISEASE,PEST,WEED,GENERAL}` → `["GENERAL"]` | `worker_job_publisher.py:121-132` |
+| 4 | Worker model anahtarını `{crop}_{analysis}_v1` diye **türetiyor** | `pipeline.py:3679-3685` |
+| 5 | → `pistachio_general_v1` — **kayıtta BÖYLE BİR GİRİŞ YOK** | ölçüldü: `model_registry.yaml` 9 kayıt, fıstık için yalnız `pistachio_disease_v1` |
+| 6 | Arama `.get(key, {})` ile **sessizce boş sözlüğe** düşüyor | `pipeline.py:3020-3021` |
+
+**Yani ① kozmetik bir etiket sorunu değildir: her fıstık işi var olmayan bir model
+anahtarı arıyor.** Üretimdeki üç işin de `analysis_type` değeri `standard`.
+
+#### ⚠️ ÇERÇEVE DÜZELTMESİ — "③'ü düzeltmek neyi değiştirir?"
+
+Kapanış turunda ölçüldü ve **ilk çerçevem eksikti**: worker `analysis_types`
+değerine **neredeyse hiç duyarlı değil**. Bunu bilmeden ①'e girmek, büyük bir iş
+yapıp hiçbir şeyin değişmediğini görmek olurdu.
+
+| Ölçüm | Sonuç |
+|---|---|
+| `analysis_types` okuma yeri | **6**, hepsi `[0]` → çok değerli istek **sessizce kırpılıyor** (`['DISEASE','PEST']` gelirse PEST kaybolur) |
+| Bunlardan kaçı bir kararı değiştiriyor | **2** (model anahtarı + dinamik eşik). Kalan 4: Prometheus etiketi, sonuca geri yazma, eskalasyon alanı, FAISS damgası |
+| Model anahtarı davranışı değiştiriyor mu | **HAYIR.** 12 mahsul × 4 tür × 2 mod = **96 hücre** ölçüldü; **95'inde** sonuç birebir aynı (`kind=deep_learning`, `router_density=None`) — kayıt ister isabet etsin ister etmesin. Tek istisna: `grape+disease+pilot` → `linear_classifier` |
+| Eşiği değiştiriyor mu | **Fıstıkta HAYIR.** DISEASE = PEST = GENERAL = **0.800** (her iki modda). Fark yalnız cotton-disease ve grape/olive/apple-weed'de (0.820) |
+| Üretilen harita kümesi | `_MAPS_BY_RESULT_MODE` `analysis_type`'a **hiç bakmıyor**; `ReportRequest`'te böyle bir alan **yok** |
+| `router.py` | Worker deposunda **böyle bir dosya yok**; registry'deki `threat_type` alanı `src/` içinde **hiç okunmuyor** |
+| Sınıf havuzunu daraltıyor mu | **HAYIR.** `_build_predictions` imzasında `analysis_type` yok; FAISS yalnız `encoder_version`'a bakıyor |
+
+**Dolayısıyla ①'in bugünkü gerçek ağırlığı:** analiz kalitesini **değiştirmez**.
+Değiştirdiği şeyler:
+
+1. `available_layers = {GENERAL}` → katman kaydında **olmayan** bir kod → uzman
+   ekranı ve çiftçi haritası bundan besleniyor.
+2. **Uzman yönlendirmesi**: `GENERAL`'i inceleyebilecek uzman etiketi **yok**.
+3. **Sözleşme ihlali**: platform bugün kanonik enum'un dışında.
+4. **Gizli tuzak**: düzeltildiğinde çok değerli istek `[0]` ile kırpılacağı için
+   `['DISEASE','PEST']` sevk etmek sessizce yalnız DISEASE koşturur — **bu, ①
+   düzeltilirken AYNI TURDA kapatılmalı**.
+
+> Yani ① *"analizi düzeltme"* işi değil, **ön koşul** işidir: mahsul/uzmanlık
+> eksenli bir analiz istenebilmesinin önünü açar. Ağırlığı buradan gelir —
+> ve bunu böyle yazmak, sonraki oturumun yanlış beklentiyle başlamasını önler.
+
+#### Ölçülmüş kopukluklar (hepsi ayrı kusur)
+
+- **Çiftçi analiz türü SEÇMİYOR.** Sipariş formunda katman seçimi **yok**; "Tek
+  Seferlik" seçeneği bugün kapalı (`fields/[id]/page.tsx:56` `SHOW_SINGLE_FLIGHT = false`).
+- **`missions.analysis_type` sevk zincirine HİÇ girmiyor** — yalnız ekranda gösteriliyor.
+  Sevk işleyicisi mission'ı **okumuyor** (dataset + field okuyor).
+- **Platform bugün sözleşmenin DIŞINDA:** kanonik `CreateMissionRequest`
+  `analysis_types` **dizisi** ister ve zorunludur; platform tekil serbest metin
+  kullanıyor. Üretimde yazılan değerlerin **hiçbiri** (`standard`, `FULL`,
+  `MULTISPECTRAL`, `SEASONAL`, `SINGLE`) kanonik enum'da **yok**.
+- **`POST /subscriptions` alanı sessizce düşürüyor:** şemada `analysis_type`
+  kabul ediliyor ama gövdede yok sayılıp `SEASONAL` yazılıyor (`subscriptions.py:301`).
+- **Küme farkı ölçüldü:** sevk edilebilir **4** · uzmana atanabilir **8** ·
+  kanonik enum **11**.
+  → `GENERAL` sevk ediliyor ama onu inceleyebilecek **tek bir uzman etiketi yok**.
+  → Uzmanların taşıdığı **5 kod** (FUNGUS, HEALTH, NITROGEN_STRESS, SALT_STRESS,
+  WATER_STRESS) **hiçbir zaman sevk edilemiyor**.
+
+#### Üç kaynak seçeneği (ölçüldü)
+
+| Seçenek | Kaynak | Gücü | Riski |
+|---|---|---|---|
+| **A** | **Satın alınan paket** — `PriceItem.analysis_types[]` → fiyat anlık görüntüsü → görev → iş | Sözleşme bunu **zaten tanımlıyor ve zorunlu tutuyor** (`pricing.v1.schema.json:95-101,153`; PISTACHIO örneği 4 katman). Fiyat anlık görüntüsü deseni platformda kurulu | Canlı `pricing_config.json`'da alan **hiç yok** → veri modeli + göç + admin ekranı işi |
+| **B** | **Üretilebilirlik** — model kaydı ∩ `crop_readiness` ∩ bant kapısı | Sevk edilen her tür için bir model anahtarı **olduğunu garanti eder**; bugünkü sessiz sapma kökten kapanır | `crop_readiness`'te **analiz türü ekseni YOK** (ölçüldü: yalnız stage1/2/3 + data_status) → üç-depo işi |
+| **C** | **Uzman havuzu** | "İnceleyecek kimse yok" kusurunu kapatır | Nedenselliği **ters çevirir**; tek başına yetmez (uzman var ama model yok) → **kaynak değil, son kapı** |
+
+**Teknik olarak tek tutarlı yapı:** kaynak **A**, kapı **B ∩ C** (fail-closed),
+ve **A \ (B∩C)** sessizce düşürülmez — işte *"teslim edilemedi"* gerekçesi olarak
+yazılır. Böylece *"ne sattık"* ile *"ne koşturabildik"* **ayrı iki cümle** kalır.
+
+#### ⬜ İNSANA ait kararlar (asistan veremez)
+
+1. **Fıstıkta hangi katmanlar satılıyor?** Sözleşme örneği 4 diyor, uzman havuzu 8
+   taşıyor, model kaydı **1** koşturabiliyor (`pistachio_disease_v1`). Bu üç sayı
+   birbirini tutmuyor.
+2. **Analiz türü bir ürün SEÇİMİ mi, yetenek ÇIKTISI mı?** Çiftçi seçecek mi
+   (seçip alamama riski), yoksa mahsul başına sabit demet mi?
+3. **Satılan ile üretilebilen çeliştiğinde hangisi kazanır?** Sipariş reddedilsin
+   mi, kabul edilip "teslim edilemedi" mi yazılsın?
+4. **`GENERAL` jokeri kalsın mı?** Bugün her iş onunla sevk ediliyor ve
+   inceleyecek uzman etiketi yok. Kalacaksa **kim inceleyecek**?
+5. **Uzmanı olmayan bir katman sevk edilebilir mi?** (KR-019 kapsamı.)
+6. **Kapsam bir config dosyasına bağlansın mı?** B'de yeni model kaydı eklenince
+   çiftçiye **satılmamış** bir katman aniden teslim edilir.
+7. **`analysis_type` tekil mi kalacak, `analysis_types[]` dizisine mi geçecek?**
+   Kanonik sözleşme zaten dizi; geçiş **kırıcı** → sürüm töreni + üç depo hizası.
+
+#### Sonraki oturumda İLK yapılacak (karar beklemeden)
+
+- [ ] `pistachio_general_v1` bulunamayınca hattın **sonunda** ne olduğunu ölç
+      (tek iş koşumu ya da birim test): boş `model_entry` hangi davranışa yol açıyor?
+      Sessizce varsayılan mı koşuyor, yoksa çıkarım kalitesi mi düşüyor?
+      **Bu ölçüm, ①'in gerçek ağırlığını belirler.**
+- [ ] `analysis_type` adının bugün taşıdığı **beş ayrı anlamı** tek listede say
+      (`standard` · `FULL` · `MULTISPECTRAL` · `SEASONAL` · `SINGLE`) ve her birine
+      ayrı ad öner — aynı ad beş şey demek olduğu sürece hiçbir düzeltme kalıcı olmaz.
+- [ ] Sözleşme ↔ platform sapmasını `open_items_decisions_2026-06.md`'ye
+      **COORDINATE** olarak kaydet (platform bugün sözleşmenin dışında).
+
+---
+
+### 🔴 ÖNCELİK ② — Kuyruk yalan söylüyor: `analysis_jobs.status` hiç ilerlemiyor
+
+**Kök neden tek cümle:** durum makinesi **yazılmış ama üretimde hiç çağrılmıyor**.
+
+#### Ölçülmüş kanıt
+
+- `AnalysisJob` domain entity'sinde `start()` → PROCESSING, `complete()` →
+  COMPLETED, `fail()` → FAILED **var** ve korumaları da var
+  (`analysis_job.py:106,110-113,120`).
+- **Üretimde tek çağıran yok** — ölçüldü: `.complete()` / `.start()` / `.fail()`
+  yalnız **testlerde** çağrılıyor (`tests/e2e/test_expert_journey.py`,
+  `tests/integration/test_mission_repository.py`,
+  `tests/unit/domain/entities/test_analysis_job.py`).
+- Repository **yalnız sevk anında** kullanılıyor (`worker_dispatch_handler.py:149,189`).
+- Sonucu yazan `worker_bridge_consumer` `analysis_jobs`'a **hiç dokunmuyor**
+  (yalnız bir yorum satırında adı geçiyor, `:875`).
+
+#### Üretimdeki somut hâli (ölçüldü 2026-08-20)
+
+```
+analysis_jobs: 3 PENDING
+  08b3cac3  queued 2026-08-18 09:26   ← SONUCU VAR, dataset ANALYZED
+  1dd6691f  queued 2026-08-19 11:24   ← SONUCU VAR, dataset ANALYZED
+  e684c8ea  queued 2026-08-18 07:36   ← GERÇEKTEN bekliyor (2 gündür)
+started_at / completed_at / duration_ms / output_manifest : HEPSİ BOŞ
+```
+
+**Sonuç:** "sıkışan işi kuyruktan teşhis etme" yolu **yapısal olarak çalışmıyor**.
+Gerçekten bekleyen tek işi (`e684c8ea`) tamamlanmış ikisinden ayırt etmenin
+kuyruğa bakarak yolu yok.
+
+#### Kapanış turunda EK ölçümler (② için)
+
+- **`job_id == result_id`** — doğrulandı, düz eşleme:
+  `result_id == analysis_job_id == UUID(body['job_id'])`. Tahmin yok.
+- **COMPLETED damgası için gereken her alan gövdede VAR:** `duration_ms` ←
+  `processing_time_ms`, `output_manifest` ← `result_uri`, `error_detail` ←
+  `error`/`error_message`. Üçü de sözleşmede tanımlı.
+- **Aynı transaction MÜMKÜN:** COMPLETED dalı tek `get_async_session()` içinde
+  açılıp tek `commit()` ile kapanıyor; `analysis_jobs` UPDATE'i satır 1636 ile
+  1686 arasına konursa **atomik** olur. FAILED dalı da kendi tx'inde (`:1821`).
+- 🔴 **PROCESSING'in ÜRETİCİSİ YOK:** worker platforma yalnız 3 tür mesaj
+  yayınlıyor (`analysis_results`, `expert_review_queue`, `rollback.completed`) —
+  *"iş başladı"* sinyali **yok**. Sevk anını PROCESSING saymak **yanlış olur**
+  (iş kuyrukta bekliyor olabilir). Durum makinesi `complete()`'i **yalnız
+  PROCESSING'den** kabul ettiği için bu bir **mimari karardır**, kod detayı değil.
+- 🔴 **ÇİFT YÖNLÜ ALAN KAYBI:** model 22 kolon beyan ediyor, **9'u hiçbir kod
+  yolunda yazılmıyor** (`completed_at`, `duration_ms`, `error_detail`,
+  `failed_at`, `idempotency_key`, `input_manifest`, `output_manifest`,
+  `retry_count`, `started_at`). Bunların **entity'de karşılığı da yok** — yani
+  kayıp repository'de değil, **entity'de başlıyor**: repo yazmak istese
+  taşıyacağı veri yok. Ters yönde 4 entity alanı kolonsuz (bu taraf repo
+  docstring'inde **açıkça beyan edilmiş**, sessiz değil).
+- Repository'nin **tek public metodu** `save()` (upsert); `get_by_id` **bilerek
+  yok**. Üretimde tek çağrıldığı yer sevk yolu → *"kaydet"* yalnız sevk anında
+  koşuyor, **bir daha asla**.
+
+#### Sonraki oturumda yapılacak
+
+- [ ] `worker_bridge_consumer`'da sonucu yazan **aynı transaction'da** işi
+      COMPLETED'a çek. ✅ `job_id == result_id` bu turda **doğrulandı** (düz eşleme,
+      yukarıda) ve aynı transaction'ın **mümkün** olduğu ölçüldü — varsayım kalmadı.
+- [ ] PROCESSING'e geçişi kim yapacak: worker geri çağrı yapamaz (KR-071), o
+      hâlde platform "sevk edildi" anında mı PROCESSING yazacak? Durum makinesi
+      `complete()`'i **yalnız PROCESSING'den** kabul ediyor — bu koruma
+      PENDING→COMPLETED geçişini **reddeder**. Ya geçiş eklenecek ya PROCESSING
+      yazılacak; **ikisi de ürün/mimari kararıdır**.
+- [ ] `status` alanını **okuyan** her yeri bul ve ilerletmenin neyi tetikleyeceğini
+      ölç (retry? alarm? rapor?). *(bu tur ölçülmedi)*
+- [ ] Idempotency: aynı sonuç iki kez gelirse ne olur? *(bu tur ölçülmedi)*
+- [x] `started_at`/`completed_at`/`duration_ms`/`output_manifest` alan kaybı —
+      **ÖLÇÜLDÜ**: 22 kolonun 9'u hiçbir kod yolunda yazılmıyor ve **entity'de de yok**
+      (yukarıya işlendi). Kayıp repository'de değil, **entity'de başlıyor**.
+
+---
+
+### 🟡 ÖNCELİK ③ — Kural ↔ kapı envanteri (bu oturumda ÖLÇÜLDÜ, kısmen kapatıldı)
+
+Ürün sahibi bu oturumun kapanış şartı olarak *"tüm repoların ve senin tüm oturumlarda
+%100 olarak CLAUDE.md kurallarına uyman"*ı istedi. **%100'ü iddia etmek kestirme olurdu**;
+onun yerine kuralları **saydım** ve her birinin kapısı olup olmadığını **komutla ölçtüm**.
+
+| Depo | Normatif kural | Kapılı | Kapısız |
+|---|---|---|---|
+| `tarlaanaliz-platform` | 45 | 10 tam + 2 kısmi + 3 kodu var/CI'da koşmuyor | **29** |
+| `tarlaanaliz-worker` | 90 | 52 + 1 kısmi | **36** |
+| kök çalışma alanı §4 | 13 | 1 tam + 2 kısmi | **10** |
+
+> **Kapısız kural yanlış kural değildir** — çoğu insan davranışıdır ("önce tam oku",
+> "kendi çıktını çürüt") ve otomatik ölçülemez. Tehlikeli olan, **kapısı olduğu sanılan**
+> kuraldır. Bu turda bulunan tam da o sınıftı.
+
+#### Bu turda KAPATILANLAR (kanıtı aşağıda)
+
+1. 🔴 **"Blok dört depoda bayt-özdeştir" bir İDDİA idi, kapısı YOKTU.** Bugün özdeş
+   (ölçüldü, dördünün SHA-256'sı aynı) ama bir depoda tek kelime değişse dört kapı da
+   yeşil kalırdı. → `check_kestirme_yok.py`'ye `_BLOK_SHA` eklendi (dört depoda).
+   Mutasyon: worker bloğunda tek kelime değişti → **yalnız worker kırmızı**, diğer üçü
+   yeşil (ayrıştırma). Pozitif kontrol: blok **dışındaki** değişiklik geçiyor.
+2. 🔴 **platform `CLAUDE.md` "ci.yml ile birebir hizalı" diyordu — DEĞİLDİ.** 6 kapı
+   listede yoktu ve liste, `ci.yml:294`'ün açıkça tasfiye ettiği satır-içi BOUND kalıbını
+   hâlâ taşıyordu (o kalıp yalnız `src/` tarar; koşan betik daha geniş). → Liste
+   `ci.yml`'den satır satır türetildi.
+3. 🔴 **edge `CLAUDE.md` §17 "CI ile BİREBİR" diyordu — DEĞİLDİ.** Üç bloke eden kapı
+   eksikti; en keskini, KESTİRME YOK kapısını **ekleyen commit'in** §17'ye dokunmamış
+   olmasıydı — kuralın kendi ihlali. → Üçü de listeye girdi.
+4. 🔴 **`ci.yml:195` ölü bir betiği "taşıyıcı kapı" diye sayıyordu.**
+   `check_ssot_compliance.py` hiçbir workflow'da çağrılmıyor (commit `5a9c8b63`'te
+   sessizce düştü). → Yorum dürüstleştirildi + neden olduğu gibi bağlanamayacağı
+   **üç ölçülmüş gerekçeyle** yazıldı.
+
+#### AÇIK KALEMLER (sayısıyla beyan — sessiz borç bırakılmadı)
+
+| # | Kalem | Neden bu turda kapanmadı |
+|---|---|---|
+| 1 | `check_ssot_compliance.py` ölü (platform) | Bağlanması **ürün kararı**: BOUND'un 3. kopyası, yığın limiti `CLAUDE.md` ile çelişiyor (40/50/80/100 ↔ 50). Silmek **onay** ister. |
+| 2 | Kapı betiğinin kendi testi **1/4 depoda** | Yalnız platform'da `test_kestirme_yok_kapisi.py` var (bu turda 2 test eklendi). contract/worker/edge'de yok. |
+| 3 | "Belge ↔ kapı paritesi" kapısı **1/4 depoda** | `check_doc_facts.py` yalnız worker'da. Bu turdaki 2 ve 3 numaralı kusuru yakalayacak kapı platform ve edge'de **yok**. |
+| 4 | platform `crop_readiness` worker-paritesi CI'da **skip** | Kardeş depo checkout edilmiyor (3 skip). Worker'ın `contracts_gate.yml`'i bunu yapabildiğini kanıtlıyor. |
+| 5 | worker kart kataloğu ratchet'i CI'da **skip** (8 test) | Aynı sebep; `check_card_catalog_drift.py` hiçbir workflow'da çağrılmıyor. |
+| 6 | ADR-002 (worker `drone_registry.yaml`'a erişemez) **tamamen kapısız** | Tek zorlama bir PR şablonu onay kutusu. Ayrıca ADR-002 kimliği bu depoda **iki ayrı şeye** işaret ediyor → kimlik-grep'i yanlış güven veriyor. |
+| 7 | KR-025+ "kart YAML'ında ilaç adı/marka yasak" **kartları görmüyor** | `validate_expert_labeling_card` yalnız şema doğruluyor; gövde tarayıcı yalnız `ipm_corpus`'ta koşuyor. Ham tarayıcı doğrudan kapı yapılamaz: 13 karta uygulandı → 3 isabet, **üçü de meşru** (direnç ekolojisi + kaynak atfı) → **taban listesi (ratchet) gerekir**. |
+| 8 | Test kabul ölçütlerinin (11 madde) **hiçbiri** CI'da zorlanmıyor | Mutasyon koşucusu platform'da **var** ama hiçbir workflow çağırmıyor; worker'da hiç yok. |
+| 9 | Oturum kancası **iki gövde** | Kök `settings.json` git'teki kanonik dosyayı, dört depo `settings.json` **makine-yerel** kopyayı gösteriyor. İçerik bugün özdeş (fark yalnız satır sonu), ama sapmayı engelleyen kapı yok. Kural "depo içinden başlat" dediği için **pratikte koşan makine-yerel kopyadır** → `KURULUM.md`'nin "git pull kancayı da günceller" vaadi o yolda geçersiz. |
+| 10 | worker'da `CLAUDE.md`'nin ikinci, mükerrer kopyası | 2026-03 tarihli, kendini "ESKİ KOPYA — OTORİTER DEĞİL" diye işaretliyor (dürüst) ama `check_claude_md_refs.py` yalnız kök `CLAUDE.md`'ye bakıyor → içindeki bayat yollar kapsam dışı. Silme **onay** ister. |
+| 11 | `sim-worker-baglan.sh` kapsayıcı kökte **mükerrer** | Betik bu oturumda worker deposuna alındı; kapsayıcıdaki kopya artık fazlalık. Silme **onay** ister. |
+
+#### ⬜ Bir sonraki turda ilk yapılacak (kural tarafında)
+
+- [ ] Kalem 3'ü kapat: worker'daki belge↔kapı parite kapısını platform ve edge'e taşı.
+      **Bu, 2 ve 3 numaralı kusurun bir daha oluşmasını engelleyen tek yapısal önlemdir.**
+- [ ] Kalem 2'yi kapat: kapı betiğinin testini contract/worker/edge'e taşı (üç kopya
+      yerine tek kanonik test + üç ince sarmalayıcı düşünülebilir).
+- [ ] Kalem 1, 10, 11 için **ürün sahibinden silme onayı** iste.
+
