@@ -11,6 +11,30 @@ Dizin ağacı, bağımlılık listesi ve kod stili **bu dosyada tekrarlanmaz** �
 `package.json` ve ağacın kendisi kanoniktir. Aşağıda yalnız koddan türetilemeyen kurallar,
 tuzaklar ve kapılar var.
 
+<!-- KESTIRME-YOK-BLOGU-BASLANGIC · bayt-özdeş: dört depoda AYNI · kapı: check_kestirme_yok.py -->
+## 🔴 KESTİRME YOK — ispatlı ve kalite odaklı çalış
+
+*(ürün sahibi, 2026-08-20 — bu dosyadaki diğer bütün kuralların şemsiyesi)*
+
+Bir işi **"çalışıyor gibi görünen"** en kısa yoldan yapmak yasaktır.
+
+1. **Kolay olanı seçme.** Doğru çözüm zor diye kolayı seçme — kolay olan *yamadır*, yama yasak.
+2. **Ölçmeden söyleme.** *"Kod yolu böyle"* ile *"canlıda böyle oluyor"* ayrı cümlelerdir.
+   **"Merge edildi" ≠ "dağıtıldı" ≠ "çalışıyor"** — üçünü ayrı ayrı ölç ve ayrı yaz.
+3. **Kapsamı sessizce daraltma.** Bir sınıfın tek örneğini düzeltip "gördüm" deme:
+   sınıfı **say**, hepsini kapat ya da **kalanı sayısıyla beyan et**.
+4. **Sessiz borç bırakma.** Engele takılınca `TODO` / `şimdilik` / `geçici` bırakıp geçme;
+   ya bitir ya da kaleme yazıp **sayısıyla** bildir. Sessiz borç en pahalı borçtur.
+5. **Susturma gerekçe ister.** `except: pass`, gerekçesiz `skip`, gerekçesiz `type: ignore`
+   veya `@ts-ignore` birer kestirmedir — her biri **neden** yorumu taşımalı.
+6. **Kendi çıktını çürütmeye çalış.** Tur sonunda kendi iddialarını yeniden ölç.
+   Ölçüldü 2026-08-20: aynı gün yazılan açık kalem listesini çürütme turu
+   **2 bayat kalem + 3 yanlış atıf + 3 yeni gerçek kusur** çıkardı.
+
+Kanonik gövde ve gerekçeler: `tarlaanaliz-contract/docs/workspace/calisma-alani-kurallari.md` §4.
+Bu blok **dört depoda bayt-özdeştir**; kapı: `check_kestirme_yok.py` (iki yönlü mandal).
+<!-- KESTIRME-YOK-BLOGU-BITIS -->
+
 ## Kritik kurallar
 
 ### 1. JSON Schema Draft 2020-12 — zorunlu
