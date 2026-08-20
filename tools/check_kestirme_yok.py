@@ -93,8 +93,13 @@ def _izli_dosyalar() -> list[Path]:
     ]
 
 
-def _bul() -> dict[str, str]:
-    """`{"yol:satir": satir_metni}` - kimliksiz isaretler."""
+def _bul() -> tuple[dict[str, str], list[tuple[str, str]]]:
+    """`({"yol:satir": satir}, [(okunamayan_yol, hata_turu)])`.
+
+    Ikinci deger BILEREK donuyor: okunamayan dosya sayisi raporlanmazsa
+    kapinin KAPSAMI sessizce daralir ve "temiz" raporu yaniltir.
+    """
+    okunamayan: list[tuple[str, str]] = []
     bulunan: dict[str, str] = {}
     for dosya in _izli_dosyalar():
         if dosya.name == Path(__file__).name:
@@ -102,7 +107,14 @@ def _bul() -> dict[str, str]:
             continue
         try:
             satirlar = dosya.read_text(encoding="utf-8").splitlines()
-        except (UnicodeDecodeError, OSError):
+        except (UnicodeDecodeError, OSError) as hata:
+            # [!] OZ-DENETIM BULGUSU (2026-08-20): burasi ONCE sessizce
+            # `continue` diyordu. "Susturma gerekce ister" kuralini uygulayan
+            # bir kapinin KENDISI, okunamayan dosyadaki borcu sessizce eksik
+            # sayiyordu. Artik atlanan dosya SAYILIR ve ciktida bildirilir:
+            # olcumun kapsami gorunur olmali, yoksa "temiz" raporu kapsam
+            # daralmasini gizler.
+            okunamayan.append((dosya.relative_to(KOK).as_posix(), type(hata).__name__))
             continue
         for no, satir in enumerate(satirlar, 1):
             if not _ISARET.search(satir) or not _YORUM.search(satir):
@@ -111,7 +123,7 @@ def _bul() -> dict[str, str]:
                 continue  # izleme kimligi var -> mesru erteleme
             anahtar = f"{dosya.relative_to(KOK).as_posix()}:{no}"
             bulunan[anahtar] = satir.strip()[:120]
-    return bulunan
+    return bulunan, okunamayan
 
 
 def _kural_blogu_kontrol() -> list[str]:
@@ -142,15 +154,22 @@ def _kural_blogu_kontrol() -> list[str]:
 
 def main(argv: list[str] | None = None) -> int:
     argv = argv if argv is not None else sys.argv[1:]
-    bulunan = _bul()
+    bulunan, okunamayan = _bul()
 
     if "--liste" in argv:
         for anahtar, satir in sorted(bulunan.items()):
             print(f"  {anahtar}  {satir}")
         print(f"\ntoplam kimliksiz isaret: {len(bulunan)}  -  taban: {len(_TABAN)}")
+        if okunamayan:
+            print(f"  UYARI: {len(okunamayan)} dosya okunamadi (kapsam eksik)")
         return 0
 
     hatalar: list[str] = _kural_blogu_kontrol()
+
+    if okunamayan:
+        hatalar.append(f"{len(okunamayan)} dosya OKUNAMADI - olcum kapsami eksik:")
+        hatalar += [f"    {yol}  ({tur})" for yol, tur in okunamayan]
+        hatalar.append("    Cozum: dosyayi UTF-8'e cevir ya da taranan uzantilardan cikar.")
 
     yeni = sorted(set(bulunan) - set(_TABAN))
     if yeni:
