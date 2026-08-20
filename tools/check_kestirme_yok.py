@@ -39,13 +39,15 @@ Kural metni dort `CLAUDE.md`'de **bayt-ozdes** durur ve bu betigi **adiyla
 vaat eder**. Olculdu: `check_claude_md_refs.py` bu vaadi **yakalamiyor** (ciplak
 ad, icinde `/` yok -> yol sayilmiyor, sessizce atlaniyor). Yani var olmayan bir
 kapiyi vaat eden metin o kapidan yesil geciyordu. Bu betik o kor noktayi kapatir:
-blogun varligini ve **bu dosyanin gercekten var oldugunu** dogrular.
+blogun varligini, **icerigini** (SHA-256, bkz. `_BLOK_SHA`) ve **bu dosyanin
+gercekten var oldugunu** dogrular.
 
 Kullanim:  python scripts/check_kestirme_yok.py [--liste]
 """
 
 from __future__ import annotations
 
+import hashlib
 import re
 import subprocess
 import sys
@@ -76,6 +78,11 @@ _TABAN: dict[str, str] = {
 
 _BLOK_BAS = "<!-- KESTIRME-YOK-BLOGU-BASLANGIC"
 _BLOK_SON = "KESTIRME-YOK-BLOGU-BITIS -->"
+# Blok dort depoda BAYT-OZDES durmali. Bu, 2026-08-20'ye kadar bir IDDIA idi --
+# hicbir kapi olcmuyordu, yani dort metin sessizce sapabilirdi. Artik OLCUM:
+# asagidaki SHA-256 blogun icerigidir. Blok mesru bir sekilde degisirse bu sabit
+# DORT DEPODA AYNI TURDA guncellenir; guncellenmezse dort kapi da kirmizi yanar.
+_BLOK_SHA = "534f335f1202aeb4bd99e55a5d8b0cae3c9b4258f5452286d8f53270c03c252a"
 
 
 def _izli_dosyalar() -> list[Path]:
@@ -138,10 +145,22 @@ def _kural_blogu_kontrol() -> list[str]:
             "CLAUDE.md'de KESTIRME-YOK blogu YOK - kural dort depoda bayt-ozdes durmali"
         )
         return hatalar
+    blok = metin[metin.index(_BLOK_BAS) : metin.index(_BLOK_SON) + len(_BLOK_SON)]
+    # Satir sonu normalizasyonu BILEREK YOK: `read_text()` evrensel satir sonu
+    # kipinde okur. Olculdu 2026-08-20 -- contract'in CLAUDE.md'si diskte CRLF
+    # oldugu halde okunan metinde CR kalmiyor. (Ham bayt karsilastirmasi ayni
+    # dosyalarda yanlis alarm uretiyor; bu kapi uretmez.)
+    olculen = hashlib.sha256(blok.encode("utf-8")).hexdigest()
+    if olculen != _BLOK_SHA:
+        hatalar.append(
+            "KESTIRME-YOK blogu SAPTI - dort depoda bayt-ozdes olmali. "
+            f"beklenen={_BLOK_SHA[:16]} olculen={olculen[:16]}. "
+            "Mesru bir degisiklikse `_BLOK_SHA` DORT DEPODA ayni turda guncellenir."
+        )
+
     # [!] Kor noktanin kendisi: blok bu betigi ADIYLA vaat ediyor.
     # `check_claude_md_refs.py` ciplak adlari (icinde '/' olmayan) atliyor,
     # yani var olmayan bir kapiyi vaat eden metin oradan YESIL geciyordu.
-    blok = metin[metin.index(_BLOK_BAS) : metin.index(_BLOK_SON)]
     vaat = re.findall(r"`(check_[a-z0-9_]+\.py)`", blok)
     for ad in vaat:
         if not any((KOK / d / ad).is_file() for d in ("scripts", "tools")):
