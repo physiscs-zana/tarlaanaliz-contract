@@ -73,6 +73,23 @@ git -C tarlaanaliz-contract describe --tags HEAD         # I-2: temiz vX.Y.Z dö
 Her kuralın gerekçesi ve ölçülmüş örnekleri parantezdeki hafıza dosyasında
 (`~/.claude/memory/tarlaanaliz/`) — kural kırıldığında oraya bak, buraya değil.
 
+- 🔴 **KESTİRME YOK — ispatlı ve kalite odaklı çalış.** *(ürün sahibi, 2026-08-20;
+  aşağıdaki kuralların hepsinin şemsiyesi)* Bir işi "çalışıyor gibi görünen" en kısa
+  yoldan yapmak yasaktır. Somut hâli:
+  **①** Doğru çözüm zor diye kolay olanı seçme — kolay olan *yama*dır, yama yasak.
+  **②** Bir şeyin çalıştığını **ölçmeden** söyleme; "kod yolu böyle" ile "canlıda böyle
+  oluyor" ayrı cümlelerdir. "Merge edildi" ≠ "dağıtıldı" ≠ "çalışıyor".
+  **③** Kapsamı sessizce daraltma. Bir sınıfın bir örneğini düzeltip "gördüm" deme —
+  sınıfı **say**, hepsini kapat ya da kalanı **sayısıyla beyan et**.
+  **④** Engele takılınca `TODO`/`şimdilik`/`geçici` bırakıp geçme; ya bitir ya da
+  kalemi **kayda geçirip sayısıyla** bildir. Sessiz borç en pahalı borçtur.
+  **⑤** Hata yutma (`except: pass`), gerekçesiz `skip`, gerekçesiz `type: ignore` /
+  `@ts-ignore` birer kestirmedir — hepsi **gerekçe yorumu** ister.
+  **⑥** Kendi çıktını **çürütmeye çalış**: bir tur sonunda kendi iddialarını yeniden ölç.
+  Ölçüldü 2026-08-20: aynı gün yazdığım açık kalem listesini çürütme turu
+  **2 bayat kalem + 3 yanlış atıf + 3 yeni gerçek kusur** çıkardı.
+  Kapı: `scripts/check_kestirme_yok.py` (dört depoda, iki yönlü mandal).
+  (`kestirme-yok-ispatli-calis`)
 - **Sade dil + parantezli terim.** Yukarıdaki kutu. (`plain-language-with-technical-terms`)
 - **Önce tam oku, sonra işlem.** İlgili dosyaların TAMAMI okunmadan değişiklik yok.
   `grep` **dosya bulmak** içindir, **karar vermek** için değil. (`once-tam-oku-sonra-islem`)

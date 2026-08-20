@@ -493,6 +493,19 @@ jobs:
           # runs positive + negative controls).
           python3 tools/check_claude_md_refs.py
 
+          # KESTIRME YOK kapisi (sessiz borc mandali) — urun sahibi kurali,
+          # 2026-08-20. Kural metni dort CLAUDE.md'de BAYT-OZDES durur; bu satir
+          # onun OLCULEBILIR kismini zorlar.
+          #
+          # Kapi kelimeyi YASAKLAMAZ: olculdu (dort depo) ki kelime yasagi %70
+          # yanlis pozitif uretir (telefon maskesi, DJI dosya adi, odeme ref).
+          # Ayirt edici olan, isaretin yaninda IZLEME KIMLIGI olup olmadigidir.
+          # IKI YONLU MANDAL: kimliksiz yeni isaret KIRMIZI; tabandan dusen de.
+          #
+          # Ayrica kural blogunun ADIYLA vaat ettigi kapinin GERCEKTEN var
+          # oldugunu dogrular — `check_claude_md_refs.py` ciplak adlari atliyor.
+          python3 tools/check_kestirme_yok.py
+
   summary:
     name: Validation Summary
     runs-on: ubuntu-latest
