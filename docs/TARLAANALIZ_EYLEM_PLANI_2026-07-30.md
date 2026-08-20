@@ -2418,7 +2418,7 @@ Anahtar ilke: **"Yeşil ama yalan bir kapı, kırmızı bir kapıdan tehlikelidi
 >
 > | Bölüm | Statü | Neden korunuyor |
 > |---|---|---|
-> | **§14.14 (2026-08-19/20)** | 🟢 **CANLI GİRİŞ NOKTASI** | En yeni tur; DK-48…DK-55 (uzman ekranı zinciri) |
+> | **§14.14 (2026-08-19/20)** | 🟢 **CANLI GİRİŞ NOKTASI** | En yeni tur; **DK-48…DK-58** (uzman ekranı zinciri) + aynı gün yapılan öz-denetim (2 kalem ⛔ çürütüldü, 3 yeni kusur) |
 > | **§14.10 (2026-08-10)** | 🟠 süperseded, **korunuyor** | **AL-K8…AL-K18 kalemleri hâlâ AÇIK** — kart/indeks borçları orada yaşıyor |
 > | **§▶️ GİRİŞ NOKTASI (2026-08-02)** | 🟡 canlı ama kısmi | **P-1…P-6 kalemleri hâlâ açık** (ENGEL 1/2/3 donanım-bloke); 🔴 ile işaretli |
 > | §14.9 (2026-08-01) | 🟠 süperseded, **korunuyor** | *Turdan BAĞIMSIZ kuyruk* 6 açık kalemi burada yaşıyor |
@@ -3444,6 +3444,63 @@ görüntülerini uzmana açar; yeni sözleşme gerektirmez (kanıt: DK-48).
 | **DK-53** 🟡 | **Faydalı böcek kartı YOK.** Katalog 210 kart: disease 84 · pest 56 · abiotic 50 · weed 20 · **beneficial 0**. `BENEFICIAL` geçerli bir alt uzmanlık kodudur ve #447'de PEST'e **yoldaş** bağlandı (zararlı kararı doğal düşman elenmeden verilemez) — kart yazıldığı gün kendiliğinden görünür. Bu bir *ölü koruma bağlama* örneğidir, ölü kolona tüketici ekleme değil | worker kart katalogu (SSOT) → platform aynası | §14.13 ile aynı tur |
 | **DK-54** 🟡 | **Kanonik bağ mandalında 2 kalem kaldı.** `scripts/check_kanonik_bag_tuketicileri.py` listesi 5 → 2'ye indi. Mandal **iki yönlü**: düzeltilip listeden silinmeyen kalem de kırmızı verir, yani kalanlar sessizce unutulamaz | platform | demo sonrası |
 | **DK-55** 🟡 | **`lock-install-smoke` bütçesi kapağını aşıyor:** `check_ci_butce.py` ölçtü — kapak 20 dk, en kötü adım bütçesi **28,5 dk**. Ya kapak yükseltilmeli ya adım bölünmeli; bugünkü hâlde kapak **yanlış güven** veriyor | platform `.github/workflows/ci.yml` | demo sonrası |
+
+### ⛔ §14.14 ÖZ-DENETİMİ (2026-08-20, aynı gün) — 2 kalem çürütüldü, 3 atıf yanlıştı
+
+> §14.14 yazıldıktan hemen sonra sekiz iddianın her biri **çürütülmeye çalışıldı**
+> (bağımsız ölçüm turu). Sonuç: 6 ayakta, **2 çürütüldü**, 3'ünde atıf yanlıştı.
+> Kalemler aşağıda düzeltiliyor — silinmiyor, çünkü neyin yanlış iddia edildiği
+> de kayıttır.
+
+| # | Yeni statü | Ölçülen doğru |
+|---|---|---|
+| **DK-55** | ⛔ **ÇÜRÜTÜLDÜ — bayat kalem** | `check_ci_butce.py` bugünkü HEAD'de `lock-install-smoke` için **kapak 20 dk / en kötü bütçe 15,0 dk** ölçüyor ve **temiz** raporluyor (çıkış kodu 0). "28,5 dk" sayısı depoda **dize olarak bile geçmiyor**. Aşım gerçekten vardı ama değeri **34,5 dk** idi, `5c0bda76`'da kaldı ve **`b84a7877` ile kapandı**. Kalem AÇILMADAN ÖNCE kapanmıştı; ben kapanmış bir ölçümü açık diye yazdım. |
+| **DK-53** | ⛔ **ÇERÇEVE YANLIŞ** | `BENEFICIAL` bir **kart kategorisi DEĞİLDİR**. Kanonik kart şemasının `category` enum'u yalnız 4 değer taşır (`disease/pest/weed/abiotic`) ve `unevaluatedProperties:false` olduğu için `category: beneficial` yazan kart **reddedilir**. `BENEFICIAL`, **zengin `sub_specialty` ekseninin** bir değeridir (şema: *"faydalı böcek / doğal düşman zengin yuvası — Gap #1"*). Doğru ifade: **`sub_specialty: BENEFICIAL` taşıyan kart yok**. Sözleşme değişikliği **GEREKMİYOR** — alan zaten var. |
+| **DK-52** | ✅ ayakta, **atıf yanlıştı** | Platform tarafında yazıcı **VAR ve BAĞLI**: `ingest.py:161` → `ingest_service_impl.py:472-506` (INSERT) → `worker_dispatch_service.py:294-309` (okuyucu). Tablo boş çünkü **ÜRETİCİ göndermiyor** (`edge/intake.py:673` `priority_zones=` vermiyor). Düzeltme **platformda değil EDGE'de**. |
+| **DK-48b** | ✅ ayakta, **kapsam daraldı** | Sıfırdan görsel üretici yazmak **gerekmiyor**: yazılmış ama **bağlanmamış** bir üretici zaten var — `expert_bundle_producer.build_expert_visual_bundle` + `expert_bundle_persistence.persist_bundle_to_disk`, `<output_dir>/<job_id>/` altına **6 PNG** (true_color, false_color, ndvi/ndre/ndwi/gndvi ısı haritası) + `manifest.json` yazıyor. İş **yazmak değil BAĞLAMAK**. |
+| **DK-48a** | ✅ ayakta, **mekanizma daha iyi** | Tespitler üretilir, sonra `self.detections = []` (`analysis_result.py:200`) listeyi **boşaltmaz, yeniden bağlar** — `PipelineResponse.detections` maskelemeden sonra da tespitleri **TUTUYOR** (ölçüldü: `len=1`, `class_id='karazenk'`). Nesne bellekte var → worker tarafında dışa vermek küçük iş. Ayrıca sınıf etiketi **zaten kalıcıya yazılıyor**: `pipeline.py:3470` + `4056-4081`, `model_pred` alanı `result_mode`'dan **bağımsız** SQLite'a gidiyor. |
+| **DK-51** | ✅ ayakta, **atıf yanlıştı** | Düzeltme **EDGE'de** (+ sözleşmede); platform Red/Green/NIR/RedEdge'ten mavi **üretemez**, reddetmesi kasıtlı fail-honest davranıştır. Ayrıca "boş dönüyor" tam olarak şudur: `has_basemap=False` → arayüz "Gerçek Görünüm" düğmesini **hiç çizmez**; karo adresi doğrudan çağrılırsa **HTTP 404** (`tiles.py:257`). Gri kare davranışı **DK-39'dan önceki** hataydı, kapatılmış. |
+
+#### 🔴 Bu öz-denetimin bulduğu YENİ kusur (§14.14'te hiç yoktu)
+
+**DK-56 · Kartın ZENGİN alt uzmanlığı EZİLİYORDU — 182 karttan 83'ü (%46) yanlış.**
+PR #447'de eklenen yükleme satırı kartın **kendi** `sub_specialty` değerini koşulsuz
+eziyordu (kaba `category`den türetip üzerine yazıyordu):
+
+```
+FUNGUS → DISEASE 56 · HEALTH → GENERAL 12 · WATER_STRESS → GENERAL 9
+NITROGEN_STRESS 3 · THERMAL_STRESS 2 · SALT_STRESS 1
+```
+
+Somut sonuç: **mantar uzmanı 56 mantar kartının hiçbirini "alanımda" göremiyordu.**
+Özellik yalnız DISEASE/PEST/WEED'de çalışıyor, **6 alt uzmanlıkta sessizce
+başarısız** oluyordu. ✅ **PR #448 ile kapandı** (yazılı değer kanonik, türetme geri
+düşüş; kanonik küme dışı token loglanır). Bu, DK-53'ün ikinci tıkacıydı da:
+faydalı böcek kartı yazılsa bile eski kod onu `PEST`'e ezerdi.
+
+**DK-57 · Birim testleri geliştiricinin `.env`'ini okuyordu — yerel ≠ CI.**
+`Settings.model_config` `env_file=".env"` diyordu; CI'da `.env` yok, geliştirici
+makinesinde var. Ölçüldü: bu makinede **5 test kırmızı**, CI'da `main` **yeşil**
+(aynı SHA), `git clone --no-local` taze klonda **65/65 geçti**. Yani oturum boyunca
+taşınan "beklenen 5 kırmızı" tabanı bir kod gerçeği değil **makine artefaktıydı** ve
+yerel ölçümü *"benim değişikliğim mi bozdu"* sorusuna karşı **kör** bırakıyordu.
+✅ **PR #448 ile kapandı** (test oturumu `.env` okumaz; üretim yolu değişmedi).
+Yerel tam paket artık **sıfır kırmızı**.
+
+**DK-58 · Yönlendirme ipucu, MODELİN TANISI gibi sunuluyordu.**
+`predicted_sub_specialty` üreticisi okundu (`worker.py:1455-1458`): INDICES_ONLY'de
+tespit maskelendiği için `first_detection` **daima None**, dolayısıyla değer
+`classify_from_evidence(crop, ndvi, ndre, month, stage, bbch, active_targets)`
+**sezgisel** sınıflandırıcısından gelir (üreticinin kendi yorumu: *"tek tüketici
+uzman yönlendirmesi"*). Yani alan **modelin tanısı değil, yönlendirme ipucudur**.
+✅ İfade **PR #448**'de düzeltildi. ⬜ **Açık ürün sorusu:** uzmanın hangi alana
+yönlendirileceğine bugün *kalibre edilmemiş bir NDVI/fenoloji sezgisi* karar
+veriyor — DK-52'deki eşik kalibrasyonuyla aynı kökten. İlk gerçek uçuş verisiyle
+birlikte değerlendirilmeli.
+
+> **Bu turun dersi:** kendi yazdığım devir notunu **aynı gün** çürütmeye çalışmak
+> 2 bayat/yanlış kalem + 3 yanlış atıf + **3 yeni gerçek kusur** çıkardı. Beyan
+> edilen açık kalem listesi, ölçülmeden **kanıt sayılmaz**.
 
 ### Bu turda kapanan ve bir daha açılmaması için kapıya bağlanan
 
