@@ -3502,6 +3502,91 @@ birlikte değerlendirilmeli.
 > 2 bayat/yanlış kalem + 3 yanlış atıf + **3 yeni gerçek kusur** çıkardı. Beyan
 > edilen açık kalem listesi, ölçülmeden **kanıt sayılmaz**.
 
+### ✅ DK-48 KAPANDI — uzmana karo kanıtı + görüntüsü (2026-08-20, aynı gün)
+
+> §14.14'te *"açık ürün kararı (insana ait)"* diye bırakılan kalem **ürün sahibi
+> tarafından karara bağlandı** ("kapıyı gevşet, uçtan uca uygula") ve aynı gün
+> dört depoda uygulandı. Aşağısı ne yapıldığının kaydıdır.
+
+#### Kural değişikliği
+
+KR-019 **tanının** saklanmasını ister — uzmanın bakacağı **kanıtın** değil. Karo
+konumu ve görüntüsü tanı değildir, tanının **ön koşuludur**. `INDICES_ONLY` artık
+`PARTIAL_REPORT` ile **aynı** maskelemeyi uygular:
+
+| Gizli kalır (tanı) | Korunur (kanıt) |
+|---|---|
+| `class_id` · `class_name` · `class_name_tr` · `sub_specialty` · `detection_type` | `tile_id` · `confidence` · `ndvi/ndre` · `bbox` · `rgb_uri` · `ms_uri` |
+
+`result_mode` ve `reason_codes` **değişmedi** → aşağı akıştaki her karar noktası
+aynen korundu. Çiftçi yolu etkilenmez (platform tespitleri zaten ayıklıyor,
+KR-071). **`NO_RESULT` dokunulmadı** ve pozitif kontrolle kilitlendi.
+
+#### Zincir (sözleşme değişikliği GEREKMEDİ)
+
+`Detection.rgb_uri` / `.ms_uri` şemada 2026'dan beri vardı; worker onları **hiç
+doldurmuyordu** ve `to_dict()` yazmıyordu bile.
+
+```
+pipeline (ham bantlar YALNIZ burada) → tile_crop_renderer (karo başına 2 PNG)
+  → PipelineResponse.tile_crop_artifacts (transient) → orchestration
+  → worker.py: indeks haritalarıyla AYNI upload() çağrısı + adresleri tespitlere yaz
+  → platform: findings → presigned HTTPS → uncertain_tiles
+  → web: galeri (solda gerçek renk, sağda NIR-K-Y)
+```
+
+Üç tasarım kararı ve gerekçesi: bantlar yukarı **taşınmadı** (tüm uçuşu bellekte
+tutmak olurdu) · yükleme **tek** `upload()` çağrısında (ikincisi `manifest.json`'ı
+ezerdi) · karo adresleri indeks haritaları boş dönse bile yazılır (iki iş bağımsız).
+
+#### Merge edilen PR'lar
+
+| Depo | PR | İçerik |
+|---|---|---|
+| worker | **#242** | üretici: maskeleme + renderer + taşıma + yükleme |
+| platform | **#450** | tüketici: `uncertain_tiles` + presign + web galerisi · dağıtım kapısı testi · tespit sayımı anahtar hatası |
+| platform | **#451** | kapı ASCII + kırılgan test çapası |
+| contract | **#103 / #104** | kural gövdesi + kapı |
+| edge | **#78** | kural bloğu + kapı |
+
+#### 🔴 Çalışması için kalan TEK adım
+
+Zincir **kodda tam**, ama worker **hiçbir yerde koşmuyor** (üretim sunucusunda
+worker konteyneri yok; bu makinede Docker kapalı). Worker `docker-compose.yml`
+`./src:/app/src:ro` mount'u taşıdığı için **imaj derlemek gerekmez** — `git pull`
++ yeniden başlatma yeter. Başlatma `sim-worker-baglan.sh` ile yapılır ve o betik
+**bilerek kullanıcı tarafından** koşturulur (üretim kimlik bilgileri asistanın
+izin katmanı dışında).
+
+Yani: `uncertain_tiles` bugün **boş dönüyor** — kusur değil, üretici kapalı.
+
+### "KESTİRME YOK" kuralı — kural + kapı
+
+Ürün sahibi kuralı (2026-08-20). Kanonik gövde §4'ün **başında** (şemsiye kural).
+Dört `CLAUDE.md`'de **bayt-özdeş blok** — çünkü ölçüldü ki **hiçbiri** çalışma
+alanı kurallarına atıf yapmıyordu ve projenin kendi "depo içinden başlat"
+talimatına uyulduğunda **hiçbir çalışma kuralı yüklenmiyordu**.
+
+Kapı (`check_kestirme_yok.py`, dört depoda) **kelimeyi yasaklamaz**: ölçüldü ki
+kelime yasağı **%70 yanlış pozitif** üretir (telefon maskesi, DJI dosya adı).
+Ayırt edici olan **izleme kimliği**. İki yönlü mandal + gerekçeli taban:
+contract 0 · worker 0 · platform 13 · edge 1.
+
+Kapı ayrıca bir kör noktayı kapatıyor: `check_claude_md_refs.py` **çıplak adları**
+atlıyor, yani var olmayan bir kapıyı adıyla vaat eden metin oradan yeşil geçiyordu.
+
+#### Bu turda ölçülen üç depo-farkı (tekrar aramamak için)
+
+1. **edge `RUF002`'yi açıyor** (yalnız `RUF003` muaf) → Türkçe **docstring** yasak,
+   Türkçe **yorum** serbest. Gövde ASCII-Türkçe'ye çevrildi.
+2. **Yalnız edge `ruff format --check`'i sert kapı yapıyor** (worker'da tavsiye,
+   platform/contract'ta hiç yok). Yerelde `ruff check` koşturmak **yetmez**.
+3. **Tüketici CI'ları kardeş contract'ı PİNLİ sürümle checkout ediyor** (`v7.7.2`
+   = 2026-08-11). 2026-08-18'den sonra eklenen contract dosyalarına yapılan
+   çapraz-repo atıfları o checkout'ta **sarkan** görünür. Bayt-özdeş bir bloğa
+   böyle bir yol **konulmamalı** — ortama göre durum değiştirir ve hangi ortamı
+   seçerseniz diğeri kalıcı kırmızı kalır.
+
 ### Bu turda kapanan ve bir daha açılmaması için kapıya bağlanan
 
 `analysis_results.dataset_id` (#441) · kanonik bağ sınıfının tamamı + AST mandalı (#443) ·
