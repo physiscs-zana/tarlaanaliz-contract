@@ -1,47 +1,47 @@
 #!/usr/bin/env python3
-# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt – canonical rules are referenced, not duplicated.
-"""KESTİRME YOK kuralının ölçülebilir kısmını kapıya bağlar (iki yönlü mandal).
+# BOUND: TARLAANALIZ_SSOT_v1_2_0.txt - canonical rules are referenced, not duplicated.
+"""KESTIRME YOK kuralinin olculebilir kismini kapiya baglar (iki yonlu mandal).
 
-## Neden bu kapı var
+## Neden bu kapi var
 
-Ürün sahibi 2026-08-20'de kalıcı kural koydu: *"asla kestirme yollarla iş yapma,
-daima ispatlı ve kalite odaklı çalış"*. Kuralın çoğu (ölçmeden söyleme, kapsamı
-sessizce daraltma, kendi çıktını çürüt) **insan davranışıdır ve otomatik
-ölçülemez**. Ama bir kısmı ölçülebilir: **sessiz borç**.
+Urun sahibi 2026-08-20'de kalici kural koydu: *"asla kestirme yollarla is yapma,
+daima ispatli ve kalite odakli calis"*. Kuralin cogu (olcmeden soyleme, kapsami
+sessizce daraltma, kendi ciktini curut) **insan davranisidir ve otomatik
+olculemez**. Ama bir kismi olculebilir: **sessiz borc**.
 
-## Ne ölçer
+## Ne olcer
 
-`TODO` / `FIXME` / `HACK` / `XXX` işaretleri — ama **kelimeyi yasaklamaz**.
-Ölçüldü 2026-08-20 (dört depo): kelimeyi yasaklayan bir kapı **%70 yanlış pozitif**
-üretir. Çıplak `XXX` araması telefon maskesini (`05XX XXX XX XX`), ödeme
-referansını (`PAY-YYYYMMDD-XXXXXX`) ve DJI dosya adını (`result_<XXX>.tif`)
-yakalar. `geçici` kelimesinin 50 geçişinin 26'sı mekanik olarak meşrudur
-("geçici hata", "geçici dosya", "geçici worktree").
+`TODO` / `FIXME` / `HACK` / `XXX` isaretleri - ama **kelimeyi yasaklamaz**.
+Olculdu 2026-08-20 (dort depo): kelimeyi yasaklayan bir kapi **%70 yanlis pozitif**
+uretir. Ciplak `XXX` aramasi telefon maskesini (`05XX XXX XX XX`), odeme
+referansini (`PAY-YYYYMMDD-XXXXXX`) ve DJI dosya adini (`result_<XXX>.tif`)
+yakalar. `gecici` kelimesinin 50 gecisinin 26'si mekanik olarak mesrudur
+("gecici hata", "gecici dosya", "gecici worktree").
 
-**Ayırt edici olan kelime değil, yanında İZLEME KİMLİĞİ olup olmadığıdır.**
-Bir kalemle bağlanmış erteleme meşrudur; bağlanmamış olan **sessiz borçtur**.
+**Ayirt edici olan kelime degil, yaninda IZLEME KIMLIGI olup olmadigidir.**
+Bir kalemle baglanmis erteleme mesrudur; baglanmamis olan **sessiz borctur**.
 
-Kabul edilen kimlikler: `KR-\\d+` · `DK-\\d+` · `AL-K\\d+` · `ADR-\\d+` · `I-\\d` ·
-`KARAR-\\d+` · `#\\d+` (PR/issue).
+Kabul edilen kimlikler: `KR-\\d+` - `DK-\\d+` - `AL-K\\d+` - `ADR-\\d+` - `I-\\d` -
+`KARAR-\\d+` - `#\\d+` (PR/issue).
 
-## İki yönlü mandal
+## Iki yonlu mandal
 
-* Kimliksiz **yeni** işaret ve tabanda yok → **KIRMIZI** (borç büyüdü).
-* Tabandaki bir kalem artık yok → **KIRMIZI** (liste bayat; temizlik yapan
-  kişi listeyi de güncellemeli, yoksa taban zamanla anlamını yitirir).
+* Kimliksiz **yeni** isaret ve tabanda yok -> **KIRMIZI** (borc buyudu).
+* Tabandaki bir kalem artik yok -> **KIRMIZI** (liste bayat; temizlik yapan
+  kisi listeyi de guncellemeli, yoksa taban zamanla anlamini yitirir).
 
-Taban **gerekçelidir**: her satır neden kabul edildiğini yazar. Yeni bir kalem
-tabana eklemek, bir insanın gerekçe yazmasını zorunlu kılar — kural budur.
+Taban **gerekcelidir**: her satir neden kabul edildigini yazar. Yeni bir kalem
+tabana eklemek, bir insanin gerekce yazmasini zorunlu kilar - kural budur.
 
-## Ayrıca: kural bloğunun kendisi
+## Ayrica: kural blogunun kendisi
 
-Kural metni dört `CLAUDE.md`'de **bayt-özdeş** durur ve bu betiği **adıyla
-vaat eder**. Ölçüldü: `check_claude_md_refs.py` bu vaadi **yakalamıyor** (çıplak
-ad, içinde `/` yok → yol sayılmıyor, sessizce atlanıyor). Yani var olmayan bir
-kapıyı vaat eden metin o kapıdan yeşil geçiyordu. Bu betik o kör noktayı kapatır:
-bloğun varlığını ve **bu dosyanın gerçekten var olduğunu** doğrular.
+Kural metni dort `CLAUDE.md`'de **bayt-ozdes** durur ve bu betigi **adiyla
+vaat eder**. Olculdu: `check_claude_md_refs.py` bu vaadi **yakalamiyor** (ciplak
+ad, icinde `/` yok -> yol sayilmiyor, sessizce atlaniyor). Yani var olmayan bir
+kapiyi vaat eden metin o kapidan yesil geciyordu. Bu betik o kor noktayi kapatir:
+blogun varligini ve **bu dosyanin gercekten var oldugunu** dogrular.
 
-Kullanım:  python scripts/check_kestirme_yok.py [--liste]
+Kullanim:  python scripts/check_kestirme_yok.py [--liste]
 """
 
 from __future__ import annotations
@@ -51,26 +51,27 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 KOK = Path(__file__).resolve().parents[1]
 
 _TARANAN_DIZINLER = ("src", "web/src", "scripts", "tools")
 _UZANTILAR = {".py", ".ts", ".tsx", ".js", ".jsx", ".sh"}
 
-# Kelime sınırıyla: `TODOS`, `_TODO_` gibi tanımlayıcılar yakalanmaz.
+# Kelime siniriyla: `TODOS`, `_TODO_` gibi tanimlayicilar yakalanmaz.
 _ISARET = re.compile(r"(?<![A-Za-z0-9_])(TODO|FIXME|HACK|XXX)(?![A-Za-z0-9_])")
-# Yorum bağlamı: kod içindeki bir dizgede geçen kelime borç değildir.
+# Yorum baglami: kod icindeki bir dizgede gecen kelime borc degildir.
 _YORUM = re.compile(r"(#|//|/\*|\*|<!--)")
 _KIMLIK = re.compile(r"(KR-\d+|DK-\d+|AL-K\d+|ADR-\d+|KARAR-\d+|I-\d(?!\d)|#\d+)")
 
 # ---------------------------------------------------------------------------
-# TABAN — her satır GEREKÇELİDİR. Ölçüldü 2026-08-20 (13 kalem).
+# TABAN - her satir GEREKCELIDIR. Olculdu 2026-08-20 (13 kalem).
 #
-# Buraya bir şey eklemek, o kalemin neden sessiz borç SAYILMADIĞINI yazmayı
-# zorunlu kılar. Gerekçe yazamıyorsan kalem borçtur: ya bitir ya kaleme yaz.
+# Buraya bir sey eklemek, o kalemin neden sessiz borc SAYILMADIGINI yazmayi
+# zorunlu kilar. Gerekce yazamiyorsan kalem borctur: ya bitir ya kaleme yaz.
 # ---------------------------------------------------------------------------
 _TABAN: dict[str, str] = {
     # Olculdu 2026-08-20: bu depoda kimliksiz isaret YOK.
-    # Taban BOS kalmali — buyurse kapi kirmizi verir.
+    # Taban BOS kalmali - buyurse kapi kirmizi verir.
 }
 
 _BLOK_BAS = "<!-- KESTIRME-YOK-BLOGU-BASLANGIC"
@@ -81,8 +82,8 @@ def _izli_dosyalar() -> list[Path]:
     dizinler = [d for d in _TARANAN_DIZINLER if (KOK / d).is_dir()]
     if not dizinler:
         return []
-    sonuc = subprocess.run(  # noqa: S603
-        ["git", "-C", str(KOK), "ls-files", *dizinler],  # noqa: S607
+    sonuc = subprocess.run(
+        ["git", "-C", str(KOK), "ls-files", *dizinler],
         capture_output=True, text=True, encoding="utf-8", errors="replace", check=False,
     )
     return [
@@ -93,11 +94,11 @@ def _izli_dosyalar() -> list[Path]:
 
 
 def _bul() -> dict[str, str]:
-    """`{"yol:satir": satir_metni}` — kimliksiz işaretler."""
+    """`{"yol:satir": satir_metni}` - kimliksiz isaretler."""
     bulunan: dict[str, str] = {}
     for dosya in _izli_dosyalar():
         if dosya.name == Path(__file__).name:
-            # Bu betik işaret kelimelerini TANIM olarak içerir; kendini saymaz.
+            # Bu betik isaret kelimelerini TANIM olarak icerir; kendini saymaz.
             continue
         try:
             satirlar = dosya.read_text(encoding="utf-8").splitlines()
@@ -107,34 +108,34 @@ def _bul() -> dict[str, str]:
             if not _ISARET.search(satir) or not _YORUM.search(satir):
                 continue
             if _KIMLIK.search(satir):
-                continue  # izleme kimliği var → meşru erteleme
+                continue  # izleme kimligi var -> mesru erteleme
             anahtar = f"{dosya.relative_to(KOK).as_posix()}:{no}"
             bulunan[anahtar] = satir.strip()[:120]
     return bulunan
 
 
 def _kural_blogu_kontrol() -> list[str]:
-    """Kural bloğu duruyor mu ve vaat ettiği kapı GERÇEKTEN var mı."""
+    """Kural blogu duruyor mu ve vaat ettigi kapi GERCEKTEN var mi."""
     hatalar: list[str] = []
     claude_md = KOK / "CLAUDE.md"
     if not claude_md.is_file():
-        return ["CLAUDE.md bulunamadı"]
+        return ["CLAUDE.md bulunamadi"]
     metin = claude_md.read_text(encoding="utf-8")
     if _BLOK_BAS not in metin or _BLOK_SON not in metin:
         hatalar.append(
-            "CLAUDE.md'de KESTIRME-YOK bloğu YOK — kural dört depoda bayt-özdeş durmalı"
+            "CLAUDE.md'de KESTIRME-YOK blogu YOK - kural dort depoda bayt-ozdes durmali"
         )
         return hatalar
-    # 🔴 Kör noktanın kendisi: blok bu betiği ADIYLA vaat ediyor.
-    # `check_claude_md_refs.py` çıplak adları (içinde '/' olmayan) atlıyor,
-    # yani var olmayan bir kapıyı vaat eden metin oradan YEŞİL geçiyordu.
+    # [!] Kor noktanin kendisi: blok bu betigi ADIYLA vaat ediyor.
+    # `check_claude_md_refs.py` ciplak adlari (icinde '/' olmayan) atliyor,
+    # yani var olmayan bir kapiyi vaat eden metin oradan YESIL geciyordu.
     blok = metin[metin.index(_BLOK_BAS) : metin.index(_BLOK_SON)]
     vaat = re.findall(r"`(check_[a-z0-9_]+\.py)`", blok)
     for ad in vaat:
         if not any((KOK / d / ad).is_file() for d in ("scripts", "tools")):
             hatalar.append(
-                f"kural bloğu `{ad}` kapısını vaat ediyor ama o dosya YOK "
-                f"(belgelenmiş ama uygulanmayan kural bir dilektir)"
+                f"kural blogu `{ad}` kapisini vaat ediyor ama o dosya YOK "
+                f"(belgelenmis ama uygulanmayan kural bir dilektir)"
             )
     return hatalar
 
@@ -146,35 +147,35 @@ def main(argv: list[str] | None = None) -> int:
     if "--liste" in argv:
         for anahtar, satir in sorted(bulunan.items()):
             print(f"  {anahtar}  {satir}")
-        print(f"\ntoplam kimliksiz işaret: {len(bulunan)}  ·  taban: {len(_TABAN)}")
+        print(f"\ntoplam kimliksiz isaret: {len(bulunan)}  -  taban: {len(_TABAN)}")
         return 0
 
     hatalar: list[str] = _kural_blogu_kontrol()
 
     yeni = sorted(set(bulunan) - set(_TABAN))
     if yeni:
-        hatalar.append(f"{len(yeni)} YENİ kimliksiz işaret (sessiz borç):")
+        hatalar.append(f"{len(yeni)} YENI kimliksiz isaret (sessiz borc):")
         hatalar += [f"    {a}  {bulunan[a]}" for a in yeni]
         hatalar.append(
-            "    Çözüm: ya BİTİR, ya yanına izleme kimliği yaz (KR-/DK-/AL-K/#123),"
+            "    Cozum: ya BITIR, ya yanina izleme kimligi yaz (KR-/DK-/AL-K/#123),"
         )
-        hatalar.append("    ya da gerekçesiyle `_TABAN` listesine ekle.")
+        hatalar.append("    ya da gerekcesiyle `_TABAN` listesine ekle.")
 
     kayip = sorted(set(_TABAN) - set(bulunan))
     if kayip:
-        hatalar.append(f"{len(kayip)} taban kalemi ARTIK YOK — liste bayat:")
+        hatalar.append(f"{len(kayip)} taban kalemi ARTIK YOK - liste bayat:")
         hatalar += [f"    {a}  ({_TABAN[a]})" for a in kayip]
-        hatalar.append("    Çözüm: `_TABAN` listesinden SİL (mandal iki yönlüdür).")
+        hatalar.append("    Cozum: `_TABAN` listesinden SIL (mandal iki yonludur).")
 
     if hatalar:
-        print("[KIRMIZI] KESTİRME YOK kapısı:")
+        print("[KIRMIZI] KESTIRME YOK kapisi:")
         for h in hatalar:
             print(f"  {h}")
         return 1
 
     print(
-        f"[OK] KESTİRME YOK kapısı temiz — kimliksiz işaret {len(bulunan)}, "
-        f"taban {len(_TABAN)} (taban büyümedi, liste bayat değil)."
+        f"[OK] KESTIRME YOK kapisi temiz - kimliksiz isaret {len(bulunan)}, "
+        f"taban {len(_TABAN)} (taban buyumedi, liste bayat degil)."
     )
     return 0
 
