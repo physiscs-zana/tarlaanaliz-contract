@@ -44,14 +44,27 @@ Yeni makinede kurulum: `tarlaanaliz-contract/docs/workspace/KURULUM.md`
 
 - **Kök:** `claude-settings-kok.json` → `TARLA-ANALİZ/.claude/settings.json` olarak
   kopyala ve içindeki kanca `-File` **mutlak yolunu kendi klon yoluna göre düzelt**.
-- **4 depo:** her birinde `.claude/settings.json` şu tek anahtarla yeter:
-  `{ "autoMemoryDirectory": "~/.claude/memory/tarlaanaliz" }`
-  (kökteki `permissions.deny` git_token blokları da önerilir — şablondan al).
+- **4 depo:** her birinde `.claude/settings.json` **iki** şey taşır:
+  `{ "autoMemoryDirectory": "~/.claude/memory/tarlaanaliz" }` **ve kökle aynı SessionStart
+  kancası** (kökteki `permissions.deny` git_token blokları da önerilir — şablondan al).
+  ⚠️ **Kancayı atlama.** Çalışma kuralı *"deponun İÇİNDEN `claude` başlat"* diyor; kanca
+  yalnız kökte olursa **kuralın söylediği yolda hatırlatma hiç çalışmaz**. Ölçüldü
+  2026-08-20: bu belge önceden "tek anahtarla yeter" diyordu ama dört depoda kanca
+  **zaten vardı** — belge kurulumu eksik anlatıyordu.
+  Şablon **aynısı** kullanılabilir: dört depo settings'i kök şablonundan yalnız
+  `claudeMdExcludes` ve `_*_notu` açıklama anahtarlarının **olmamasıyla** ayrılır
+  (ölçüldü 2026-08-20, JSON karşılaştırmasıyla).
 
 ## 4. Kanca (SessionStart)
 
-Kanca gövdesi bu depoda: `oturum-basi-hook.ps1`. Kök settings **doğrudan bu dosyayı**
-işaret eder — kopyalamaya gerek YOK (tek kaynak; `git pull` kancayı da günceller).
+Kanca gövdesi bu depoda: `oturum-basi-hook.ps1`. **Beş settings'in beşi de doğrudan bu
+dosyayı** işaret eder — kopyalamaya gerek YOK (tek kaynak; `git pull` kancayı da günceller).
+
+⚠️ **2026-08-20'de ölçülüp düzeltildi:** dört depo settings'i kancayı `~/.claude/hooks/`
+altındaki **makine-yerel bir kopyadan** koşuyordu. İki gövde o gün içerik olarak özdeşti
+(ölçüldü, fark yalnız satır sonu) ama sapmayı engelleyen hiçbir şey yoktu ve *"git pull
+kancayı da günceller"* vaadi **o yolda geçersizdi** — üstelik pratikte koşan **oydu**,
+çünkü kural depo içinden başlatmayı söylüyor. Dördü de kanonik dosyaya çevrildi.
 
 - ⚠️ Dosya **UTF-8 BOM'lu** olmalı (PowerShell 5.1 BOM'suz UTF-8'de Türkçe'yi bozar).
   Git BOM'u içerikle birlikte taşır; dosyayı bir araçla yeniden yazarsan BOM'u geri koy
