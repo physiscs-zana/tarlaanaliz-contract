@@ -31,7 +31,9 @@ Bir işi **"çalışıyor gibi görünen"** en kısa yoldan yapmak yasaktır.
    Ölçüldü 2026-08-20: aynı gün yazılan açık kalem listesini çürütme turu
    **2 bayat kalem + 3 yanlış atıf + 3 yeni gerçek kusur** çıkardı.
 
-Kanonik gövde ve gerekçeler: `tarlaanaliz-contract/docs/workspace/calisma-alani-kurallari.md` §4.
+Kanonik gövde ve gerekçeler: **contract deposunun çalışma alanı kuralları
+belgesi**, §4 (yol bilerek yazılmadı: bu blok dört depoda bayt-özdeştir ve
+çapraz-repo yolu tüketici CI'larında pinli sürüme düşüp sarkan atıf üretiyor).
 Bu blok **dört depoda bayt-özdeştir**; kapı: `check_kestirme_yok.py` (iki yönlü mandal).
 <!-- KESTIRME-YOK-BLOGU-BITIS -->
 
