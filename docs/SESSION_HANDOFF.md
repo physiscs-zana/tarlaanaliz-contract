@@ -146,6 +146,78 @@ bırakmıştı ve daraltma daha önce **kullanıcı vetosuyla** yapılmamıştı
 sorulmalıydı. Onay sonradan alındı (2026-08-19) ve gerekçesiyle
 `docs/security/open_items_decisions_2026-06.md`'ye işlendi.
 
+### ⛔ §0.A ÖZ-DENETİMİ + AYNI OTURUMUN İKİNCİ YARISI (2026-08-20)
+
+> Yukarıdaki §0.A yazıldıktan sonra iş **devam etti** ve §0.A'nın iki ifadesi
+> ölçümle **yanlışlandı**. Düzeltmeler siliniyor değil, üstüne yazılıyor.
+
+#### İki yanlış ifadem
+
+| §0.A'da yazan | Ölçülen doğru |
+|---|---|
+| *"7 PR merge edildi ve **DAĞITILDI**"* | ⛔ **#447 dağıtılmamıştı.** Üretim `f176e260`'ta (yani #446'da) duruyordu; #447 yalnız merge edilmişti. "Merge edildi" ile "canlıda" **ayrı yazılır** — kendi kuralımı çiğnemişim. |
+| *"Sunucu aynı commit'te"* | ⛔ Sunucu `main`'in **2 commit gerisindeydi**. |
+
+#### 🔴 Kök neden: `deploy_prod.sh` güncel olmayan checkout'ta "TAMAM" diyordu
+
+Betikte `git pull` **yoktur** (ve olmaması doğrudur — dağıtım betiği kod çekmez).
+Ama sonucu şuydu: bayat bir checkout üzerinde koşulduğunda imajları yeniden
+derliyor, konteynerleri yeniden kuruyor ve **`==> DAGITIM TAMAM.`** yazıyordu —
+hiçbir yeni kod inmemiş olsa bile. Bugün birebir yaşandı: dağıtım "TAMAM" dedi,
+uzman ekranındaki düzeltme üretime **hiç gitmedi**; ancak canlıda kart dağılımını
+ölçtüğümde tutarsız sayılar görüp fark ettim.
+
+**Yanlış bir BAŞARI raporu, açık bir hatadan kötüdür: doğrulamayı durdurur.**
+Aynı sınıfın **üçüncü** tekrarı — 2026-08-17 `.env` sürüklenmesi · 2026-08-18 boş
+submodule · bugün bayat checkout.
+
+✅ **Kapatıldı (PR #449):** `deploy_prod.sh` adım **0c** — `fetch` edip geride ise
+**DURDURUR**, önde ise uyarır, ayrık HEAD/upstream'siz dalı reddeder. Otomatik
+`merge`/`reset` **YAPMAZ** (operatör ne dağıttığını bilmeli). Gerçek üretim
+yolunda **negatif + pozitif kontrol** ile kanıtlandı; çalışan yığına dokunulmadı.
+
+#### Bu turda kapatılan gerçek kusurlar
+
+| PR | Ne | Kanıt |
+|---|---|---|
+| **#448** | **Kartın zengin `sub_specialty`'si eziliyordu** — 182 karttan **83'ü (%46)** yanlış; mantar uzmanı 56 mantar kartının **hiçbirini** göremiyordu | Mutasyon 3 yolda (4+1+2 kırmızı), pozitif kontroller sağ; canlıda doğrulandı: FUNGUS **56**, `net_blotch` doğru geri düşüşle DISEASE |
+| **#448** | **Testler geliştirici `.env`'ini okuyordu** — yerelde 5 kırmızı, CI'da aynı SHA yeşil, `--no-local` klonda 65/65 | Yerel tam paket artık **sıfır kırmızı** (%83.78) |
+| **#448** | **Yönlendirme ipucu "modelin tanısı" gibi sunuluyordu** (bu PR'ın kendi kusuruydu) | Üretici okundu (`worker.py:1455-1458`): INDICES_ONLY'de değer `classify_from_evidence` sezgiselinden gelir |
+| **#448** | `SALT_STRESS` atanabiliyor ama uzman profilinde etiketsizdi; kart rozeti kaba kategoriyi gösteriyordu; 1 Kiril homoglifi | — |
+| **#449** | Dağıtım güncellik kapısı (yukarıda) | — |
+| contract **#101** | §14.14'ün öz-denetimi: **2 kalem çürütüldü, 3 atıf yanlıştı, 3 yeni kusur** | — |
+
+#### 🔴 Uzman ekranı zinciri — ÜÇ noktadan ölü (DK-48'in kesin teşhisi)
+
+Ürün sahibinin *"uzman ekranında sadece harita var"* şikâyetinin tam cevabı:
+
+| # | Nerede | Ne oluyor |
+|---|---|---|
+| 1 | `analysis_result.py:200` | INDICES_ONLY'de tespitler maskeleniyor — **KR-019 gereği doğru** |
+| 2 | `reporting_agent.py:295` | Uzman görsel paketi INDICES_ONLY'de **bilerek atlanıyor** — yani tam da uzmanın çağrıldığı modda |
+| 3 | `reporting_agent.py:291` | FULL/PARTIAL'da bile üretilmiyor: **`expert_bundle_bands` üretim kodunda hiçbir yerde atanmıyor** (yalnız `= None` varsayılanı ve onu okuyan kapı var) |
+
+Yani sistem uzmanı çağırıyor ama karar vermesi için gereken görselleri üretmiyor.
+Üretici (`expert_bundle_producer` + `expert_bundle_persistence`, 6 PNG + manifest)
+**yazılmış ama hiç bağlanmamış** — bugüne dek bir kez bile çalışmamış.
+
+⬜ **Açık ürün kararı (insana ait):** madde 2'deki kapı gevşetilmeli mi?
+Tanının saklanması KR-019'dur ve doğrudur; ama **uzmanın bakacağı görüntünün**
+saklanması eskalasyonun amacını ortadan kaldırıyor. Görüntü tanı değildir —
+tanının ön koşuludur. Karar verilmeden uçtan uca uygulama başlatılmamalı
+(worker + sözleşme sürümü + platform + web).
+
+#### Üretimin şu anki hâli
+
+```
+platform main = sunucu = 9a2609c6   (fark 0, submodule ' ' temiz)
+servisler: backend/web/db/minio/rabbitmq/redis — hepsi healthy
+uzman ekranı: kartlar ARTIK doğru alt uzmanlıkla · "model karar veremedi (%30,
+              yönlendirildiği alan: Zararlı)" bölümü CANLIDA · döşemeler çalışıyor
+hâlâ eksik : karo görüntüleri (DK-48, üç noktadan ölü) · yama görselleri (DK-52,
+              edge üretmiyor) · gerçek görünüm taban katmanı (DK-51, edge)
+```
+
 ## 0.A-l ÖNCEKİ TUR — (2026-08-19, **on beşinci oturum: uçuş öncesi platform turu — üretim kesintisi sınıfı üç kusur + admin görünürlüğü + ÖZ-DENETİM**)
 
 > **Durum: platform `main` @ `2715808f`; kod ÜRETİMDE DOĞRULANDI** (rota tablosu
