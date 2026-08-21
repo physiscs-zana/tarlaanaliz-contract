@@ -2418,13 +2418,16 @@ Anahtar ilke: **"Yeşil ama yalan bir kapı, kırmızı bir kapıdan tehlikelidi
 >
 > | Bölüm | Statü | Neden korunuyor |
 > |---|---|---|
-> | **§14.14 (2026-08-19/20)** | 🟢 **CANLI GİRİŞ NOKTASI** | En yeni tur; **DK-48…DK-58** (uzman ekranı zinciri) + aynı gün yapılan öz-denetim (2 kalem ⛔ çürütüldü, 3 yeni kusur) |
+> | **§14.17 (2026-08-21)** | 🟢 **CANLI GİRİŞ NOKTASI** | En yeni tur. Beş öncelik + **§14.15'ten devralınan 11 kalemlik açık borç tablosu** + 2026-08-21 öz-denetiminin 5 bulgusu |
+> | **§14.16 (2026-08-21)** | 🟠 süperseded, **korunuyor** | ① ve ②'nin **uygulama kaydı** (11 PR) + 5 kalemlik *"açıkça yapılmayanlar"* tablosu |
+> | **§14.14 (2026-08-19/20)** | 🟠 süperseded, **korunuyor** | **DK-48…DK-58** (uzman ekranı zinciri) + aynı gün yapılan öz-denetim (2 kalem ⛔ çürütüldü, 3 yeni kusur) |
 > | **§14.10 (2026-08-10)** | 🟠 süperseded, **korunuyor** | **AL-K8…AL-K18 kalemleri hâlâ AÇIK** — kart/indeks borçları orada yaşıyor |
 > | **§▶️ GİRİŞ NOKTASI (2026-08-02)** | 🟡 canlı ama kısmi | **P-1…P-6 kalemleri hâlâ açık** (ENGEL 1/2/3 donanım-bloke); 🔴 ile işaretli |
 > | §14.9 (2026-08-01) | 🟠 süperseded, **korunuyor** | *Turdan BAĞIMSIZ kuyruk* 6 açık kalemi burada yaşıyor |
 > | §14.8 (2026-08-01) | 🟠 süperseded, **korunuyor** | 3 ⬜ kalem taşıyor |
 > | §14.7 (2026-07-31) | 🟠 süperseded, **korunuyor** | 13 ⬜ kalem taşıyor |
 > | ▶️ tarihsel kayıt (2026-08-02) | ⛔ **KALDIRILDI** | 0 tekil kalem taşıyordu (ölçüldü) |
+> | §14.15 (2026-08-20) | ⛔ **KALDIRILDI (2026-08-21, öz-denetim turu)** | Gövdesi 255 satırdı ve §14.16 onu zaten *"tarihsel kayıt"* ilan etmişti. **Açık kalemleri ÖNCE §14.17'ye taşındı, SONRA gövde daraltıldı** — ölçüm ve devir haritası mezar taşında |
 >
 > ⚠️ **Süperseded bölümler SİLİNMEDİ** çünkü içlerinde açık iş var. Silmeden önce
 > o kalemleri §14.10'a taşımak gerekir — ayrı ve dikkatli bir iş.
@@ -3398,7 +3401,7 @@ koşmadan** üretilmişti. Kartlar o yüzden ekranın tek içeriğiydi; istek or
 
 ---
 
-## 14.14 🟢 UZMAN EKRANI ZİNCİRİ TURU (2026-08-19/20) — **CANLI GİRİŞ NOKTASI**
+## 14.14 🟠 UZMAN EKRANI ZİNCİRİ TURU (2026-08-19/20) — *süperseded: canlı giriş §14.17*
 
 > **Bu bölüm §14.10'un yerine geçer.** Yukarıdaki "TEK YETKİLİ GİRİŞ NOKTASI"
 > tablosunda §14.10 🟢 idi; bu turda ölçülen kalemler onu süperseded ediyor.
@@ -3661,6 +3664,124 @@ mi — **kırıcı**, insan kararı) · eski geri düşüş yolu · ölü `check
 ikisi de tam o kapının sınıfı. Platform + edge'e taşımak, sınıfın tekrarını
 engelleyen **tek yapısal önlemdir**.
 
+### 🟢 YEREL UÇTAN UCA KOŞUM (2026-08-21) — zincir **İLK KEZ AKTI**
+
+> Ürün sahibinin kararı: *"önce yerelde kanıtla"*. Gerekçe ölçülmüştü — üretimde
+> `analysis_job_started` kuyruğu **YOK** (`404 NOT_FOUND`), yani üretim 7.8.0 öncesi
+> kodu koşuyor ve durum zinciri orada **görünemezdi**. Bağımsız kanıt: 7.8.0
+> tüketicisi açılışta o kuyruğu *declare eder*; kuyruk hiç doğmamış.
+
+**Yerel yığın önce ONARILDI (Ö-2):** backend 381 başarısız sağlık kontrolüyle ölüydü.
+Kök neden ölçüldü ve **teşhis bir kez düzeltildi**: kapı `/app/contracts/…` değil
+**`/app/CONTRACTS_VERSION.md`** okuyor (`main.py:117` → `contracts_base.parent` = `/app`).
+`src/` mount'lu (taze), platformun kök dosyaları imaja gömülü (2026-08-13, `7.7.2`).
+Çözüm yama değil, **tazelik simetrisi**: üç mount birlikte
+(`contracts/` + `CONTRACTS_SHA256.txt` + `CONTRACTS_VERSION.md`).
+Sonuç: `contracts_integrity_verified checked=98` · `contract_orchestration_guard_wired
+pinned='7.8.0'` · nginx `200` · login ucu `422` (uç VAR kanıtı).
+
+**Kanıtlanan halkalar** (iki koşum, `analysis_jobs` kuyruğuna kanonik
+`build_analysis_job_v1` + `publish_analysis_job` ile — elle alan uydurulmadı):
+
+| Halka | Kanıt |
+|---|---|
+| ① Katmanlar **`GENERAL` değil** | `ANALIZ_PAKETI.TESLIM_EDILEMEYEN crop=PISTACHIO satilan=[HEALTH,DISEASE,PEST,FUNGUS] sevk=[DISEASE] edilemeyen=3×MODEL_YOK` → mesajda `analysis_types: ['DISEASE']` |
+| ② PENDING → **PROCESSING** | iş `ab990df4`: worker `analysis_job_started` yayınladı → `WORKER_BRIDGE.JOB_STARTED` → `started_at=14:34:28` **ilk kez doldu** |
+| ② → **COMPLETED** | iş `01d6f7fc`: `completed_at` dolu, `duration_ms=36103`, `output_manifest` yazıldı |
+| Bilinçli `PENDING→COMPLETED` düşüşü + uyarısı | `ANALYSIS_JOB.BASLADI_SINYALI_KAYIP … started_at BOŞ kaldı (kanıt kaydın kendisinde)` — tasarlandığı gibi |
+| Worker hattı | `pipeline_completed duration_ms=30447 result_mode=INDICES_ONLY confidence=0.311`, 4 katman + **karo kırpıntıları** S3'e |
+
+#### 🔴 Bu koşumun ÇIKARDIĞI İKİ YENİ KUSUR
+
+| # | Kusur | Kanıt ve neden önemli |
+|---|---|---|
+| **Y-1** 🔴 | **`IDEMPOTENT_SKIP` işin COMPLETED geçişini ATLIYOR.** `worker_bridge_consumer.py:1618` çıplak `return`; COMPLETED geçişi `:1782`, yani **sonra**. Görev `PENDING_REVIEW`/`DONE`/`EXPERT_REJECTED` ise sonuç mesajı tümden atlanır ve **iş sonsuza kadar PROCESSING'de kalır**. | Canlıda ölçüldü: iş `ab990df4` analizi 30 sn'de BİTTİ, sonuç S3'e yazıldı ve **`analysis_results` satırı veritabanında MEVCUT** (`result_id=fcb65f99…`) — buna rağmen iş hâlâ `PROCESSING`. Çürütme turu iddiayı **güçlendirdi**: `analysis_jobs.status`'u COMPLETED'a çeken **tek** üretici `:1785`'tir (ölçüldü, alternatif yol yok), o da atlanan dalın içindedir. Yani bu, ②'nin kapattığı *"sonuç var ama iş PENDING"* hâlinin birebir tekrarıdır — yalnızca bir adım sonrasında. **Tasarımla erişilebilir:** admin sevk ucu *"ikinci veri seti bir arıza DEĞİL, meşru bir iş durumudur"* diyor (REFLY/yeniden kalibrasyon) ve KR-019 reddi görevi yeniden analize yollar. Aynı görevin İKİNCİ işi bu delikten düşer. ⚠️ Bu, ②'nin kapattığı kusurun **bir adım sonraki** hâlidir. |
+| **Y-2** 🟠 | **"İş başladı" sinyali BOŞTA KALMIŞ bağlantıda ölüyor.** `publisher.publish()` → `queue_declare` → `StreamLostError: Connection reset by peer`. Best-effort tasarım işi kurtardı (doğru), ama PROCESSING sinyali kayboldu. | 2 sevkin **1'inde** oldu (14:38:11). Worker'ın normal hâli *boşta beklemek* olduğu için bu, istisna değil **olağan** yol. Yani yeni kurulan sinyal üretimde sık sık kayıp olacak ve *"kuyrukta mı, koşuyor mu"* ayrımı yine bulanıklaşacak. Sonraki yayınlar başarılı → bağlantı kendini toparlıyor, eksik olan **ilk çağrıda yeniden deneme**. |
+
+#### Bu koşumun KANITLAMADIĞI (sessiz borç değil, beyan)
+
+* **Ingest → AV1 → AV2 → sevk** üst zinciri koşulmadı. Sevk kapısı yalnız
+  `CALIBRATED_SCANNED_CENTER_OK` kabul ediyor (doğru davranış); yereldeki iki veri seti
+  **analiz sonrası** durumda. Taze veri seti yerel ingest ister ve o **üç ayrı
+  yapılandırma** ister: yerel nginx'te 8443/istemci-sertifikası sonlandırması yok ·
+  `client.pem` parmak izi (`7cccee5c…`) backend'de kayıtlı olanla (`3bb10fc6…`)
+  **uyuşmuyor** · mTLS başlıklarını vekil üretmeli.
+* **Üretim ölçümleri yapılmadı** (SSH bu oturumda kesildi). Üretim hakkındaki tek
+  ölçüm kuyruk sondasıdır: `analysis_jobs` tüketici 1 → 0 (tünel düştü),
+  `analysis_job_started` **yok**.
+* **Yerel veri değişti (beyan):** pozitif kontrol için görev `591ba3da` elle
+  `DONE → ANALYZING` yapıldı; zincir onu kanonik olarak `PENDING_REVIEW`'a taşıdı.
+  Yalnız YEREL veritabanı; üretim verisine dokunulmadı.
+* **Tünel düştü:** oturum başında ayaktaydı (`ssh -f -N`, 12:20), sonra kayboldu ve
+  worker **32 kez** yeniden başladı — devir notundaki *kırılganlık #1*'in canlı
+  gerçekleşmesi.
+
+---
+
+### 🔬 ÖZ-DENETİM (2026-08-21, kapanıştan 22 dk sonra) — 5 bulgu, hepsi ÖLÇÜLDÜ
+
+> Ürün sahibi kapanıştan hemen sonra §14.16/§14.17 turunun öz-denetimini istedi.
+> **Önce doğrulananlar** (önceki oturum bunları DOĞRU söylemiş): 11 PR merge
+> (`gh pr list … merged:>=2026-08-21` → 4+3+3+1) · dört depo temiz ve `7.8.0` hizalı ·
+> I-3 submodule bayt-özdeş · zincirin üç halkası da kodda · **KESTİRME kapısı
+> mutasyonla sınandı** (blok bozulunca `exit=1`, geri alınca `exit=0`) · **worker
+> "iş başladı" sıra testi mutasyonla sınandı** (çağrı silinince kırmızı) · 35 test yeşil.
+>
+> Aşağıdaki 5 bulgu **beyan edilmemişti**.
+
+| # | Bulgu | Kanıt (bu turda ölçüldü) |
+|---|---|---|
+| **Ö-1** 🔴 | **Üretim kimlikleri düz metin, korumasız, kapsayıcı kökte.** `.sim-worker-prod.env` üretim RabbitMQ **ve** MinIO parolalarını taşıyor. Betiğin kendi belgesi `rm -f .sim-worker-prod.env  # kimlikleri sil` diyor — **silinmedi**. | Beş `settings.json`'ın `permissions.deny` listesinde `git_token` **3/3** var, `sim-worker-prod` **0/5**. Hiçbir devir belgesinde geçmiyor (`grep -rn "sim-worker-prod.env" docs/` → 0). |
+| **Ö-2** 🔴 | **Yerel platform yığını ÖLÜ ve bunu bu turun kendi değişikliği öldürdü.** backend 381 başarısız sağlık kontrolü, nginx **502**. Oturum *"worker healthy"* diye kapandı; **platformun öldüğü hiç ölçülmedi**. | Kök neden: `main.py:187` pin `7.8.0` (mount'lu `src` → taze) ↔ `/app/contracts/CONTRACTS_VERSION.md` **`7.7.2`** (imaja gömülü, imaj **2026-08-13**). backend compose YALNIZ `./src:/app/src:ro` mount ediyor — `contracts/` mount **YOK**. Konteyner 12:11'de başlatıldı, pin 11:30'da merge edildi → 85 dk boyunca oturum içinde ölüydü. |
+| **Ö-3** 🔴 | **Sürüm kapısı YANLIŞ YÖNE fail-closed.** Sürüm *eskiyse* keser; dosya *hiç yoksa* **geçirir**. Daha az tehlikeli hâli kesip daha tehlikelisini geçiriyor. | `contract_orchestration_guard.py:123-129` → `if not cv_path.exists(): logger.warning(...); return`. Canlı ölçüm (backend konteynerinde koşuldu): **(A)** sürüm ESKİ → `ContractsVersionError` ✅ · **(B)** dosya YOK → **geçirdi** ❌. (B) tam olarak 2026-08-18 üretim senaryosudur (**boş submodule** → çiftçi ekranı kararır). |
+| **Ö-4** 🟠 | **Kural gövdesindeki I-2 komutu yanlış beyan ediyor.** *"temiz `vX.Y.Z` dönmeli"* diyor; bugün `v7.8.0-3-g1b8b93c` dönüyor. Değişmez KIRIK DEĞİL (etiket release commit'inde, sonraki 3 commit yalnız `docs/`) — **komutun beklentisi** yanlış. | `git -C tarlaanaliz-contract describe --tags HEAD` → `v7.8.0-3-g1b8b93c`. Sınıf: *"yayımlanmış ama koşmayan komut"* — önceki oturumun contract'ta **11 örneğini** kapattığı sınıfın kendisi, kendi taşıdığı dosyada (`docs/workspace/calisma-alani-kurallari.md`). |
+| **Ö-5** 🟠 | **Kökte ayrışmış ikizler + hiç beyan edilmemiş bir artefakt.** Kök `sim-worker-baglan.sh` **242** satır, git'teki **301** — kök kopya eski atası. `sim-worker-prod.yml` de ayrışmış. **Ek:** boş `tarlaanaliz-platform;C` dizini (PowerShell artefaktı, 2026-08-19) — hiçbir belgede geçmiyor. | `diff <(tr -d '
+' < sim-worker-baglan.sh) …/scripts/sim-worker-baglan.sh` → `_koku_bul()` fail-closed kök çözümü kök kopyada **YOK**. İkizler §14.15 kalem 11'de beyan edilmişti (silme onay bekliyor); `;C` dizini edilmemişti. |
+
+**Ö-2 + Ö-3 birlikte okunmalı:** aynı mekanizmanın iki yüzü. Yerel yığın bugün
+Ö-2'nin *fail-closed* yüzünü yaşıyor (gürültülü, görünür, zararsız). Üretim
+2026-08-18'de Ö-3'ün *fail-open* yüzünü yaşadı (sessiz, görünmez, çiftçi ekranı
+karardı). **Kapıyı düzeltmeden yapılacak bir üretim dağıtımı ikinci yüzü tekrar riske atar.**
+
+⬜ **Ö-1 · Ö-3 · Ö-4 · Ö-5 bu turda AÇIK bırakıldı** (ürün sahibi öz-denetim istedi,
+uygulama istemedi). Ö-2 dağıtım/imaj tazeleme işidir, ÖNCELİK 1a ile aynı turda kapanır.
+
+---
+
+### 🟠 ÖNCELİK 5-B — §14.15'ten DEVRALINAN açık borç (11 kalem)
+
+> Bu tablo 2026-08-20'de §14.15'te ölçüldü. §14.15 gövdesi 2026-08-21'de daraltılırken
+> tablo **buraya taşındı** — §14.17 onu tek satırlık *"kapı asimetrisi"* özetine
+> indirmişti ve 11 kalemin **10'u** o özette görünmüyordu. Taşıma, silmeden ÖNCE yapıldı.
+
+#### Kalemler (ölçüldü 2026-08-20, §14.15'ten devralındı)
+
+| # | Kalem | Neden bu turda kapanmadı |
+|---|---|---|
+| 1 | `check_ssot_compliance.py` ölü (platform) | Bağlanması **ürün kararı**: BOUND'un 3. kopyası, yığın limiti `CLAUDE.md` ile çelişiyor (40/50/80/100 ↔ 50). Silmek **onay** ister. |
+| 2 | Kapı betiğinin kendi testi **1/4 depoda** | Yalnız platform'da `test_kestirme_yok_kapisi.py` var (bu turda 2 test eklendi). contract/worker/edge'de yok. |
+| 3 | "Belge ↔ kapı paritesi" kapısı **1/4 depoda** | `check_doc_facts.py` yalnız worker'da. Bu turdaki 2 ve 3 numaralı kusuru yakalayacak kapı platform ve edge'de **yok**. |
+| 4 | platform `crop_readiness` worker-paritesi CI'da **skip** | Kardeş depo checkout edilmiyor (3 skip). Worker'ın `contracts_gate.yml`'i bunu yapabildiğini kanıtlıyor. |
+| 5 | worker kart kataloğu ratchet'i CI'da **skip** (8 test) | Aynı sebep; `check_card_catalog_drift.py` hiçbir workflow'da çağrılmıyor. |
+| 6 | ADR-002 (worker `drone_registry.yaml`'a erişemez) **tamamen kapısız** | Tek zorlama bir PR şablonu onay kutusu. Ayrıca ADR-002 kimliği bu depoda **iki ayrı şeye** işaret ediyor → kimlik-grep'i yanlış güven veriyor. |
+| 7 | KR-025+ "kart YAML'ında ilaç adı/marka yasak" **kartları görmüyor** | `validate_expert_labeling_card` yalnız şema doğruluyor; gövde tarayıcı yalnız `ipm_corpus`'ta koşuyor. Ham tarayıcı doğrudan kapı yapılamaz: 13 karta uygulandı → 3 isabet, **üçü de meşru** (direnç ekolojisi + kaynak atfı) → **taban listesi (ratchet) gerekir**. |
+| 8 | Test kabul ölçütlerinin (11 madde) **hiçbiri** CI'da zorlanmıyor | Mutasyon koşucusu platform'da **var** ama hiçbir workflow çağırmıyor; worker'da hiç yok. |
+| ~~9~~ ✅ | ~~Oturum kancası **iki gövde**~~ — **KAPANDI 2026-08-20** | Kök `settings.json` git'teki kanonik dosyayı, dört depo `settings.json` **makine-yerel** kopyayı gösteriyordu. İçerik özdeşti (ölçüldü, fark yalnız satır sonu) ama sapmayı engelleyen hiçbir şey yoktu; üstelik kural *"depo içinden başlat"* dediği için **pratikte koşan makine-yerel kopyaydı** → `KURULUM.md`'nin *"git pull kancayı da günceller"* vaadi o yolda geçersizdi. **Düzeltildi:** dördü de kanonik gövdeyi gösteriyor; kanca yeni yoldan koşturularak doğrulandı (EXIT=0, Türkçe çıktı sağlam). `KURULUM.md` §3/§4 de düzeltildi — dört deponun kanca taşıdığını hiç yazmıyordu. |
+| 10 | worker'da `CLAUDE.md`'nin ikinci, mükerrer kopyası | 2026-03 tarihli, kendini "ESKİ KOPYA — OTORİTER DEĞİL" diye işaretliyor (dürüst) ama `check_claude_md_refs.py` yalnız kök `CLAUDE.md`'ye bakıyor → içindeki bayat yollar kapsam dışı. Silme **onay** ister. |
+| 11 | `sim-worker-baglan.sh` kapsayıcı kökte **mükerrer** | Betik bu oturumda worker deposuna alındı; kapsayıcıdaki kopya artık fazlalık. Silme **onay** ister. |
+
+#### ⬜ Bir sonraki turda ilk yapılacak (kural tarafında)
+
+- [ ] Kalem 3'ü kapat: worker'daki belge↔kapı parite kapısını platform ve edge'e taşı.
+      **Bu, 2 ve 3 numaralı kusurun bir daha oluşmasını engelleyen tek yapısal önlemdir.**
+- [ ] Kalem 2'yi kapat: kapı betiğinin testini contract/worker/edge'e taşı (üç kopya
+      yerine tek kanonik test + üç ince sarmalayıcı düşünülebilir).
+- [ ] Kalem 1, 10, 11 için **ürün sahibinden silme onayı** iste.
+
+
+
+---
+
 ### Sonraki oturumun İLK komutu
 
 ```bash
@@ -3739,257 +3860,27 @@ canlıda doğrulanabilir.
 
 ---
 
-## 14.15 ▶️ SONRAKİ OTURUM — **İSPATLI PLAN** (2026-08-20 kapanışında yazıldı)
+## 14.15 ⛔ KALDIRILDI (2026-08-21, öz-denetim turu) — *"İSPATLI PLAN" (2026-08-20 kapanışında yazılmıştı)*
 
-> **Öncelik sırası ürün sahibi tarafından verildi:** önce ①, sonra ②.
-> Her satır ölçülmüştür; kanıtsız cümle yoktur. *"Ölçülmedi"* diye işaretlenenler
-> gerçekten ölçülmemiştir — tahmin edilmemiştir.
-
----
-
-### 🔴 ÖNCELİK ① — Her sevk `GENERAL`'e düşüyor (ve **yanlış model** seçiliyor)
-
-**Kök neden tek cümle:** `analysis_type` bir ürün kararı değil, bir **Python
-varsayılan parametresidir** — üretimdeki tek çağıran onu hiç vermiyor.
-
-#### Ölçülmüş zincir
-
-| # | Ne oluyor | Kanıt |
-|---|---|---|
-| 1 | `dispatch_to_worker(analysis_type: str = "standard")` — varsayılan | `worker_dispatch_service.py:102` |
-| 2 | Tek üretim çağıranı bu parametreyi **hiç vermiyor** | `worker_dispatch_handler.py:198-204` |
-| 3 | `"STANDARD"` ∉ `{DISEASE,PEST,WEED,GENERAL}` → `["GENERAL"]` | `worker_job_publisher.py:121-132` |
-| 4 | Worker model anahtarını `{crop}_{analysis}_v1` diye **türetiyor** | `pipeline.py:3679-3685` |
-| 5 | → `pistachio_general_v1` — **kayıtta BÖYLE BİR GİRİŞ YOK** | ölçüldü: `model_registry.yaml` 9 kayıt, fıstık için yalnız `pistachio_disease_v1` |
-| 6 | Arama `.get(key, {})` ile **sessizce boş sözlüğe** düşüyor | `pipeline.py:3020-3021` |
-
-**Yani ① kozmetik bir etiket sorunu değildir: her fıstık işi var olmayan bir model
-anahtarı arıyor.** Üretimdeki üç işin de `analysis_type` değeri `standard`.
-
-#### ⚠️ ÇERÇEVE DÜZELTMESİ — "③'ü düzeltmek neyi değiştirir?"
-
-Kapanış turunda ölçüldü ve **ilk çerçevem eksikti**: worker `analysis_types`
-değerine **neredeyse hiç duyarlı değil**. Bunu bilmeden ①'e girmek, büyük bir iş
-yapıp hiçbir şeyin değişmediğini görmek olurdu.
-
-| Ölçüm | Sonuç |
-|---|---|
-| `analysis_types` okuma yeri | **6**, hepsi `[0]` → çok değerli istek **sessizce kırpılıyor** (`['DISEASE','PEST']` gelirse PEST kaybolur) |
-| Bunlardan kaçı bir kararı değiştiriyor | **2** (model anahtarı + dinamik eşik). Kalan 4: Prometheus etiketi, sonuca geri yazma, eskalasyon alanı, FAISS damgası |
-| Model anahtarı davranışı değiştiriyor mu | **HAYIR.** 12 mahsul × 4 tür × 2 mod = **96 hücre** ölçüldü; **95'inde** sonuç birebir aynı (`kind=deep_learning`, `router_density=None`) — kayıt ister isabet etsin ister etmesin. Tek istisna: `grape+disease+pilot` → `linear_classifier` |
-| Eşiği değiştiriyor mu | **Fıstıkta HAYIR.** DISEASE = PEST = GENERAL = **0.800** (her iki modda). Fark yalnız cotton-disease ve grape/olive/apple-weed'de (0.820) |
-| Üretilen harita kümesi | `_MAPS_BY_RESULT_MODE` `analysis_type`'a **hiç bakmıyor**; `ReportRequest`'te böyle bir alan **yok** |
-| `router.py` | Worker deposunda **böyle bir dosya yok**; registry'deki `threat_type` alanı `src/` içinde **hiç okunmuyor** |
-| Sınıf havuzunu daraltıyor mu | **HAYIR.** `_build_predictions` imzasında `analysis_type` yok; FAISS yalnız `encoder_version`'a bakıyor |
-
-**Dolayısıyla ①'in bugünkü gerçek ağırlığı:** analiz kalitesini **değiştirmez**.
-Değiştirdiği şeyler:
-
-1. `available_layers = {GENERAL}` → katman kaydında **olmayan** bir kod → uzman
-   ekranı ve çiftçi haritası bundan besleniyor.
-2. **Uzman yönlendirmesi**: `GENERAL`'i inceleyebilecek uzman etiketi **yok**.
-3. **Sözleşme ihlali**: platform bugün kanonik enum'un dışında.
-4. **Gizli tuzak**: düzeltildiğinde çok değerli istek `[0]` ile kırpılacağı için
-   `['DISEASE','PEST']` sevk etmek sessizce yalnız DISEASE koşturur — **bu, ①
-   düzeltilirken AYNI TURDA kapatılmalı**.
-
-> Yani ① *"analizi düzeltme"* işi değil, **ön koşul** işidir: mahsul/uzmanlık
-> eksenli bir analiz istenebilmesinin önünü açar. Ağırlığı buradan gelir —
-> ve bunu böyle yazmak, sonraki oturumun yanlış beklentiyle başlamasını önler.
-
-#### Ölçülmüş kopukluklar (hepsi ayrı kusur)
-
-- **Çiftçi analiz türü SEÇMİYOR.** Sipariş formunda katman seçimi **yok**; "Tek
-  Seferlik" seçeneği bugün kapalı (`fields/[id]/page.tsx:56` `SHOW_SINGLE_FLIGHT = false`).
-- **`missions.analysis_type` sevk zincirine HİÇ girmiyor** — yalnız ekranda gösteriliyor.
-  Sevk işleyicisi mission'ı **okumuyor** (dataset + field okuyor).
-- **Platform bugün sözleşmenin DIŞINDA:** kanonik `CreateMissionRequest`
-  `analysis_types` **dizisi** ister ve zorunludur; platform tekil serbest metin
-  kullanıyor. Üretimde yazılan değerlerin **hiçbiri** (`standard`, `FULL`,
-  `MULTISPECTRAL`, `SEASONAL`, `SINGLE`) kanonik enum'da **yok**.
-- **`POST /subscriptions` alanı sessizce düşürüyor:** şemada `analysis_type`
-  kabul ediliyor ama gövdede yok sayılıp `SEASONAL` yazılıyor (`subscriptions.py:301`).
-- **Küme farkı ölçüldü:** sevk edilebilir **4** · uzmana atanabilir **8** ·
-  kanonik enum **11**.
-  → `GENERAL` sevk ediliyor ama onu inceleyebilecek **tek bir uzman etiketi yok**.
-  → Uzmanların taşıdığı **5 kod** (FUNGUS, HEALTH, NITROGEN_STRESS, SALT_STRESS,
-  WATER_STRESS) **hiçbir zaman sevk edilemiyor**.
-
-#### Üç kaynak seçeneği (ölçüldü)
-
-| Seçenek | Kaynak | Gücü | Riski |
-|---|---|---|---|
-| **A** | **Satın alınan paket** — `PriceItem.analysis_types[]` → fiyat anlık görüntüsü → görev → iş | Sözleşme bunu **zaten tanımlıyor ve zorunlu tutuyor** (`pricing.v1.schema.json:95-101,153`; PISTACHIO örneği 4 katman). Fiyat anlık görüntüsü deseni platformda kurulu | Canlı `pricing_config.json`'da alan **hiç yok** → veri modeli + göç + admin ekranı işi |
-| **B** | **Üretilebilirlik** — model kaydı ∩ `crop_readiness` ∩ bant kapısı | Sevk edilen her tür için bir model anahtarı **olduğunu garanti eder**; bugünkü sessiz sapma kökten kapanır | `crop_readiness`'te **analiz türü ekseni YOK** (ölçüldü: yalnız stage1/2/3 + data_status) → üç-depo işi |
-| **C** | **Uzman havuzu** | "İnceleyecek kimse yok" kusurunu kapatır | Nedenselliği **ters çevirir**; tek başına yetmez (uzman var ama model yok) → **kaynak değil, son kapı** |
-
-**Teknik olarak tek tutarlı yapı:** kaynak **A**, kapı **B ∩ C** (fail-closed),
-ve **A \ (B∩C)** sessizce düşürülmez — işte *"teslim edilemedi"* gerekçesi olarak
-yazılır. Böylece *"ne sattık"* ile *"ne koşturabildik"* **ayrı iki cümle** kalır.
-
-#### ⬜ İNSANA ait kararlar (asistan veremez)
-
-1. **Fıstıkta hangi katmanlar satılıyor?** Sözleşme örneği 4 diyor, uzman havuzu 8
-   taşıyor, model kaydı **1** koşturabiliyor (`pistachio_disease_v1`). Bu üç sayı
-   birbirini tutmuyor.
-2. **Analiz türü bir ürün SEÇİMİ mi, yetenek ÇIKTISI mı?** Çiftçi seçecek mi
-   (seçip alamama riski), yoksa mahsul başına sabit demet mi?
-3. **Satılan ile üretilebilen çeliştiğinde hangisi kazanır?** Sipariş reddedilsin
-   mi, kabul edilip "teslim edilemedi" mi yazılsın?
-4. **`GENERAL` jokeri kalsın mı?** Bugün her iş onunla sevk ediliyor ve
-   inceleyecek uzman etiketi yok. Kalacaksa **kim inceleyecek**?
-5. **Uzmanı olmayan bir katman sevk edilebilir mi?** (KR-019 kapsamı.)
-6. **Kapsam bir config dosyasına bağlansın mı?** B'de yeni model kaydı eklenince
-   çiftçiye **satılmamış** bir katman aniden teslim edilir.
-7. **`analysis_type` tekil mi kalacak, `analysis_types[]` dizisine mi geçecek?**
-   Kanonik sözleşme zaten dizi; geçiş **kırıcı** → sürüm töreni + üç depo hizası.
-
-#### Sonraki oturumda İLK yapılacak (karar beklemeden)
-
-- [ ] `pistachio_general_v1` bulunamayınca hattın **sonunda** ne olduğunu ölç
-      (tek iş koşumu ya da birim test): boş `model_entry` hangi davranışa yol açıyor?
-      Sessizce varsayılan mı koşuyor, yoksa çıkarım kalitesi mi düşüyor?
-      **Bu ölçüm, ①'in gerçek ağırlığını belirler.**
-- [ ] `analysis_type` adının bugün taşıdığı **beş ayrı anlamı** tek listede say
-      (`standard` · `FULL` · `MULTISPECTRAL` · `SEASONAL` · `SINGLE`) ve her birine
-      ayrı ad öner — aynı ad beş şey demek olduğu sürece hiçbir düzeltme kalıcı olmaz.
-- [ ] Sözleşme ↔ platform sapmasını `open_items_decisions_2026-06.md`'ye
-      **COORDINATE** olarak kaydet (platform bugün sözleşmenin dışında).
-
----
-
-### 🔴 ÖNCELİK ② — Kuyruk yalan söylüyor: `analysis_jobs.status` hiç ilerlemiyor
-
-**Kök neden tek cümle:** durum makinesi **yazılmış ama üretimde hiç çağrılmıyor**.
-
-#### Ölçülmüş kanıt
-
-- `AnalysisJob` domain entity'sinde `start()` → PROCESSING, `complete()` →
-  COMPLETED, `fail()` → FAILED **var** ve korumaları da var
-  (`analysis_job.py:106,110-113,120`).
-- **Üretimde tek çağıran yok** — ölçüldü: `.complete()` / `.start()` / `.fail()`
-  yalnız **testlerde** çağrılıyor (`tests/e2e/test_expert_journey.py`,
-  `tests/integration/test_mission_repository.py`,
-  `tests/unit/domain/entities/test_analysis_job.py`).
-- Repository **yalnız sevk anında** kullanılıyor (`worker_dispatch_handler.py:149,189`).
-- Sonucu yazan `worker_bridge_consumer` `analysis_jobs`'a **hiç dokunmuyor**
-  (yalnız bir yorum satırında adı geçiyor, `:875`).
-
-#### Üretimdeki somut hâli (ölçüldü 2026-08-20)
-
-```
-analysis_jobs: 3 PENDING
-  08b3cac3  queued 2026-08-18 09:26   ← SONUCU VAR, dataset ANALYZED
-  1dd6691f  queued 2026-08-19 11:24   ← SONUCU VAR, dataset ANALYZED
-  e684c8ea  queued 2026-08-18 07:36   ← GERÇEKTEN bekliyor (2 gündür)
-started_at / completed_at / duration_ms / output_manifest : HEPSİ BOŞ
-```
-
-**Sonuç:** "sıkışan işi kuyruktan teşhis etme" yolu **yapısal olarak çalışmıyor**.
-Gerçekten bekleyen tek işi (`e684c8ea`) tamamlanmış ikisinden ayırt etmenin
-kuyruğa bakarak yolu yok.
-
-#### Kapanış turunda EK ölçümler (② için)
-
-- **`job_id == result_id`** — doğrulandı, düz eşleme:
-  `result_id == analysis_job_id == UUID(body['job_id'])`. Tahmin yok.
-- **COMPLETED damgası için gereken her alan gövdede VAR:** `duration_ms` ←
-  `processing_time_ms`, `output_manifest` ← `result_uri`, `error_detail` ←
-  `error`/`error_message`. Üçü de sözleşmede tanımlı.
-- **Aynı transaction MÜMKÜN:** COMPLETED dalı tek `get_async_session()` içinde
-  açılıp tek `commit()` ile kapanıyor; `analysis_jobs` UPDATE'i satır 1636 ile
-  1686 arasına konursa **atomik** olur. FAILED dalı da kendi tx'inde (`:1821`).
-- 🔴 **PROCESSING'in ÜRETİCİSİ YOK:** worker platforma yalnız 3 tür mesaj
-  yayınlıyor (`analysis_results`, `expert_review_queue`, `rollback.completed`) —
-  *"iş başladı"* sinyali **yok**. Sevk anını PROCESSING saymak **yanlış olur**
-  (iş kuyrukta bekliyor olabilir). Durum makinesi `complete()`'i **yalnız
-  PROCESSING'den** kabul ettiği için bu bir **mimari karardır**, kod detayı değil.
-- 🔴 **ÇİFT YÖNLÜ ALAN KAYBI:** model 22 kolon beyan ediyor, **9'u hiçbir kod
-  yolunda yazılmıyor** (`completed_at`, `duration_ms`, `error_detail`,
-  `failed_at`, `idempotency_key`, `input_manifest`, `output_manifest`,
-  `retry_count`, `started_at`). Bunların **entity'de karşılığı da yok** — yani
-  kayıp repository'de değil, **entity'de başlıyor**: repo yazmak istese
-  taşıyacağı veri yok. Ters yönde 4 entity alanı kolonsuz (bu taraf repo
-  docstring'inde **açıkça beyan edilmiş**, sessiz değil).
-- Repository'nin **tek public metodu** `save()` (upsert); `get_by_id` **bilerek
-  yok**. Üretimde tek çağrıldığı yer sevk yolu → *"kaydet"* yalnız sevk anında
-  koşuyor, **bir daha asla**.
-
-#### Sonraki oturumda yapılacak
-
-- [ ] `worker_bridge_consumer`'da sonucu yazan **aynı transaction'da** işi
-      COMPLETED'a çek. ✅ `job_id == result_id` bu turda **doğrulandı** (düz eşleme,
-      yukarıda) ve aynı transaction'ın **mümkün** olduğu ölçüldü — varsayım kalmadı.
-- [ ] PROCESSING'e geçişi kim yapacak: worker geri çağrı yapamaz (KR-071), o
-      hâlde platform "sevk edildi" anında mı PROCESSING yazacak? Durum makinesi
-      `complete()`'i **yalnız PROCESSING'den** kabul ediyor — bu koruma
-      PENDING→COMPLETED geçişini **reddeder**. Ya geçiş eklenecek ya PROCESSING
-      yazılacak; **ikisi de ürün/mimari kararıdır**.
-- [ ] `status` alanını **okuyan** her yeri bul ve ilerletmenin neyi tetikleyeceğini
-      ölç (retry? alarm? rapor?). *(bu tur ölçülmedi)*
-- [ ] Idempotency: aynı sonuç iki kez gelirse ne olur? *(bu tur ölçülmedi)*
-- [x] `started_at`/`completed_at`/`duration_ms`/`output_manifest` alan kaybı —
-      **ÖLÇÜLDÜ**: 22 kolonun 9'u hiçbir kod yolunda yazılmıyor ve **entity'de de yok**
-      (yukarıya işlendi). Kayıp repository'de değil, **entity'de başlıyor**.
-
----
-
-### 🟡 ÖNCELİK ③ — Kural ↔ kapı envanteri (bu oturumda ÖLÇÜLDÜ, kısmen kapatıldı)
-
-Ürün sahibi bu oturumun kapanış şartı olarak *"tüm repoların ve senin tüm oturumlarda
-%100 olarak CLAUDE.md kurallarına uyman"*ı istedi. **%100'ü iddia etmek kestirme olurdu**;
-onun yerine kuralları **saydım** ve her birinin kapısı olup olmadığını **komutla ölçtüm**.
-
-| Depo | Normatif kural | Kapılı | Kapısız |
-|---|---|---|---|
-| `tarlaanaliz-platform` | 45 | 10 tam + 2 kısmi + 3 kodu var/CI'da koşmuyor | **29** |
-| `tarlaanaliz-worker` | 90 | 52 + 1 kısmi | **36** |
-| kök çalışma alanı §4 | 13 | 1 tam + 2 kısmi | **10** |
-
-> **Kapısız kural yanlış kural değildir** — çoğu insan davranışıdır ("önce tam oku",
-> "kendi çıktını çürüt") ve otomatik ölçülemez. Tehlikeli olan, **kapısı olduğu sanılan**
-> kuraldır. Bu turda bulunan tam da o sınıftı.
-
-#### Bu turda KAPATILANLAR (kanıtı aşağıda)
-
-1. 🔴 **"Blok dört depoda bayt-özdeştir" bir İDDİA idi, kapısı YOKTU.** Bugün özdeş
-   (ölçüldü, dördünün SHA-256'sı aynı) ama bir depoda tek kelime değişse dört kapı da
-   yeşil kalırdı. → `check_kestirme_yok.py`'ye `_BLOK_SHA` eklendi (dört depoda).
-   Mutasyon: worker bloğunda tek kelime değişti → **yalnız worker kırmızı**, diğer üçü
-   yeşil (ayrıştırma). Pozitif kontrol: blok **dışındaki** değişiklik geçiyor.
-2. 🔴 **platform `CLAUDE.md` "ci.yml ile birebir hizalı" diyordu — DEĞİLDİ.** 6 kapı
-   listede yoktu ve liste, `ci.yml:294`'ün açıkça tasfiye ettiği satır-içi BOUND kalıbını
-   hâlâ taşıyordu (o kalıp yalnız `src/` tarar; koşan betik daha geniş). → Liste
-   `ci.yml`'den satır satır türetildi.
-3. 🔴 **edge `CLAUDE.md` §17 "CI ile BİREBİR" diyordu — DEĞİLDİ.** Üç bloke eden kapı
-   eksikti; en keskini, KESTİRME YOK kapısını **ekleyen commit'in** §17'ye dokunmamış
-   olmasıydı — kuralın kendi ihlali. → Üçü de listeye girdi.
-4. 🔴 **`ci.yml:195` ölü bir betiği "taşıyıcı kapı" diye sayıyordu.**
-   `check_ssot_compliance.py` hiçbir workflow'da çağrılmıyor (commit `5a9c8b63`'te
-   sessizce düştü). → Yorum dürüstleştirildi + neden olduğu gibi bağlanamayacağı
-   **üç ölçülmüş gerekçeyle** yazıldı.
-
-#### AÇIK KALEMLER (sayısıyla beyan — sessiz borç bırakılmadı)
-
-| # | Kalem | Neden bu turda kapanmadı |
-|---|---|---|
-| 1 | `check_ssot_compliance.py` ölü (platform) | Bağlanması **ürün kararı**: BOUND'un 3. kopyası, yığın limiti `CLAUDE.md` ile çelişiyor (40/50/80/100 ↔ 50). Silmek **onay** ister. |
-| 2 | Kapı betiğinin kendi testi **1/4 depoda** | Yalnız platform'da `test_kestirme_yok_kapisi.py` var (bu turda 2 test eklendi). contract/worker/edge'de yok. |
-| 3 | "Belge ↔ kapı paritesi" kapısı **1/4 depoda** | `check_doc_facts.py` yalnız worker'da. Bu turdaki 2 ve 3 numaralı kusuru yakalayacak kapı platform ve edge'de **yok**. |
-| 4 | platform `crop_readiness` worker-paritesi CI'da **skip** | Kardeş depo checkout edilmiyor (3 skip). Worker'ın `contracts_gate.yml`'i bunu yapabildiğini kanıtlıyor. |
-| 5 | worker kart kataloğu ratchet'i CI'da **skip** (8 test) | Aynı sebep; `check_card_catalog_drift.py` hiçbir workflow'da çağrılmıyor. |
-| 6 | ADR-002 (worker `drone_registry.yaml`'a erişemez) **tamamen kapısız** | Tek zorlama bir PR şablonu onay kutusu. Ayrıca ADR-002 kimliği bu depoda **iki ayrı şeye** işaret ediyor → kimlik-grep'i yanlış güven veriyor. |
-| 7 | KR-025+ "kart YAML'ında ilaç adı/marka yasak" **kartları görmüyor** | `validate_expert_labeling_card` yalnız şema doğruluyor; gövde tarayıcı yalnız `ipm_corpus`'ta koşuyor. Ham tarayıcı doğrudan kapı yapılamaz: 13 karta uygulandı → 3 isabet, **üçü de meşru** (direnç ekolojisi + kaynak atfı) → **taban listesi (ratchet) gerekir**. |
-| 8 | Test kabul ölçütlerinin (11 madde) **hiçbiri** CI'da zorlanmıyor | Mutasyon koşucusu platform'da **var** ama hiçbir workflow çağırmıyor; worker'da hiç yok. |
-| ~~9~~ ✅ | ~~Oturum kancası **iki gövde**~~ — **KAPANDI 2026-08-20** | Kök `settings.json` git'teki kanonik dosyayı, dört depo `settings.json` **makine-yerel** kopyayı gösteriyordu. İçerik özdeşti (ölçüldü, fark yalnız satır sonu) ama sapmayı engelleyen hiçbir şey yoktu; üstelik kural *"depo içinden başlat"* dediği için **pratikte koşan makine-yerel kopyaydı** → `KURULUM.md`'nin *"git pull kancayı da günceller"* vaadi o yolda geçersizdi. **Düzeltildi:** dördü de kanonik gövdeyi gösteriyor; kanca yeni yoldan koşturularak doğrulandı (EXIT=0, Türkçe çıktı sağlam). `KURULUM.md` §3/§4 de düzeltildi — dört deponun kanca taşıdığını hiç yazmıyordu. |
-| 10 | worker'da `CLAUDE.md`'nin ikinci, mükerrer kopyası | 2026-03 tarihli, kendini "ESKİ KOPYA — OTORİTER DEĞİL" diye işaretliyor (dürüst) ama `check_claude_md_refs.py` yalnız kök `CLAUDE.md`'ye bakıyor → içindeki bayat yollar kapsam dışı. Silme **onay** ister. |
-| 11 | `sim-worker-baglan.sh` kapsayıcı kökte **mükerrer** | Betik bu oturumda worker deposuna alındı; kapsayıcıdaki kopya artık fazlalık. Silme **onay** ister. |
-
-#### ⬜ Bir sonraki turda ilk yapılacak (kural tarafında)
-
-- [ ] Kalem 3'ü kapat: worker'daki belge↔kapı parite kapısını platform ve edge'e taşı.
-      **Bu, 2 ve 3 numaralı kusurun bir daha oluşmasını engelleyen tek yapısal önlemdir.**
-- [ ] Kalem 2'yi kapat: kapı betiğinin testini contract/worker/edge'e taşı (üç kopya
-      yerine tek kanonik test + üç ince sarmalayıcı düşünülebilir).
-- [ ] Kalem 1, 10, 11 için **ürün sahibinden silme onayı** iste.
+> **Bu bölüm 255 satırdı.** §14.16 onu daha 2026-08-21'de *"tarihsel kayıt"* ilan
+> etmişti ama başlığı hâlâ **"SONRAKİ OTURUM"** diyordu ve dosyada beşinci bir
+> "buradan başla" iddiası olarak duruyordu.
+>
+> **Hiçbir açık kalem kaybolmadı — ölçüldü ve TAŞINDI (silmeden ÖNCE):**
+>
+> | §14.15'te olan | Bugün nerede |
+> |---|---|
+> | **ÖNCELİK ①** (her sevk `GENERAL`'e düşüyor) — ölçülmüş zincir + çerçeve düzeltmesi | **UYGULANDI**: §14.16 (platform #456 · worker #245 · contract #109). Ölçülmüş sonuç tablosu `SESSION_HANDOFF.md` §0.A'da |
+> | **ÖNCELİK ②** (`analysis_jobs.status` ilerlemiyor) — ölçülmüş kanıt | **UYGULANDI**: §14.16 (platform #455 · contract v7.8.0 `analysis_job_started.v1`) |
+> | **⬜ İNSANA ait kararlar 1·2·3·6·7** | **CEVAPLANDI**: §14.16 *"Ürün sahibinin beş kararı"* tablosu |
+> | **⬜ İNSANA ait karar 4** (`GENERAL` jokeri kalsın mı) | **ÇÖZÜLDÜ**: platform #456 ile sevk artık `GENERAL` göndermiyor |
+> | 🔴 **⬜ İNSANA ait karar 5** (*uzmanı olmayan bir katman sevk edilebilir mi? — KR-019*) | **HÂLÂ AÇIK** → §14.17 ÖNCELİK 2'nin yanına alındı, aşağıda |
+> | **ÖNCELİK ③ · 11 kalemlik AÇIK KALEMLER tablosu** | **TAŞINDI** → §14.17 **ÖNCELİK 5-B** (birebir, 9 numaralı kapanmış kalem dahil) |
+> | *"Sonraki oturumda İLK yapılacak"* — `pistachio_general_v1` ölçümü | **YAPILDI**: `model_registry.yaml` 9 giriş, fıstıkta yalnız `pistachio_disease_v1`, `pistachio_general_v1` **yok** |
+> | *"`analysis_type` adının 5 ayrı anlamı"* | **ÖLÇÜLDÜ ve SAYI DÜZELDİ: 5 değil 7** → §14.16 tablosu kalem 3 |
+>
+> ⬜ **Devralınan tek insan kararı:** *uzmanı (KR-019 inceleyicisi) olmayan bir katman
+> sevk edilebilir mi?* Bugün pratik etkisi ölçülmedi; §14.17 ÖNCELİK 2 (kiraz kararı)
+> ile aynı oturumda sorulmalı çünkü ikisi de **satılabilirlik ↔ teslim edilebilirlik**
+> ekseninde.
 
