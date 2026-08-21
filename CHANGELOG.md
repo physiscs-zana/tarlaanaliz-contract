@@ -7,6 +7,86 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.8.0] - 2026-08-21 — İş "başladı" sinyali + analiz türü yüzeyinin kanoniğe hizalanması
+
+> **MINOR.** Yeni bir şema eklendi, hiçbir şema kaldırılmadı, hiçbir alan zorunlu
+> hâle gelmedi. `breaking_change_detector.py --old v7.7.2 --new .` → **0 kırıcı,
+> 1 kırıcı-olmayan** (şema eklendi).
+
+### Neden bu sürüm var
+
+`analysis_jobs` durum makinesi `complete()`'i **yalnız PROCESSING'den** kabul ediyor,
+ama üretimde bir işi PROCESSING'e çekecek **hiçbir üretici yoktu** — worker platforma
+yalnız `analysis_results`, `expert_review_queue` ve `rollback.completed` yayınlıyor,
+*"iş başladı"* sinyali **hiç yok**. Sonuç ölçüldü (2026-08-20 üretim): 3 iş PENDING,
+ikisinin sonucu **var**, üçüncüsü gerçekten 2 gündür bekliyor — ve kuyruğa bakarak
+bu ikisini ayırt etmenin **yolu yok**.
+
+### Added
+
+- **`schemas/worker/analysis_job_started.v1.schema.json`** — Worker → Platform tek yönlü
+  runtime sinyali. `analysis_job_started` direct kuyruğuna yayınlanır (aynı yol:
+  `exchange=""`), yani KR-070/KR-071 sınırı korunur: worker **HTTP geri çağrı yapmaz**.
+  PII taşımaz (`field_id` yok). `attempt` alanı RabbitMQ yeniden teslimini görünür kılar
+  — tüketici **aynı iş için tekrarlanan başlangıcı hata saymamalıdır**.
+- `docs/examples/analysis_job_started.example.json` + README girişi.
+
+### Fixed — ölçülmüş sapma: OpenAPI, sözleşmenin KENDİ enum'unun dışındaydı
+
+- **`api/components/schemas.yaml → AnalysisType`: 7 → 11 değer.** Bileşen kanonik
+  `enums/analysis_type.enum.v1.json`'ın **bayat bir kesitiydi**; `THERMAL_STRESS`,
+  `SALT_STRESS`, `BENEFICIAL`, `GENERAL` eksikti. Enum değeri **eklemek** kırıcı değildir
+  (`docs/versioning_policy.md`).
+  ⚠️ Bu sapmayı ölçen **hiçbir kapı yoktu** ve bu mutasyonla kanıtlandı: kanonik
+  yapının kopyasına uydurma bir değer (`UYDURMA_KATMAN_ZZZ`) eklendiğinde
+  `tools/validate.py` **0 hata** verdi ve tüm süitte yalnız **agrega checksum** testi
+  kırmızıya döndü — meşru bir düzeltme de **aynı tek testi** kırmızıya döndürüyor.
+  Yani o kapı *"dosya değişti"* diyor, *"değer yanlış"* demiyor. `validate.py` `api/`
+  ağacını yalnız **PII kapsamında** geziyor.
+
+### Tightened — `CreateMissionRequest.analysis_types` artık `uniqueItems: true`
+
+Kanonik **wire** şeması `analysis_job.v1` bunu **zaten** taşıyordu; istek yüzeyi
+taşımıyordu. Aynı ekseni tarif eden iki sözleşme yüzeyi farklı sıkılıktaydı ve sonucu
+şuydu: `["DISEASE","DISEASE"]` gönderen bir istemci **kabul edilir**, ama o istekten
+doğan iş **wire şemasında düşerdi** — hata, girildiği yerden çok uzakta patlıyordu.
+
+> **Sürüm sınıflandırması — dürüst kayıt.** Kısıt **sıkılaştırmak** politikanın MAJOR
+> listesinde (alan kaldırma/yeniden adlandırma, tip değişimi, enum kaldırma, `required`
+> ekleme) **yok**; MINOR listesinde de açıkça yok. Belirsizliği gizlemek yerine yazıyoruz:
+> MINOR sayıldı, çünkü **uçtan uca çalışmış hiçbir istemci** etkilenemez — mükerrer değer
+> gönderen bir istemcinin işi zaten wire şemasında reddediliyordu. Aksi bir yorum
+> gelirse bu satır MAJOR'a çevrilmelidir.
+
+### Fixed — BOŞTA KOŞAN kapı gerçek kapıya çevrildi
+
+`test_mission_example_analysis_types_are_kr002` **hiçbir şey ölçmüyordu**: baktığı
+`mission.example.json` içinde `analysis_types` anahtarı **yok** (kanonik `mission.v1`
+böyle bir alan tanımlamıyor), `example.get(..., [])` boş dönüyor, döngü hiç dönmüyordu.
+Kardeşi de **bayat 7'lik** kümeye çapalanmıştı ve `GENERAL` taşıyan örnek kapsam
+**dışındaydı** — yani kapı, **dar olduğu için** yeşildi.
+
+İkisi tek kapıya indirildi: kanonik enum **dosyadan** okunur (teste kopyalanmaz),
+`analysis_types` taşıyan **her** örnek gezilir, **sayaç kilidi** vardır (gezilen < 2 →
+kırmızı) ve ayrı bir **ayırt edicilik kontrolü** "her şeyi kabul eden" bir mutasyonu
+öldürür.
+
+### Bilinçli olarak YAPILMAYAN (sessiz borç değil — kayda geçirildi)
+
+- **Kanonik katman sayısı çelişkisi ÇÖZÜLMEDİ.** Aynı depo *"kaç katman?"* sorusuna
+  **dört** ayrı cevap veriyor: **11** (enum, testle kilitli) · **10** (enum'un iç ad/eşleme
+  blokları — `GENERAL` orada yok) · **8** (SSOT metni KR-002/KR-064 tabloları) · **7**
+  (bu sürümde 11'e çekilen OpenAPI kesiti + hâlâ duran açıklama metinleri).
+  `CLAUDE.md` §4 *"çelişkide SSOT metni kazanır"* diyor; harfiyen uygulanırsa enum'un
+  **üç** değeri (`SALT_STRESS`, `BENEFICIAL`, `GENERAL`) gayrimeşru olur ve bu **kırıcı**
+  bir karardır. **İnsan kararı bekliyor** — bu sürüm o kararı vermez, yalnız yüzeyleri
+  bugünkü kanonik enum'a hizalar.
+- **`KR-064` tablosundaki `N_STRESS` kodu** kanonik enum'da yok (`NITROGEN_STRESS`).
+  Platform veritabanı göçü yeniden adlandırmayı 2026-04-04'te zaten yapmış. SSOT metnini
+  düzeltmek yukarıdaki karara bağlı, o yüzden bu sürümde **dokunulmadı**.
+
+---
+
 ## [7.7.2] - 2026-08-11 — Aynı kusur KARDEŞ DOSYADA da vardı: sınıfı kapattığımı sanmıştım
 
 > **PATCH.** Sözleşme yüzeyi değişmedi; `schemas/` ve `enums/` ağaçlarına dokunulmadı.
@@ -682,7 +762,7 @@ için **%51**. Test tablosunun *"tam liste"* olmadığı da yazıldı (43 dosya)
 Yukarıdaki tur kanonikte 27 düğüme sızma politikası ekledi. Öz-denetimde şunu ölçtüm:
 
 ```
-tools/propagate_vendored.py --check  ->  "Bekleyen yayılım YOK" (exit 0)
+tools/propagate_vendored.py           ->  "Bekleyen yayılım YOK" (exit 0; `--apply` verilmedikçe salt-okur)
 tests/test_vendored_parity.py        ->  185 passed
 elle ölçüm                           ->  5 SAPMA (kanonik kapalı, vendored beyansız)
 ```

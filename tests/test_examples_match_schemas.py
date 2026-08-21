@@ -73,6 +73,7 @@ class TestExamplesValidation:
         'analysis_result_with_yield.example.json': 'worker/analysis_result.v1.schema.json',
         'analysis_result_worker.example.json': 'worker/analysis_result.v1.schema.json',
         'analysis_job_worker.example.json': 'worker/analysis_job.v1.schema.json',
+        'analysis_job_started.example.json': 'worker/analysis_job_started.v1.schema.json',
         'expert_feedback.example.json': 'worker/expert_feedback.v1.schema.json',
         'expert_review_queue.example.json': 'worker/expert_review_queue.v1.schema.json',
         'analysis_review_requested.example.json': 'events/analysis_review_requested.v1.schema.json',
@@ -165,32 +166,74 @@ class TestExamplesValidation:
         assert example['crop_type'] in gap_crops, \
             f"Example must use GAP crop, got: {example['crop_type']}"
     
-    def test_mission_example_analysis_types_are_kr002(self, examples_dir: Path):
-        """Test mission example uses KR-002 analysis types"""
-        example = self.load_example(examples_dir / "mission.example.json")
-        
-        kr002_types = {
-            'HEALTH', 'DISEASE', 'PEST', 'FUNGUS',
-            'WEED', 'WATER_STRESS', 'NITROGEN_STRESS'
-        }
-        
-        for analysis_type in example.get('analysis_types', []):
-            assert analysis_type in kr002_types, \
-                f"Example must use KR-002 analysis type, got: {analysis_type}"
-    
-    def test_analysis_job_example_has_kr002_types(self, examples_dir: Path):
-        """Test analysis job example uses KR-002 types"""
-        example = self.load_example(examples_dir / "analysis_job.example.json")
-        
-        kr002_types = {
-            'HEALTH', 'DISEASE', 'PEST', 'FUNGUS',
-            'WEED', 'WATER_STRESS', 'NITROGEN_STRESS'
-        }
-        
-        for analysis_type in example.get('analysis_types', []):
-            assert analysis_type in kr002_types, \
-                f"Job example must use KR-002 type, got: {analysis_type}"
-    
+    # ------------------------------------------------------------------
+    # 2026-08-21: ustteki IKI test BOSTA KOSUYORDU. Olculdu:
+    #   * `mission.example.json` icinde `analysis_types` anahtari YOK
+    #     (kanonik `mission.v1` boyle bir alan tanimlamiyor, `unevaluatedProperties:
+    #     false`) -> `example.get(..., [])` bos donuyor, dongu hic donmuyor,
+    #     test yesil kaliyordu. Sifir sey olcen bir kapi, kapisizliktan kotudur.
+    #   * Kardesi GERCEKTEN donuyordu ama yalniz TEK dosyaya bakiyordu ve BAYAT
+    #     bir 7'lik kumeye capalanmisti; `analysis_job_worker.example.json`
+    #     `GENERAL` tasiyor ve kapsam DISINDAYDI -> kapsam bir satir genisletilse
+    #     kapi kirmizi donerdi. Yani kapi, dar oldugu icin yesildi.
+    #   * Ayni 7'lik kume IKI testte kopyalanmisti; iki kopya kural, sapan kuraldir.
+    # Yerine: kanonik enum DOSYASINDAN okuyan, `analysis_types` tasiyan HER ornegi
+    # gezen, sayac kilitli tek kapi + ayirt edicilik kontrolu.
+    # ------------------------------------------------------------------
+
+    def _canonical_analysis_types(self, base_dir: Path) -> set:
+        """Kanonik kume TEK yerden okunur - teste KOPYALANMAZ."""
+        enum_file = base_dir / "enums" / "analysis_type.enum.v1.json"
+        assert enum_file.exists(), f"kanonik enum yok: {enum_file}"
+        with open(enum_file, "r", encoding="utf-8") as handle:
+            return set(json.load(handle)["enum"])
+
+    def test_every_example_analysis_type_is_canonical(
+        self, examples_dir: Path, base_dir: Path
+    ):
+        """`analysis_types` tasiyan HER ornek kanonik enum icinde kalmali.
+
+        SAYAC KILIDI: gezilen/gorulen sifirsa kapi KIRMIZI verir - eski halinin
+        sessizce bos donmesi tam olarak bu yuzden fark edilmemisti.
+        """
+        canonical = self._canonical_analysis_types(base_dir)
+        assert len(canonical) >= 8, f"kanonik enum beklenmedik sekilde kucuk: {canonical}"
+
+        gezilen = 0
+        gorulen = 0
+        for example_file in sorted(examples_dir.glob("*.json")):
+            example = self.load_example(example_file)
+            if not isinstance(example, dict):
+                continue
+            degerler = example.get("analysis_types")
+            if not isinstance(degerler, list):
+                continue
+            gezilen += 1
+            for analysis_type in degerler:
+                gorulen += 1
+                assert analysis_type in canonical, (
+                    f"{example_file.name}: `{analysis_type}` kanonik enum'da YOK. "
+                    f"Kanonik kume: {sorted(canonical)}"
+                )
+
+        assert gezilen >= 2, (
+            f"`analysis_types` tasiyan yalniz {gezilen} ornek gezildi - kapi "
+            "kapsamini yitirmis olabilir (eski hali BOSTA kosuyordu)."
+        )
+        assert gorulen > 0, "hicbir analiz turu gorulmedi - kapi bosta kosuyor"
+
+    def test_canonical_set_gate_discriminates(self, base_dir: Path):
+        """AYIRT EDICILIK KONTROLU - tek yonlu iddiaya karsi.
+
+        Ustteki test yalniz "kotu deger YOK" diyor. Her seyi kabul eden bir
+        mutasyon (or. kumeyi tum dizelerle doldurmak) ondan YESIL gecerdi.
+        Bu kontrol kumenin mesru bir degeri KABUL, uydurma bir degeri REDDET
+        ettigini ayri ayri gosterir.
+        """
+        canonical = self._canonical_analysis_types(base_dir)
+        assert "DISEASE" in canonical, "mesru deger kumede yok - kapi cok dar"
+        assert "UYDURMA_KATMAN_ZZZ" not in canonical, "uydurma deger kabul edildi - kapi kor"
+
     def test_analysis_result_example_has_map_layers(self, examples_dir: Path):
         """Test analysis result example has map layers (KR-002)"""
         example = self.load_example(examples_dir / "analysis_result.example.json")

@@ -38,6 +38,11 @@ components:
     
     AnalysisType:
       type: string
+      # 2026-08-21: 7 -> 11. Olculdu: bu bilesen kanonik enum'un BAYAT bir kesitiydi
+      # (THERMAL_STRESS / SALT_STRESS / BENEFICIAL / GENERAL eksikti) ve sapmayi
+      # olcen HICBIR kapi yoktu - `validate.py` `api/` agacini yalniz PII kapsaminda
+      # geziyor. Enum degeri EKLEMEK kirici degildir (docs/versioning_policy.md:140).
+      # Kaynak tek yerdedir: enums/analysis_type.enum.v1.json (11 deger, testle kilitli).
       enum:
         - HEALTH
         - DISEASE
@@ -46,7 +51,11 @@ components:
         - WEED
         - WATER_STRESS
         - NITROGEN_STRESS
-      description: "Analysis type (reference enums/analysis_type.enum.v1.json - KR-002: 7 map layers)"
+        - THERMAL_STRESS
+        - SALT_STRESS
+        - BENEFICIAL
+        - GENERAL
+      description: "Analysis type - canonical set, mirrors enums/analysis_type.enum.v1.json (11 codes). NOTE: enum membership is NOT producibility; the enum file's bandRequirements/availability block marks WATER_STRESS proxy_only, THERMAL_STRESS requires_thermal_payload and BENEFICIAL not-yet-emittable."
     
     Role:
       type: string
@@ -259,6 +268,10 @@ components:
           items:
             $ref: '#/components/schemas/AnalysisType'
           minItems: 1
+          # `uniqueItems` 2026-08-21'de eklendi: kanonik `analysis_job.v1` bunu ZATEN
+          # tasiyordu, bu yuzey tasimiyordu - ayni ekseni tarif eden iki sozlesme
+          # yuzeyi farkli sikiliktaydi. Tekrarli katman istemek anlamsizdir.
+          uniqueItems: true
           example: ["HEALTH", "DISEASE", "PEST"]
         scheduled_date:
           type: string
