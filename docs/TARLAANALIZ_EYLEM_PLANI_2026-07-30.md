@@ -3615,7 +3615,7 @@ mandalıyla korunuyor; yeni bir tahmin yolu yazılırsa CI kırmızı verir.
 | PROCESSING'e nasıl geçilecek? | **Worker "iş başladı" olayı yayınlasın** |
 | Diğer 6 mahsul? | **Hepsine fıstıkla aynı 4 katman** |
 
-### Merge edilen 6 PR
+### Merge edilen PR'lar (ölçüm: `gh pr list --state merged`)
 
 | Depo | PR | Ne |
 |---|---|---|
@@ -3624,6 +3624,13 @@ mandalıyla korunuyor; yeni bir tahmin yolu yazılırsa CI kırmızı verir.
 | edge | #81 | pin 7.8.0 (saf pin; edge şema baytları değişmedi — ölçüldü) |
 | platform | #455 | `analysis_jobs.status` **gerçekten ilerliyor** · contract v7.8.0 pini |
 | platform | #456 | sevk edilen katmanlar **artık GENERAL değil** — paket ∩ üretilebilirlik |
+| contract | #110 | devir notu + bu bölüm |
+| worker | #246 | **worker üretime bağlanabiliyor** — eksik override dosyası git'e alındı + kapısı |
+| worker | #247 | öz-denetim: yanlış ölçüme dayanan gerekçe + kapının 4 kaçış yolu kapatıldı |
+| platform | #457 | CLAUDE.md'deki satır numaralı atıflar kaldırıldı (5'i zaten bayattı) |
+
+⚠️ Bu tablo bir kez **"6 PR"** diye yazıldı ve altında 5 satır vardı; çürütme turu
+ölçüp düzeltti. **Sayıyı komuttan alın**, elle saymayın.
 
 ### 🔴 "Merge edildi" ≠ "dağıtıldı" ≠ "çalışıyor"
 
@@ -3639,17 +3646,20 @@ canlıda doğrulanabilir.
    `bookable: true` diyor; model kaydında `cherry_*` **tek giriş yok**. Yeni kapı
    bunu görünür kılıyor: kiraz için sevk **fail-closed** kesiliyor ve dört katmanın
    dördü de `MODEL_YOK` gerekçesiyle kaydediliyor. **Ürün kararı bekliyor.**
-2. **WHEAT / SUNFLOWER çelişkili:** modelleri VAR ve `bookable: true` ama canlı fiyat
-   kapsamında **yoklar** (KR-015 ile Tarla kapsamı dışına alınmışlar). Çözücü
-   üretilebilirliğe düşüyor ve `PAKET_TANIMSIZ_URETILEBILIRLIGE_DUSULDU` yazıyor —
-   yani kullanılabilirlik korunuyor ama çelişki kayda geçiyor.
+2. **WHEAT çelişkili:** modeli VAR ve `bookable: true` ama canlı fiyat kapsamında
+   **yok** (KR-015 ile Tarla kapsamı dışına alınmış). Çözücü üretilebilirliğe
+   düşüyor ve `PAKET_TANIMSIZ_URETILEBILIRLIGE_DUSULDU` yazıyor — kullanılabilirlik
+   korunuyor, çelişki kayda geçiyor.
+   ⛔ **SUNFLOWER bu cümleye YANLIŞ eklenmişti.** Ölçüldü: `bookable: false`
+   (`stage1: research`). Sipariş alınmıyor, çelişki yok. İki mahsulü tek cümlede
+   birleştirmek ölçülmemiş bir genellemeydi.
 3. **Satılan ≠ koşturulabilen, artık ölçülü:** fıstıkta 4 satılıyor, **1** koşuyor.
 
 ### Bu turda AÇIKÇA yapılmayanlar (sessiz borç değil)
 
 | # | Kalem | Neden |
 |---|---|---|
-| 1 | **Dağıtım** | Yapılmadı. `deploy-staging.yml` elle tetiklenir; üretim dağıtımı ayrı bir karardır. |
+| 1 | **Dağıtım** | Yapılmadı. `deploy-staging.yml` elle tetiklenir; üretim dağıtımı ayrı bir karardır. 🟢 **Worker AYRI**: dağıtılmadı ama **üretim broker'ına tünelle bağlandı** (PR #246) — `analysis_jobs` tüketici 0→1. Üretim sunucusunda worker KOŞAMAZ (ölçüldü: `sse4_2`/`avx` yok, GPU yok). |
 | 2 | **Fan-out** (tür başına ayrı çıkarım) | Birleştirme semantiği (tespit harmanı, `confidence` indirgemesi, çelişen `result_mode`) **kodda yok** ve tasarlanması bir ÜRÜN kararı. Bugün etkisi 0: platform tek üretilebilir tür sevk ediyor. Kırpma artık `ANALYSIS_TYPE_NOT_RUN` koduyla **görünür**. |
 | 3 | **`analysis_type` adının 7 anlamı** | Ölçüldü: platform'da 7 ayrı şeye işaret ediyor (4 DB kolonu, 6 farklı sabit). Bu turda **katman ekseni** ayrıldı (`analysis_types`), ama `analysis_jobs.analysis_type` → `processing_depth` ve `missions.analysis_type` yeniden adlandırmaları **yapılmadı** — göç + ORM + arayüz işi, ayrı tur. |
 | 4 | **SSOT metni ↔ enum çelişkisi** | "Kaç katman?" sorusuna depo **dört** ayrı cevap veriyor (11 enum · 10 iç eşleme · 8 SSOT metni · 7 eski OpenAPI kesiti). Bu turda OpenAPI 11'e çekildi; **SSOT metnini değiştirmek KIRICI bir karardır** ve insan kararı bekliyor. |
