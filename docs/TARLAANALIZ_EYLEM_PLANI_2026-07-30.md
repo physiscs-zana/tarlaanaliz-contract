@@ -3664,6 +3664,60 @@ mi — **kırıcı**, insan kararı) · eski geri düşüş yolu · ölü `check
 ikisi de tam o kapının sınıfı. Platform + edge'e taşımak, sınıfın tekrarını
 engelleyen **tek yapısal önlemdir**.
 
+### 🟢 YEREL UÇTAN UCA KOŞUM (2026-08-21) — zincir **İLK KEZ AKTI**
+
+> Ürün sahibinin kararı: *"önce yerelde kanıtla"*. Gerekçe ölçülmüştü — üretimde
+> `analysis_job_started` kuyruğu **YOK** (`404 NOT_FOUND`), yani üretim 7.8.0 öncesi
+> kodu koşuyor ve durum zinciri orada **görünemezdi**. Bağımsız kanıt: 7.8.0
+> tüketicisi açılışta o kuyruğu *declare eder*; kuyruk hiç doğmamış.
+
+**Yerel yığın önce ONARILDI (Ö-2):** backend 381 başarısız sağlık kontrolüyle ölüydü.
+Kök neden ölçüldü ve **teşhis bir kez düzeltildi**: kapı `/app/contracts/…` değil
+**`/app/CONTRACTS_VERSION.md`** okuyor (`main.py:117` → `contracts_base.parent` = `/app`).
+`src/` mount'lu (taze), platformun kök dosyaları imaja gömülü (2026-08-13, `7.7.2`).
+Çözüm yama değil, **tazelik simetrisi**: üç mount birlikte
+(`contracts/` + `CONTRACTS_SHA256.txt` + `CONTRACTS_VERSION.md`).
+Sonuç: `contracts_integrity_verified checked=98` · `contract_orchestration_guard_wired
+pinned='7.8.0'` · nginx `200` · login ucu `422` (uç VAR kanıtı).
+
+**Kanıtlanan halkalar** (iki koşum, `analysis_jobs` kuyruğuna kanonik
+`build_analysis_job_v1` + `publish_analysis_job` ile — elle alan uydurulmadı):
+
+| Halka | Kanıt |
+|---|---|
+| ① Katmanlar **`GENERAL` değil** | `ANALIZ_PAKETI.TESLIM_EDILEMEYEN crop=PISTACHIO satilan=[HEALTH,DISEASE,PEST,FUNGUS] sevk=[DISEASE] edilemeyen=3×MODEL_YOK` → mesajda `analysis_types: ['DISEASE']` |
+| ② PENDING → **PROCESSING** | iş `ab990df4`: worker `analysis_job_started` yayınladı → `WORKER_BRIDGE.JOB_STARTED` → `started_at=14:34:28` **ilk kez doldu** |
+| ② → **COMPLETED** | iş `01d6f7fc`: `completed_at` dolu, `duration_ms=36103`, `output_manifest` yazıldı |
+| Bilinçli `PENDING→COMPLETED` düşüşü + uyarısı | `ANALYSIS_JOB.BASLADI_SINYALI_KAYIP … started_at BOŞ kaldı (kanıt kaydın kendisinde)` — tasarlandığı gibi |
+| Worker hattı | `pipeline_completed duration_ms=30447 result_mode=INDICES_ONLY confidence=0.311`, 4 katman + **karo kırpıntıları** S3'e |
+
+#### 🔴 Bu koşumun ÇIKARDIĞI İKİ YENİ KUSUR
+
+| # | Kusur | Kanıt ve neden önemli |
+|---|---|---|
+| **Y-1** 🔴 | **`IDEMPOTENT_SKIP` işin COMPLETED geçişini ATLIYOR.** `worker_bridge_consumer.py:1618` çıplak `return`; COMPLETED geçişi `:1782`, yani **sonra**. Görev `PENDING_REVIEW`/`DONE`/`EXPERT_REJECTED` ise sonuç mesajı tümden atlanır ve **iş sonsuza kadar PROCESSING'de kalır**. | Canlıda ölçüldü: iş `ab990df4` analizi 30 sn'de BİTTİ, sonuç S3'e yazıldı, ama iş hâlâ `PROCESSING`. **Tasarımla erişilebilir:** admin sevk ucu *"ikinci veri seti bir arıza DEĞİL, meşru bir iş durumudur"* diyor (REFLY/yeniden kalibrasyon) ve KR-019 reddi görevi yeniden analize yollar. Aynı görevin İKİNCİ işi bu delikten düşer. ⚠️ Bu, ②'nin kapattığı kusurun **bir adım sonraki** hâlidir. |
+| **Y-2** 🟠 | **"İş başladı" sinyali BOŞTA KALMIŞ bağlantıda ölüyor.** `publisher.publish()` → `queue_declare` → `StreamLostError: Connection reset by peer`. Best-effort tasarım işi kurtardı (doğru), ama PROCESSING sinyali kayboldu. | 2 sevkin **1'inde** oldu (14:38:11). Worker'ın normal hâli *boşta beklemek* olduğu için bu, istisna değil **olağan** yol. Yani yeni kurulan sinyal üretimde sık sık kayıp olacak ve *"kuyrukta mı, koşuyor mu"* ayrımı yine bulanıklaşacak. Sonraki yayınlar başarılı → bağlantı kendini toparlıyor, eksik olan **ilk çağrıda yeniden deneme**. |
+
+#### Bu koşumun KANITLAMADIĞI (sessiz borç değil, beyan)
+
+* **Ingest → AV1 → AV2 → sevk** üst zinciri koşulmadı. Sevk kapısı yalnız
+  `CALIBRATED_SCANNED_CENTER_OK` kabul ediyor (doğru davranış); yereldeki iki veri seti
+  **analiz sonrası** durumda. Taze veri seti yerel ingest ister ve o **üç ayrı
+  yapılandırma** ister: yerel nginx'te 8443/istemci-sertifikası sonlandırması yok ·
+  `client.pem` parmak izi (`7cccee5c…`) backend'de kayıtlı olanla (`3bb10fc6…`)
+  **uyuşmuyor** · mTLS başlıklarını vekil üretmeli.
+* **Üretim ölçümleri yapılmadı** (SSH bu oturumda kesildi). Üretim hakkındaki tek
+  ölçüm kuyruk sondasıdır: `analysis_jobs` tüketici 1 → 0 (tünel düştü),
+  `analysis_job_started` **yok**.
+* **Yerel veri değişti (beyan):** pozitif kontrol için görev `591ba3da` elle
+  `DONE → ANALYZING` yapıldı; zincir onu kanonik olarak `PENDING_REVIEW`'a taşıdı.
+  Yalnız YEREL veritabanı; üretim verisine dokunulmadı.
+* **Tünel düştü:** oturum başında ayaktaydı (`ssh -f -N`, 12:20), sonra kayboldu ve
+  worker **32 kez** yeniden başladı — devir notundaki *kırılganlık #1*'in canlı
+  gerçekleşmesi.
+
+---
+
 ### 🔬 ÖZ-DENETİM (2026-08-21, kapanıştan 22 dk sonra) — 5 bulgu, hepsi ÖLÇÜLDÜ
 
 > Ürün sahibi kapanıştan hemen sonra §14.16/§14.17 turunun öz-denetimini istedi.
