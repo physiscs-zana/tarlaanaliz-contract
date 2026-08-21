@@ -22,7 +22,92 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-20, **on yedinci oturum: DK-48 uçtan uca · KESTİRME YOK kuralı + kapısı · uzman görüntülerinde alan süzgeci · kural↔kapı envanteri**)
+## 0.A EN GÜNCEL — (2026-08-21, **on sekizinci oturum: ÖNCELİK ① ve ② UÇTAN UCA UYGULANDI — contract v7.8.0**)
+
+> **6 PR merge edildi:** contract #109 (v7.8.0 + tag) · worker #245 · edge #81 ·
+> platform #455 · platform #456. Dört depo da varsayılan dalında temiz ve **7.8.0
+> hizalı** (I-1 ölçüldü).
+>
+> 🔴 **"Merge edildi" ≠ "dağıtıldı" ≠ "çalışıyor."** Bu turun **hiçbiri** üretime
+> dağıtılmadı. Üretim hâlâ eski kodu koşuyor: `analysis_jobs` PENDING'de duruyor,
+> sevkler `GENERAL` göndermeye devam ediyor. Ayrıca **worker hiçbir yerde koşmuyor**
+> — "iş başladı" sinyali bugün üretilmiyor bile.
+
+### Ürün sahibinin verdiği beş karar
+
+fıstıkta **4 katman** (sözleşme örneği) · kaynak **paket**, kapı **üretilebilirlik** ·
+**diziye geç** · PROCESSING'i **worker'ın "iş başladı" olayı** açsın · diğer 6 mahsule
+de **aynı 4 katman**.
+
+### ② `analysis_jobs.status` — ARTIK İLERLİYOR
+
+Kusur (üretimde ölçülmüştü): durum makinesi yazılmış ama **hiç çağrılmıyordu**;
+3 iş PENDING, **ikisinin sonucu vardı**. Kök neden: bir işi PROCESSING'e çekecek
+**üretici yoktu**.
+
+* contract'a `analysis_job_started.v1` eklendi (worker → platform, direct kuyruk).
+* worker `_handle_message`'ın **başında** yayınlıyor; **sırası testle kilitli**.
+* platform yeni kuyruğu tüketiyor (PENDING→PROCESSING) ve sonucu yazan **aynı
+  transaction** içinde COMPLETED'a çekiyor; FAILED dalı mission satırı olmasa bile
+  işaretliyor (eski kod yalnız mission güncellenen dalda commit ediyordu).
+* Geçiş kuralı **TEK KAYNAK** (`analysis_job.py::IZINLI_GECISLER`); tüketici kopya
+  taşımıyor ve bunu bir **anti-drift testi** kilitliyor.
+
+🔴 **Bilinçli davranış değişikliği:** `PENDING → COMPLETED` artık izinli. "Başladı"
+sinyali best-effort olduğu için, katı kural **kaybolan bir sinyalde** işi sonsuza
+kadar PENDING'de bırakırdı — yani düzeltilen kusuru geri getirirdi. `started_at IS
+NULL` kanıt olarak kalıyor ve tüketici uyarı loglıyor.
+
+### ① Sevk edilen katmanlar — ARTIK `GENERAL` DEĞİL
+
+Kusur: `analysis_type` bir **Python varsayılan parametresiydi**; üretimdeki tek
+çağıran onu hiç vermiyordu → her iş `["GENERAL"]` taşıyordu (katman kaydında yok,
+uzman etiketi yok, worker `pistachio_general_v1` arayıp **sessizce** boş sözlüğe
+düşüyordu — 48 kombinasyonun 41'i ıska).
+
+Üç süzgeç, her elemenin **gerekçesi** var: paket (satılan) → üretilebilirlik →
+worker'ın kabul yüzeyi. Karar `analysis_jobs.input_manifest`'e yazılıyor (şemada
+2026'dan beri var, **hiç yazılmıyordu**).
+
+Canlı veriyle ölçülen sonuç:
+
+```
+PISTACHIO  sevk=[DISEASE]        edilemeyen=HEALTH/PEST/FUNGUS (MODEL_YOK)
+COTTON     sevk=[DISEASE, PEST]  edilemeyen=HEALTH/FUNGUS
+CORN/GRAPE sevk=[DISEASE]
+CHERRY     sevk=[]  ← DÖRT katman da MODEL_YOK
+```
+
+### 🔴 Ölçülmüş ÜRÜN bulguları (kod değil, veri çelişkisi)
+
+1. **KİRAZ sipariş edilebilir ama hiçbir modeli yok** → sevk fail-closed kesiliyor.
+   **Ürün kararı bekliyor.** Bir test bu gerçeği kilitliyor: model eklendiği gün
+   kırmızı döner, yani bulgu sessizce eskimez.
+2. **WHEAT/SUNFLOWER**: modelleri var, `bookable: true`, ama fiyat kapsamında yoklar.
+   Çözücü üretilebilirliğe düşüyor ve bunu **kaydediyor**.
+
+### Yol boyunca çıkan üç ölçülmüş tuzak
+
+1. **`data/pricing_config.json` gitignore'da** → CI'da ve **taze üretim
+   kapsayıcısında yok**. Tohum sunum katmanında yaşıyordu; uygulama katmanına
+   taşındı. CI bunu yakaladı ve düzeltme **CI koşulu yerelde yeniden üretilerek**
+   doğrulandı (dosya geçici kaldırıldı → 15/15 yeşil).
+2. **Windows yol tuzağı:** `Path("/app/data/x.json").is_absolute()` Windows'ta
+   **False** → yol sürücü köküne çevriliyor ve bu makinede **gerçekten var olan
+   bayat** bir dosya okunuyordu. Docker mutlak yolu zaten gereksizdi, kaldırıldı.
+3. **Kendi kusurum:** worker'da gerekçe kodlarını `al.escalation_reasons`
+   **ATAMASINDAN önce** yazmıştım; o satır atamadır, ek değil → eskalasyon varsa
+   kodlarım **sessizce siliniyordu**. "Sessiz düşürme"yi düzeltirken aynı kusuru
+   üretmişim; testi yazmasam görmezdim.
+
+### AÇIKÇA yapılmayanlar — eylem planı **§14.16** tablosunda (5 kalem)
+
+Dağıtım · fan-out · `analysis_type` adının 7 anlamının ayrıştırılması ·
+SSOT metni ↔ enum çelişkisi (kırıcı, insan kararı) · eski geri düşüş yolu.
+
+---
+
+## 0.A-n ÖNCEKİ TUR — (2026-08-20, **on yedinci oturum: DK-48 uçtan uca · KESTİRME YOK kuralı + kapısı · uzman görüntülerinde alan süzgeci · kural↔kapı envanteri**)
 
 > **Bugün açılan PR'lar (ölçüldü, `gh pr list`):** platform **10** (#445–#454) · contract
 > **7** (#100–#106) · worker **3** (#242–#244) · edge **3** (#78–#80). Bunlardan **dördü

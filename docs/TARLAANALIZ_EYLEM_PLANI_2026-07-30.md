@@ -3599,6 +3599,64 @@ mandalıyla korunuyor; yeni bir tahmin yolu yazılırsa CI kırmızı verir.
 
 ---
 
+## 14.16 ✅ ① ve ② UYGULANDI (2026-08-21) — *"sonraki oturum yerine bu oturumda"*
+
+> Ürün sahibi §14.15'i okuyup **"sonraki oturum yerine bu oturumda yapmaya ne dersin?"**
+> dedi ve dört kararı verdi. İkisi de aynı oturumda uçtan uca uygulandı, merge edildi.
+> §14.15 aşağıda **tarihsel kayıt** olarak duruyor (ölçümleri hâlâ geçerli).
+
+### Ürün sahibinin dört kararı
+
+| Soru | Karar |
+|---|---|
+| Fıstıkta hangi katmanlar satılıyor? | **Sözleşme örneğindeki 4 katman** (HEALTH, DISEASE, PEST, FUNGUS) |
+| `analysis_types` kaynağı? | **Kaynak = paket, KAPI = üretilebilirlik** (fark "teslim edilemedi" yazılır) |
+| Tekil mi dizi mi? | **Diziye geç** |
+| PROCESSING'e nasıl geçilecek? | **Worker "iş başladı" olayı yayınlasın** |
+| Diğer 6 mahsul? | **Hepsine fıstıkla aynı 4 katman** |
+
+### Merge edilen 6 PR
+
+| Depo | PR | Ne |
+|---|---|---|
+| contract | #109 | **v7.8.0** — `analysis_job_started.v1` şeması · OpenAPI `AnalysisType` 7→11 · boşta koşan kapı gerçek kapıya · **yayımlanan komut sınıfı** (11 örnek daha bulundu) |
+| worker | #245 | "iş başladı" yayını · sonuç artık **koşan** türleri beyan ediyor · pin v7.8.0 |
+| edge | #81 | pin 7.8.0 (saf pin; edge şema baytları değişmedi — ölçüldü) |
+| platform | #455 | `analysis_jobs.status` **gerçekten ilerliyor** · contract v7.8.0 pini |
+| platform | #456 | sevk edilen katmanlar **artık GENERAL değil** — paket ∩ üretilebilirlik |
+
+### 🔴 "Merge edildi" ≠ "dağıtıldı" ≠ "çalışıyor"
+
+**Hiçbiri üretime dağıtılmadı.** Üretim hâlâ eski kodu koşuyor: `analysis_jobs`
+satırları PENDING'de duruyor ve sevkler `GENERAL` göndermeye devam ediyor.
+Ayrıca **worker hiçbir yerde koşmuyor**, yani "iş başladı" sinyali bugün
+üretilmiyor bile. Zincir ancak (a) dağıtım ve (b) worker'ın ayağa kalkmasıyla
+canlıda doğrulanabilir.
+
+### Ölçülmüş ürün bulguları (kod değil, VERİ çelişkileri)
+
+1. 🔴 **KİRAZ sipariş edilebilir ama hiçbir modeli yok.** `crop_readiness.json`
+   `bookable: true` diyor; model kaydında `cherry_*` **tek giriş yok**. Yeni kapı
+   bunu görünür kılıyor: kiraz için sevk **fail-closed** kesiliyor ve dört katmanın
+   dördü de `MODEL_YOK` gerekçesiyle kaydediliyor. **Ürün kararı bekliyor.**
+2. **WHEAT / SUNFLOWER çelişkili:** modelleri VAR ve `bookable: true` ama canlı fiyat
+   kapsamında **yoklar** (KR-015 ile Tarla kapsamı dışına alınmışlar). Çözücü
+   üretilebilirliğe düşüyor ve `PAKET_TANIMSIZ_URETILEBILIRLIGE_DUSULDU` yazıyor —
+   yani kullanılabilirlik korunuyor ama çelişki kayda geçiyor.
+3. **Satılan ≠ koşturulabilen, artık ölçülü:** fıstıkta 4 satılıyor, **1** koşuyor.
+
+### Bu turda AÇIKÇA yapılmayanlar (sessiz borç değil)
+
+| # | Kalem | Neden |
+|---|---|---|
+| 1 | **Dağıtım** | Yapılmadı. `deploy-staging.yml` elle tetiklenir; üretim dağıtımı ayrı bir karardır. |
+| 2 | **Fan-out** (tür başına ayrı çıkarım) | Birleştirme semantiği (tespit harmanı, `confidence` indirgemesi, çelişen `result_mode`) **kodda yok** ve tasarlanması bir ÜRÜN kararı. Bugün etkisi 0: platform tek üretilebilir tür sevk ediyor. Kırpma artık `ANALYSIS_TYPE_NOT_RUN` koduyla **görünür**. |
+| 3 | **`analysis_type` adının 7 anlamı** | Ölçüldü: platform'da 7 ayrı şeye işaret ediyor (4 DB kolonu, 6 farklı sabit). Bu turda **katman ekseni** ayrıldı (`analysis_types`), ama `analysis_jobs.analysis_type` → `processing_depth` ve `missions.analysis_type` yeniden adlandırmaları **yapılmadı** — göç + ORM + arayüz işi, ayrı tur. |
+| 4 | **SSOT metni ↔ enum çelişkisi** | "Kaç katman?" sorusuna depo **dört** ayrı cevap veriyor (11 enum · 10 iç eşleme · 8 SSOT metni · 7 eski OpenAPI kesiti). Bu turda OpenAPI 11'e çekildi; **SSOT metnini değiştirmek KIRICI bir karardır** ve insan kararı bekliyor. |
+| 5 | **`_map_analysis_types` geri düşüşü** | Katman taşımayan bir iş gelirse eski yola düşülüyor — ama artık **UYARIYLA**. Tümden silmek, eski kuyrukta bekleyen işleri düşürürdü. |
+
+---
+
 ## 14.15 ▶️ SONRAKİ OTURUM — **İSPATLI PLAN** (2026-08-20 kapanışında yazıldı)
 
 > **Öncelik sırası ürün sahibi tarafından verildi:** önce ①, sonra ②.
