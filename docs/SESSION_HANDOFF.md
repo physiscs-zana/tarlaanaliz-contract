@@ -24,14 +24,23 @@
 
 ## 0.A EN GÜNCEL — (2026-08-21, **on sekizinci oturum: ÖNCELİK ① ve ② UÇTAN UCA UYGULANDI — contract v7.8.0**)
 
-> **6 PR merge edildi:** contract #109 (v7.8.0 + tag) · worker #245 · edge #81 ·
-> platform #455 · platform #456. Dört depo da varsayılan dalında temiz ve **7.8.0
-> hizalı** (I-1 ölçüldü).
+> **9 PR merge edildi:** contract #109 (v7.8.0 + tag) · #110 · worker #245 · #246 ·
+> #247 · edge #81 · platform #455 · #456 · #457. Dört depo da varsayılan dalında
+> temiz ve **7.8.0 hizalı** (I-1 ölçüldü).
+>
+> ⚠️ **Bu satır bir kez YANLIŞ yazıldı:** ilk hâli "6 PR" diyordu ve altındaki
+> tablo 5 satırdı. Çürütme turu ölçüp düzeltti. Aynı turda yazılan bir sayı bile
+> tur bitmeden bayatlayabiliyor — **sayıyı komuttan alın** (`gh pr list --state merged`).
 >
 > 🔴 **"Merge edildi" ≠ "dağıtıldı" ≠ "çalışıyor."** Bu turun **hiçbiri** üretime
 > dağıtılmadı. Üretim hâlâ eski kodu koşuyor: `analysis_jobs` PENDING'de duruyor,
-> sevkler `GENERAL` göndermeye devam ediyor. Ayrıca **worker hiçbir yerde koşmuyor**
-> — "iş başladı" sinyali bugün üretilmiyor bile.
+> sevkler `GENERAL` göndermeye devam ediyor.
+>
+> 🟢 **WORKER ARTIK KOŞUYOR** (bu satır da düzeltildi — ilk hâli "hiçbir yerde
+> koşmuyor" diyordu ve tur içinde geçersizleşti). Yerel GPU makinesinde, **SSH
+> tüneliyle üretim broker'ına bağlı**: `analysis_jobs` kuyruğunda tüketici
+> **0 → 1**. Ama **iş AKMIYOR**: kuyrukta 0 mesaj, 3 iş hâlâ PENDING ve worker
+> bağlandığından beri tek satır iş logu yok. *"Bağlı"* ile *"iş akıyor"* AYRI.
 
 ### Ürün sahibinin verdiği beş karar
 
@@ -83,8 +92,12 @@ CHERRY     sevk=[]  ← DÖRT katman da MODEL_YOK
 1. **KİRAZ sipariş edilebilir ama hiçbir modeli yok** → sevk fail-closed kesiliyor.
    **Ürün kararı bekliyor.** Bir test bu gerçeği kilitliyor: model eklendiği gün
    kırmızı döner, yani bulgu sessizce eskimez.
-2. **WHEAT/SUNFLOWER**: modelleri var, `bookable: true`, ama fiyat kapsamında yoklar.
-   Çözücü üretilebilirliğe düşüyor ve bunu **kaydediyor**.
+2. **WHEAT**: modeli var ve `bookable: true` ama fiyat kapsamında **yok** →
+   çözücü üretilebilirliğe düşüyor ve **kaydediyor**.
+   ⛔ **SUNFLOWER için aynısını yazmıştım — YANLIŞ.** Ölçüldü:
+   `SUNFLOWER → bookable: false` (`stage1: research`, `data_status: critical_gap`).
+   Sipariş alınmadığı için çelişki de yok. İki mahsulü tek cümlede birleştirmek
+   ölçülmemiş bir genellemeydi.
 
 ### Yol boyunca çıkan üç ölçülmüş tuzak
 
@@ -99,6 +112,16 @@ CHERRY     sevk=[]  ← DÖRT katman da MODEL_YOK
    **ATAMASINDAN önce** yazmıştım; o satır atamadır, ek değil → eskalasyon varsa
    kodlarım **sessizce siliniyordu**. "Sessiz düşürme"yi düzeltirken aynı kusuru
    üretmişim; testi yazmasam görmezdim.
+
+### 🔴 WORKER KOŞUYOR — ama kurulumun ölçülmüş kırılganlıkları var
+
+| # | Ölçülmüş gerçek |
+|---|---|
+| 1 | **Tünelin otomatik başlatması YOK.** Worker `restart: unless-stopped`, tünel ise elle başlatılmış çıplak bir `ssh -f -N` süreci. Makine yeniden başlarsa **worker gelir, tünel gelmez** → sonsuz yeniden bağlanma. Tek giriş noktası `sim-worker-baglan.sh`. |
+| 2 | **Üretimde `analysis_job_started` kuyruğu YOK ve tüketicisi YOK** (prod backend 7.7.2 kodunu koşuyor). Worker ilk işi aldığında kuyruğu **kendisi declare edecek** ve mesajlar **tüketilmeden birikecek**. Zararsız ama görünür olmalı. |
+| 3 | **DLQ yok:** `analysis_jobs` · `ai.feedback.v1` · `rollback.request` — worker açılışta üç kez `dlq_not_configured` uyarıyor ("discarded messages are destroyed, not archived"). |
+| 4 | **İmaj 7 gün bayat.** Kod ve sözleşme pini yalnız **bind-mount** sayesinde taze; imajın kendi kopyası v7.7.2 ve `publish_job_started` içermiyor. Mount'suz çalıştırma sessizce eski davranır. |
+| 5 | **Kapsayıcı kökte ayrışmış ikizler:** `sim-worker-baglan.sh` + `sim-worker-prod.yml` izlenmiyor ve depodaki sürümlerden farklı. **Silme kullanıcı onayı bekliyor.** |
 
 ### AÇIKÇA yapılmayanlar — eylem planı **§14.16** tablosunda (5 kalem)
 
