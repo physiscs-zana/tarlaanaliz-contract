@@ -3599,6 +3599,78 @@ mandalıyla korunuyor; yeni bir tahmin yolu yazılırsa CI kırmızı verir.
 
 ---
 
+## 14.17 ▶️ SONRAKİ OTURUM — **BURADAN BAŞLA** (2026-08-21 kapanışında yazıldı)
+
+> Her satır bu turda **ölçüldü**. Tahmin yok; ölçülemeyen "ölçülmedi" diye yazılı.
+> Önceki tur §14.16'da anlatılıyor, oradaki 5 kalem hâlâ geçerli.
+
+### Bugün nerede duruyoruz — üç ayrı cümle
+
+| Cümle | Durum | Kanıt |
+|---|---|---|
+| **Merge edildi** | ✅ Dört depo `7.8.0` hizalı, temiz, CI yeşil | `gh pr list --state merged --search "merged:2026-08-21"` |
+| **Dağıtıldı** | ❌ **HAYIR.** Üretim `7.7.2` kodunu koşuyor | prod backend içinde `analysis_job_started` grep → **0**; `contracts/CONTRACTS_VERSION.md` → `7.7.2` |
+| **Çalışıyor** | 🟡 Worker **bağlı**, iş **akmıyor** | `analysis_jobs` → tüketici **1**, mesaj **0**; 3 iş hâlâ PENDING, `started_at` NULL |
+
+### 🔴 ÖNCELİK 1 — Zinciri GERÇEKTEN akıt (tek turda kanıtlanabilir)
+
+Bugün zincirin **her halkası kodda hazır** ama uçtan uca **bir kez bile
+akmadı**. Sıra önemlidir; her adım bir öncekini kanıtlar:
+
+- [ ] **1a. Platformu üretime dağıt.** Bu yapılmadan `analysis_job_started`
+      tüketicisi üretimde YOK; worker sinyali yayınlar, **kimse dinlemez** ve
+      `analysis_jobs.status` yine ilerlemez. Ölçüldü: prod backend'de o kuyruk
+      adı **hiç geçmiyor**.
+- [ ] **1b. Worker'ı bağla** — `bash tarlaanaliz-worker/scripts/sim-worker-baglan.sh`
+      (tünel + konteyner + doğrulama tek komutta). Bugün çalıştı; **tünel makine
+      yeniden başlayınca gelmez**, o yüzden her oturumda yeniden koşulur.
+- [ ] **1c. BİR iş sevk et.** Üretimdeki 3 PENDING işin **mesajı kayıp**
+      (ölçüldü: `event_outbox` `published_at` DOLU ama kuyrukta 0 mesaj ve broker
+      2026-08-18'den beri yeniden başlamamış). Worker'ın sonradan bağlanması o
+      mesajları geri getirmez → **yeni bir sevk şart**.
+      ⚠️ Bu üretim verisine yazar; **ürün sahibinin onayıyla** yapılmalı.
+- [ ] **1d. Ölç:** `analysis_jobs.status` PENDING → PROCESSING → COMPLETED,
+      `started_at`/`completed_at`/`duration_ms`/`output_manifest` dolu mu?
+      `input_manifest` satılan/sevk edilen/teslim edilemeyen üçlüsünü taşıyor mu?
+
+### 🔴 ÖNCELİK 2 — Ürün kararı: KİRAZ
+
+`crop_readiness.json` **`bookable: true`** diyor ama model kaydında `cherry_*`
+**tek giriş yok**. Yeni kapı bunu görünür kıldı: kiraz siparişi artık
+**fail-closed** kesiliyor (dört katman da `MODEL_YOK`). İki seçenek:
+**(a)** kiraz modeli eklenir · **(b)** `bookable: false` yapılır.
+Bir test bu gerçeği kilitliyor — model geldiği gün kırmızı döner.
+
+### 🟠 ÖNCELİK 3 — Worker kurulumunun 5 kırılganlığı
+
+Ayrıntı ve kanıt `SESSION_HANDOFF.md` §0.A tablosunda. Özet:
+tünelin **otomatik başlatması yok** (yeniden başlatmada ~6 dk'lık sonsuz çökme
+döngüsü) · üretimde **tüketicisiz kuyruk** riski · üç kuyrukta **DLQ yok** ·
+**imaj 7 gün bayat** (tazelik yalnız bind-mount'tan) · kapsayıcı kökte
+**ayrışmış ikizler** (silme **onay** bekliyor).
+
+### 🟠 ÖNCELİK 4 — §14.16'nın 5 açık kalemi
+
+fan-out · `analysis_type` adının 7 anlamı · SSOT metni ↔ enum çelişkisi (8 mi 11
+mi — **kırıcı**, insan kararı) · eski geri düşüş yolu · ölü `check_ssot_compliance`.
+
+### 🟡 ÖNCELİK 5 — Kapı asimetrisi (kural↔kapı envanterinden)
+
+`check_doc_facts.py` **yalnız worker'da**. Bu turda platform `CLAUDE.md`'de
+**5 bayat satır atfı** ve contract'ta **11 koşmayan yayımlanmış komut** bulundu —
+ikisi de tam o kapının sınıfı. Platform + edge'e taşımak, sınıfın tekrarını
+engelleyen **tek yapısal önlemdir**.
+
+### Sonraki oturumun İLK komutu
+
+```bash
+gh pr list --repo physiscs-zana/tarlaanaliz-platform --state merged --search "merged:>=2026-08-21"
+```
+
+Sonra `SESSION_HANDOFF.md` §0.A. **Hafızadan değil, depodan oku.**
+
+---
+
 ## 14.16 ✅ ① ve ② UYGULANDI (2026-08-21) — *"sonraki oturum yerine bu oturumda"*
 
 > Ürün sahibi §14.15'i okuyup **"sonraki oturum yerine bu oturumda yapmaya ne dersin?"**
