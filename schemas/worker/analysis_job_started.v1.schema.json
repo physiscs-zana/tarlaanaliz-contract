@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api.tarlaanaliz.com/schemas/worker/analysis_job_started.v1.schema.json",
+  "title": "AnalysisJobStarted",
+  "description": "Worker → Platform runtime signal: the worker DEQUEUED a job and began processing it. Published to the direct queue `analysis_job_started` (exchange=\"\"), the same one-way path as `analysis_results` — the worker never calls the platform back over HTTP (KR-070/KR-071). WHY THIS EXISTS: the platform's analysis_jobs state machine only accepts complete() from PROCESSING, and until this signal existed nothing could ever put a job into PROCESSING — every job stayed PENDING forever, so 'queued for 2 days' and 'running right now' were indistinguishable. Deliberately PII-free: no field_id, no owner, no coordinates.",
+  "type": "object",
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "anyOf": [
+        { "pattern": "^job_[a-z0-9]{24}$" },
+        { "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" }
+      ],
+      "description": "Job identifier. Same dual form as analysis_job.v1 (worker runtime UUID, orchestration job_<24hex>) so the platform can key on it without translation."
+    },
+    "status": {
+      "type": "string",
+      "const": "PROCESSING",
+      "description": "Constant. Present so the wire is self-describing and the consumer can assert on it instead of inferring meaning from the queue name."
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the worker began processing (ISO 8601 UTC). Becomes analysis_jobs.started_at."
+    },
+    "worker_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "description": "Worker application version that picked the job up. Lets a stuck job be attributed to a specific deployed build."
+    },
+    "contracts_version": {
+      "type": "string",
+      "pattern": "^v?[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Contract set version the worker is pinned to (I-1). A start signal from a worker on an older pin is the earliest observable symptom of a version-alignment break."
+    },
+    "attempt": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "1 on first delivery, higher on RabbitMQ redelivery. The consumer MUST treat a repeated start for the same job as idempotent — a redelivered job is not an error."
+    }
+  },
+  "required": [
+    "job_id",
+    "status",
+    "started_at"
+  ],
+  "unevaluatedProperties": false,
+  "examples": [
+    {
+      "job_id": "e684c8ea-1f2b-4c3d-9a8e-7b6c5d4e3f21",
+      "status": "PROCESSING",
+      "started_at": "2026-08-21T06:15:42.331Z",
+      "worker_version": "2.0.0",
+      "contracts_version": "v7.8.0",
+      "attempt": 1
+    }
+  ]
+}

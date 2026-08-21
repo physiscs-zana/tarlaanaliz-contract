@@ -211,8 +211,15 @@ MAJOR.MINOR.PATCH
 
 Breaking change'ler otomatik tespit edilir:
 
+> ⚠️ 2026-08-21'de ölçüldü: bu belge dokuz yerde `pin_version.py --bump <x>`,
+> altı yerde `breaking_change_detector.py --from/--to`, birer yerde `--format json`
+> ve `pin_version.py --set` yayınlıyordu — **hiçbiri çalışmıyordu** (araçlar bu
+> bayrakları tanımıyor, `exit 2`). Kapı artık `tools/` altındaki **tüm** argparse
+> araçlarını kapsıyor (`tests/test_published_commands_run.py`), yani bu sınıf bir
+> daha sessizce geri gelemez.
+
 ```bash
-python tools/breaking_change_detector.py --from v1.2.0 --to HEAD
+python tools/breaking_change_detector.py --old v1.2.0 --new .
 ```
 
 **Çıktı**:
@@ -351,13 +358,13 @@ v2.0.0 (2026-03-15): user_id removed (breaking)
 
 ```bash
 # Breaking change varsa
-python tools/pin_version.py --bump major
+python tools/pin_version.py --major
 
 # Yeni feature varsa
-python tools/pin_version.py --bump minor
+python tools/pin_version.py --minor
 
 # Bug fix varsa
-python tools/pin_version.py --bump patch
+python tools/pin_version.py --patch
 ```
 
 **Output**:
@@ -817,7 +824,7 @@ Google Sheet veya GitHub Project:
 
 ```bash
 # 1. Breaking change tespit
-$ python tools/breaking_change_detector.py --from v1.5.0 --to HEAD
+$ python tools/breaking_change_detector.py --old v1.5.0 --new .
 ⚠ BREAKING: Added required field 'crop_type' in schemas/core/field.v1.schema.json
 
 # 2. Migration guide yaz
@@ -825,7 +832,7 @@ $ cat docs/migration_guides/field_v1_to_v2.md
 # [Guide content]
 
 # 3. Version bump
-$ python tools/pin_version.py --bump major
+$ python tools/pin_version.py --major
 Current: 1.5.0 → New: 2.0.0
 Breaking change: true
 
@@ -857,11 +864,11 @@ $ cat schemas/core/field.v1.schema.json
 }
 
 # 2. Breaking change kontrolü
-$ python tools/breaking_change_detector.py --from v1.5.0 --to HEAD
+$ python tools/breaking_change_detector.py --old v1.5.0 --new .
 ✓ No breaking changes detected
 
 # 3. Version bump
-$ python tools/pin_version.py --bump minor
+$ python tools/pin_version.py --minor
 Current: 1.5.0 → New: 1.6.0
 Breaking change: false
 
@@ -894,7 +901,7 @@ $ cat schemas/core/user.v1.schema.json
 }
 
 # 2. Version bump
-$ python tools/pin_version.py --bump patch
+$ python tools/pin_version.py --patch
 Current: 1.6.0 → New: 1.6.1
 Breaking change: false
 
@@ -919,16 +926,16 @@ Version bump ve hash hesaplama:
 
 ```bash
 # Breaking change
-python tools/pin_version.py --bump major
+python tools/pin_version.py --major
 
 # New feature
-python tools/pin_version.py --bump minor
+python tools/pin_version.py --minor
 
 # Bug fix
-python tools/pin_version.py --bump patch
+python tools/pin_version.py --patch
 
 # Manuel version
-python tools/pin_version.py --set 3.0.0
+python tools/pin_version.py --version 3.0.0
 ```
 
 ### `tools/breaking_change_detector.py`
@@ -940,10 +947,10 @@ Breaking change tespit:
 python tools/breaking_change_detector.py
 
 # İki versiyon arası
-python tools/breaking_change_detector.py --from v1.5.0 --to v2.0.0
+python tools/breaking_change_detector.py --old v1.5.0 --new .
 
 # JSON output (CI için)
-python tools/breaking_change_detector.py --format json
+python tools/breaking_change_detector.py --json
 ```
 
 ### `tools/sync_to_repos.sh`
