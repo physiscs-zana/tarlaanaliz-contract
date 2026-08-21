@@ -24,13 +24,21 @@
 
 ## 0.A EN GÜNCEL — (2026-08-21, **on sekizinci oturum: ÖNCELİK ① ve ② UÇTAN UCA UYGULANDI — contract v7.8.0**)
 
-> **9 PR merge edildi:** contract #109 (v7.8.0 + tag) · #110 · worker #245 · #246 ·
-> #247 · edge #81 · platform #455 · #456 · #457. Dört depo da varsayılan dalında
-> temiz ve **7.8.0 hizalı** (I-1 ölçüldü).
+> **Bu turun PR'ları — SAYIYI BURADAN OKUMAYIN, KOMUTTAN ALIN:**
 >
-> ⚠️ **Bu satır bir kez YANLIŞ yazıldı:** ilk hâli "6 PR" diyordu ve altındaki
-> tablo 5 satırdı. Çürütme turu ölçüp düzeltti. Aynı turda yazılan bir sayı bile
-> tur bitmeden bayatlayabiliyor — **sayıyı komuttan alın** (`gh pr list --state merged`).
+> ```bash
+> gh pr list --repo <depo> --state merged --search "merged:2026-08-21"
+> ```
+>
+> 🔴 **Bu satır İKİ KEZ yanlış yazıldı** ve ikisi de aynı sebeptendi. Önce "6 PR"
+> dedi (tablosu 5 satırdı), düzeltildi "9 PR" oldu — **o da yanlıştı**: düzeltmenin
+> kendisi bir PR'dır ve kendi merge'ini listeleyemez. Sayı **yapısal olarak**
+> kendine referanslıdır; elle yazılan her değer kapanış PR'ları kadar eksik kalır.
+>
+> Çözüm sayıyı düzeltmek değil, **sayıyı yazmamak**tır. Aşağıdaki tablo NE
+> yapıldığını anlatır; KAÇ olduğunu komut söyler.
+>
+> Dört depo da varsayılan dalında temiz ve **7.8.0 hizalı** (I-1 ölçüldü).
 >
 > 🔴 **"Merge edildi" ≠ "dağıtıldı" ≠ "çalışıyor."** Bu turun **hiçbiri** üretime
 > dağıtılmadı. Üretim hâlâ eski kodu koşuyor: `analysis_jobs` PENDING'de duruyor,
