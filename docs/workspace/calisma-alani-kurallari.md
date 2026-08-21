@@ -65,7 +65,7 @@ Sayı ezberleme — contract `CLAUDE.md`'deki üreteç komutunu koş.
 
 ```bash
 git -C tarlaanaliz-platform submodule status contracts   # I-3: başında '+/-' OLMAMALI
-git -C tarlaanaliz-contract describe --tags HEAD         # I-2: temiz vX.Y.Z dönmeli
+git -C tarlaanaliz-contract describe --tags --abbrev=0 HEAD  # I-2: vX.Y.Z dönmeli
 ```
 
 ## 4. Kalıcı çalışma kuralları
