@@ -9,7 +9,10 @@
     "deny": [
       "Read(//**/git_token.txt)",
       "Edit(//**/git_token.txt)",
-      "PowerShell(Get-Content *git_token*)"
+      "PowerShell(Get-Content *git_token*)",
+      "Read(//**/.sim-worker-prod.env)",
+      "Edit(//**/.sim-worker-prod.env)",
+      "PowerShell(Get-Content *sim-worker-prod.env*)"
     ]
   },
   "hooks": {
