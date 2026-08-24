@@ -75,18 +75,20 @@ alınamadı; AST mandalları **yapıyı** doğrular, deploy öncesi yerelde koş
 
 **KAPANDI (PR ile):** RK-1 (#458) · RK-2 K2/K3 (#459) · RK-3 (#461) · RK-4 (#460) ·
 RK-5 (#248 + #250) · RK-10 (#460) · RK-11 (#460, **tek zayıf halkası #462 ile**) ·
-RK-13 (#250) · Ö-1 (#114) · B04-K1 (#252) · B05-K1 / B06-K1 (#461) · **T02-F1/F2 (#462)**.
+RK-13 (#250) · Ö-1 (#114) · B04-K1 (#252) · B05-K1 / B06-K1 (#461) · **T02-F1/F2 (#462)** · U02 (#463) · **T01-K1/K2/K3 (plat #464)** · **T03-1/2/4/5/6/7 + T04 (plat #465)** · **T03-8b/9 (worker #253)** · tünel yarı-açık tespiti (worker #254) · RK-9 (dağıtım, 2026-08-24).
 
 **AÇIK:**
 
 | # | Kök neden | Risk | Not |
 |---|---|---|---|
-| **RK-9** | ~~Dağıtım yapılmadı~~ → **KAPANDI 2026-08-24**: ürün sahibi dağıttı, üretim `a2af40ec` → `65c4880a` | — | Canlıda #455/#456/#458/#459/#460/#461/#462. Kapı kanıtı: `contracts=6569144342da (v7.8.0)` · `CONFIG_OK` · `RASTER_OK`. ⚠️ İkinci el (dağıtım çıktısı); dışarıdan bağımsız doğrulanamaz — her uç `401` döner, `401` sürüm kanıtı DEĞİLDİR. 🔴 **Yerine iki AÇIK kalem geçti:** (a) *"dağıtıldı" ≠ "zincir akıyor"* — kuyruk/tüketici/durum geçişi HÂLÂ ölçülmedi; (b) **`SENTRY_DSN` boş → hata izleme KAPALI**, en büyük değişiklikten hemen sonraki en riskli pencerede alarm yok |
+| **RK-9** | **KAPANDI 2026-08-24** — üretim `a2af40ec` → **`80acfe27`** (üç ayrı dağıtım turu) | — | Canlıda #455/#456/#458–#462 **ve** #464/#465. Kapı kanıtı her turda: `contracts=6569144342da (v7.8.0)` · `CONFIG_OK` · `RASTER_OK 1.26.4 1.4.4` · tazelik `geride=0 önde=0`. Tazelik kapısı bir turu **haklı olarak REDDETTİ** (#463 merge'i checkout'u 1 commit geriye düşürmüştü) — arıza değil, PR #449'un çalışması. ✅ **`SENTRY_DSN` DOLDURULDU** (AB bölgesi, `ingest.de.sentry.io`): ön-uçuş uyarısı 11→10, `sentry_initialized` loglandı, test olayı Sentry'ye **ulaştı**. ✅ **PR #428 üretimde DOĞRULANDI**: bu dağıtımda RabbitMQ konteyneri gerçekten yeniden yaratıldı ve **15 kuyruk korundu** (önceki kanıt yalnız yerel force-recreate'ti) |
 | **RK-6** | Sır yönetimi: deny kuralları kabuk yollarını kapatmıyor | YÜKSEK | Kabul edildi — tek güvenilen katman dosyanın **kısa ömrü** (trap). SIGKILL/güç kesintisi kapsanamaz (beyan) |
 | **RK-7** | Mahsul seti tek SSOT'tan okumuyor (5 ayrı liste) | ORTA | Pre-existing, çoğu belgeli. Canlı risk yok: `GAP_OFFERED_CROPS` sunum kapısı kesiyor |
 | **RK-8** | Pistachio eğitimsiz model + kalibre olmayan güven | ORTA | **Kod kusuru DEĞİL** — belgeli kasıtlı pilot (ADR-006). Mature'a geçiş ürün/ML kararı |
-| **T01-K1** | Eskalasyon dalı GÖREV-terminal kapısı taşımıyor (RK-2 K2'nin eskalasyon ikizi) | **KRİTİK** | 2026-08-24 Tur 4'te bulundu; iptal/tamamlanmış göreve eskalasyon gidebiliyor. **Bu turda kapatılmadı** |
-| **T03** | 7 yüksek: `if False:` ölü-dal kaçışı · `overwrite=False` garantisi mandalsız · `mission_id` yoksa iş sessizce ilerlemiyor | YÜKSEK | Tur 4 raporları: `denetim-tur4-2026-08-24/bulgular/` |
+| 🔴 **OP-1** | **Üretimde worker BAĞLI DEĞİL** — `analysis_jobs` kuyruğunda **0 tüketici** | YÜKSEK | Ölçüldü 2026-08-24 (üretim `rabbitmqctl`): platform 4 kuyrukta tüketici taşıyor (`analysis_job_started` **2** — önceki ölçümdeki 404 GİTTİ), ama platformun iş yayınladığı `analysis_jobs` boşta. Kod kusuru DEĞİL: worker o sunucuda koşamaz (sse4_2/avx yok, GPU yok) → tek yol SSH tüneli, `worker/scripts/sim-worker-baglan.sh`. Köprü **kalıcı değil**: yerel makine kapanınca tüketici yine sıfırlanır |
+| **T04** | ~~`result_id == job_id` varsayımı~~ → **KAPANDI (plat #465)** | — | Bu oturumda **yerel ölçümle** bulundu: `job 01d6f7fc` satırı `result_id=d3cba4d8` taşıyor → eskalasyon ham `ForeignKeyViolationError` ile DLX'e düşüyordu ve RK-4 mükerrerlik sorgusu o satırlarda kördü. `cozumle_sonuc_id()` varsayımı ölçüme çevirdi |
+| ~~T01-K1~~ | **KAPANDI (plat #464)** | — | Üç kusur: K1 eskalasyon dalı GÖREV-terminal kapısı taşımıyordu · K2 `commit` `if reviews:` içindeydi (uzman yoksa sonuç satırı sessizce geri alınıyordu) · K3 ikinci gövde. **Yerel canlı kanıt:** DB'de gerçekleşmiş iz bulundu — 2026-08-13'te `DONE` olan göreve 2026-08-24'te 2 `ExpertReview` üretilmiş ve uzman atanmıştı. Karşı-olgu ölçüldü: düzeltmeyle sonuç satırı 1, düzeltmesiz **0** |
+| ~~T03~~ | **KAPANDI (plat #465 + worker #253)** | — | `if False:` ölü-dal kaçışı **eskiden 0 test kırıyordu, şimdi 2** (kök neden AST zayıflığı değil, dalın **çağrılamaz** olmasıydı → `_skip_dali_yan_etkileri` çıkarıldı) · SKIP dalı `overwrite=False`→`True` · COMPLETED dalı FAILED ile simetrik hale getirildi (**canlı kanıt:** `mission_id`siz sonuçta düzeltmeyle iş `COMPLETED`, düzeltmesiz `PROCESSING`de kaldı) · karar yeri polaritesi mandallandı · worker vendor `mission_id` `minLength:1` (T03-9 **kusur değil KARAR**: kendi çıktısında sıkı olmak doğru yön) |
 
 ---
 
