@@ -66,13 +66,27 @@
 RK-1/RK-2/Y-2 canlıda görünemez. Davranışsal (canlı) kanıt Docker kapalı olduğundan
 alınamadı; AST mandalları **yapıyı** doğrular, deploy öncesi yerelde koşulmalı.
 
-### Kalan açık kök nedenler (denetimden, beyan)
+### Kök neden durumu (2026-08-24 sonu — ÖLÇÜLDÜ, komuttan)
 
-**RK-4** tüketici-tarafı eskalasyon dedup yok (YÜKSEK) · **RK-6** sır yönetimi (deny sınıfı
-kabuk yollarını kapatmıyor — kabul edildi, tek koruma dosyanın yokluğu) · **RK-8** pistachio
-eğitimsiz model + kalibre olmayan güven (ORTA) · **RK-7** mahsul seti tek SSOT'tan okumuyor
-(ORTA, çoğu belgeli) · **RK-9** dağıtım yapılmadı (YÜKSEK) · **RK-10** yerel config git-dışı
-(YÜKSEK) · **RK-11** Ö-3 runtime fail-open (YÜKSEK, 2026-08-18 senaryosu).
+> ⚠️ **Bu bölüm bir kez BAYATLADI ve eylem-planı şeridindeki oturum yakaladı.** İlk hâli
+> RK-4/RK-10/RK-11'i "açık" sayıyordu; oysa **#460 üçünü de kapatmıştı**. Sebep zaman
+> sırasıydı (not 12:24, #460 13:13). Ders: kök-neden durumu **PR numarasıyla** yazılır,
+> yoksa aynı gün içinde bile bayatlar.
+
+**KAPANDI (PR ile):** RK-1 (#458) · RK-2 K2/K3 (#459) · RK-3 (#461) · RK-4 (#460) ·
+RK-5 (#248 + #250) · RK-10 (#460) · RK-11 (#460, **tek zayıf halkası #462 ile**) ·
+RK-13 (#250) · Ö-1 (#114) · B04-K1 (#252) · B05-K1 / B06-K1 (#461) · **T02-F1/F2 (#462)**.
+
+**AÇIK:**
+
+| # | Kök neden | Risk | Not |
+|---|---|---|---|
+| **RK-9** | Dağıtım yapılmadı — üretim 7.8.0 ÖNCESİ kodu koşuyor | YÜKSEK | Ölçüldü: üretim `analysis_job_started` kuyruğu **404**. Tüm düzeltmeler canlıda görünmez. Dağıtım **`bash scripts/deploy_prod.sh`** ile yapılır; elle `git pull && compose up && prune` zinciri 2026-08-17 kesintisini üretti. ⚠️ `git pull` submodule'ü GÜNCELLEMEZ ve RK-11 artık boş `contracts/` ile **boot'u reddediyor** → `git submodule update --init --recursive` ŞART |
+| **RK-6** | Sır yönetimi: deny kuralları kabuk yollarını kapatmıyor | YÜKSEK | Kabul edildi — tek güvenilen katman dosyanın **kısa ömrü** (trap). SIGKILL/güç kesintisi kapsanamaz (beyan) |
+| **RK-7** | Mahsul seti tek SSOT'tan okumuyor (5 ayrı liste) | ORTA | Pre-existing, çoğu belgeli. Canlı risk yok: `GAP_OFFERED_CROPS` sunum kapısı kesiyor |
+| **RK-8** | Pistachio eğitimsiz model + kalibre olmayan güven | ORTA | **Kod kusuru DEĞİL** — belgeli kasıtlı pilot (ADR-006). Mature'a geçiş ürün/ML kararı |
+| **T01-K1** | Eskalasyon dalı GÖREV-terminal kapısı taşımıyor (RK-2 K2'nin eskalasyon ikizi) | **KRİTİK** | 2026-08-24 Tur 4'te bulundu; iptal/tamamlanmış göreve eskalasyon gidebiliyor. **Bu turda kapatılmadı** |
+| **T03** | 7 yüksek: `if False:` ölü-dal kaçışı · `overwrite=False` garantisi mandalsız · `mission_id` yoksa iş sessizce ilerlemiyor | YÜKSEK | Tur 4 raporları: `denetim-tur4-2026-08-24/bulgular/` |
 
 ---
 
