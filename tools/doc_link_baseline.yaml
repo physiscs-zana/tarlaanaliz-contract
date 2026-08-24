@@ -31,6 +31,9 @@ accepted:
 - denetim/denetim_raporu_2026-08-01_ozdenetim_6lens.md|grep -nE "^  v[0-9]+\.[0-9]+\.[0-9]+ \(" CONTRACTS_VERSION.md
 - docs/DEMO_GUNU_YAPILACAKLAR.txt|AT/report/report.md
 - docs/DEMO_GUNU_YAPILACAKLAR.txt|NOTLAR.txt
+- docs/EYLEM_PLANI_ARSIV_2026-08.md|CONTRACTS_SHA256.txt
+- docs/EYLEM_PLANI_ARSIV_2026-08.md|denetim/scale_wire_devir_spec_2026_08_01.md
+- docs/EYLEM_PLANI_ARSIV_2026-08.md|docs/architecture/data_lifecycle_transfer.md
 - docs/README.md|GUNCELLEMELER.md
 - docs/REPO_BOUNDARY_RULES.txt|CONTRACTS_SHA256.txt
 - docs/REPO_BOUNDARY_RULES.txt|REPO_BOUNDARY_RULES.md
@@ -57,10 +60,8 @@ accepted:
 - docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md|aktif_ogrenme_secim_tasarimi_S1_S2_dedup.md
 - docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md|birlesik_devir_spec_arsivi_2026.md
 - docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md|config/processing/pix4d_allowlist_domains.txt
-- docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md|denetim/scale_wire_devir_spec_2026_08_01.md
 - docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md|docs/adr/ADR-007-preliminary-farmer-view.md
 - docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md|docs/adr/ADR-009-dev-station-profile.md
-- docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md|docs/architecture/data_lifecycle_transfer.md
 - docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md|docs/architecture/end_to_end_workflow.md
 - docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md|docs/security/open_items_decisions_2026-06.md
 - docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md|end_to_end_workflow.md
