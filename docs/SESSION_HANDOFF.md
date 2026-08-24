@@ -22,7 +22,61 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-21, **on sekizinci oturum: ÖNCELİK ① ve ② UÇTAN UCA UYGULANDI — contract v7.8.0**)
+## 0.A EN GÜNCEL — (2026-08-21/24, **on dokuzuncu oturum: YEREL UÇTAN UCA + ÇOK-AJANLI DENETİM + Y-1/Y-2/RK-1/RK-2 DÜZELTİLDİ**)
+
+> **Bu turun PR'ları — SAYIYI KOMUTTAN AL:**
+> ```bash
+> for r in tarlaanaliz-contract tarlaanaliz-platform tarlaanaliz_worker; do \
+>   gh pr list --repo physiscs-zana/$r --state merged --search "merged:>=2026-08-21" --json number,title; done
+> ```
+
+### Ne yapıldı
+
+1. **Zincir yerelde İLK KEZ uçtan uca aktı** (PENDING→PROCESSING→COMPLETED). Kanıt +
+   reçete: eylem planı §14.17 *"YEREL UÇTAN UCA KOŞUM"*. Yerel yığın önce onarıldı
+   (**Ö-2**: platform `docker-compose.override.yml`'e üç mount — contracts ağacı + SHA256 pin
+   dosyası + sürüm dosyası; teşhis bir kez düzeltildi — kapı platformun kök sürüm dosyasını
+   okuyor, submodule'ü değil).
+
+2. **17-ajanlı bağımsız denetim** (13 keşif + 3 çürütme + 1 senkron matris). 31 kritik+yüksek
+   bulgu → **13 kök nedene** indi; **6'sı bu oturumun işinden**, 7'si pre-existing. Tam kayıt
+   workspace kökündeki `denetim-oturum-2026-08-21` klasöründe (git-dışı — contract deposunun
+   parçası değil; bulgular · curutme · karar-verici doğrulama tablosu).
+
+3. **Düzeltilen ve MERGE edilen kök nedenler:**
+   * **RK-1** (platform) — Y-1 SKIP dalı ikinci işin (REFLY) sonucunu da kalıcılaştırır
+     (iş-eksenli, idempotent; NORMAL dal dokunulmadı). AST mandalı (RK-3).
+   * **RK-2 K2+K3** (platform) — durum-makinesi eksen-çaprazı: iptal/FAILED göreve bildirim
+     (K2) + PENDING_REVIEW'daki geçerli sonucun FAILED ile kaybı (K3). İkisi de pre-existing.
+   * **Y-2** (worker) — yayıncı bayat bağlantıda ölmüyor (bir kez yeniden bağlan+dene).
+   * **RK-5** (worker) — kök `sim-worker-baglan.sh` **SİLİNDİ** (ürün sahibi onayı) +
+     geri-alma komutu `:36` düzeltildi.
+   * **RK-13** (worker) — conftest DLL guard'ı (`except Exception`); 18 saf-Python testi açıldı.
+   * **Ö-1** (contract + 5 yerel) — deny şablonuna `.sim-worker-prod.env`.
+
+4. 🔀 **PARALEL OTURUM:** worker Y-2 düzeltmesi başka bir aktör tarafından **#248** olarak
+   zaten merge edilmişti. Mükerrer PR kapatıldı, yalnız kalan iş cherry-pick edildi (#250).
+   Hafıza: `tarlaanaliz-paralel-oturum-riski`. **contract EYLEM_PLANI working tree'de başka
+   aktörün commit'lenmemiş kiraz-doküman değişikliği vardı — dokunulmadı.**
+
+### 🔴 "Düzeltildi" ≠ "dağıtıldı" ≠ "çalışıyor"
+
+**Hiçbiri üretime dağıtılmadı.** Üretim hâlâ 7.8.0 ÖNCESİ kodu koşuyor (ölçüldü: üretim
+`analysis_job_started` kuyruğu **404 NOT_FOUND** — 7.8.0 tüketicisi onu declare ederdi).
+RK-1/RK-2/Y-2 canlıda görünemez. Davranışsal (canlı) kanıt Docker kapalı olduğundan
+alınamadı; AST mandalları **yapıyı** doğrular, deploy öncesi yerelde koşulmalı.
+
+### Kalan açık kök nedenler (denetimden, beyan)
+
+**RK-4** tüketici-tarafı eskalasyon dedup yok (YÜKSEK) · **RK-6** sır yönetimi (deny sınıfı
+kabuk yollarını kapatmıyor — kabul edildi, tek koruma dosyanın yokluğu) · **RK-8** pistachio
+eğitimsiz model + kalibre olmayan güven (ORTA) · **RK-7** mahsul seti tek SSOT'tan okumuyor
+(ORTA, çoğu belgeli) · **RK-9** dağıtım yapılmadı (YÜKSEK) · **RK-10** yerel config git-dışı
+(YÜKSEK) · **RK-11** Ö-3 runtime fail-open (YÜKSEK, 2026-08-18 senaryosu).
+
+---
+
+## 0.B — (2026-08-21, **on sekizinci oturum: ÖNCELİK ① ve ② UÇTAN UCA UYGULANDI — contract v7.8.0**)
 
 > **Bu turun PR'ları — SAYIYI BURADAN OKUMAYIN, KOMUTTAN ALIN:**
 >
