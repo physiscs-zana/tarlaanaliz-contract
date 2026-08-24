@@ -3041,13 +3041,27 @@ ayrıca buraya da yazıldı — **iki dosya artık hemfikir**. *Sayıyı komutta
 | Durum | Kanıt |
 |---|---|
 | **Açık PR: SIFIR** (dört depo) | `gh pr list --repo <depo> --state open --json number --jq 'length'` → `0 0 0 0` |
-| 🔴 **Dağıtım hâlâ YAPILMADI** (`RK-9`) — **ÖNCELİK 1a duruyor** | Üretim 7.8.0 **öncesi** kodu koşuyor; diğer oturumun ölçümü: üretimde `analysis_job_started` kuyruğu **404 NOT_FOUND** (7.8.0 tüketicisi onu declare ederdi) |
+| ✅ **Dağıtım YAPILDI** (`RK-9` kapandı) — 2026-08-24, ürün sahibi | Üretim `a2af40ec` → `65c4880a`. Canlıda: #455 · #456 · #458 · #459 · #460 · #461 · #462. Dağıtım kapıları kanıt üretti: `contracts=6569144342da (v7.8.0)` (submodule DOLU) · `CONFIG_OK` · `RASTER_OK 1.26.4 1.4.4` · tazelik `geride=0 önde=0`. ⚠️ **İkinci el kanıt** — dağıtım çıktısından okundu; bu oturum üretimi **bağımsız doğrulayamadı** (dışarıdan her uç `401` döner ve `401` sürüm kanıtı DEĞİLDİR) |
+| 🔴 **"Dağıtıldı" ≠ "zincir akıyor" — akış HÂLÂ ÖLÇÜLMEDİ** | Dağıtım yalnız **boot** kanıtlar. Ölçülmemiş dördü: ① `analysis_job_started` kuyruğu artık var mı (önceki ölçüm **404**) ② worker hâlâ bağlı mı (tünel elle açılan çıplak `ssh -f -N`; kırılganlık #1 duruyor) ③ PENDING→PROCESSING→COMPLETED yürüyor mu ④ sevk gerçek katman gönderiyor mu. Komut: `rabbitmqctl -p /tarlaanaliz list_queues name consumers messages` |
+| 🔴 **`SENTRY_DSN` BOŞ → hata izleme KAPALI** | Preflight'ın kendi çıktısı: *"PR #360 alarm kuralı ölü kalır"*. Üretim en büyük değişikliğini aldı (7 PR) ve **alarm yok**: #458/#459/#460 `/health`'i kırmayan biçimde yanlış davranırsa **kimse haberdar olmaz**. Dağıtım sonrası en riskli pencere tam burasıdır |
 | Kalan kök nedenler (beyan) | `RK-6` sır yönetimi (kabul edildi: tek koruma dosyanın yokluğu) · `RK-7` mahsul seti tek SSOT'tan okumuyor · `RK-8` fıstıkta eğitimsiz model + kalibre olmayan güven |
 
-🔴 **Dağıtım artık DAHA DEĞERLİ ama hâlâ ölçülmedi:** #458/#459/#460 üçü de *"iş asılı
-kalıyor / sonuç kayboluyor"* sınıfındandır ve **canlıda görünemezler**. Diğer oturumun
-kendi beyanı: davranışsal kanıt Docker kapalı olduğu için alınamadı, **AST mandalları
-yalnız YAPIYI doğrular** → dağıtımdan önce yerelde koşulmalı.
+🔴 **Dağıtım YAPILDI, davranış hâlâ ölçülmedi.** #458/#459/#460 üçü de *"iş asılı
+kalıyor / sonuç kayboluyor"* sınıfındandır; artık canlıdalar ama **görüldükleri**
+anlamına gelmez — mandalların bir kısmı **AST**'tir ve yalnız YAPIYI doğrular.
+Sıradaki iş kod değil **ölçüm**: kuyruk + tüketici + durum geçişi.
+
+⚠️ **Bir dağıtım REDDEDİLDİ ve bu ARIZA DEĞİL, kapının çalışmasıdır.** plat #463
+merge olunca sunucudaki checkout 1 commit geriye düştü ve `deploy_prod.sh` 0c tazelik
+kapısı **fail-closed** durdu — PR #449 tam bunun için yazılmıştı. Ölçüldü: #463
+**yalnız test** (1 dosya, `test_mtls_verifier_dev_bypass.py`) → üretimde
+çalışma-zamanı eksiği **yok**. Hizalama: `git pull --ff-only origin main` ve
+`git submodule update --init --recursive`, sonra yeniden dağıtım.
+
+⚠️ **Kısayol uyarısı:** dağıtım bir kez reçetenin dışında, tek başına
+`git pull origin main` ile (submodule güncellemesi olmadan) koşuldu. Bu sefer zararsız
+kaldı çünkü submodule zaten v7.8.0'daydı. Ama **RK-11 artık boş `contracts/` ile boot'u
+REDDEDİYOR** → aynı kısayol bir dahakine doğrudan kesinti üretir.
 
 ##### Bu turun kendi ölçüm dersi (kayda geçiyor)
 
