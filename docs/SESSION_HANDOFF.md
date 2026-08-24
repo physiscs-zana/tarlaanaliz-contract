@@ -81,7 +81,7 @@ RK-13 (#250) · Ö-1 (#114) · B04-K1 (#252) · B05-K1 / B06-K1 (#461) · **T02-
 
 | # | Kök neden | Risk | Not |
 |---|---|---|---|
-| **RK-9** | Dağıtım yapılmadı — üretim 7.8.0 ÖNCESİ kodu koşuyor | YÜKSEK | Ölçüldü: üretim `analysis_job_started` kuyruğu **404**. Tüm düzeltmeler canlıda görünmez. Dağıtım **`bash scripts/deploy_prod.sh`** ile yapılır; elle `git pull && compose up && prune` zinciri 2026-08-17 kesintisini üretti. ⚠️ `git pull` submodule'ü GÜNCELLEMEZ ve RK-11 artık boş `contracts/` ile **boot'u reddediyor** → `git submodule update --init --recursive` ŞART |
+| **RK-9** | ~~Dağıtım yapılmadı~~ → **KAPANDI 2026-08-24**: ürün sahibi dağıttı, üretim `a2af40ec` → `65c4880a` | — | Canlıda #455/#456/#458/#459/#460/#461/#462. Kapı kanıtı: `contracts=6569144342da (v7.8.0)` · `CONFIG_OK` · `RASTER_OK`. ⚠️ İkinci el (dağıtım çıktısı); dışarıdan bağımsız doğrulanamaz — her uç `401` döner, `401` sürüm kanıtı DEĞİLDİR. 🔴 **Yerine iki AÇIK kalem geçti:** (a) *"dağıtıldı" ≠ "zincir akıyor"* — kuyruk/tüketici/durum geçişi HÂLÂ ölçülmedi; (b) **`SENTRY_DSN` boş → hata izleme KAPALI**, en büyük değişiklikten hemen sonraki en riskli pencerede alarm yok |
 | **RK-6** | Sır yönetimi: deny kuralları kabuk yollarını kapatmıyor | YÜKSEK | Kabul edildi — tek güvenilen katman dosyanın **kısa ömrü** (trap). SIGKILL/güç kesintisi kapsanamaz (beyan) |
 | **RK-7** | Mahsul seti tek SSOT'tan okumuyor (5 ayrı liste) | ORTA | Pre-existing, çoğu belgeli. Canlı risk yok: `GAP_OFFERED_CROPS` sunum kapısı kesiyor |
 | **RK-8** | Pistachio eğitimsiz model + kalibre olmayan güven | ORTA | **Kod kusuru DEĞİL** — belgeli kasıtlı pilot (ADR-006). Mature'a geçiş ürün/ML kararı |
