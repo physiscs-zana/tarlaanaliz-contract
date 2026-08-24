@@ -3029,10 +3029,11 @@ Kendi devir notlarına da yazdılar: *"contract EYLEM_PLANI working tree'de baş
 commit'lenmemiş kiraz-doküman değişikliği vardı — **dokunulmadı**."*
 Hafıza kaydı: `tarlaanaliz-paralel-oturum-riski`.
 
-⚠️ **Devir notunun "kalan açık kök nedenler" listesi RK-4/RK-10/RK-11'i AÇIK sayar —
-bugün kapalılar.** Hata değil, **zaman sırası**: not `12:24`'te yazıldı, #460 `13:13`'te,
-#461 `17:43`'te merge edildi. Not düzeltilmedi çünkü o dosya diğer oturumun **açık
-şeridi**; gerçek buraya yazıldı. *Sayıyı komuttan al:*
+⚠️ **Devir notunun "kalan açık kök nedenler" listesi RK-4/RK-10/RK-11'i bir süre AÇIK
+saydı — oysa kapalılardı.** Hata değil, **zaman sırası**: not `12:24`'te yazıldı, #460
+`13:13`'te, #461 `17:43`'te merge edildi. Not **aynı gün #116 ile düzeltildi** (liste
+artık KAPANDI/AÇIK olarak ayrılıyor ve her kapanış **PR numarasına** bağlı); gerçek
+ayrıca buraya da yazıldı — **iki dosya artık hemfikir**. *Sayıyı komuttan al:*
 `gh pr list --repo physiscs-zana/tarlaanaliz-platform --state merged --search "merged:>=2026-08-21"`
 
 #### Bugün ne AÇIK kaldı
