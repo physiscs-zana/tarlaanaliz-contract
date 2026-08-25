@@ -93,9 +93,47 @@ Eskalasyon ekseninin **kendi** kapısı yazıldı; küme kanonikten **türetiliy
 | plat #470 | **Y1** (`result_id == job_id` sınıfı) + **Y2** (üretici formu) + çift kuyruk declare | Y1 sınıfı **üç** üyeliydi ve sonuçları farklı: uzman ataması FK ihlali (sert) · wire olayı yanlış kimlik · `field_history` kolonu **FK değil** → çökmez, **sessizce** yanlış işaretçi. Y2: `_insert_field_history` worker'ın hiç üretmediği `type`/`severity`/`name` anahtarlarını okuyordu → gerçek yükte geçmiş olayları **yapısal olarak hiç yazılmıyordu** |
 | plat #471 | **K3** — DLX'e bağlı kuyruk YOKTU | 🔴 **#467 bu deliği KAPATMIYOR**: policy deseni dokuz kuyruk sayan açık bir liste ve `domain.events.*` orada yok. Ayrıca ölçüldü: `declare_topology` için depoda **hiç test yoktu** |
 | plat #472 | **Y3** — çıkarım çökse bile iş ekseninde iz kalmıyordu | ⛔ `status="FAILED"` **YAPILMADI**: platform görevi FAILED yapar, ardından gelen eskalasyon kapıya takılır → uzman incelemesi hiç açılmaz (T01-K1'in aynısı). İş ekseni **durum değil KANIT** taşır |
+| work #260 | 🔴 **K2** — eksik zorunlu bant sıfırla dolduruluyordu, sonuç **sessizce yanlış** oluyordu | Kural tek kaynağa çıkarıldı; fail-closed → ACİL eskalasyon. **Öz-denetimde bulundu** (bkz. ⑤) |
 | work #259 | İki sarkan `dlq-kur.sh` atfı + Y4 tuzağı + "ölü" DLX opt-in **karar** olarak mandallandı | Kapı ilk koşumda **üçüncü** bir atıf buldu; ölçüldü, platformda gerçekten var → çapraz-repo, kanıtıyla izin listesine alındı |
 
-### ⑤ Bu dosyada EKSİK kalan beş PR (önceki turdan)
+### ⑤ 🔴 ÖZ-DENETİM: kapsamı SESSİZCE DARALTMIŞIM — K2 (worker #260)
+
+Tur sonunda kendi çıktımı çürütme turu (`CLAUDE.md` §6) **kendi hatamı** buldu:
+devir notunda **KRİTİK** olarak duran **K2**, benim önerdiğim PR gruplamasında
+**yoktu** — yani §3 *"kapsamı sessizce daraltma"* ihlali. Kökten kapatıldı.
+
+**Kusur:** `_load_bands` eksik olan HER bandı ayrım yapmadan sıfırla dolduruyor,
+yalnız WARNING basıyordu. `NIR=0` → `NDVI = (0−R)/(0+R+eps) = −1.0` → **tarlanın
+tamamı "anomali"**. Sıfır kanal düşük varyanslı olduğu için güven formülü bunu
+belirsizlik saymaz → fail-closed eşikleri (KARAR-13) **devreye girmez** → model
+tam bir tanı üretir ve sonuç çiftçiye gider. **Başarısız değil, sessizce YANLIŞ.**
+
+**Koruma neden etkisizdi:** `channel_spec.build_input_tensor` ayrımı ZATEN
+yapıyordu, ama `_load_bands` ONDAN ÖNCE koşup bandı sıfırla "var" hâle getiriyor
+ve o korumayı **körleştiriyordu**. Kural artık tek kaynakta
+(`bant_sifir_doldurulabilir_mi`), iki tüketici de onu okur. Zorunlu bant eksikse
+fail-closed → `NO_RESULT` + `PIPELINE_ERROR` → **ACİL eskalasyon** (iş kaybolmaz,
+uzmana gider). Blue'nun tasarlanmış nazik bozulması **korundu**.
+
+### ⑥ Merge provası GERÇEK bir çakışma buldu (merge etmeden önce)
+
+Beş platform dalı sıralı olarak geçici bir dalda merge edildi: #468→#469→#470→
+#471 temiz, **#472 ÇAKIŞTI**. Sebep salt metinsel bitişiklik — #469 ve #472 aynı
+çapaya ekleme yapıyordu. **Çakışmayı yönetmek yerine ORTADAN KALDIRDIK:** #472'nin
+yardımcı bloğu başka bir konuma taşındı (Python ad çözümlemesi çağrı anında olduğu
+için davranış değişmez). Prova tekrarlandı → **beşi de temiz**, ve **birleşmiş
+hâlde** `ruff` temiz + tüm unit testler yeşil (çıkış kodu 0). Merge sırası artık
+önemsiz.
+
+### ⑦ AÇIK KALEM olarak BEYAN (sessiz borç bırakmamak için)
+
+**`rollback.request` tek taraflı** — worker tüketiyor, platformda ne üretici ne
+tüketici var (ölçüldü: `grep -rn rollback tarlaanaliz-platform/src` yalnız ilgisiz
+DB rollback'leri buluyor). **Düzeltilmedi ve bu bilinçli:** platform tarafına
+üretici yazmak var olmayan bir özellik icat etmek olurdu. Bugün **sıfır risk**
+(kimse basmıyor) ve DLX policy deseni onu zaten kapsıyor. Ürün kararı gerektirir.
+
+### ⑧ Bu dosyada EKSİK kalan beş PR (önceki turdan)
 
 Denetimde ölçüldü: **plat #466, #467 · worker #256, #257, #258** bu dosyada hiç anılmıyordu.
 
@@ -180,7 +218,7 @@ RK-13 (#250) · Ö-1 (#114) · B04-K1 (#252) · B05-K1 / B06-K1 (#461) · **T02-
 **2026-08-25'te AÇILAN PR'lar (hiçbiri DAĞITILMADI):** tarla ekleme 422 — canlı çiftçi
 hatası (plat **#468**) · T01-K1 gerilemesi (plat **#469**) · Y1+Y2+çift declare
 (plat **#470**) · K3 DLX kuyruk bağlama (plat **#471**) · Y3 iş ekseni kanıtı
-(plat **#472**) · sarkan betik atıfları + Y4 + yeni kapı (worker **#259**).
+(plat **#472**) · sarkan betik atıfları + Y4 + yeni kapı (worker **#259**) · 🔴 K2 eksik zorunlu bant fail-closed (worker **#260**).
 Önceki turdan bu dosyada eksik kalanlar: plat **#466**, **#467** · worker **#256**,
 **#257**, **#258**.
 
