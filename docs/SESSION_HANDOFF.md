@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-19/20 (**on altıncı oturum** — uzman ekranı zinciri: sonuç↔veri seti bağı sınıfı tamamen kapatıldı (#441/#443) · **üretimde ölü döşeme servisi** bulundu ve düzeltildi (#446 — NumPy x86-64-v2 uyumsuzluğu, 7770 log satırı) · CI asılma kapakları (#442) · alan adı + BOUND kapısı (#444) · dağıtımda submodule kapısı + simülasyon bağımsızlığı (#445) · kartlar alt uzmanlık duyarlı (#447). ✅ **7 PR MERGE EDİLDİ ve DAĞITILDI**. Önceki: 2026-08-18 (**on üçüncü/on dördüncü oturum** — KR-013-2 komşuluk kapısı sahipten bağımsız hâle getirildi (#91) · CLAUDE.md dört depoda Opus 5 rehberine göre yeniden yapılandırıldı + `check_claude_md_refs.py` atıf bütünlüğü kapısı kuruldu (#92) · kök `CLAUDE.md` + oturum-başı kanca kalıcılık için contract'a taşındı (#93) · dört depoda `docs/`+`denetim/` (191 dosya) tam-okuma denetimi: platform+worker sıfır aday, contract'ta 2 alansız dosya silindi/taşındı (#94). **AL-K26 (I-1 hizası) bu turda platformun 7.6.1'de kaldığı iddiasıyla açık görünüyordu — ölçüldü, 2026-08-13'te KAPANMIŞ ve dört depo bugün de 7.7.2'de hizalı** (bkz. §0.A, önceki turun bu satırı düzeltildi). Önceki: **on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
+**Son güncelleme:** 2026-08-25 (**yirminci oturum** — önceki turun devir notu **bağımsız denetimden geçti** (4 kusur + 1 yeni bulgu + 3 karar) · 🔴 **canlı çiftçi hatası** düzeltildi: tarla eklenemiyordu, arayüz sözleşmenin bayat aynasıydı (plat #468) · 🔴 **T01-K1 gerilemesi kapandı** — kapı doğruydu, KÜME yanlıştı; düşük-güvenli her işte uzman incelemesi sessizce kapanıyordu (plat #469) · Y1 sınıfı (üç üye) + Y2 üretici formu + çift declare (plat #470) · **K3** DLX'e bağlı kuyruk yoktu, **#467 bunu kapatmıyor** (plat #471) · **Y3** iş ekseni artık kanıt taşıyor, `status="FAILED"` bilerek YAPILMADI (plat #472) · iki sarkan betik atfı + Y4 tuzağı + yeni kapı (work #259). ⚠️ **Hiçbiri dağıtılmadı.** Detay: §0.A. Önceki: 2026-08-19/20 (**on altıncı oturum** — uzman ekranı zinciri: sonuç↔veri seti bağı sınıfı tamamen kapatıldı (#441/#443) · **üretimde ölü döşeme servisi** bulundu ve düzeltildi (#446 — NumPy x86-64-v2 uyumsuzluğu, 7770 log satırı) · CI asılma kapakları (#442) · alan adı + BOUND kapısı (#444) · dağıtımda submodule kapısı + simülasyon bağımsızlığı (#445) · kartlar alt uzmanlık duyarlı (#447). ✅ **7 PR MERGE EDİLDİ ve DAĞITILDI**. Önceki: 2026-08-18 (**on üçüncü/on dördüncü oturum** — KR-013-2 komşuluk kapısı sahipten bağımsız hâle getirildi (#91) · CLAUDE.md dört depoda Opus 5 rehberine göre yeniden yapılandırıldı + `check_claude_md_refs.py` atıf bütünlüğü kapısı kuruldu (#92) · kök `CLAUDE.md` + oturum-başı kanca kalıcılık için contract'a taşındı (#93) · dört depoda `docs/`+`denetim/` (191 dosya) tam-okuma denetimi: platform+worker sıfır aday, contract'ta 2 alansız dosya silindi/taşındı (#94). **AL-K26 (I-1 hizası) bu turda platformun 7.6.1'de kaldığı iddiasıyla açık görünüyordu — ölçüldü, 2026-08-13'te KAPANMIŞ ve dört depo bugün de 7.7.2'de hizalı** (bkz. §0.A, önceki turun bu satırı düzeltildi). Önceki: **on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -22,7 +22,145 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-21/24, **on dokuzuncu oturum: YEREL UÇTAN UCA + ÇOK-AJANLI DENETİM + Y-1/Y-2/RK-1/RK-2 DÜZELTİLDİ**)
+## 0.A EN GÜNCEL — (2026-08-25, **yirminci oturum: DEVİR NOTUNUN BAĞIMSIZ DENETİMİ + CANLI ÇİFTÇİ HATASI + 6 PR**)
+
+> **Bu turun PR'ları — SAYIYI KOMUTTAN AL:**
+> ```bash
+> for r in tarlaanaliz-contract tarlaanaliz-platform tarlaanaliz_worker; do \
+>   gh pr list --repo physiscs-zana/$r --state all --search "created:>=2026-08-25" --json number,state,title; done
+> ```
+
+### ① Önceki turun devir notu bağımsız olarak DENETLENDİ
+
+Her iddia komutla yeniden sınandı. **§1 (T01-K1 gerilemesi) kusursuz çıktı** — altı satır
+atfının altısı da birebir; kapı ayrıca **canlı konteynerde davranışsal olarak** ölçüldü
+(`PENDING_REVIEW → True`, pozitif kontroller doğru).
+
+**Dört kusur bulundu ve düzeltildi:** ①② Y4'ün iki bayat satır atfı
+(`config.py:39`→`:47` — kayma aynı gün worker #257 ile oluşmuştu; `consumer.py:121-127`→
+`:131-137` — bu atıf *hiç* doğru olmamış) · ③ *"docs onu düzeltme gibi sunuyor"*
+**⛔ ÇÜRÜTÜLDÜ** (sabit tüm çalışma alanında **iki** yerde geçiyor, hiçbiri docs değil) ·
+④ §3.2 iki **bağımsız** kapıyı birleştiriyordu.
+
+**Yeni bulgu:** iki sarkan `dlq-kur.sh` atfı (aşağıda, worker #259).
+
+**Doğrulanamayan üç kalem karara bağlandı** (kaynak geçici bir çalışma-alanı notuydu;
+kaybolmaması için kararlar BURAYA taşındı):
+
+1. **Ajan turu sayıları** (14 ajan / 105 bulgu / 77 doğrulanmış / 36 kusur) → ⛔
+   **DOĞRULANAMAZ, KAPATILDI.** Turun hiçbir artefaktı diske yazılmamış (2026-08-25 tarihli
+   denetim klasörü YOK) ve kaynak oturum kaydına erişilemiyor. Bir daha doğrulanabilir hâle
+   **gelmeyecek** — kovalamayın. ⚠️ **Kural ihlali, ders:** bir filo turu, ajan çıktısı
+   `denetim-<tur>-<tarih>/bulgular/` altına yazılmadan **bitmiş sayılmaz**.
+2. **Üretim SHA'sı** → ⚠️ **ÖLÇÜLMEDİ**, kusur DEĞİL. Sürüm bildiren uç yok, yerel dağıtım
+   kaydı yok. Doğrulama: `ssh <prod> "cd /opt/tarlaanaliz && git rev-parse --short HEAD"`.
+3. **Takvim çelişkisi** → ✅ **KAPANDI**, konusuz kaldı (revize takvim yerine geçti).
+
+### ② 🔴 CANLI ÇİFTÇİ HATASI — tarla eklenemiyordu (plat #468)
+
+Çiftçi *"Yeni Tarla Ekle"* formunda Kaydet'e basınca kırmızı **"Validation failed"**
+alıyordu. **Kök neden: arayüz, sözleşmenin BAYAT AYNASIYDI.** Backend
+`FieldCreateRequest.geometry` varsayılansız (zorunlu) tanımlı; arayüz ise sınırı
+*"(Opsiyonel)"* diye sunuyor ve alanı yalnız doluysa gönderiyordu. `main.py` tüm 422'leri
+şema sızdırmamak için tek bir *"Validation failed"*e düzleştirdiği için sebep gizleniyordu.
+
+**Çalışan konteynerde ölçüldü:** `ZORUNLU: ['parcel_ref','area_ha','crop_type','geometry']`;
+eski arayüzün gönderdiği gövde → `REDDEDILDI: [(('geometry',), 'missing')]`.
+
+Ayrıca **KR-013-2 komşu-tarla bilgi notu KALDIRILDI** (ürün kararı): kapı
+`KR-013-2-DEVRE-DISI-2026-08-17` ile yorum satırında, yani not **var olmayan** bir
+davranışı anlatıyordu. ⚠️ **KR-013-1 asgari 5 dönüm kuralı HÂLÂ ETKİN** (`field.py:50`,
+kapı `fields.py:259`) — o cümle silinmedi, alan kutusunun yardım metnine taşındı.
+
+### ③ T01-K1 GERİLEMESİ KAPANDI (plat #469) — kendi #464'ümüzün ürünü
+
+#464 eskalasyon dalına `gorev_yan_etkileri_atlanmali` bağladı. **Kapı doğruydu, KÜME
+yanlıştı:** o küme `PENDING_REVIEW` içerir ve üretim sırası tam onu üretir
+(worker `:1396` sonuç ÖNCE → görev PENDING_REVIEW → `:1604` eskalasyon SONRA → kapı ısırır).
+Sonuç: düşük-güvenli **her** işte uzman incelemesi sessizce kapanıyordu.
+
+Eskalasyon ekseninin **kendi** kapısı yazıldı; küme kanonikten **türetiliyor**
+(`GOREV_TERMINAL_DURUMLARI - {"PENDING_REVIEW"}`) — ikinci gövde YOK.
+
+> **DERS (kalıcı):** *bir kapıyı İZOLE sınamak yetmez — üretimin o kapıya hangi SIRAYLA
+> geldiğini de sına.* #464'ün mandalları izole yazılmıştı ve **yeşildi**. Yeni
+> `TestT01K1UretimSirasi` sırayı kilitler.
+
+### ④ Diğer dört PR
+
+| PR | İş | Not |
+|---|---|---|
+| plat #470 | **Y1** (`result_id == job_id` sınıfı) + **Y2** (üretici formu) + çift kuyruk declare | Y1 sınıfı **üç** üyeliydi ve sonuçları farklı: uzman ataması FK ihlali (sert) · wire olayı yanlış kimlik · `field_history` kolonu **FK değil** → çökmez, **sessizce** yanlış işaretçi. Y2: `_insert_field_history` worker'ın hiç üretmediği `type`/`severity`/`name` anahtarlarını okuyordu → gerçek yükte geçmiş olayları **yapısal olarak hiç yazılmıyordu** |
+| plat #471 | **K3** — DLX'e bağlı kuyruk YOKTU | 🔴 **#467 bu deliği KAPATMIYOR**: policy deseni dokuz kuyruk sayan açık bir liste ve `domain.events.*` orada yok. Ayrıca ölçüldü: `declare_topology` için depoda **hiç test yoktu** |
+| plat #472 | **Y3** — çıkarım çökse bile iş ekseninde iz kalmıyordu | ⛔ `status="FAILED"` **YAPILMADI**: platform görevi FAILED yapar, ardından gelen eskalasyon kapıya takılır → uzman incelemesi hiç açılmaz (T01-K1'in aynısı). İş ekseni **durum değil KANIT** taşır |
+| work #260 | 🔴 **K2** — eksik zorunlu bant sıfırla dolduruluyordu, sonuç **sessizce yanlış** oluyordu | Kural tek kaynağa çıkarıldı; fail-closed → ACİL eskalasyon. **Öz-denetimde bulundu** (bkz. ⑤) |
+| work #259 | İki sarkan `dlq-kur.sh` atfı + Y4 tuzağı + "ölü" DLX opt-in **karar** olarak mandallandı | Kapı ilk koşumda **üçüncü** bir atıf buldu; ölçüldü, platformda gerçekten var → çapraz-repo, kanıtıyla izin listesine alındı |
+
+### ⑤ 🔴 ÖZ-DENETİM: kapsamı SESSİZCE DARALTMIŞIM — K2 (worker #260)
+
+Tur sonunda kendi çıktımı çürütme turu (`CLAUDE.md` §6) **kendi hatamı** buldu:
+devir notunda **KRİTİK** olarak duran **K2**, benim önerdiğim PR gruplamasında
+**yoktu** — yani §3 *"kapsamı sessizce daraltma"* ihlali. Kökten kapatıldı.
+
+**Kusur:** `_load_bands` eksik olan HER bandı ayrım yapmadan sıfırla dolduruyor,
+yalnız WARNING basıyordu. `NIR=0` → `NDVI = (0−R)/(0+R+eps) = −1.0` → **tarlanın
+tamamı "anomali"**. Sıfır kanal düşük varyanslı olduğu için güven formülü bunu
+belirsizlik saymaz → fail-closed eşikleri (KARAR-13) **devreye girmez** → model
+tam bir tanı üretir ve sonuç çiftçiye gider. **Başarısız değil, sessizce YANLIŞ.**
+
+**Koruma neden etkisizdi:** `channel_spec.build_input_tensor` ayrımı ZATEN
+yapıyordu, ama `_load_bands` ONDAN ÖNCE koşup bandı sıfırla "var" hâle getiriyor
+ve o korumayı **körleştiriyordu**. Kural artık tek kaynakta
+(`bant_sifir_doldurulabilir_mi`), iki tüketici de onu okur. Zorunlu bant eksikse
+fail-closed → `NO_RESULT` + `PIPELINE_ERROR` → **ACİL eskalasyon** (iş kaybolmaz,
+uzmana gider). Blue'nun tasarlanmış nazik bozulması **korundu**.
+
+### ⑥ Merge provası GERÇEK bir çakışma buldu (merge etmeden önce)
+
+Beş platform dalı sıralı olarak geçici bir dalda merge edildi: #468→#469→#470→
+#471 temiz, **#472 ÇAKIŞTI**. Sebep salt metinsel bitişiklik — #469 ve #472 aynı
+çapaya ekleme yapıyordu. **Çakışmayı yönetmek yerine ORTADAN KALDIRDIK:** #472'nin
+yardımcı bloğu başka bir konuma taşındı (Python ad çözümlemesi çağrı anında olduğu
+için davranış değişmez). Prova tekrarlandı → **beşi de temiz**, ve **birleşmiş
+hâlde** `ruff` temiz + tüm unit testler yeşil (çıkış kodu 0). Merge sırası artık
+önemsiz.
+
+### ⑦ AÇIK KALEM olarak BEYAN (sessiz borç bırakmamak için)
+
+**`rollback.request` tek taraflı** — worker tüketiyor, platformda ne üretici ne
+tüketici var (ölçüldü: `grep -rn rollback tarlaanaliz-platform/src` yalnız ilgisiz
+DB rollback'leri buluyor). **Düzeltilmedi ve bu bilinçli:** platform tarafına
+üretici yazmak var olmayan bir özellik icat etmek olurdu. Bugün **sıfır risk**
+(kimse basmıyor) ve DLX policy deseni onu zaten kapsıyor. Ürün kararı gerektirir.
+
+### ⑧ Bu dosyada EKSİK kalan beş PR (önceki turdan)
+
+Denetimde ölçüldü: **plat #466, #467 · worker #256, #257, #258** bu dosyada hiç anılmıyordu.
+
+- **plat #466** — otomatik sevk zinciri: kalibrasyon kaydı üreticisi + olay yolunun AV2 bayrağından ayrılması
+- **plat #467** — DLX policy kapsamı 4→9 + fail-closed doğrulama · ⚠️ **dağıtım durumu ÖLÇÜLMEDİ**
+- **work #256** — taze zincir Faz 2 (COG yükleme) · **#257** — sırları `--env-file`'a taşı · **#258** — rakip DLQ betiği kaldırıldı
+
+### ⑥ Ortam notu — yerel worker testleri
+
+`pytest tests/unit` worker'da **54 kırmızı**. ⚠️ **BASELINE DE 54** (`git stash` ile
+`master` üzerinde ölçüldü) → değişikliklerimiz sıfır yeni kırmızı üretiyor. Kök neden
+makine artefaktı: **torch/NumPy ABI uyuşmazlığı** (`Numpy is not available`), kodla
+ilgisiz. Hafızadaki *"yerel artık sıfır kırmızı"* kaydı (#448 sonrası) bu ortamda
+**bayatlamıştır**.
+
+### 🔴 "Merge edildi" ≠ "dağıtıldı" ≠ "çalışıyor"
+
+Altı PR'ın hiçbiri **dağıtılmadı**. Bu depolarda push/merge tetikli deploy işi **yok**.
+Çiftçi şikâyeti (#468) ve T01-K1 gerilemesi (#469) **canlıdan** geldiği için dağıtım ayrı
+bir adım olarak yapılmalıdır.
+
+**CI (2026-08-25 ölçümü):** #468 → 19/19 SUCCESS · #469, #470, #471 → 7/7 SUCCESS ·
+#472 → koşuyordu · work #259 → açıldı.
+
+---
+
+## 0.B — (2026-08-21/24, **on dokuzuncu oturum: YEREL UÇTAN UCA + ÇOK-AJANLI DENETİM + Y-1/Y-2/RK-1/RK-2 DÜZELTİLDİ**)
 
 > **Bu turun PR'ları — SAYIYI KOMUTTAN AL:**
 > ```bash
@@ -77,6 +215,13 @@ alınamadı; AST mandalları **yapıyı** doğrular, deploy öncesi yerelde koş
 RK-5 (#248 + #250) · RK-10 (#460) · RK-11 (#460, **tek zayıf halkası #462 ile**) ·
 RK-13 (#250) · Ö-1 (#114) · B04-K1 (#252) · B05-K1 / B06-K1 (#461) · **T02-F1/F2 (#462)** · U02 (#463) · **T01-K1/K2/K3 (plat #464)** · **T03-1/2/4/5/6/7 + T04 (plat #465)** · **T03-8b/9 (worker #253)** · tünel yarı-açık tespiti (worker #254) · RK-9 (dağıtım, 2026-08-24).
 
+**2026-08-25'te AÇILAN PR'lar (hiçbiri DAĞITILMADI):** tarla ekleme 422 — canlı çiftçi
+hatası (plat **#468**) · T01-K1 gerilemesi (plat **#469**) · Y1+Y2+çift declare
+(plat **#470**) · K3 DLX kuyruk bağlama (plat **#471**) · Y3 iş ekseni kanıtı
+(plat **#472**) · sarkan betik atıfları + Y4 + yeni kapı (worker **#259**) · 🔴 K2 eksik zorunlu bant fail-closed (worker **#260**).
+Önceki turdan bu dosyada eksik kalanlar: plat **#466**, **#467** · worker **#256**,
+**#257**, **#258**.
+
 **AÇIK:**
 
 | # | Kök neden | Risk | Not |
@@ -87,7 +232,11 @@ RK-13 (#250) · Ö-1 (#114) · B04-K1 (#252) · B05-K1 / B06-K1 (#461) · **T02-
 | **RK-8** | Pistachio eğitimsiz model + kalibre olmayan güven | ORTA | **Kod kusuru DEĞİL** — belgeli kasıtlı pilot (ADR-006). Mature'a geçiş ürün/ML kararı |
 | **OP-1** | ~~Üretimde worker bağlı değil~~ → **KÖPRÜ KURULDU 2026-08-24** | ORTA | Ölçüldü (`sim-worker-baglan.sh` 5/5): üretimde `analysis_jobs` **1 tüketici** — worker bağlı. Worker `host.docker.internal:5673` üzerinden tünele bakıyor. ⚠️ **Köprü hâlâ köprü:** yerel makine kapanınca tüketici sıfırlanır. Bunu otomatikleştiren **tünel gözetmeni** eklendi (worker #255): oturum açılışında başlar, canlılığı **broker cevabıyla** ölçer (TCP değil), ölü/yarı-açık tüneli kapatıp yeniden kurar, üstel geri çekilme 5→300 sn. 🔴 **AÇIK KALAN:** *bağlı ≠ iş akıyor* — üretimde gerçek bir iş henüz akmadı (kuyruk 0 mesaj); DK-48 listesi hâlâ boş ve bunun kanıtı ancak gerçek bir sevkle alınır |
 | **T04** | ~~`result_id == job_id` varsayımı~~ → **KAPANDI (plat #465)** | — | Bu oturumda **yerel ölçümle** bulundu: `job 01d6f7fc` satırı `result_id=d3cba4d8` taşıyor → eskalasyon ham `ForeignKeyViolationError` ile DLX'e düşüyordu ve RK-4 mükerrerlik sorgusu o satırlarda kördü. `cozumle_sonuc_id()` varsayımı ölçüme çevirdi |
-| ~~T01-K1~~ | **KAPANDI (plat #464)** | — | Üç kusur: K1 eskalasyon dalı GÖREV-terminal kapısı taşımıyordu · K2 `commit` `if reviews:` içindeydi (uzman yoksa sonuç satırı sessizce geri alınıyordu) · K3 ikinci gövde. **Yerel canlı kanıt:** DB'de gerçekleşmiş iz bulundu — 2026-08-13'te `DONE` olan göreve 2026-08-24'te 2 `ExpertReview` üretilmiş ve uzman atanmıştı. Karşı-olgu ölçüldü: düzeltmeyle sonuç satırı 1, düzeltmesiz **0** |
+| **T01-K1** | 🔴 **#464 GERİLEME ÜRETTİ → yeniden KAPANDI (plat #469, 2026-08-25)** | — | #464'ün kapısı doğruydu ama KÜMESİ yanlıştı: `GOREV_TERMINAL_DURUMLARI` `PENDING_REVIEW` içerir ve üretim sırası tam onu üretir → düşük-güvenli **her** işte uzman incelemesi sessizce kapanıyordu (üretimde canlıydı). Eskalasyon ekseninin kendi kapısı yazıldı, küme kanonikten TÜRETİLİYOR. **Ders: izole kapı testi SIRAYI kaçırır** |
+| **K3** | **DLX'e bağlı kuyruk YOKTU → KAPANDI (plat #471, 2026-08-25)** | — | `declare_topology` `<ad>.dlx` açıyordu ama bind yalnız ANA exchange'e yapılıyordu; alıcısı olmayan exchange'e giden mesaj RabbitMQ'da SESSİZCE düşer. ⚠️ **#467 bunu kapatmıyor** (policy deseni `domain.events.*`'ı içermiyor). Ölçüldü: `declare_topology` için depoda **hiç test yoktu** |
+| **Y1 (T04 sınıfı)** | **SINIF KAPANDI (plat #470, 2026-08-25)** | — | #465 varsayımı YALNIZ eskalasyon dalında ölçüme çevirmişti. Sınıf **üç** üyeliydi; üçüncüsü (`field_history.analysis_result_id`) FK DEĞİL → çökmez, **sessizce** yanlış işaretçi yazar |
+| **Y3** | **KAPANDI (plat #472, 2026-08-25)** | — | Çıkarım çökse bile iş ekseninde iz kalmıyordu. ⛔ `status="FAILED"` **bilerek yapılmadı**: T01-K1 sınıfı gerileme üretirdi (görev FAILED → eskalasyon kapıya takılır → uzman incelemesi hiç açılmaz). İş ekseni **durum değil KANIT** taşır |
+| ~~T01-K1 (ilk tur)~~ | **KAPANDI (plat #464)** — ⚠️ bu düzeltme yukarıdaki gerilemeyi doğurdu | — | Üç kusur: K1 eskalasyon dalı GÖREV-terminal kapısı taşımıyordu · K2 `commit` `if reviews:` içindeydi (uzman yoksa sonuç satırı sessizce geri alınıyordu) · K3 ikinci gövde. **Yerel canlı kanıt:** DB'de gerçekleşmiş iz bulundu — 2026-08-13'te `DONE` olan göreve 2026-08-24'te 2 `ExpertReview` üretilmiş ve uzman atanmıştı. Karşı-olgu ölçüldü: düzeltmeyle sonuç satırı 1, düzeltmesiz **0** |
 | ~~T03~~ | **KAPANDI (plat #465 + worker #253)** | — | `if False:` ölü-dal kaçışı **eskiden 0 test kırıyordu, şimdi 2** (kök neden AST zayıflığı değil, dalın **çağrılamaz** olmasıydı → `_skip_dali_yan_etkileri` çıkarıldı) · SKIP dalı `overwrite=False`→`True` · COMPLETED dalı FAILED ile simetrik hale getirildi (**canlı kanıt:** `mission_id`siz sonuçta düzeltmeyle iş `COMPLETED`, düzeltmesiz `PROCESSING`de kaldı) · karar yeri polaritesi mandallandı · worker vendor `mission_id` `minLength:1` (T03-9 **kusur değil KARAR**: kendi çıktısında sıkı olmak doğru yön) |
 
 ---
