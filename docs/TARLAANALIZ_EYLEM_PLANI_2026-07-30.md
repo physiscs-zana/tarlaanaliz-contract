@@ -2838,12 +2838,23 @@ altına **tek** rehber ④ `pin_version.py --major --breaking` ⑤ annotated tag
 | **DK-53** 🟡 | **Faydalı böcek kartı YOK** (210 kartın 0'ı `beneficial`). Koruma #447'de bağlandı → kart yazıldığı gün görünür. *Ölü koruma bağlama* örneği | worker kart kataloğu |
 | **DK-54** 🟡 | Kanonik bağ mandalında **2 kalem** kaldı (5 → 2). Mandal iki yönlü, sessizce unutulamaz | platform |
 | **DK-55** 🟡 | `lock-install-smoke` bütçesi kapağı aşıyor: kapak 20 dk, gerçek **28,5 dk** → kapak **yanlış güven** veriyor | platform `ci.yml` |
+| **DK-56** 🔴 | **Eskalasyon döngüsü — inceleme HİÇ kapanmıyor.** `expert_reviews.escalation_round = **26**` (satır `e8c513ed…`/`dbdfb37a…`, 08-19'da doğdu, 08-26 03:30'da yine atandı) ve `escalated_to_expert_id` **atanan uzmanın kendisi**. Sonuç: `has_open_reviewer()` yüzünden KR-019 kapısı **hiç değerlendirilmiyor** → görev `PENDING_REVIEW`da kilitli kalıyor, iki inceleme ZATEN `rejected` olsa bile. Rapor çiftçiye **hiç** ulaşmaz | platform `expert_reassignment_service` |
+| **DK-57** 🔴 | **Uzman, GÖREMEYECEĞİ kanıta atanıyor** — aşağıdaki açık ürün sorusunun ilk somut ölçümü. `4d1ab823…`: `predicted_sub_specialty=DISEASE` → hastalık uzmanı atandı (atama **doğru** çalıştı), ama `predicted_detection_type` **BOŞ** (koşum `INDICES_ONLY`, %31 güvenle bulgu bastırıldı) → alt-uzmanlık `evidence_hint`'ten türetildi (`worker.py:1455-1458`). Gerçekte üretilen katman **Azot Stresi** ve arayüz onu bu uzmandan **bilerek gizliyor**. Uzmandan kanıtsız karar isteniyor | worker + platform |
+| **DK-58** 🟠 | **Uzmana tüm tarlanın tek görüntüsü gidiyor.** `ReviewImagesResponse` iki kaynak döner: `patches` (Edge'in 3 katmanlı yamaları, **birincil**) yalnız NDVI önceliklendirme + Pix4D varsa dolar — üretimde **donanım-kapılı**, yani boş; herkes `tile_layers` **geri düşüşüne**, yani tarla geneli COG'a düşüyor. Alt-uzmanlık ayrımı görüntü katmanında hiç oluşmuyor. DK-52 ile aynı kök | edge → platform |
+| **DK-59** 🟡 | **Kartlar alt-uzmanlığa göre GİZLENMİYOR** — kusur değil **ürün kararı çatışması**. Ayrım mantığı ÇALIŞIYOR (ölçüldü: zararlı uzmanı `{BENEFICIAL,PEST}` ↔ su/azot uzmanı `{HEALTH,NITROGEN_STRESS,WATER_STRESS}`, ayrık). Backend kart **silmez**, `relevant` etiketi koyar; arayüz ilgisizleri **özet olarak altta** tutar — gerekçesi kodda: *"hastalık/zararlı ayrımı komşu kart okunarak yapılır"*. Ürün sahibi 2026-08-26'da **süzme** istedi. ⚠️ `_caller_specialization_codes` **fail-OPEN**: DB hatasında tüm kartlar `relevant:True` — süzme eklenirken bu dal ele alınmazsa arıza anında uzman **hiç kart göremez** | web + platform |
+| **DK-60** 🟠 | **Çerez 24 saat, JWT 30 dakika.** `AUTH_TOKEN_TTL_MS = 24 saat` (`web/src/lib/constants.ts:6`) ↔ `jwt_access_token_expire_minutes = 30` (`settings.py:171`). Sunucu kapısı yalnız çerezin **varlığına** bakıyor (`(admin)/layout.tsx:41`), geçerliliğine değil → sayfa açılıyor, ilk API çağrısı 401 alıyor, refresh düşerse `clearAuthStorage()` **oturumu siliyor**. Belirti: panelde 30 dk bekleyip bir butona basınca **çıkış**; geri dönünce sayfa açık (istemci önbelleği). Canlı gözlendi 2026-08-26 | web |
 
 **+ Açık ürün sorusu:** uzmanın **hangi alana yönlendirileceğine** bugün *kalibre
 edilmemiş bir NDVI/fenoloji sezgisi* karar veriyor (`classify_from_evidence`). İfade
 PR **#448**'de düzeltildi (alan *"modelin tanısı değil, yönlendirme ipucu"*), ama
 **kalibrasyon sorusu açık** — DK-52'deki eşik kalibrasyonuyla aynı kökten.
 **İlk gerçek uçuş verisiyle birlikte değerlendirilmeli.**
+>
+> 🔴 **2026-08-26 — bu soru artık teorik değil, ÖLÇÜLDÜ (DK-57).** Canlı bir incelemede
+> tespit hiç üretilmediği hâlde (`predicted_detection_type` BOŞ) yönlendirme
+> `evidence_hint`'ten **DISEASE** dedi; sistem hastalık uzmanı atadı; gerçekte üretilen
+> tek katman **Azot Stresi**ydi ve arayüz onu o uzmandan gizledi. Yani kalibrasyonsuz
+> sezgi yalnız *"yanlış alana yönlendirme"* değil, **kanıtsız karar isteme** üretiyor.
 
 ### 🔴 Ö1 — CI bu depoda **otoriter değildir** (§14.9'dan, planda hiç geçmiyordu)
 
