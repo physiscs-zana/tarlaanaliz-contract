@@ -7,6 +7,48 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.9.0] - 2026-08-29 — analiz işi tarla sınırını taşır (ölçüm kırpılabilsin)
+
+> **MINOR.** Tek opsiyonel alan eklendi; hiçbir alan zorunlu yapılmadı, hiçbir
+> şema kaldırılmadı. `breaking_change_detector` doğruladı: *0 breaking,
+> 1 non-breaking (Optional field added)*.
+
+### Eklendi
+
+- **`worker/analysis_job.v1`** → `field_boundary_geojson` *(opsiyonel)*
+  Tarla sınır poligonu (GeoJSON, WGS84/EPSG:4326).
+
+### Neden — ölçülmüş kusur (2026-08-29, gerçek sipariş `24cceb52`)
+
+Bir uçuşun ortofotosunun **%56'sı tarla sınırlarının dışındaydı**
+(18.35 / 32.80 dönüm). Kırpılmamış döküm ağaç oranını **%6.5** gösteriyordu;
+tarla poligonuna kırpınca **%13.4** çıktı — yani *"ot"* sanılanın çoğu
+bahçenin dışındaki alandı. Kırpılmamış girdiyle üretilen her yüzde, bahçe
+dışındaki toprağı çiftçinin bahçesi sayar.
+
+Worker **izole çalışır** (KR-071) ve platforma geri çağrı **yapamaz** →
+sınır bilgisi iş yükünde gitmelidir. `metadata` serbest biçimli olduğu için
+oraya sıkıştırmak mümkündü ama bu **örtük bir iş kuralı** olurdu: worker,
+kimsenin beyan etmediği bir anahtarı okurdu. Ayrıca şema
+`unevaluatedProperties: false` taşıyor — beyansız alan zaten reddedilir.
+
+### Tüketici yükümlülüğü
+
+- **platform:** `worker_job_publisher` alanı `fields.boundary_geojson`'dan
+  doldurur. ⚠️ `fields.boundary` (PostGIS) üretimde **NULL**'dır; poligon
+  yalnız `boundary_geojson` (JSONB) içindedir.
+- **worker:** alan **varsa** ölçümden önce kırpar; **yoksa kırpmaz ve bunu
+  ölçümün yanında bildirir** — sessizce kırpılmış gibi davranmaz.
+
+### Açık obje politikası — bilinçli
+
+`additionalProperties: true`. GeoJSON sözleşmesi `bbox` ve yabancı üyelere
+izin verir (RFC 7946 §5–6); katı davranıp işi reddetmek zararsız bir `bbox`
+yüzünden analizi tümden durdururdu. Tüketici yalnız `type`/`coordinates`
+okur, diğerlerini yok sayar.
+
+---
+
 ## [7.8.0] - 2026-08-21 — İş "başladı" sinyali + analiz türü yüzeyinin kanoniğe hizalanması
 
 > **MINOR.** Yeni bir şema eklendi, hiçbir şema kaldırılmadı, hiçbir alan zorunlu
