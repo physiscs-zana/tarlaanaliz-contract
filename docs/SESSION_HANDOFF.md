@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-25 (**yirminci oturum** — önceki turun devir notu **bağımsız denetimden geçti** (4 kusur + 1 yeni bulgu + 3 karar) · 🔴 **canlı çiftçi hatası** düzeltildi: tarla eklenemiyordu, arayüz sözleşmenin bayat aynasıydı (plat #468) · 🔴 **T01-K1 gerilemesi kapandı** — kapı doğruydu, KÜME yanlıştı; düşük-güvenli her işte uzman incelemesi sessizce kapanıyordu (plat #469) · Y1 sınıfı (üç üye) + Y2 üretici formu + çift declare (plat #470) · **K3** DLX'e bağlı kuyruk yoktu, **#467 bunu kapatmıyor** (plat #471) · **Y3** iş ekseni artık kanıt taşıyor, `status="FAILED"` bilerek YAPILMADI (plat #472) · iki sarkan betik atfı + Y4 tuzağı + yeni kapı (work #259). ⚠️ **Hiçbiri dağıtılmadı.** Detay: §0.A. Önceki: 2026-08-19/20 (**on altıncı oturum** — uzman ekranı zinciri: sonuç↔veri seti bağı sınıfı tamamen kapatıldı (#441/#443) · **üretimde ölü döşeme servisi** bulundu ve düzeltildi (#446 — NumPy x86-64-v2 uyumsuzluğu, 7770 log satırı) · CI asılma kapakları (#442) · alan adı + BOUND kapısı (#444) · dağıtımda submodule kapısı + simülasyon bağımsızlığı (#445) · kartlar alt uzmanlık duyarlı (#447). ✅ **7 PR MERGE EDİLDİ ve DAĞITILDI**. Önceki: 2026-08-18 (**on üçüncü/on dördüncü oturum** — KR-013-2 komşuluk kapısı sahipten bağımsız hâle getirildi (#91) · CLAUDE.md dört depoda Opus 5 rehberine göre yeniden yapılandırıldı + `check_claude_md_refs.py` atıf bütünlüğü kapısı kuruldu (#92) · kök `CLAUDE.md` + oturum-başı kanca kalıcılık için contract'a taşındı (#93) · dört depoda `docs/`+`denetim/` (191 dosya) tam-okuma denetimi: platform+worker sıfır aday, contract'ta 2 alansız dosya silindi/taşındı (#94). **AL-K26 (I-1 hizası) bu turda platformun 7.6.1'de kaldığı iddiasıyla açık görünüyordu — ölçüldü, 2026-08-13'te KAPANMIŞ ve dört depo bugün de 7.7.2'de hizalı** (bkz. §0.A, önceki turun bu satırı düzeltildi). Önceki: **on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
+**Son güncelleme:** 2026-08-26 (**yirmi birinci oturum** — 🔴 **çiftçi tarla ekleyemiyordu**: saha kanıtından kök nedene, beş PR (plat #473/#474/#478/#479/#480) — ekran çiftçiye **yalan söylüyordu** (boş ama truthy sınır), `Invalid LngLat (NaN, NaN)` kök nedeni **deneyle kanıtlandı** (tür etiketine güvenmek; etiketi uyduran da bizim kodumuzdu), tarla ekleme **tek butona** indi · A-1/A-2 `/docs` üretimde fail-OPEN (#476) + G-1 WORM tablosuna yanlış “teslim edildi” (#477) · ⭐ **DAĞITIM İLK KEZ ÜÇ KATMANDA ÖLÇÜLDÜ** — üretim `origin/main` ile **0 commit** hizalı, backend konteynerinde ve **canlı web paketinde** doğrulandı · ⚠️ iki oturum **kayıt bırakmadan** kapandı, bu bölüm depodan kurtarıldı. Detay: §0.A. Önceki: 2026-08-25 (**yirminci oturum** — önceki turun devir notu **bağımsız denetimden geçti** (4 kusur + 1 yeni bulgu + 3 karar) · 🔴 **canlı çiftçi hatası** düzeltildi: tarla eklenemiyordu, arayüz sözleşmenin bayat aynasıydı (plat #468) · 🔴 **T01-K1 gerilemesi kapandı** — kapı doğruydu, KÜME yanlıştı; düşük-güvenli her işte uzman incelemesi sessizce kapanıyordu (plat #469) · Y1 sınıfı (üç üye) + Y2 üretici formu + çift declare (plat #470) · **K3** DLX'e bağlı kuyruk yoktu, **#467 bunu kapatmıyor** (plat #471) · **Y3** iş ekseni artık kanıt taşıyor, `status="FAILED"` bilerek YAPILMADI (plat #472) · iki sarkan betik atfı + Y4 tuzağı + yeni kapı (work #259). ⛔ “Hiçbiri dağıtılmadı” iddiası 2026-08-26'da **ÇÜRÜTÜLDÜ** — ölçüldü, altısı da canlıda (§0.A ③). Önceki: 2026-08-19/20 (**on altıncı oturum** — uzman ekranı zinciri: sonuç↔veri seti bağı sınıfı tamamen kapatıldı (#441/#443) · **üretimde ölü döşeme servisi** bulundu ve düzeltildi (#446 — NumPy x86-64-v2 uyumsuzluğu, 7770 log satırı) · CI asılma kapakları (#442) · alan adı + BOUND kapısı (#444) · dağıtımda submodule kapısı + simülasyon bağımsızlığı (#445) · kartlar alt uzmanlık duyarlı (#447). ✅ **7 PR MERGE EDİLDİ ve DAĞITILDI**. Önceki: 2026-08-18 (**on üçüncü/on dördüncü oturum** — KR-013-2 komşuluk kapısı sahipten bağımsız hâle getirildi (#91) · CLAUDE.md dört depoda Opus 5 rehberine göre yeniden yapılandırıldı + `check_claude_md_refs.py` atıf bütünlüğü kapısı kuruldu (#92) · kök `CLAUDE.md` + oturum-başı kanca kalıcılık için contract'a taşındı (#93) · dört depoda `docs/`+`denetim/` (191 dosya) tam-okuma denetimi: platform+worker sıfır aday, contract'ta 2 alansız dosya silindi/taşındı (#94). **AL-K26 (I-1 hizası) bu turda platformun 7.6.1'de kaldığı iddiasıyla açık görünüyordu — ölçüldü, 2026-08-13'te KAPANMIŞ ve dört depo bugün de 7.7.2'de hizalı** (bkz. §0.A, önceki turun bu satırı düzeltildi). Önceki: **on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -22,7 +22,358 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-25, **yirminci oturum: DEVİR NOTUNUN BAĞIMSIZ DENETİMİ + CANLI ÇİFTÇİ HATASI + 6 PR**)
+## 0.A EN GÜNCEL — (2026-08-29, **yirmi ikinci oturum: GERÇEK UÇUŞ ÜRETİMDE İŞLENDİ · TOPRAK MASKESİ · CHM İLE AĞAÇ/OT/TOPRAK · RENK ÖLÇEĞİ**)
+
+> **Bu turun tek cümlesi:** 2026-08-27 gerçek fıstık uçuşu (Karaburun 102/1, sipariş
+> `24cceb52`) üretim zincirinden **uçtan uca geçti** ve çiftçinin canlılık puanı
+> **0.317 → 0.650** oldu — fark ağaç değil, **ağaç aralarındaki toprak**tı.
+
+### ① ✅ ZİNCİR AKTI — gerçek siparişte, uçtan uca
+
+`sim-gercek-4c-raster2.py` → 263 MB COG (33 parça) → platform adresi kendisi bildirdi
+(`assembled_uri`) → `rgb_ortho_uri` + `calibrated_ortho_uri` **kanonik üreticiden** yazıldı
+(elle SQL yok) → sevk → yerel GPU worker → sonuç → uzman kuyruğu.
+
+| Uçuş | veri seti | `overall_health_index` | dayanak |
+|---|---|---|---|
+| Uçuş-1 (maskesiz) | `33f230f7` | 0.317 | `FIELD_MEAN_NDVI` |
+| **Uçuş-2 (maskeli)** | `481e9c13` | **0.650** | `FIELD_MEAN_NDVI` |
+
+Worker ölçümü: 4326×4731 → 110 karo, **30'u kapsama eşiği altında hariç**, 80 karo,
+`confidence=0.310`, `mode=INDICES_ONLY`, ~33 dk.
+
+⚠️ **Ölçüm tuzağı:** worker konteyneri `pipeline_completed` için `04:31:09` dedi,
+üretim DB satırı `04:02:17` yazdı — **~29 dk saat kayması** (Docker Desktop VM uyku/uyanma).
+Zaman damgasına dayanan hata ayıklama bu makinede yanıltır.
+
+### ② 🔴 SEVK `PENDING_REVIEW`'DA TIKANDI — çözüm tasarımın kendisindeydi (→ DK-63)
+
+Sevk **409** verdi. `mission.py:88` → `PENDING_REVIEW` yalnız `DONE / EXPERT_REJECTED /
+FAILED / CANCELLED`'a gider; sevk edilebilir olan `EXPERT_REJECTED`. Yani Uçuş-2'yi
+işletmenin kanonik yolu Uçuş-1'i **reddettirmekti** — kaçamak değil, tasarlanmış
+yeniden-uçuş döngüsü. Ret iki bağımsız gerekçeyle de doğruydu (kapsama **%22.4**;
+analiz **maske öncesi** üretilmişti).
+
+**Ölçülmüş yan bilgiler (bir dahaki tura):**
+* Sevk ucu **üç işi birden** yapar: `EXPERT_REJECTED → ANALYZING`, `CALIBRATED →
+  CALIBRATED_SCANNED_CENTER_OK` (**AV2 muafiyeti**, `scan_performed:false` damgasıyla —
+  üretimde `TARLA_AV2_ENABLED=false` ve `av2-scanner:8400` **yok**), ve en güncel veri
+  setini kuyruğa koyma. AV2 **ayrı bir adım değildir**.
+* `qc_report.pass_warn_fail` bir **kapı DEĞİL** — platform kaynağında hiç geçmiyor.
+  KR-018'in altı koşulu: durum · kalibre · sha256 · av1 · av2 · ≥4 bant.
+* Üretim DB'si: `ssh tarlaanaliz-prod` → konteyner **`tarlaanaliz-db`**.
+  Kullanıcı/veritabanı adını uydurma, konteynerin `$POSTGRES_USER`/`$POSTGRES_DB`'sini kullan.
+* Çiftçi listesi görev başına **yalnız en güncel** sonucu gösterir
+  (`results_service_impl.py`) — iki uçuşu ayrı ayrı sunmak bugünkü tasarımla **mümkün değil**.
+
+### ③ ⭐ TOPRAK MASKESİ — ölçümü DOĞRU değil, TEKRARLANABİLİR de yaptı
+
+Maske (`NDVI ≥ 0.40`, `health_distribution.yaml`) ürüne üç yoldan birden ulaşıyor
+(`reporting_agent.py`): `mean_ndvi` → platform `overall_health_index` türetimi.
+
+| ort. NDVI | Uçuş-1 (30 m) | Uçuş-2 (60 m) | sapma |
+|---|---|---|---|
+| maskesiz | 0.3152 | 0.2695 | **0.046** |
+| maskeli | 0.6405 | 0.6422 | **0.0017** |
+
+İki bağımsız uçuş, farklı yükseklik, 14 dk arayla: **maskesizken birbirini tutmuyor,
+maskeliyken örtüşüyor.** Maskesiz indeks aslında *"karede ne kadar toprak kaldı"*yı
+ölçüyordu ve bu uçuş sınırlarına göre değişiyordu.
+
+### ④ 🔴 AMA `canopy_cover_ratio` "AĞAÇ ORANI" DEĞİL (→ DK-64)
+
+Ot da yeşildir ve `0.40` eşiğini geçer. Nokta bulutundan **CHM** üretildi
+(`odm_filterpoints/point_cloud.ply`; pozitif kontrol tepe **3.77 m** ≈ fıstık ağacı,
+negatif kontrol zemin medyanı **0.087 m** ≈ 0):
+
+| | Uçuş-1 | Uçuş-2 |
+|---|---|---|
+| ağaç | %22.3 | %6.5 |
+| **ot** | %5.5 | **%13.6** |
+| toprak | %72.2 | %79.9 |
+
+Uçuş-2'de "kanopi" denen %20.1'in **üçte ikisinden fazlası ot**. Ot ortalamayı iki uçuşta
+da aynı yönde çekiyor: yalnız-ağaç **0.6682 / 0.6663** (fark **+0.0317 / +0.0326**).
+Yükseklik eşiği veriden seçildi (Otsu): **1.52 / 1.46 m**; ağaç tacı medyanı **2.74 / 2.71 m**
+— farklı uçuş, farklı nokta bulutu, **aynı ağaçlar**.
+
+⚠️ Çiftçiye sunmadan önce **tarla poligonuyla kırpılmalı**: Uçuş-2 ortofotosu 32.8 dönüm,
+kayıtlı tarla **29.0 dönüm**.
+
+### ⑤ ⭐ RENK ÖLÇEĞİ — renkler ZATEN göreli, ve kimse söylemiyordu
+
+Ürün sahibinin *"uzmana renklerin anlamını verelim"* fikri ölçüm sonrası büyüdü:
+
+1. **Uzman portalinde hiç renk açıklaması YOKTU** (ölçüldü).
+2. Karo üreticisi rampayı **görüntünün kendi %2–%98 dilimlerine** oturtuyor
+   (`tile_service_impl._percentile_rescale`) → renkler **her durumda göreli**, kalibrasyon
+   mutlak olsa bile. *"Kırmızı = NDVI 0.2"* her hâlde yanlış olurdu.
+3. Worker her sonuçla `absolute_scale_valid` gönderiyor — **sıfır tüketici** (platform, web,
+   şemalar). Öksüz veri.
+
+⇒ Lejant **iki bağımsız şey** söyler: *"renkler görelidir"* (daima) ve *"sınıf sınırları
+yaklaşıktır"* (yalnız `RELATIVE`). Bunları tek koşula bağlayan regresyonu yakalayan test
+**mutasyonla doğrulandı**.
+
+**Dal: `feat/renk-olcegi-gecerlilik` (platform) — PR yok, DAĞITILMADI.** Göç gerekmedi;
+`absolute_scale_valid` `datasets.manifest['calibration_type']`'tan türetiliyor,
+okuma kanonik `dataset_value_for_result` ile (sonuç-kapsamlı, "görevin en günceli" değil).
+Lejant **ortak** `ResultMapSection`'a konuldu — o bileşeni çiftçi *ve* uzman kullanıyor.
+
+### ⑥ ⭐ ARAŞTIRMA DENETİMİ — kartımız çürütülmüş bir iddia taşıyor (→ DK-62)
+
+23 fıstık kartı içinde **tek `DIRECT`+`HIGH`** olan `thaumetopoea_solitaria`, kanıtını
+*kalıcı ipeksi keseye* dayandırıyor. Literatür bunu çürütüyor (kalıcı kese
+*T. pityocampa*'nın; *T. solitaria* gündüz gövdede dinlenir, **yumurta halinde kışlar** —
+kart "kışlayan larvalar" diyor). ⓘ Kart metni okundu; **çürütme araştırma ajanı
+raporundan**, birincil kaynaklar okunmadı → düzeltmeden önce doğrulanmalı.
+
+### ⑦ 📌 BU TURDA AÇILAN KALEMLER
+
+`DK-62` (gözkurdu kartı) · `DK-63` (yeniden analiz kapısı) · `DK-64` (ağaç/ot/toprak + CHM
++ ortofoto çözünürlüğü). Dal: `docs/devir-2026-08-26`, **PR yok — birikiyor**.
+
+### ⑨ 🔴 AYNI OTURUMUN İKİNCİ YARISI — sözleşme 7.9.0 + ÜÇ ZİNCİRLEME KUSUR (kendi ürettiğim)
+
+**Teslim edilen (üçü de merge + üretime dağıtıldı):**
+
+| depo | ne |
+|---|---|
+| contract | `analysis_job.v1` → `field_boundary_geojson` (opsiyonel, 0 breaking) · **v7.9.0 etiketli** |
+| worker | `field_clip.py` — ölçüm tarla sınırına kırpılır · bitki-örtüsü maskesi **mahsule bağlı** |
+| platform | `FieldBoundaryRepositoryImpl` — sınır sevk yüküne konur · uçuş geçmişi + renk lejantı |
+
+I-1/I-2/I-3 doğrulandı: üç depo **7.9.0**, `v7.9.0` annotated etiket,
+submodule pini `8384fdf0` = etiket commit'i.
+
+**🔴 ÜÇ KUSUR ÜRETTİM — üçünü de öz-denetimde kendim buldum:**
+
+1. **Maskeyi KÜRESEL açtım.** Her mahsule uygulandı, **7 mevcut testi**
+   kırdı. Kıranlardan biri tam bu sınıfı koruyordu: *"0.0 meşru bir
+   NDVI'dir; onu silmek VERİ İMHA EDERDİ"*. Buğday tarlasında NDVI 0.0
+   çiftçinin **görmesi gereken** sorundur. Ürün sahibinin kuralı zaten
+   *"ağaçlı bahçe"* diye kapsamlıydı — **kural doğruydu, ben genişlettim**.
+   ⇒ Düzeltme: küresel varsayılan **KAPALI**, maske
+   `config/crops/<mahsul>.yaml`'dan açılır. Kodda mahsul listesi **yok**.
+
+2. **`git stash` ÜRETİMİ BOZDU.** Paylaşımlı worker ağacını temizledim;
+   ama çalışan konteyner o dizini **bind-mount** ediyordu
+   (`…/src → /app/src`). Modül dosyaları ayağının altından çekildi, worker
+   çöktü, onaylanmamış iş yeniden koştu ve çiftçinin değeri
+   **0.650 → 0.270** oldu. ⚠️ **Dosyayı geri koymak yetmedi** — Python
+   içe aktarılmış modülü yeniden yüklemez; düzelme ancak **konteyner
+   yeniden başlatılınca** geldi.
+
+3. **Mahsule bağlı maske ÜRETİMDE ÖLÜ KODDU.** `ReportRequest`
+   `crop_type` **taşımıyordu**; `getattr(message, "crop_type", None)`
+   sessizce `None` alıp maskeyi kapatıyordu. Kanıt zaten oradaydı
+   (`vegetation_mask_applied = false`), ben bakmamıştım.
+   ⇒ Alan **ZORUNLU** yapıldı (sessiz düşüş tip düzeyinde imkânsız),
+   bilinmeyen mahsul **loglanıyor**, **üretim yolundan geçen** testler
+   yazıldı (mutasyonla kanıtlandı).
+
+**Üçünün ortak kökü: ÇÖZÜCÜYÜ test ettim, ZİNCİRİ değil.**
+Ayrıntı ve reçeteler: yerel hafıza `olculmus-tuzaklar-2026-08-29`.
+
+**Ölçülen diğer gerçekler (bir dahaki tur için):**
+* Uçuş-2 ortofotosunun **%56'sı tarla sınırlarının DIŞINDAYDI**; kırpınca
+  ağaç oranı %6.5 → **%13.4**, ot %13.6 → **%5.3** (→ DK-65).
+* `fields.boundary` (PostGIS) üretimde **NULL**; poligon
+  `boundary_geojson` (JSONB) içinde — uzamsal sorgu sessizce boş döner.
+* CHM bağımsız eksenle doğrulandı: taç çapı 4.5–5.4 m, komşu mesafesi iki
+  uçuşta **8.04 / 7.92 m**, **CV 0.08** → dikili bahçe ızgarası.
+* Yerel araç sürümleri CI'dan geriydi (`ruff` 0.15.12 vs 0.16.5, `mypy`
+  2.1.0 vs 2.3.1) ve ölçümü geçersiz kılıyordu. ⚠️ Sürüm eşitlemek de
+  yetmiyor: **bağımlılık kümesi** farklı → bu depoda **mypy yerelde
+  tahmin edilmez, CI'da doğrulanır** (`ci.yml` bunu zaten yazıyor).
+
+**⚠️ AÇIK (o an):** kırpma platformda canlıydı ama uçtan uca hiç koşmamıştı.
+→ **⑩'da KAPANDI.**
+
+### ⑩ ✅ ÜÇÜNCÜ FAZ — zincir uçtan uca aktı, YEDİ kusur kapandı
+
+> **Tek cümle:** yeniden analizi açtım; arkasından **dört kilit daha** çıktı, hepsi
+> kapandı ve iki uçuş da artık **maskeli + tarla sınırına kırpılmış**.
+
+**Çiftçinin gördüğü son hâl** (ölçüldü, `DISTINCT ON (dataset_id)`):
+
+| Uçuş | Sonuç | Sağlık | Bitki örtüsü | Açık toprak | Tarla dışı (kırpıldı) |
+|---|---|---|---|---|---|
+| 27 Ağustos | `9150c0ca` | **0.666** | %27.2 | %72.8 | %4.5 |
+| 28 Ağustos | `9fbbfef7` | **0.646** | %19.1 | %80.9 | **%57.9** |
+
+Bayat `0.650` (kırpılmamış) ve maskesiz `0.317` **elenir**.
+
+**Kırpmanın bağımsız doğrulaması:** boru hattı %57.9 dedi, elle ölçüm %56 —
+iki ayrı yöntem 1.9 puan içinde uyuştu.
+
+⚠️ **Ölçülen ama açıklanmayan:** kırpma sağlığı neredeyse hiç değiştirmedi
+(0.650 → 0.646) ama örtü oranını %20.6 → %19.1 düşürdü — yani **bahçe DIŞI,
+bahçenin kendisinden daha yeşildi**. Nedeni ÖLÇÜLMEDİ.
+
+**Kapatılan yedi kusur** — dördü ancak gerçek siparişi uçtan uca sürerken göründü:
+
+| # | Kusur | Nasıl bulundu | PR |
+|---|---|---|---|
+| 1 | Worker çöküş döngüsü (kalp atışı) | RabbitMQ `missed heartbeats` + `die 1` | work #265 |
+| 2 | Ulaşılamaz yeniden-analiz geçişi (DK-63) | sevk `FAILED` | plat #484 |
+| 3 | Başarısız sevk görevi KİLİTLİYOR | görev `ANALYZING`, kuyruk boş | plat #485 |
+| 4 | `rate_limiter` çalışma zamanı kusuru | mypy → mutasyon | plat #484 |
+| 5 | Escalation sonuç satırında patlıyor | `analysis_results_pkey` | plat #486 |
+| 6 | Örtü oranı çiftçiye ulaşmıyor (DK-64 Kademe 1) | API'de var, arayüzde yok | plat #487 |
+| 7 | Aynı uçuş için MÜKERRER kart | üç maskeli satır oluştu | plat #488 |
+
+**Zincirleme:** yeniden analizi açınca escalation'ın kırık olduğu çıktı; escalation
+düzelince aynı uçuşun iki sonucu oluştu; iki sonuç oluşunca listeleme kuralının
+bunu öngörmediği görüldü. **Hiçbiri kod okuyarak bulunamazdı.**
+
+**Sevk artık uçuş hedefleyebiliyor:** `sim-faz4d-sevk.py … --dataset <UUID>`.
+Bayrak PIN kapısından ÖNCE ayıklanır.
+
+**⚠️ Kanıtlanmayan:** #486'daki escalation kusurunun tam interleaving'i **yerelde
+yeniden ÜRETİLEMEDİ** (hem sıralı hem yarış kurgusu kusurlu kodla yeşil kaldı).
+Yarış testi bu yüzden depoya KONULMADI — sahte güven, testsizlikten kötüdür.
+Düzeltme çakışmanın sebebine değil, o yolun sözleşmesine dayanır.
+
+### ⑧ ⚠️ DEVREDEN
+
+* ✅ **Uçuş-1'in maskeli+kırpılmış koşumu YAPILDI** (⑩). Önceki turda "önerilmedi"
+  denmişti çünkü sevk hep en güncel veri setini seçiyordu — **o kısıt kaldırıldı**
+  (`--dataset`), yani gerekçe artık geçersiz.
+* **Birleştirme YAPILMADI** (ürün sahibi kararı). Ölçüm hazır: F1 uzamsal olarak **F2'nin
+  içinde**, aynı gün 14 dk arayla → radyometrik risk düşük; F1'in 77 ek karesi merkezi
+  yoğunlaştırır. Uçuş-1 **30 m** (GSD 1.38 cm, `pistachio.yaml` şartı `[0.5,1.5]` içinde),
+  Uçuş-2 **60 m** (2.76 cm, şartın ~2 katı dışında).
+* Uzman kuyruğunda Uçuş-2'nin **kırpılmış** sonucu için iki `PENDING` inceleme.
+* 🔶 **DK-64 Kademe 2 AÇIK:** ağaç/ot/toprak üçlü ayrımı. Kademe 1 (bitki örtüsü /
+  açık toprak) canlıda; ağaç-ot ayrımı **CHM** ister (yükseklik), NDVI ayıramaz.
+  Üretici hâlâ kurulu değil — bugüne dek elle yapıldı, sahada üretilemez.
+
+---
+
+## 0.B — (2026-08-25/26, **yirmi birinci oturum: ÇİFTÇİ TARLA-EKLEME ZİNCİRİ · A-1/G-1 · DAĞITIM İLK KEZ ÖLÇÜLDÜ — 8 PR**)
+
+> ⚠️ **Bu bölüm SONRADAN yazıldı.** İki oturum (denetim turu + tarla-formu turu) devir
+> notu bırakmadan kapandı; bu kayıt depodan ve **yeniden yapılan ölçümlerden** kurtarıldı.
+> Ders ⑤'te.
+>
+> **Bu turun PR'ları — SAYIYI KOMUTTAN AL:**
+> ```bash
+> gh pr list --repo physiscs-zana/tarlaanaliz-platform --state all \
+>   --search "created:>=2026-08-25" --json number,state,title
+> ```
+
+### ① 🔴 ÇİFTÇİ TARLA EKLEYEMİYORDU — saha kanıtından kök nedene (plat #473 · #474 · #478 · #479 · #480)
+
+Gerçek çiftçinin üretim ekran görüntüsü: form dolu, alan **28854**, yeşil *“Tarla sınırı
+eklendi (Polygon)”* yazıyor — ama harita kutusu **boş** ve üstünde
+`Harita yüklenemedi: Invalid LngLat object: (NaN, NaN)`. Kaydet'e basılıyor, **hiçbir şey
+olmuyor**. Çiftçi: *“iki buton da çalışmıyor.”*
+
+⚠️ **Asıl sınıf: “Kadastrodan Çek” ASLINDA ÇALIŞMIŞTI.** `28854` değeri yalnızca
+TKGM yanıtından (`28853.55` → `Math.round`) gelebilir. Çiftçi sonucu göremediği için
+“çalışmıyor” sandı. Yani kusur işlevde değil, **ekranın çiftçiye yalan
+söylemesindeydi** — bu turun bütün kalemleri o tek sınıfın üyesi.
+
+| PR | Kapatılan |
+|---|---|
+| **#473 · #474** | Siyah harita + *“Kadastro sorgusu başarısız”* — TKGM yol parametresi. #473'ün **düşen commit'leri** ve **aynı kök nedenin ikinci dosyadaki kopyası** #474'te toplandı |
+| **#478** | ① **boş ama TRUTHY sınır** — `coordinates=ham.get("coordinates", [])` anahtar yoksa `{type:"Polygon", coordinates:[]}` üretiyordu; arayüz yalnız **varlığa** bakıyordu (`if (data.geometry)`) → “sınır eklendi” denip hiçbir şey çizilmiyor, Kaydet'te backend opak hatayla reddediyordu. Artık bir sınır **ya geçerlidir ya yoktur** ② arayüzde **tek yazıcı yoktu** (çizim / kadastro / ters-kadastro state'e ayrı ayrı yazıyordu) ③ Kaydet'in **bekleme durumu yoktu** → asılı POST ile ölü buton ayırt edilemiyordu; çift gönderim kilidi de yoktu ④ **harita çökünce butonlar ölüyordu** (`map.on('click')` try bloğunun en sonundaydı; `setTerrain` yalnızca **süsleme** olduğu hâlde korumasızdı) |
+| **#479** | `Invalid LngLat (NaN, NaN)` **kök nedeni bulundu ve deneyle kanıtlandı**: düzleştirme `type` **etiketine** güveniyordu (`type === 'MultiPolygon' ? flat(2) : flat(1)`). Etiket yanlışsa `.flat(1)` noktaları değil **halkaları** verir; 2–3 noktalı halka `LngLatLike`'ın uzunluk kapısından geçer ve `Number([x,y])` = **NaN** olur. **Etiketi uyduran da bizim kodumuzdu** (`ham.get("type","Polygon")`, **üç** yerde). Artık nokta listesi etiketten değil **verinin yapısından** türetiliyor; `type` tabanlı düzleştirme depoda **kalmadı** |
+| **#480** | Ürün sahibi: *“harita açıldı ama işlem kalabalığı var, yaşlı çiftçiler zor bulur; sakın çalışan kodları bozma.”* **Bir adım tamamen kalktı** — önceden: ada/parsel yaz → “Haritada Çiz”e bas → haritanın **içinden** “Kadastrodan Çek”i bul; şimdi: ada/parsel yaz → **“Kadastrodan Çek”** → sınır gelir, harita **kendiliğinden** açılır. Çizim ve tıkla-seç yolları **duruyor** (TKGM'de kaydı olmayan parseller için hâlâ gerekli). Ayrıca: her alana **görünür etiket** (yer tutucu yazmaya başlayınca kayboluyordu), **3 adımlı** akış, `(Polygon)` gibi teknik terim gizlendi, alan kutusu sınır varken **salt okunur** (düzenlenebiliyordu ama kayıtta sınırdan hesaplanan değer eziyordu), çiftçiye görünen metinler **diakritikli** Türkçe |
+
+**Doğrulama biçimi:** tarayıcıda **uçtan uca** — üretim derlemesi + gerçek Mapbox anahtarı +
+gerçek TKGM poligonu (Gaziantep/Oğuzeli/Karaburun 102/1, 19 nokta). jest **427/427** ·
+tsc / eslint / prettier temiz · mutasyon: #478 backend 3/3 + arayüz 3/3, #479 2/2.
+**İki mutasyon EŞDEĞER çıktı** ve ayırt edildi — biri fazlalık diye **silindi**, biri
+savunma-derinliği diye **bilerek bırakıldı**. `mypy` tabanı ölçüldü: `origin/main` zaten
+aynı 2 hatayı veriyor, yeni hata yok.
+
+⚠️ **#479'un beyan edilmiş sınırı:** çiftçinin tarayıcısındaki NaN'ın **tam üreteci**
+kanıtlanamadı (25+ olumsuz koşulda yerelde üretilemedi: 0x0 kap, `display:none`,
+`transform:scale(0)`, WebGL yok, DEM kesik…). Bir neden **uydurulmadı**; bunun yerine
+yapı olarak **imkânsız** kılındı ve bir daha olursa **ölçülebilir** yapıldı (yığın izi +
+merkez/zoom/kap ölçüleri + nokta sayısı loglanıyor).
+
+### ② A-1/A-2 ve G-1 — denetim turu (plat #475 · #476 · #477)
+
+* **A-1 + A-2 (#476)** — ortam etiketi **BÜYÜK HARF** yazılırsa (`APP_ENV=Production`)
+  `_docs_url` karşılaştırması tutmuyordu → `/docs` üretimde **açık** kalırdı: kimliksiz
+  API yüzeyi ifşası, **fail-OPEN**. Ayrıca `TANINAN_ORTAMLAR` kümesi mandalsızdı.
+  ⛔ *“Üretimde hâlâ açık”* dendi, **çürütüldü**: `/docs` ve `/openapi.json` →
+  **404**, `/health` → **200**. 404'ü **uygulama** veriyor (JSON gövde + FastAPI güvenlik
+  başlıkları; rastgele bir yol da aynı imzayı üretiyor), ağ katmanı değil. Kusur
+  **latent** bir tuzaktı — dört yapılandırmada da etiket küçük harf.
+* **G-1 (#477)** — `_insert_field_history` `NO_RESULT` durumunda da **teslim edildi**
+  yazıyordu: hiçbir sonuç üretilmediği hâlde çiftçinin tarla geçmişine
+  `ANALYSIS_DELIVERED` düşüyordu (`health_score=None`). Zarar **kalıcı**: `field_history`
+  bir **WORM** tablosu, asla silinmiyor. Asimetri kanıttı — kardeş **üç** çağrı yeri
+  `result_mode != "NO_RESULT"` koşulunu taşıyor, bu **taşımıyordu**.
+* **#475** aynı daldan **mükerrer** açılıp merge edildi (#476'dan 35 sn önce). Zararsız,
+  ama not: PR açmadan önce açık PR listesine bakılır.
+
+### ③ ⭐ DAĞITIM İLK KEZ ÜÇ KATMANDA ÖLÇÜLDÜ — §0.B'nin iddiası ÇÜRÜDÜ
+
+| Katman | Ölçüm | Sonuç |
+|---|---|---|
+| Üretim diski | `git rev-parse --short HEAD` → `84d1a7ba` (= #480) | `452d9879` (#476) ve `93e4579d` (#477) bu commit'in **atası**; `origin/main`'in **0 commit** gerisinde |
+| Çalışan backend konteyneri | `docker exec tarlaanaliz-backend grep -c …` | iki düzeltme de **1** |
+| Çalışan **web paketi** (dışarıdan) | canlı CSS'te `.-mt-1{margin-top:-.25rem}` | **VAR** ⇒ #480 canlı |
+
+**Web'i DIŞARIDAN ölçmenin yolu.** Çiftçi sayfaları **giriş kapılı**, bu yüzden
+*“yeni dizeyi `curl` ile ara”* reçetesi orada **çalışmaz** (`/fields` → HTTP 200
+ama gövde giriş ekranı; sayfanın kendi chunk'ı hiç servis edilmez). Çalışan yol: #480 ile
+**tek** bir yeni Tailwind sınıfı doğdu (`-mt-1`, tüm `web/` ağacında yalnız
+`AddFieldModal.tsx:352`). Tailwind CSS'i `content: ["./src/**"]` taramasından ürettiği için
+bu sınıf **ancak** o kaynaktan derlenmiş pakette bulunur — ve genel CSS **giriş
+gerektirmez**. Pozitif kontrol: `.mt-1` de bulundu (grep'in çalıştığının kanıtı).
+
+⚠️ **Bu ölçümün DESTEKLEMEDİĞİ şey:** yalnız **platform** (backend + web) ölçüldü; worker
+ve edge kapsam dışı. Ayrıca statik varlıkların `last-modified`'ı **asimetrik** kanıttır:
+**yeni** tarih dağıtımı kanıtlar, **eski** tarih dağıtılmadığını **kanıtlamaz** (içeriği
+değişmeyen chunk eski tarihini korur). Ölçülen üç değer üç ayrı dağıtıma denk düştü:
+`08-25 21:34Z` (#476 sonrası) · `08-25 23:36Z` (#478 sonrası) · `08-26 05:43Z` — #480'in
+commit'inden **2 dk** sonra.
+
+**Düzeltilmiş kural:** otomasyonun yokluğu **dağıtılmadığını kanıtlamaz.** Ürün sahibi
+`deploy_prod.sh`'ı elle koşuyor, ama bunu merge'den **dakikalar sonra** yapıyor.
+
+### ④ 🔴 ÖZ-DENETİM: aynı hata bir turda ALTI KEZ — çıkarımı ölçüm gibi söylemek
+
+Denetim turunun kendi kaydına göre **altı** kez bir çıkarım ölçüm gibi sunuldu. İkisi aynı
+oturumda çürütüldü: *“A-1 üretimde hâlâ açık”* → tek bir `curl` ile; *“iki PR
+de dağıtılmadı”* → ürün sahibinin tek komutuyla. **Her ikisi de söylenmeden önce
+ölçülebilirdi.** Kural zaten yazılı (kanıt aynı mesajda); eksik olan uygulamaydı —
+*“merge ≠ dağıtıldı ≠ çalışıyor”* üçlüsünün **her ayağı ayrı ayrı** ölçülür.
+
+### ⑤ ⚠️ İKİ OTURUM KAYIT BIRAKMADAN KAPANDI — bu bölümün var olma nedeni
+
+Bu turun sekiz PR'ı bu dosyada **hiç** anılmıyordu (`grep` → #473…#480 için **0 isabet**).
+Aynı ihlal §0.B ⑧'de de kayıtlı (o turda beş PR eksikti) — yani **tekrar eden** bir kalıp.
+**Kural:** bir tur, devir notu yazılmadan **bitmiş sayılmaz**; ve devir notu **kapanış
+anında** yazılır, sonraki oturuma bırakılmaz.
+
+### ⑥ AÇIK KALEMLER
+
+| # | Kalem | Durum |
+|---|---|---|
+| **U-1** | `docker-compose.override.yml` ile `docker-compose.dev.yml` yorumlar hariç **bayt-özdeş** (`diff` boş) → iki kaynak sessizce ayrışır. Ayrıca README + iki-makine runbook'u hâlâ çıplak `docker compose up` diyor (`-f` yok, grep **0 isabet**) → ikinci makinede üç tazelik mount'u yüklenmez | AÇIK, ucuz |
+| **U-2** | `deploy-staging.yml` bir **plasebo**: build adımı `echo "Docker build would run here"`, gerçek komut yorum satırında. Tetiklenirse hiçbir şey dağıtmaz ama *“staging'e dağıtıldı”* izlenimi verir | AÇIK, ucuz |
+| `rollback.request` | tek taraflı (worker tüketiyor, platformda üretici yok) — §0.B ⑦'den **devam ediyor**, ürün kararı bekliyor | AÇIK |
+
+> Gerekçeleri ve **elenmiş 18 kalemin** neden elendiği, çalışma alanı kökündeki
+> `DENETIM-ACIK-BULGULAR` listesinde (git-izli **değil**, makineye özel).
+
+**Çalışma alanı temizliği (ölçülerek):** `Desktop/ODM_TARLA` **22 GB → 6,8 GB** — ODM ara
+ürünleri silindi (`opensfm`, `odm_texturing_25d`, `odm_filterpoints`, `odm_meshing`);
+ortofoto, COG, rapor, georeferencing ve kaynak fotoğraflar **korundu**. Pozitif kontrol:
+silme sonrası COG ve camera ortofotosu `rasterio` ile **açıldı**. ⚠️ Üç koldaki `images/`
+klasörleri **hardlink** (`link=3`, tek fiziksel kopya) — ikisini silmek **sıfır yer
+açardı**. `Desktop/DJİ_29-07-ÇEKİM` (16 GB, `link=1`) arşiv kararı **ürün sahibinin**.
+
+---
+
+## 0.B — (2026-08-25, **yirminci oturum: DEVİR NOTUNUN BAĞIMSIZ DENETİMİ + CANLI ÇİFTÇİ HATASI + 6 PR**)
 
 > **Bu turun PR'ları — SAYIYI KOMUTTAN AL:**
 > ```bash
@@ -152,6 +503,13 @@ ilgisiz. Hafızadaki *"yerel artık sıfır kırmızı"* kaydı (#448 sonrası) 
 ### 🔴 "Merge edildi" ≠ "dağıtıldı" ≠ "çalışıyor"
 
 Altı PR'ın hiçbiri **dağıtılmadı**. Bu depolarda push/merge tetikli deploy işi **yok**.
+
+> ⛔ **2026-08-26'da ÇÜRÜTÜLDÜ — bkz. §0.A ③.** “Dağıtılmadı” bir **çıkarımdı**
+> (“otomatik dağıtım yok → demek ki dağıtılmamış”), ölçüm değil. Ölçüm: üretim diski
+> `84d1a7ba` (= plat #480) ve `origin/main`'in **0 commit gerisinde** — yani bu altı PR
+> da canlıda. İkinci cümle (*push/merge tetikli deploy işi yok*) **doğru kaldı**; ondan
+> “dağıtılmadı” sonucu **çıkmaz** — dağıtım elle yapılıyor, ama merge'den
+> **dakikalar sonra**.
 Çiftçi şikâyeti (#468) ve T01-K1 gerilemesi (#469) **canlıdan** geldiği için dağıtım ayrı
 bir adım olarak yapılmalıdır.
 
