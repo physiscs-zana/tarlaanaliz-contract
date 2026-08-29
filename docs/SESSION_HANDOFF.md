@@ -187,20 +187,67 @@ Ayrıntı ve reçeteler: yerel hafıza `olculmus-tuzaklar-2026-08-29`.
   yetmiyor: **bağımlılık kümesi** farklı → bu depoda **mypy yerelde
   tahmin edilmez, CI'da doğrulanır** (`ci.yml` bunu zaten yazıyor).
 
-**⚠️ AÇIK:** kırpma **platformda canlı** ama uçtan uca hiç koşmadı;
-Uçuş-2'nin canlı değeri **kırpılmamış**. Kırpılmış yeniden-analiz turu
-(PIN'li) ürün sahibinde.
+**⚠️ AÇIK (o an):** kırpma platformda canlıydı ama uçtan uca hiç koşmamıştı.
+→ **⑩'da KAPANDI.**
+
+### ⑩ ✅ ÜÇÜNCÜ FAZ — zincir uçtan uca aktı, YEDİ kusur kapandı
+
+> **Tek cümle:** yeniden analizi açtım; arkasından **dört kilit daha** çıktı, hepsi
+> kapandı ve iki uçuş da artık **maskeli + tarla sınırına kırpılmış**.
+
+**Çiftçinin gördüğü son hâl** (ölçüldü, `DISTINCT ON (dataset_id)`):
+
+| Uçuş | Sonuç | Sağlık | Bitki örtüsü | Açık toprak | Tarla dışı (kırpıldı) |
+|---|---|---|---|---|---|
+| 27 Ağustos | `9150c0ca` | **0.666** | %27.2 | %72.8 | %4.5 |
+| 28 Ağustos | `9fbbfef7` | **0.646** | %19.1 | %80.9 | **%57.9** |
+
+Bayat `0.650` (kırpılmamış) ve maskesiz `0.317` **elenir**.
+
+**Kırpmanın bağımsız doğrulaması:** boru hattı %57.9 dedi, elle ölçüm %56 —
+iki ayrı yöntem 1.9 puan içinde uyuştu.
+
+⚠️ **Ölçülen ama açıklanmayan:** kırpma sağlığı neredeyse hiç değiştirmedi
+(0.650 → 0.646) ama örtü oranını %20.6 → %19.1 düşürdü — yani **bahçe DIŞI,
+bahçenin kendisinden daha yeşildi**. Nedeni ÖLÇÜLMEDİ.
+
+**Kapatılan yedi kusur** — dördü ancak gerçek siparişi uçtan uca sürerken göründü:
+
+| # | Kusur | Nasıl bulundu | PR |
+|---|---|---|---|
+| 1 | Worker çöküş döngüsü (kalp atışı) | RabbitMQ `missed heartbeats` + `die 1` | work #265 |
+| 2 | Ulaşılamaz yeniden-analiz geçişi (DK-63) | sevk `FAILED` | plat #484 |
+| 3 | Başarısız sevk görevi KİLİTLİYOR | görev `ANALYZING`, kuyruk boş | plat #485 |
+| 4 | `rate_limiter` çalışma zamanı kusuru | mypy → mutasyon | plat #484 |
+| 5 | Escalation sonuç satırında patlıyor | `analysis_results_pkey` | plat #486 |
+| 6 | Örtü oranı çiftçiye ulaşmıyor (DK-64 Kademe 1) | API'de var, arayüzde yok | plat #487 |
+| 7 | Aynı uçuş için MÜKERRER kart | üç maskeli satır oluştu | plat #488 |
+
+**Zincirleme:** yeniden analizi açınca escalation'ın kırık olduğu çıktı; escalation
+düzelince aynı uçuşun iki sonucu oluştu; iki sonuç oluşunca listeleme kuralının
+bunu öngörmediği görüldü. **Hiçbiri kod okuyarak bulunamazdı.**
+
+**Sevk artık uçuş hedefleyebiliyor:** `sim-faz4d-sevk.py … --dataset <UUID>`.
+Bayrak PIN kapısından ÖNCE ayıklanır.
+
+**⚠️ Kanıtlanmayan:** #486'daki escalation kusurunun tam interleaving'i **yerelde
+yeniden ÜRETİLEMEDİ** (hem sıralı hem yarış kurgusu kusurlu kodla yeşil kaldı).
+Yarış testi bu yüzden depoya KONULMADI — sahte güven, testsizlikten kötüdür.
+Düzeltme çakışmanın sebebine değil, o yolun sözleşmesine dayanır.
 
 ### ⑧ ⚠️ DEVREDEN
 
-* **Uçuş-1'i maskeli yeniden koşturmak** değerlendirildi ve **önerilmedi**: sevk en güncel
-  veri setini seçtiği için Uçuş-2'nin yerini alır (%49.9 → %22.4 kapsama takası) ve
-  zaten aynı cevabı veriyor (0.6405 ≈ 0.6422).
+* ✅ **Uçuş-1'in maskeli+kırpılmış koşumu YAPILDI** (⑩). Önceki turda "önerilmedi"
+  denmişti çünkü sevk hep en güncel veri setini seçiyordu — **o kısıt kaldırıldı**
+  (`--dataset`), yani gerekçe artık geçersiz.
 * **Birleştirme YAPILMADI** (ürün sahibi kararı). Ölçüm hazır: F1 uzamsal olarak **F2'nin
   içinde**, aynı gün 14 dk arayla → radyometrik risk düşük; F1'in 77 ek karesi merkezi
   yoğunlaştırır. Uçuş-1 **30 m** (GSD 1.38 cm, `pistachio.yaml` şartı `[0.5,1.5]` içinde),
   Uçuş-2 **60 m** (2.76 cm, şartın ~2 katı dışında).
-* Uzman kuyruğunda Uçuş-2 için **iki `PENDING` inceleme** (`escalation_round 0`).
+* Uzman kuyruğunda Uçuş-2'nin **kırpılmış** sonucu için iki `PENDING` inceleme.
+* 🔶 **DK-64 Kademe 2 AÇIK:** ağaç/ot/toprak üçlü ayrımı. Kademe 1 (bitki örtüsü /
+  açık toprak) canlıda; ağaç-ot ayrımı **CHM** ister (yükseklik), NDVI ayıramaz.
+  Üretici hâlâ kurulu değil — bugüne dek elle yapıldı, sahada üretilemez.
 
 ---
 
