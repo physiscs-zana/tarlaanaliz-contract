@@ -22,7 +22,131 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-25/26, **yirmi birinci oturum: ÇİFTÇİ TARLA-EKLEME ZİNCİRİ · A-1/G-1 · DAĞITIM İLK KEZ ÖLÇÜLDÜ — 8 PR**)
+## 0.A EN GÜNCEL — (2026-08-29, **yirmi ikinci oturum: GERÇEK UÇUŞ ÜRETİMDE İŞLENDİ · TOPRAK MASKESİ · CHM İLE AĞAÇ/OT/TOPRAK · RENK ÖLÇEĞİ**)
+
+> **Bu turun tek cümlesi:** 2026-08-27 gerçek fıstık uçuşu (Karaburun 102/1, sipariş
+> `24cceb52`) üretim zincirinden **uçtan uca geçti** ve çiftçinin canlılık puanı
+> **0.317 → 0.650** oldu — fark ağaç değil, **ağaç aralarındaki toprak**tı.
+
+### ① ✅ ZİNCİR AKTI — gerçek siparişte, uçtan uca
+
+`sim-gercek-4c-raster2.py` → 263 MB COG (33 parça) → platform adresi kendisi bildirdi
+(`assembled_uri`) → `rgb_ortho_uri` + `calibrated_ortho_uri` **kanonik üreticiden** yazıldı
+(elle SQL yok) → sevk → yerel GPU worker → sonuç → uzman kuyruğu.
+
+| Uçuş | veri seti | `overall_health_index` | dayanak |
+|---|---|---|---|
+| Uçuş-1 (maskesiz) | `33f230f7` | 0.317 | `FIELD_MEAN_NDVI` |
+| **Uçuş-2 (maskeli)** | `481e9c13` | **0.650** | `FIELD_MEAN_NDVI` |
+
+Worker ölçümü: 4326×4731 → 110 karo, **30'u kapsama eşiği altında hariç**, 80 karo,
+`confidence=0.310`, `mode=INDICES_ONLY`, ~33 dk.
+
+⚠️ **Ölçüm tuzağı:** worker konteyneri `pipeline_completed` için `04:31:09` dedi,
+üretim DB satırı `04:02:17` yazdı — **~29 dk saat kayması** (Docker Desktop VM uyku/uyanma).
+Zaman damgasına dayanan hata ayıklama bu makinede yanıltır.
+
+### ② 🔴 SEVK `PENDING_REVIEW`'DA TIKANDI — çözüm tasarımın kendisindeydi (→ DK-63)
+
+Sevk **409** verdi. `mission.py:88` → `PENDING_REVIEW` yalnız `DONE / EXPERT_REJECTED /
+FAILED / CANCELLED`'a gider; sevk edilebilir olan `EXPERT_REJECTED`. Yani Uçuş-2'yi
+işletmenin kanonik yolu Uçuş-1'i **reddettirmekti** — kaçamak değil, tasarlanmış
+yeniden-uçuş döngüsü. Ret iki bağımsız gerekçeyle de doğruydu (kapsama **%22.4**;
+analiz **maske öncesi** üretilmişti).
+
+**Ölçülmüş yan bilgiler (bir dahaki tura):**
+* Sevk ucu **üç işi birden** yapar: `EXPERT_REJECTED → ANALYZING`, `CALIBRATED →
+  CALIBRATED_SCANNED_CENTER_OK` (**AV2 muafiyeti**, `scan_performed:false` damgasıyla —
+  üretimde `TARLA_AV2_ENABLED=false` ve `av2-scanner:8400` **yok**), ve en güncel veri
+  setini kuyruğa koyma. AV2 **ayrı bir adım değildir**.
+* `qc_report.pass_warn_fail` bir **kapı DEĞİL** — platform kaynağında hiç geçmiyor.
+  KR-018'in altı koşulu: durum · kalibre · sha256 · av1 · av2 · ≥4 bant.
+* Üretim DB'si: `ssh tarlaanaliz-prod` → konteyner **`tarlaanaliz-db`**.
+  Kullanıcı/veritabanı adını uydurma, konteynerin `$POSTGRES_USER`/`$POSTGRES_DB`'sini kullan.
+* Çiftçi listesi görev başına **yalnız en güncel** sonucu gösterir
+  (`results_service_impl.py`) — iki uçuşu ayrı ayrı sunmak bugünkü tasarımla **mümkün değil**.
+
+### ③ ⭐ TOPRAK MASKESİ — ölçümü DOĞRU değil, TEKRARLANABİLİR de yaptı
+
+Maske (`NDVI ≥ 0.40`, `health_distribution.yaml`) ürüne üç yoldan birden ulaşıyor
+(`reporting_agent.py`): `mean_ndvi` → platform `overall_health_index` türetimi.
+
+| ort. NDVI | Uçuş-1 (30 m) | Uçuş-2 (60 m) | sapma |
+|---|---|---|---|
+| maskesiz | 0.3152 | 0.2695 | **0.046** |
+| maskeli | 0.6405 | 0.6422 | **0.0017** |
+
+İki bağımsız uçuş, farklı yükseklik, 14 dk arayla: **maskesizken birbirini tutmuyor,
+maskeliyken örtüşüyor.** Maskesiz indeks aslında *"karede ne kadar toprak kaldı"*yı
+ölçüyordu ve bu uçuş sınırlarına göre değişiyordu.
+
+### ④ 🔴 AMA `canopy_cover_ratio` "AĞAÇ ORANI" DEĞİL (→ DK-64)
+
+Ot da yeşildir ve `0.40` eşiğini geçer. Nokta bulutundan **CHM** üretildi
+(`odm_filterpoints/point_cloud.ply`; pozitif kontrol tepe **3.77 m** ≈ fıstık ağacı,
+negatif kontrol zemin medyanı **0.087 m** ≈ 0):
+
+| | Uçuş-1 | Uçuş-2 |
+|---|---|---|
+| ağaç | %22.3 | %6.5 |
+| **ot** | %5.5 | **%13.6** |
+| toprak | %72.2 | %79.9 |
+
+Uçuş-2'de "kanopi" denen %20.1'in **üçte ikisinden fazlası ot**. Ot ortalamayı iki uçuşta
+da aynı yönde çekiyor: yalnız-ağaç **0.6682 / 0.6663** (fark **+0.0317 / +0.0326**).
+Yükseklik eşiği veriden seçildi (Otsu): **1.52 / 1.46 m**; ağaç tacı medyanı **2.74 / 2.71 m**
+— farklı uçuş, farklı nokta bulutu, **aynı ağaçlar**.
+
+⚠️ Çiftçiye sunmadan önce **tarla poligonuyla kırpılmalı**: Uçuş-2 ortofotosu 32.8 dönüm,
+kayıtlı tarla **29.0 dönüm**.
+
+### ⑤ ⭐ RENK ÖLÇEĞİ — renkler ZATEN göreli, ve kimse söylemiyordu
+
+Ürün sahibinin *"uzmana renklerin anlamını verelim"* fikri ölçüm sonrası büyüdü:
+
+1. **Uzman portalinde hiç renk açıklaması YOKTU** (ölçüldü).
+2. Karo üreticisi rampayı **görüntünün kendi %2–%98 dilimlerine** oturtuyor
+   (`tile_service_impl._percentile_rescale`) → renkler **her durumda göreli**, kalibrasyon
+   mutlak olsa bile. *"Kırmızı = NDVI 0.2"* her hâlde yanlış olurdu.
+3. Worker her sonuçla `absolute_scale_valid` gönderiyor — **sıfır tüketici** (platform, web,
+   şemalar). Öksüz veri.
+
+⇒ Lejant **iki bağımsız şey** söyler: *"renkler görelidir"* (daima) ve *"sınıf sınırları
+yaklaşıktır"* (yalnız `RELATIVE`). Bunları tek koşula bağlayan regresyonu yakalayan test
+**mutasyonla doğrulandı**.
+
+**Dal: `feat/renk-olcegi-gecerlilik` (platform) — PR yok, DAĞITILMADI.** Göç gerekmedi;
+`absolute_scale_valid` `datasets.manifest['calibration_type']`'tan türetiliyor,
+okuma kanonik `dataset_value_for_result` ile (sonuç-kapsamlı, "görevin en günceli" değil).
+Lejant **ortak** `ResultMapSection`'a konuldu — o bileşeni çiftçi *ve* uzman kullanıyor.
+
+### ⑥ ⭐ ARAŞTIRMA DENETİMİ — kartımız çürütülmüş bir iddia taşıyor (→ DK-62)
+
+23 fıstık kartı içinde **tek `DIRECT`+`HIGH`** olan `thaumetopoea_solitaria`, kanıtını
+*kalıcı ipeksi keseye* dayandırıyor. Literatür bunu çürütüyor (kalıcı kese
+*T. pityocampa*'nın; *T. solitaria* gündüz gövdede dinlenir, **yumurta halinde kışlar** —
+kart "kışlayan larvalar" diyor). ⓘ Kart metni okundu; **çürütme araştırma ajanı
+raporundan**, birincil kaynaklar okunmadı → düzeltmeden önce doğrulanmalı.
+
+### ⑦ 📌 BU TURDA AÇILAN KALEMLER
+
+`DK-62` (gözkurdu kartı) · `DK-63` (yeniden analiz kapısı) · `DK-64` (ağaç/ot/toprak + CHM
++ ortofoto çözünürlüğü). Dal: `docs/devir-2026-08-26`, **PR yok — birikiyor**.
+
+### ⑧ ⚠️ DEVREDEN
+
+* **Uçuş-1'i maskeli yeniden koşturmak** değerlendirildi ve **önerilmedi**: sevk en güncel
+  veri setini seçtiği için Uçuş-2'nin yerini alır (%49.9 → %22.4 kapsama takası) ve
+  zaten aynı cevabı veriyor (0.6405 ≈ 0.6422).
+* **Birleştirme YAPILMADI** (ürün sahibi kararı). Ölçüm hazır: F1 uzamsal olarak **F2'nin
+  içinde**, aynı gün 14 dk arayla → radyometrik risk düşük; F1'in 77 ek karesi merkezi
+  yoğunlaştırır. Uçuş-1 **30 m** (GSD 1.38 cm, `pistachio.yaml` şartı `[0.5,1.5]` içinde),
+  Uçuş-2 **60 m** (2.76 cm, şartın ~2 katı dışında).
+* Uzman kuyruğunda Uçuş-2 için **iki `PENDING` inceleme** (`escalation_round 0`).
+
+---
+
+## 0.B — (2026-08-25/26, **yirmi birinci oturum: ÇİFTÇİ TARLA-EKLEME ZİNCİRİ · A-1/G-1 · DAĞITIM İLK KEZ ÖLÇÜLDÜ — 8 PR**)
 
 > ⚠️ **Bu bölüm SONRADAN yazıldı.** İki oturum (denetim turu + tarla-formu turu) devir
 > notu bırakmadan kapandı; bu kayıt depodan ve **yeniden yapılan ölçümlerden** kurtarıldı.
