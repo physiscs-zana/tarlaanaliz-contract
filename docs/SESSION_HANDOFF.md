@@ -133,6 +133,64 @@ raporundan**, birincil kaynaklar okunmadı → düzeltmeden önce doğrulanmalı
 `DK-62` (gözkurdu kartı) · `DK-63` (yeniden analiz kapısı) · `DK-64` (ağaç/ot/toprak + CHM
 + ortofoto çözünürlüğü). Dal: `docs/devir-2026-08-26`, **PR yok — birikiyor**.
 
+### ⑨ 🔴 AYNI OTURUMUN İKİNCİ YARISI — sözleşme 7.9.0 + ÜÇ ZİNCİRLEME KUSUR (kendi ürettiğim)
+
+**Teslim edilen (üçü de merge + üretime dağıtıldı):**
+
+| depo | ne |
+|---|---|
+| contract | `analysis_job.v1` → `field_boundary_geojson` (opsiyonel, 0 breaking) · **v7.9.0 etiketli** |
+| worker | `field_clip.py` — ölçüm tarla sınırına kırpılır · bitki-örtüsü maskesi **mahsule bağlı** |
+| platform | `FieldBoundaryRepositoryImpl` — sınır sevk yüküne konur · uçuş geçmişi + renk lejantı |
+
+I-1/I-2/I-3 doğrulandı: üç depo **7.9.0**, `v7.9.0` annotated etiket,
+submodule pini `8384fdf0` = etiket commit'i.
+
+**🔴 ÜÇ KUSUR ÜRETTİM — üçünü de öz-denetimde kendim buldum:**
+
+1. **Maskeyi KÜRESEL açtım.** Her mahsule uygulandı, **7 mevcut testi**
+   kırdı. Kıranlardan biri tam bu sınıfı koruyordu: *"0.0 meşru bir
+   NDVI'dir; onu silmek VERİ İMHA EDERDİ"*. Buğday tarlasında NDVI 0.0
+   çiftçinin **görmesi gereken** sorundur. Ürün sahibinin kuralı zaten
+   *"ağaçlı bahçe"* diye kapsamlıydı — **kural doğruydu, ben genişlettim**.
+   ⇒ Düzeltme: küresel varsayılan **KAPALI**, maske
+   `config/crops/<mahsul>.yaml`'dan açılır. Kodda mahsul listesi **yok**.
+
+2. **`git stash` ÜRETİMİ BOZDU.** Paylaşımlı worker ağacını temizledim;
+   ama çalışan konteyner o dizini **bind-mount** ediyordu
+   (`…/src → /app/src`). Modül dosyaları ayağının altından çekildi, worker
+   çöktü, onaylanmamış iş yeniden koştu ve çiftçinin değeri
+   **0.650 → 0.270** oldu. ⚠️ **Dosyayı geri koymak yetmedi** — Python
+   içe aktarılmış modülü yeniden yüklemez; düzelme ancak **konteyner
+   yeniden başlatılınca** geldi.
+
+3. **Mahsule bağlı maske ÜRETİMDE ÖLÜ KODDU.** `ReportRequest`
+   `crop_type` **taşımıyordu**; `getattr(message, "crop_type", None)`
+   sessizce `None` alıp maskeyi kapatıyordu. Kanıt zaten oradaydı
+   (`vegetation_mask_applied = false`), ben bakmamıştım.
+   ⇒ Alan **ZORUNLU** yapıldı (sessiz düşüş tip düzeyinde imkânsız),
+   bilinmeyen mahsul **loglanıyor**, **üretim yolundan geçen** testler
+   yazıldı (mutasyonla kanıtlandı).
+
+**Üçünün ortak kökü: ÇÖZÜCÜYÜ test ettim, ZİNCİRİ değil.**
+Ayrıntı ve reçeteler: yerel hafıza `olculmus-tuzaklar-2026-08-29`.
+
+**Ölçülen diğer gerçekler (bir dahaki tur için):**
+* Uçuş-2 ortofotosunun **%56'sı tarla sınırlarının DIŞINDAYDI**; kırpınca
+  ağaç oranı %6.5 → **%13.4**, ot %13.6 → **%5.3** (→ DK-65).
+* `fields.boundary` (PostGIS) üretimde **NULL**; poligon
+  `boundary_geojson` (JSONB) içinde — uzamsal sorgu sessizce boş döner.
+* CHM bağımsız eksenle doğrulandı: taç çapı 4.5–5.4 m, komşu mesafesi iki
+  uçuşta **8.04 / 7.92 m**, **CV 0.08** → dikili bahçe ızgarası.
+* Yerel araç sürümleri CI'dan geriydi (`ruff` 0.15.12 vs 0.16.5, `mypy`
+  2.1.0 vs 2.3.1) ve ölçümü geçersiz kılıyordu. ⚠️ Sürüm eşitlemek de
+  yetmiyor: **bağımlılık kümesi** farklı → bu depoda **mypy yerelde
+  tahmin edilmez, CI'da doğrulanır** (`ci.yml` bunu zaten yazıyor).
+
+**⚠️ AÇIK:** kırpma **platformda canlı** ama uçtan uca hiç koşmadı;
+Uçuş-2'nin canlı değeri **kırpılmamış**. Kırpılmış yeniden-analiz turu
+(PIN'li) ürün sahibinde.
+
 ### ⑧ ⚠️ DEVREDEN
 
 * **Uçuş-1'i maskeli yeniden koşturmak** değerlendirildi ve **önerilmedi**: sevk en güncel
