@@ -235,6 +235,59 @@ yeniden ÜRETİLEMEDİ** (hem sıralı hem yarış kurgusu kusurlu kodla yeşil 
 Yarış testi bu yüzden depoya KONULMADI — sahte güven, testsizlikten kötüdür.
 Düzeltme çakışmanın sebebine değil, o yolun sözleşmesine dayanır.
 
+### ⑪ ✅ DÖRDÜNCÜ FAZ — beş öneri uygulandı + üç ortam sapması kapandı (2026-08-30)
+
+**Sözleşme 7.10.0** (contract #124, `v7.10.0` etiketli): ön-faz kapalı listesine
+`canopy_cover_ratio` + `field_clip_outside_ratio`. 0 breaking.
+
+| # | İş | PR |
+|---|---|---|
+| 1 | Kırpma **kapsamı** çiftçiye (kolon+göç+köprü+DTO+arayüz) | plat #491 |
+| 2 | **Skaler faz kapısı** — KR-093 yalnız katmanlar için çalışıyordu | plat #491 |
+| 3 | Kanonik ön-faz listesi | ctr #124 |
+| 5 | **`SUPERSEDED`** — yeniden analiz uzmanı REDDETTİRMESİN (DK-63) | plat #492 |
+| 6 | Yeniden başlatma sayacı **görünür** | work #267 |
+| — | worker saf pin 7.10.0 (I-1) | work #268 |
+
+**4 (CHM / ağaç-ot ayrımı) BİLİNÇLİ ERTELENDİ** — pilot uçuşlardan sonra, tek iş
+olarak. Bugün verilen `%27.2` **bitki örtüsüdür**, ot dahildir; arayüz bunu
+çiftçiye açıkça yazar ve terim koruması **teste bağlıdır**.
+
+#### ⚠️ İki KAVRAM aynı kelimeyi kullanıyor — karıştırma
+
+`result_mode` (worker) ile `report_phase` (platform) **AYRI eksenlerdir** ve
+ikisi de "FULL" der:
+
+* `result_mode = FULL_REPORT` → *worker'ın güveni yeterli, bulguları raporladı*
+* `report_phase = FULL` → *uzman onayladı, çiftçi görebilir*
+
+Bir iş `FULL_REPORT` üretip aynı anda çiftçiye `PRELIMINARY` gidebilir —
+bugünkü iki uçuş da öyle. Kod ayrımı DOĞRU yapıyor; risk yalnız insan
+yorumundadır (denetimde/devirde karıştırılır).
+
+#### Worker'ın raporu uzman görüşünden bağımsız mı? — ÜÇ eksen, üç cevap
+
+| Eksen | Bağımlılık | Kanıt |
+|---|---|---|
+| Bu işin raporunun **içeriği** | **BAĞIMSIZ** | pipeline'da uzman sorgusu YOK; `result_mode` yalnız güven eşiğinden |
+| Çiftçiye **teslimi** | **TAM BAĞIMLI** | `raw_findings = ... if report_phase == "FULL"`; `FULL` yalnız görev `DONE` iken, o da yalnız uzman onayıyla |
+| **Gelecek** işlerin içeriği | **KISMEN, dolaylı** | uzman → `ai.feedback.v1` → prototip/Hebbian → bellek → agreement → güven → `result_mode` |
+
+⚠️ Üçüncü eksen **kod okunarak** kuruldu, **akışı ölçülmedi** — bir uzman notunun
+sonraki bir işin çıktısını değiştirdiği DENEYLE görülmedi ("bağlı ≠ çalışıyor").
+
+✅ Kritik koruma yerinde (O-4): çıkarımda saklanan gömüler `TrainingGrade.C` —
+eğitime/prototipe **girmez**; onları ancak **gerçek uzman geri bildirimi**
+yükseltir. Eski kod modelin kendi güvenini not sayıyordu → **doğrulama
+yanlılığı**; kapatılmış.
+
+#### Ortam: üç sapma kapandı (kanıt arşivi platform `denetim/`)
+
+`redis 8.0.1` (pin `<6`) sahte "unused ignore" üretiyordu · `pytest 9.1.1`
+contract'ın `==9.0.2` pinini ihlal ediyordu · **sistem** `core.autocrlf=true`
+taze klonları CRLF'e çevirip KR-042 kapısını sahte kırmızıya düşürüyordu.
+Üçü de düzeltildi: `mypy src/ scripts/` → **488 dosya 0 hata** (CI ile birebir).
+
 ### ⑧ ⚠️ DEVREDEN
 
 * ✅ **Uçuş-1'in maskeli+kırpılmış koşumu YAPILDI** (⑩). Önceki turda "önerilmedi"
