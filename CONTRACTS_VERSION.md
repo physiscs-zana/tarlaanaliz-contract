@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.12.0
+## Version: 7.13.0
 
-**Release Date:** 2026-08-30T11:24:34.049156Z  
+**Release Date:** 2026-08-30T11:45:42.895940Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `44d556e89c240e03c4c38e56a84ff3bb44e189ed8a103158aa67a03e2dfda58f`
+**Contracts Checksum (SHA-256):** `1e43814d346f8f22e06ecbf3d4de1a9aaadd95a2e7cb08e2e217fa1c745b8f54`
 
 ---
 
@@ -257,15 +257,21 @@ Individual file hashes for verification:
 ### API Specs
 
 - `api/edge_local.v1.yaml`  
-  `6cd398a0938aa445b4c685e564e1573f218881dcac09ec4990fa5e9eb295166e`
+  `c8f2f3b47efce94749c7b30f6bc19a78714d21422567b010df50f84962017737`
 - `api/platform_internal.v1.yaml`  
-  `64ca9d6762d89d23b7b2eae93a30439219051f646059abb99bc0b0c89636769b`
+  `f137a51574a987b84806e773987b8ea0e116317a608f20efb709bc777e3ec7d2`
 - `api/platform_public.v1.yaml`  
-  `c296a25fa834c24ab3d026bda6ff624f4af6b35ffaad57cebea4f0c9737262d0`
+  `fc7be3a24ee3d3549e35c9a368ef7df169d83903cdb94663e230f380274b0a6a`
 
 ---
 
 ## Changelog
+
+### v7.13.0 (2026-08-30)
+
+**Breaking:** NO
+
+Version pinned automatically.
 
 ### v7.12.0 (2026-08-30)
 
@@ -445,7 +451,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("44d556e89c240e03c4c38e56a84ff3bb44e189ed8a103158aa67a03e2dfda58f"), "Contracts checksum mismatch!"
+assert verify_contracts("1e43814d346f8f22e06ecbf3d4de1a9aaadd95a2e7cb08e2e217fa1c745b8f54"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -458,7 +464,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("44d556e89c240e03c4c38e56a84ff3bb44e189ed8a103158aa67a03e2dfda58f"), "Contracts checksum mismatch!");
+assert(verifyContracts("1e43814d346f8f22e06ecbf3d4de1a9aaadd95a2e7cb08e2e217fa1c745b8f54"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -509,4 +515,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-08-30T11:24:34.049156Z
+**Last Updated:** 2026-08-30T11:45:42.895940Z

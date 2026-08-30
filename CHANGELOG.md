@@ -7,6 +7,43 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.13.0] - 2026-08-30 — hangi zararlı HANGİ dalgaboyunu gerektirir (kısıt ilanı)
+
+### Eklendi
+- `drone_capability_matrix.yaml` → **`detection_requirements`** bloğu (5 kalem).
+- `tests/test_detection_requirements_gate.py` — 8 test, **3 mutasyonla** doğrulandı.
+
+### Neden
+`index_requirements` bir **indeksin** hangi bandı gerektirdiğini söyler. Ama
+*"bu drone ile fıstıkta Verticillium tespit edebilir miyiz?"* sorusunun
+makine-okunur cevabı **yoktu**. Cevapsız soru sessizce "evet" sanılır.
+
+⚠️ **Bu bir yetenek ilanı DEĞİL, KISIT ilanıdır.** Referans donanımla
+(`DJI_MAVIC_3M`, BASIC_4BAND) beş kalemin **hiçbiri** tespit edilemez ve blok
+tam olarak bunu söyler. Bir test bunu **kilitler**: donanım yükseltilirse test
+kırılır ve blok bilinçli olarak yeniden hizalanır.
+
+### Kalemler ve kanıt gücü
+
+| kalem | kanıt | tespit için gereken |
+|---|---|---|
+| `WATER_STRESS_TRUE` | ✅ **fıstıkta doğrudan** | LWIR → CWSI |
+| `VERTICILLIUM_WILT` | zeytin/pamuk/patates | LWIR + hiperspektral (floresan 688 nm, PRI 531/570) |
+| `ALTERNARIA_LATE_BLIGHT` | patates (morfolojik, spektral değil) | UHR-RGB; 5 cm/piksel **yetersiz** |
+| `BOTRYOSPHAERIA_PANICLE_BLIGHT` | **yok** | — |
+| `PISTACHIO_PSYLLID` | **yok** | 🔴 hiçbiri — kalıcı yasak |
+
+`evidence_strength` **kapalı küme**: `peer_reviewed_same_crop` /
+`peer_reviewed_other_crop` / `none`. Ticari blog iddiaları kaynak sayılmaz.
+
+### Ürün sonucu
+**Termal (LWIR) en yüksek getirili donanım adımıdır:** `WATER_STRESS` katmanı
+2026-07-31'de (D17/A1) *vekil* olduğu için ön-faz kapalı listesinden
+çıkarılmıştı; termal onu gerçek ölçüme çevirir ve o kısıtı **kaldırır**.
+
+`HYPERSPECTRAL_VNIR` bilerek `band_classes` altına **eklenmedi** — tanımlamak,
+destekliyormuş gibi görünmenin ilk adımıdır.
+
 ## [7.12.0] - 2026-08-30 — ön faz TARLANIN KAPSANAN ORANINI taşır (iki uçuş karşılaştırılabilsin)
 
 ### Değişti

@@ -118,6 +118,136 @@ index_requirements:
   #   worker H9/MD-9 kararı) ama ayrı okuma: NDRE genel canlılık, LCI klorofil bozulması.
   #   ⇒ 4 bantlı drone da ÜRETEBİLİR; matriste `extended` altında kalması bir ÜRÜN kararıdır.
 
+# ---------------------------------------------------------------------------
+# Detection requirements — HANGİ zararlı/hastalık HANGİ dalgaboyunu gerektirir
+#   [2026-08-30 · literatür taraması, ürün sahibi talebi]
+# ---------------------------------------------------------------------------
+# NEDEN VAR: `index_requirements` bir İNDEKSİN hangi bandı gerektirdiğini söyler.
+# Ama "bu drone ile fıstıkta Verticillium tespit edebilir miyiz?" sorusunun
+# makine-okunur bir cevabı YOKTU. Cevapsız soru sessizce "evet" sanılır — ve
+# ürün sahibine dayanaksız bir yetenek vaadi olarak geri döner.
+#
+# ⚠️ BU BLOK BİR YETENEK İLANI DEĞİL, BİR KISIT İLANIDIR. Bugün referans
+# donanım (DJI_MAVIC_3M, BASIC_4BAND) ile aşağıdakilerin HİÇBİRİ tespit
+# edilemez; blok tam olarak bunu makine-okunur kılar. Sensör yükseltilirse
+# `requires_bands` karşılanır ve kapı KENDİLİĞİNDEN açılabilir — kod
+# değişikliği değil, donanım kararı.
+#
+# KAYNAK: hakemli literatür. `evidence_strength` alanı KANITIN GÜCÜNÜ ayırır:
+#   peer_reviewed_same_crop  — fıstıkta doğrudan gösterilmiş
+#   peer_reviewed_other_crop — başka üründe gösterilmiş, fıstığa AKTARILMAMIŞ
+#   none                     — uzaktan algılama literatürü YOK
+# Ticari blog/pazarlama iddiaları KAYNAK SAYILMAZ (ör. "fıstıkta %95 doğruluk"
+# iddiası 2026-08-30'da tarandı: hakemsiz, veri seti ve bant sayısı açık değil).
+detection_requirements:
+
+  # ── Mantari hastalıklar ────────────────────────────────────────────────
+  VERTICILLIUM_WILT:
+    tr_name: "Verticillium solgunluğu"
+    pathogen: "Verticillium dahliae"
+    requires_bands: [LWIR, HYPERSPECTRAL_VNIR]
+    requires_indices: [CWSI, CANOPY_TEMP, PRI, FLUORESCENCE_688]
+    key_wavelengths_nm:
+      canopy_temperature: [8000, 15000]   # TIR — terleme düşer, taç ısınır
+      chlorophyll_loss: [550, 550]        # yeşilde yansıma ARTAR
+      red_edge_shift: [650, 720]
+      fluorescence: [688, 688]            # dar bant, hiperspektral şart
+      xanthophyll_pri: [531, 570]
+    detectable_with_band_class: [THERMAL]
+    NOT_detectable_with: [BASIC_4BAND, EXTENDED_5BAND]
+    evidence_strength: peer_reviewed_other_crop
+    evidence_crop: [olive, cotton, potato]
+    why_not_pistachio: >
+      Mekanizma (ksilem tıkanması -> terleme düşüşü -> taç ısınması) fıstıkta da
+      geçerli olmalıdır ama FISTIKTA GÖSTERİLMEMİŞTİR. Aktarım bir HİPOTEZDİR;
+      ürün bunu doğrulanmış gibi sunamaz.
+    references:
+      - "Calderón et al., Remote Sensing of Environment 139 (2013) 231-245 — zeytin, hiperspektral+termal+floresan"
+      - "Calderón et al., Remote Sensing 7(5) (2015) 5584-5610 — geniş alanda erken tespit"
+
+  BOTRYOSPHAERIA_PANICLE_BLIGHT:
+    tr_name: "Botryosphaeria salkım ve sürgün yanıklığı"
+    requires_bands: [RED_EDGE, NIR, HYPERSPECTRAL_VNIR]
+    requires_indices: [NDRE, LCI]
+    key_wavelengths_nm:
+      chlorophyll_degradation: [700, 750]
+    detectable_with_band_class: []
+    NOT_detectable_with: [BASIC_4BAND, EXTENDED_5BAND, THERMAL]
+    evidence_strength: none
+    why_not_pistachio: >
+      Fıstıkta UAV spektral tespit çalışması BULUNAMADI (2026-08-30 taraması).
+      Nekrotik doku geniş-bant NDRE'yi düşürür ama bu ÖZGÜL DEĞİLDİR: su
+      stresi, azot eksikliği ve yaşlanma aynı yönde etki eder. Ayrım için
+      dar-bantlı imza gerekir.
+
+  ALTERNARIA_LATE_BLIGHT:
+    tr_name: "Alternaria geç yanıklığı"
+    requires_bands: [RED, RED_EDGE, NIR]
+    requires_indices: [NDVI, NDRE]
+    detectable_with_band_class: []
+    NOT_detectable_with: [BASIC_4BAND, EXTENDED_5BAND]
+    evidence_strength: peer_reviewed_other_crop
+    evidence_crop: [potato]
+    why_not_pistachio: >
+      Patateste ULTRA YÜKSEK ÇÖZÜNÜRLÜKLÜ RGB + derin öğrenme ile ikili
+      sınıflandırma gösterildi; yöntem SPEKTRAL değil MORFOLOJİK (leke
+      geometrisi). Fıstık tacında karşılığı gösterilmemiştir ve bizim
+      çözünürlüğümüz (5 cm/piksel) yaprak lekesi için YETERSİZDİR.
+    references:
+      - "van de Vijver et al., Frontiers in Plant Science 15 (2024) 1206998 — patates, UHR-RGB + CNN"
+
+  # ── Zararlılar ─────────────────────────────────────────────────────────
+  PISTACHIO_PSYLLID:
+    tr_name: "Fıstık psillidi"
+    pest: "Agonoscena pistaciae"
+    requires_bands: []
+    requires_indices: []
+    detectable_with_band_class: []
+    NOT_detectable_with: [BASIC_4BAND, EXTENDED_5BAND, THERMAL, HYPERSPECTRAL_VNIR]
+    evidence_strength: none
+    why_not_pistachio: >
+      🔴 UZAKTAN ALGILAMA LİTERATÜRÜ HİÇ YOK (2026-08-30 taraması). İzleme
+      TUZAK tabanlıdır ve öyle kalmalıdır. Spektral olarak görülebilen şey
+      fumajin (is küfü) örtüsüdür — bu bir GEÇ ve DOLAYLI belirtidir: zarar
+      çoktan oluşmuştur ve aynı koyulaşma toz, gölge veya başka tatlımsı
+      salgı üreten zararlılarla KARIŞIR.
+      Bu kayıt bir yetenek boşluğu değil, bir YASAKTIR: sensör yükseltilse
+      bile bu zararlı için spektral tespit İDDİA EDİLMEZ.
+    alternative_method: >
+      Sarı yapışkan tuzak + kozalak tuzağı. Türkiye'de ölçüldü (2020-2022,
+      güney Türkiye): psillid çam/servi kozalaklarında ve meşe yaprağında
+      kışlar; kozalak tuzağı doğal kozalaktan ~10 kat fazla yakalar.
+      Ürün karşılığı: EZE (ekonomik zarar eşiği) SAYIM ile belirlenir,
+      görüntüyle değil.
+    references:
+      - "Insects 16(11) (2026) 1150 — kışlama ekolojisi ve tuzak stratejisi (Türkiye)"
+      - "Journal of Asia-Pacific Entomology (2004) — Iran, parazitoitler"
+
+  # ── Su durumu (hastalık değil ama aynı sensör kısıtı) ──────────────────
+  WATER_STRESS_TRUE:
+    tr_name: "Su stresi (gerçek ölçüm)"
+    requires_bands: [LWIR]
+    requires_indices: [CWSI, CANOPY_TEMP]
+    detectable_with_band_class: [THERMAL]
+    NOT_detectable_with: [BASIC_4BAND, EXTENDED_5BAND]
+    evidence_strength: peer_reviewed_same_crop
+    evidence_crop: [pistachio]
+    note: >
+      ✅ FISTIKTA DOĞRUDAN GÖSTERİLMİŞ olan TEK kalem budur. Termal bant
+      eklemek `WATER_STRESS` katmanını `proxy_only` olmaktan çıkarır — bu
+      katman 2026-07-31'de (D17/A1) tam da vekil olduğu için ön-faz kapalı
+      listesinden ÇIKARILMIŞTI. Yani termal yükseltme, mevcut bir ürün
+      kısıtını KALDIRIR: en yüksek getirili donanım adımı budur.
+    references:
+      - "Applied Sciences 13(13) (2023) 7716 — fıstık, termal + non-termal UAV indeksleri"
+      - "Horticulturae 10(5) (2024) 515 — fıstık, SEBAL ile evapotranspirasyon"
+      - "Precision Agriculture (2025) — fıstık/badem, gövde su potansiyeli, NDRE/OSAVI/CWSI"
+
+# Bu blokta adı geçen ve MATRİSTE HENÜZ BULUNMAYAN bant sınıfı:
+#   HYPERSPECTRAL_VNIR — dar bantlı (<10 nm) VNIR küp. Referans filoda YOK.
+#   Bilerek `band_classes` altına EKLENMEDİ: tanımlamak, destekliyormuş gibi
+#   görünmenin ilk adımıdır. Donanım alınırsa AYNI TÖRENLE eklenir.
+
 # Band class definitions
 band_classes:
   BASIC_4BAND:
