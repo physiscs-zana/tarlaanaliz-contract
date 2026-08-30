@@ -271,10 +271,43 @@ yorumundadır (denetimde/devirde karıştırılır).
 |---|---|---|
 | Bu işin raporunun **içeriği** | **BAĞIMSIZ** | pipeline'da uzman sorgusu YOK; `result_mode` yalnız güven eşiğinden |
 | Çiftçiye **teslimi** | **TAM BAĞIMLI** | `raw_findings = ... if report_phase == "FULL"`; `FULL` yalnız görev `DONE` iken, o da yalnız uzman onayıyla |
-| **Gelecek** işlerin içeriği | **KISMEN, dolaylı** | uzman → `ai.feedback.v1` → prototip/Hebbian → bellek → agreement → güven → `result_mode` |
+| **Gelecek** işlerin içeriği | **KISMEN, dolaylı** | ⚠️ mekanizma 2026-08-30'da ÖLÇÜLDÜ ve **düzeltildi** — aşağıya bak |
 
-⚠️ Üçüncü eksen **kod okunarak** kuruldu, **akışı ölçülmedi** — bir uzman notunun
-sonraki bir işin çıktısını değiştirdiği DENEYLE görülmedi ("bağlı ≠ çalışıyor").
+#### 🔴 Üçüncü eksenin MEKANİZMASI ÖLÇÜLDÜ — ilk yazdığım ZİNCİR YANLIŞTI
+
+İlk hâli *"uzman → **prototip** → bellek → agreement → güven"* diyordu.
+Dosyalar tam okununca çürüdü (worker **#269**):
+
+| İlk iddia | Ölçüm |
+|---|---|
+| Prototipler belleğe/çıkarıma gidiyor | `PrototypeManager.query` **hiç çağrılmıyor** (yalnız testlerde) |
+| `is_prototype` FAISS'te | geçiş **0** |
+| `MemoryOrchestrator` prototip mesafesi ekliyor | geçiş **0** |
+| `Pipeline` prototip uyumu kullanıyor | yorum-dışı geçiş **0** |
+
+**Yanıltan şey `prototype_manager.py`'nin KENDİ docstring'iydi** — üç
+entegrasyonu *olmuş gibi* yazıyordu. Yorum iddiadır; üreticiyi okumadan
+güvenildi. Docstring ölçüme uyduruldu + **iki yönlü mandal testi** kondu
+(entegrasyon bağlanırsa da, docstring geri alınırsa da kırılır).
+
+**GERÇEK zincir — iki yol, ikisi de ölçüldü:**
+
+1. **Hebbian `weight` (K-6)** → `_weighted_top_disease_hint` içinde
+   `score = cosine × weight × zero_init` ile **HANGİ** komşunun ipucunun öne
+   çıktığını sıralar. `cosine_sim`/`is_ood`'a **DOKUNMAZ** — bilinçli sınır:
+   *takviye HATIRLAMAYI yanlar, YENİLİK tespitini asla* (fail-closed OOD korunur).
+2. **REJECT** → `atlas.invalidate(crop, disease)` (KR-029) L1 kaydını **SİLER**
+   → sonraki sorgular L2'ye düşer → `agreement` kaynağı `atlas_confidence`'tan
+   `cosine_sim`'e geçer → güven değişebilir.
+
+⚠️ **Hâlâ ölçülmeyen:** bu iki yolun **canlıda aktığı** (bir uzman notunun
+sonraki bir işin çıktısını gerçekten değiştirdiği) DENEYLE görülmedi.
+Mekanizma artık doğru; **akış** hâlâ iddia. ("bağlı ≠ çalışıyor")
+
+📌 **Beyan edilmiş borç:** `add_sample` ÜRETİMDE çağrılıyor (her grade A/B geri
+bildirimi) ama `query` hiçbir üretim yolundan çağrılmıyor — prototipler
+üretiliyor, kimse okumuyor. Bu bir kusur DEĞİL, K-7 "genişletme" deseninin
+bilinçli faz borcu; ama beyan edilmemiş hâli SESSİZ borçtu.
 
 ✅ Kritik koruma yerinde (O-4): çıkarımda saklanan gömüler `TrainingGrade.C` —
 eğitime/prototipe **girmez**; onları ancak **gerçek uzman geri bildirimi**
