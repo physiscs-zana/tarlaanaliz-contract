@@ -7,6 +7,46 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.12.0] - 2026-08-30 — ön faz TARLANIN KAPSANAN ORANINI taşır (iki uçuş karşılaştırılabilsin)
+
+### Değişti
+- `enums/report_phase.enum.v1.json` → ön-faz kapalı listesine **`field_coverage_ratio`**.
+
+### Neden (ölçüldü 2026-08-30, gerçek sipariş `24cceb52`)
+Aynı görevin iki uçuşu çiftçiye örtü oranı **%27.2** ve **%19.1** olarak gidiyordu.
+Ölçüldü: bu **-8.1 puanlık** farkın **-7.7 puanı KAPSAM artefaktıdır**; gerçek
+değişim yalnızca **-0.4 puan**.
+
+| | Uçuş-1 | Uçuş-2 |
+|---|---|---|
+| Tarlanın ölçülen kısmı | **%21.2** | **%50.1** |
+| Örtü — kendi kapsamında | %27.2 | %19.1 |
+| Örtü — **ortak alanda** | %27.2 | **%26.8** |
+
+Uçuş-1'in alanı Uçuş-2'nin **alt kümesidir**. 0.25–0.55 arası **yedi eşikte**
+doğrulandı; negatif kontrol (Uçuş-1'in görmediği 8.36 dönüm belirgin seyrek:
+%13.5 vs %26.8) ve pozitif kontrol (her uçuş kendisiyle → +0.0 puan) yapıldı.
+
+### Neden mevcut alan yetmiyor
+`field_clip_outside_ratio` **başka bir büyüklüktür ve bundan türetilemez**:
+
+| alan | payda | soru |
+|---|---|---|
+| `field_clip_outside_ratio` | **görüntü** | görüntünün ne kadarı tarla dışında? |
+| `field_coverage_ratio` | **tarla poligonu** | **tarlanın** ne kadarı görüntüde? |
+
+Küçük ama tam isabetli bir görüntü ile büyük ama yarısı dışarı taşan bir görüntü
+**aynı** `outside_ratio`'yu verir.
+
+### Taşıma — şema değişikliği YOK
+Worker `metrics.custom_metrics.field_coverage_ratio` ile gönderir; `custom_metrics`
+açık nesnedir (`additionalProperties: true`). Sürüm yükseltmesi **yalnızca kapalı
+liste** içindir → **0 breaking**.
+
+### NULL anlamı
+NULL = **ölçülmedi** (sıfır değil). Sınır bildirilmediyse worker alanı hiç
+göndermez (fail-honest); tüketici sessiz kalmaz, *"kapsam ölçülmedi"* yazar.
+
 ## [7.11.0] - 2026-08-30 — ön faz ANALİZ ZAMANINI taşır (iki uçuş ayırt edilebilsin)
 
 ### Değişti
