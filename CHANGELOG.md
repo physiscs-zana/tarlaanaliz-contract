@@ -7,6 +7,29 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.11.0] - 2026-08-30 — ön faz ANALİZ ZAMANINI taşır (iki uçuş ayırt edilebilsin)
+
+### Değişti
+- `enums/report_phase.enum.v1.json` → `x-preliminary-content.stage_b_post_analysis.fields`
+  listesine **`created_at`** eklendi.
+
+### Neden (ölçüldü 2026-08-30, gerçek sipariş `24cceb52`)
+Çiftçiye aynı görevde **iki kart** gidiyor (iki uçuş, iki veri seti) ve kartlarda
+**hiçbir ayırt edici bilgi yoktu** — sonuç kartları hiç tarih basmıyordu
+(`web/src/features/results/` içinde tarih biçimlendirmesi yalnız `HistoryTimeline.tsx`'te,
+ayrı bir bileşende). Backend alanı **zaten gönderiyordu** (`results.py`
+`ResultSummaryDTO.created_at`) ama web tipi (`resultService.ts` `ResultData`) alanı hiç
+beyan etmiyordu: **üretilen alanın tüketicisi yoktu.**
+
+Alan kapalı listede olmadığı için sunulması KR-093'e göre zaten ihlaldi; listeye
+yazılmadan arayüzde gösterilemez.
+
+### Bilinen sınır (kapatılmadı, ürün kararı)
+Bu **analiz** zamanıdır, **uçuş tarihi değil**. Uçuş tarihi `datasets.capture_date`
+olurdu; `intake_manifest.v1` içinde `files[].captured_at` **opsiyonel** olduğu için
+üretimde 8 veri setinin 7'sinde NULL. Zorunlu kılmak sahadaki edge cihazları için
+**BREAKING**'dir. Arayüz bu yüzden alanı açıkça **"Analiz"** diye etiketler, "Uçuş" demez.
+
 ## [7.10.0] - 2026-08-30 — ön faz iki ÖLÇÜMÜ daha taşır (örtü oranı + kırpma kapsamı)
 
 ### Added

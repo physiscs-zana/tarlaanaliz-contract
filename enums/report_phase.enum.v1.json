@@ -26,19 +26,26 @@
     },
     "stage_b_post_analysis": {
       "available_when": "mission IN_ANALYSIS / PENDING_REVIEW — worker sonucu geldi",
-      "source": "worker analysis_result (deterministik indeks katmanları)",
+      "source": "worker analysis_result (deterministik indeks katmanları) + platform `analysis_results.created_at` — bu SONUNCUSU worker çıktısı DEĞİLDİR, platformun kendi kaydıdır.",
       "fields": [
         "ortho",
         "HEALTH",
         "NITROGEN_STRESS",
         "overall_health_index",
         "canopy_cover_ratio",
-        "field_clip_outside_ratio"
+        "field_clip_outside_ratio",
+        "created_at"
       ],
       "x-added-2026-08-30": {
         "fields": ["canopy_cover_ratio", "field_clip_outside_ratio"],
         "why": "Ikisi de DOGRUDAN OLCUMDUR, vekil gosterge DEGIL — on-faz kapisinin amaci dogrulanmamis bir VEKIL gostergenin ciftciye ulasmasini engellemektir. `canopy_cover_ratio` ciftcinin GOZLE dogrulayabildigi tek sayidir (bitki ortusu / acik toprak). `field_clip_outside_ratio` ise otekinin PAYDASINI soyler: olcumun tarla sinirlarinin ne kadarini kapsadigini. Olculdu 2026-08-29 (gercek siparis 24cceb52): bir ucusun goruntusunun %57.9u tarla DISINDAYDI; bu oran gizlenirse ciftci, bahcesinin ancak bir kismindan uretilmis bir yuzdeyi tam bahce sanir.",
         "note": "Seffaflik URUN SAHIBI kararidir: sinir disina tasan oran ciftciden GIZLENMEZ, ek bilgi olarak sunulur."
+      },
+      "x-added-2026-08-30-b": {
+        "fields": ["created_at"],
+        "why": "ÖLÇÜLDÜ 2026-08-30 (gerçek sipariş 24cceb52): çiftçiye AYNI görevde İKİ kart gidiyor (iki uçuş, iki veri seti) ve kartlarda hiçbir ayırt edici bilgi yoktu — sonuç kartları hiç tarih basmıyordu (`web/src/features/results/` içinde tarih biçimlendirmesi YALNIZ `HistoryTimeline.tsx`'te, ayrı bir bileşende). Kimlik (`result_id`) çiftçi için anlamsızdır; ayırt edici olan TARİHTİR. Backend alanı ZATEN gönderiyordu (`results.py` `ResultSummaryDTO.created_at`, gerekçesi yorumda yazılı) ama web tipi (`resultService.ts` `ResultData`) alanı hiç beyan etmiyordu → ÜRETİLEN ALANIN TÜKETİCİSİ YOKTU.",
+        "scope": "Bu bir ÖLÇÜM değil, KAYIT ZAMANIDIR ve vekil-gösterge riski taşımaz. Yine de kapalı listeye YAZILIR: liste exhaustive ilan edilmiştir; \"zararsız olduğu için listelemeye gerek yok\" istisnası listeyi çürütür. Alan gönderiliyor ama listede değildi — yani sunulması KR-093'e göre zaten ihlaldi.",
+        "bilinen-sinir": "Bu ANALİZ zamanıdır, UÇUŞ tarihi DEĞİL. Uçuş tarihi `datasets.capture_date` olurdu; kanonik `intake_manifest.v1` içinde `files[].captured_at` OPSİYONEL olduğu için üretimde 8 veri setinin 7'sinde NULL (ölçüldü 2026-08-30). Zorunlu kılmak sahadaki edge cihazları için BREAKING değişikliktir → ÜRÜN kararı, ayrı kalem. Arayüz bu yüzden alanı açıkça \"Analiz\" diye etiketler; \"Uçuş\" DEMEZ."
       },
       "x-removed-2026-07-31": {
         "field": "WATER_STRESS",
