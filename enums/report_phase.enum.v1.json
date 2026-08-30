@@ -34,7 +34,8 @@
         "overall_health_index",
         "canopy_cover_ratio",
         "field_clip_outside_ratio",
-        "created_at"
+        "created_at",
+        "field_coverage_ratio"
       ],
       "x-added-2026-08-30": {
         "fields": ["canopy_cover_ratio", "field_clip_outside_ratio"],
@@ -46,6 +47,13 @@
         "why": "ÖLÇÜLDÜ 2026-08-30 (gerçek sipariş 24cceb52): çiftçiye AYNI görevde İKİ kart gidiyor (iki uçuş, iki veri seti) ve kartlarda hiçbir ayırt edici bilgi yoktu — sonuç kartları hiç tarih basmıyordu (`web/src/features/results/` içinde tarih biçimlendirmesi YALNIZ `HistoryTimeline.tsx`'te, ayrı bir bileşende). Kimlik (`result_id`) çiftçi için anlamsızdır; ayırt edici olan TARİHTİR. Backend alanı ZATEN gönderiyordu (`results.py` `ResultSummaryDTO.created_at`, gerekçesi yorumda yazılı) ama web tipi (`resultService.ts` `ResultData`) alanı hiç beyan etmiyordu → ÜRETİLEN ALANIN TÜKETİCİSİ YOKTU.",
         "scope": "Bu bir ÖLÇÜM değil, KAYIT ZAMANIDIR ve vekil-gösterge riski taşımaz. Yine de kapalı listeye YAZILIR: liste exhaustive ilan edilmiştir; \"zararsız olduğu için listelemeye gerek yok\" istisnası listeyi çürütür. Alan gönderiliyor ama listede değildi — yani sunulması KR-093'e göre zaten ihlaldi.",
         "bilinen-sinir": "Bu ANALİZ zamanıdır, UÇUŞ tarihi DEĞİL. Uçuş tarihi `datasets.capture_date` olurdu; kanonik `intake_manifest.v1` içinde `files[].captured_at` OPSİYONEL olduğu için üretimde 8 veri setinin 7'sinde NULL (ölçüldü 2026-08-30). Zorunlu kılmak sahadaki edge cihazları için BREAKING değişikliktir → ÜRÜN kararı, ayrı kalem. Arayüz bu yüzden alanı açıkça \"Analiz\" diye etiketler; \"Uçuş\" DEMEZ."
+      },
+      "x-added-2026-08-30-c": {
+        "fields": ["field_coverage_ratio"],
+        "why": "ÖLÇÜLDÜ 2026-08-30 (gerçek sipariş 24cceb52): aynı görevin iki uçuşu çiftçiye örtü oranı **%27.2** ve **%19.1** olarak gidiyordu. Bu -8.1 puanlık farkın **-7.7 puanı KAPSAM artefaktıdır**; gerçek değişim yalnızca **-0.4 puan** (0.25-0.55 arası YEDİ eşikte doğrulandı, negatif ve pozitif kontrollerle). Uçuş-1 tarlanın **%21.2**'sini, Uçuş-2 **%50.1**'ini ölçmüştü ve Uçuş-1'in alanı Uçuş-2'nin ALT KÜMESİYDİ. Bu alan olmadan çiftçi iki yüzdeyi karşılaştırılabilir sanır ve olmayan bir düşüşü gerçek sayar. Ölçüm: `tarlaanaliz-worker/denetim/kapsam_mi_gercek_degisim_mi_olcumu_2026_08_30.md`.",
+        "neden-mevcut-alan-yetmiyor": "`field_clip_outside_ratio` BAŞKA bir büyüklüktür ve bundan TÜRETİLEMEZ: paydası GÖRÜNTÜDÜR (\"görüntünün ne kadarı tarla dışında\"), bu alanınki ise TARLA POLİGONUDUR (\"tarlanın ne kadarı görüntüde\"). Küçük ama tam isabetli bir görüntü ile büyük ama yarısı dışarı taşan bir görüntü AYNI `outside_ratio`'yu verir; kapsamları tamamen farklıdır. Worker testi bu zıtlığı literal değerlerle kilitler (`test_tarla_goruntunun_SOL_YARISI_ise_kapsam_TAM_kalir`: kapsam %100 iken dışarı %50).",
+        "scope": "DOĞRUDAN ÖLÇÜMDÜR, vekil gösterge DEĞİL — `canopy_cover_ratio` ve `field_clip_outside_ratio` ile aynı gerekçe (bkz. x-added-2026-08-30). Üstelik ötekilerin GEÇERLİLİK KOŞULUDUR: kapsam bilinmeden örtü yüzdesi yorumlanamaz. Taşıma: worker `metrics.custom_metrics.field_coverage_ratio` (açık nesne, `additionalProperties: true`) → şema değişikliği GEREKMEZ; sürüm yükseltmesi YALNIZCA bu kapalı liste içindir.",
+        "null-anlami": "NULL = ÖLÇÜLMEDİ (sıfır DEĞİL). Sınır bildirilmediyse kırpma yapılmaz ve worker bu alanı HİÇ göndermez (fail-honest). Tüketici sessiz kalmaz, \"kapsam ölçülmedi\" yazar."
       },
       "x-removed-2026-07-31": {
         "field": "WATER_STRESS",
