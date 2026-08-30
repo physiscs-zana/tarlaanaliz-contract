@@ -7,6 +7,33 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.10.0] - 2026-08-30 — ön faz iki ÖLÇÜMÜ daha taşır (örtü oranı + kırpma kapsamı)
+
+### Added
+
+`report_phase.enum.v1` → `x-preliminary-content.stage_b_post_analysis.fields`
+listesine **`canopy_cover_ratio`** ve **`field_clip_outside_ratio`** eklendi.
+
+**Neden.** Ön-faz kapısının amacı kodda yazılı: *"vekil bir göstergenin
+DOĞRULANMADAN çiftçiye ulaşmasını engellemek"*. Bu iki alan **vekil gösterge
+değil, doğrudan ölçümdür**:
+
+* `canopy_cover_ratio` — çiftçinin **gözle doğrulayabildiği** tek sayı
+  (bitki örtüsü / açık toprak). ⚠️ "ağaç oranı" DEĞİLDİR: NDVI eşiğini geçen
+  yabancı ot da bu sayıya girer; arayüz bunu açıkça yazar.
+* `field_clip_outside_ratio` — ötekinin **paydasını** söyler: ölçüm tarlanın
+  ne kadarını kapsıyor. Ölçüldü 2026-08-29 (gerçek sipariş `24cceb52`): bir
+  uçuşun görüntüsünün **%57.9'u tarla sınırlarının DIŞINDAYDI**. Bu oran
+  gizlenirse çiftçi, bahçesinin ancak bir kısmından üretilmiş bir yüzdeyi
+  **tam bahçe** sanır — örtü oranını vermek ama kapsamı vermemek, sayıyı
+  bağlamından koparır.
+
+Şeffaflık **ürün sahibi kararıdır**: sınır dışına taşan oran çiftçiden
+gizlenmez, ek bilgi olarak sunulur.
+
+**Kırıcı değil** (0 breaking): kapalı listeye alan EKLENİR, hiçbir alan
+çıkarılmaz; tüketiciler listeyi okur, uzunluğuna bağlı değildir.
+
 ## [7.9.0] - 2026-08-29 — analiz işi tarla sınırını taşır (ölçüm kırpılabilsin)
 
 > **MINOR.** Tek opsiyonel alan eklendi; hiçbir alan zorunlu yapılmadı, hiçbir

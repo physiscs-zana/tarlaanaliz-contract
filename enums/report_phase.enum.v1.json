@@ -31,8 +31,15 @@
         "ortho",
         "HEALTH",
         "NITROGEN_STRESS",
-        "overall_health_index"
+        "overall_health_index",
+        "canopy_cover_ratio",
+        "field_clip_outside_ratio"
       ],
+      "x-added-2026-08-30": {
+        "fields": ["canopy_cover_ratio", "field_clip_outside_ratio"],
+        "why": "Ikisi de DOGRUDAN OLCUMDUR, vekil gosterge DEGIL — on-faz kapisinin amaci dogrulanmamis bir VEKIL gostergenin ciftciye ulasmasini engellemektir. `canopy_cover_ratio` ciftcinin GOZLE dogrulayabildigi tek sayidir (bitki ortusu / acik toprak). `field_clip_outside_ratio` ise otekinin PAYDASINI soyler: olcumun tarla sinirlarinin ne kadarini kapsadigini. Olculdu 2026-08-29 (gercek siparis 24cceb52): bir ucusun goruntusunun %57.9u tarla DISINDAYDI; bu oran gizlenirse ciftci, bahcesinin ancak bir kismindan uretilmis bir yuzdeyi tam bahce sanir.",
+        "note": "Seffaflik URUN SAHIBI kararidir: sinir disina tasan oran ciftciden GIZLENMEZ, ek bilgi olarak sunulur."
+      },
       "x-removed-2026-07-31": {
         "field": "WATER_STRESS",
         "why": "D17/A1: katman VEKİLDİR (analysis_type.availability = proxy_only) — doğrudan ölçümü CWSI (LWIR) veya NDMI (SWIR) ister, ikisi de referans donanımda YOK. Vekil bir gösterge, uzman kapısı ÖNCESİNDE 'ön rapor' olarak teslim edilemez: çiftçi bunu doğrulanmış bir teşhis sanır. KR-019 zayıflamasın diye stage_b kapalı listesinden çıkarıldı.",
