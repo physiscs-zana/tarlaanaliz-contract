@@ -300,9 +300,29 @@ güvenildi. Docstring ölçüme uyduruldu + **iki yönlü mandal testi** kondu
    → sonraki sorgular L2'ye düşer → `agreement` kaynağı `atlas_confidence`'tan
    `cosine_sim`'e geçer → güven değişebilir.
 
-⚠️ **Hâlâ ölçülmeyen:** bu iki yolun **canlıda aktığı** (bir uzman notunun
-sonraki bir işin çıktısını gerçekten değiştirdiği) DENEYLE görülmedi.
-Mekanizma artık doğru; **akış** hâlâ iddia. ("bağlı ≠ çalışıyor")
+✅ **AKIŞ DA ÖLÇÜLDÜ** (worker **#270**, `tarlaanaliz-worker/denetim/uzman_geri_bildirim_zinciri_olcumu_2026_08_30.md`).
+Betikler `tarlaanaliz-worker/denetim/deneyler/` altında — iddia değil, **yeniden koşulabilir kanıt**:
+
+| Deney | Ölçüm |
+|---|---|
+| Hebbian ipucu sıralamasını değiştiriyor mu | **EVET** `HASTALIK_A → HASTALIK_B` |
+| `cosine_sim` / `is_ood` etkileniyor mu | **HAYIR** — `0.995037` → `0.995037` |
+| REJECT → `atlas.invalidate` | kaynak `L1 → L2`, agreement **0.88 → 1.000** |
+| Güven / rapor kipi kayıyor mu | **+0.0360**, 7 senaryonun **1'inde** `PARTIAL → FULL` |
+
+Fark **tam** formülün öngördüğü `0.30 × 0.12` çıktı — pozitif kontrol: formül
+gerçekten o yuvadan besleniyor. ✅ Fail-closed sınırı da ölçüldü: **takviye
+HATIRLAMAYI yanlar, YENİLİK tespitini asla.**
+
+📌 **Ölçümün gösterdiği beklenmeyen yön:** bu senaryoda **REJECT güveni
+YÜKSELTTİ** (reddedilen atlas kaydı silinince sorgu L2'ye düşüyor ve oradaki
+cosine daha yüksek). Kusur **iddiası değil**, ölçülmüş davranış; arzu
+edilirliği ürün/ML kararıdır.
+
+⚠️ **Kapsam sınırı:** deneyler İZOLE nesnelerle koştu ve üretime DOKUNMAZ.
+Ölçülen: mekanizmanın çalıştığı. **Ölçülmeyen:** üretimdeki canlı FAISS/atlas
+durumunda aynı **BÜYÜKLÜKTE** etki (gerçek indeks içeriği, decay geçmişi ve
+`zero_init` durumu farklıdır).
 
 📌 **Beyan edilmiş borç:** `add_sample` ÜRETİMDE çağrılıyor (her grade A/B geri
 bildirimi) ama `query` hiçbir üretim yolundan çağrılmıyor — prototipler
