@@ -3821,3 +3821,102 @@ havuzundan** seçilir; `ndvi_mean`/`ndre_mean`/`embedding` hepsinde hazır.
 sözleşme dokunuşu istemiyor ve ürün sahibinin iki isteğini birden karşılıyor
 (beş farklı karo + dört bandın sonucu). **P-3 aynı turda gitmeli** — yoksa uzman
 kotası sessizce beşe bir sapar.
+
+### 14.18-E — ÖZ-DENETİM: kendi çelişkilerim (ürün sahibi uyarısı, 2026-08-31)
+
+Ürün sahibi *"son 4-5 konuşmada yazdıklarında çelişkiler gördüm"* dedi. Dördü
+ölçüldü. **Üçü BENDEN, biri koddaki yorum-kod ayrışmasından.**
+
+#### 🔴 Ç-1 (BENDEN) — "110 karonun kanıtı 1'e iner" YANILTICI
+
+Üretim logu (dört iş):
+
+| iş | kesilen | **kapsama eşiği altı → HARİÇ** | anomali | sağlıklı | uzmana |
+|---|---|---|---|---|---|
+| `31afd0e4` | 110 | **66** | 44 | **0** | 1 |
+| `9cc74301` | 110 | **75** | 35 | **0** | 1 |
+| `512b8808` | 110 | **75** | 35 | **0** | 1 |
+| `4eba9231` | 25 | 3 | 22 | **0** | 1 |
+
+*"110 kesiliyor, 1 gidiyor"* **doğru**; ama *"110 karonun kanıtı 1'e iner"*
+yanlış çerçeve — gerçek aday havuzu **35–44**. Kalanı `_anomaly_filter`
+kapsama eşiğiyle (`tile_min_valid_ratio=0.20`) zaten **hariç tutuyor**.
+
+⭐ Ölçüm ayrıca beklenmedik bir şey söyledi: **sağlıklı karo sayısı SIFIR.**
+Ölçülebilir her karo "anomali". Yani anomali bayrağı bu bahçede **hiç ayırt
+etmiyor** (eşik `ndvi<0.55`, bahçenin NDVI'si ~0.28). Beş karo seçimi bu yüzden
+"anomaliler arasından" değil, **indeks imzası çeşitliliğine göre** yapılmalı —
+F1(c)'nin varlık nedeni tam da bu.
+
+#### 🔴 Ç-2 (BENDEN) — "platform değişikliği gerekmez" fazla genel bir cümleydi
+
+§14.18-C'de *"W-4 tek başına yeterli; sözleşme ve platform değişikliği
+gerekmez"* yazdım, §14.18-D'de **P-3 platform kalemini** ekledim.
+
+Ölçüldü, ikisi farklı şeyler:
+* **TESLİM** yolu gerçekten platform istemiyor — `_karo_kaniti_kur`
+  `limit`/`offset` argümanı **almıyor** (`expert_portal.py:864`), yani
+  `uncertain_tiles` **sayfalanmıyor**; sayfalama yalnız `patch_rows`'a uygulanıyor.
+* **KOTA MUHASEBESİ** platform istiyor (P-3).
+
+Cümle "teslim" için doğru, mutlak biçimiyle yanlıştı. **Düzeltilmiş ifade:**
+*"W-4 beş karoyu uzmanın EKRANINA ulaştırır; kota DEFTERİ için P-3 gerekir."*
+
+#### ✅ Ç-3 (ÇELİŞKİ DEĞİL) — iki AYRI şema, yazımım ayırmamıştı
+
+| şema | yön | `tile*` alanları |
+|---|---|---|
+| `expert_feedback.v1` | platform → worker (**geri besleme**) | `tile_coordinates` **yalnız** |
+| `expert_review_queue.v1` | worker → platform (**eskalasyon**) | `tile_coordinates`, `tile_group_id`, `tile_group_size`, `tile_group_similarity_min`, **`tile_id`** |
+
+Yani *"karo kimliği YOK"* (B-1) geri-besleme için **doğru**; *"tile_id VAR"*
+(D-3) eskalasyon için **doğru**. Çelişki yok — ama yan yana okunduğunda öyle
+görünüyordu. **C-2 yalnız geri-besleme yönü içindir.**
+
+#### 🔴 Ç-4 (BENDEN, EN AĞIRI) — "FAISS soğuk başlangıçta boş" ÖLÇÜLMEMİŞ ve YANLIŞ
+
+Üretimde ölçüldü (`/app/data/embeddings/manifest.json` + `metadata.pkl`):
+
+```
+ntotal = 100   index_type = IndexFlatIP   saved_at = 2026-08-27
+crop_type      -> pistachio: 100
+analysis_type  -> GENERAL: 50, DISEASE: 50
+disease_class  -> None: 100      ← 🔴
+grade          -> TrainingGrade.C: 100
+```
+
+**Depo boş değil.** Kök neden bambaşka ve daha keskin:
+`_build_predictions` adlandırılmış tahmin için `memory_result.disease_hint`
+istiyor; `disease_hint` komşunun `disease_class`'ı
+(`memory_orchestrator._weighted_top_disease_hint`) — ve **100 kaydın 100'ünde
+`disease_class = None`**.
+
+Neden None: `_aggregate_results` çıkarımda depolarken **bilerek** sınıf
+yazmıyor (O-4: *"model kendi tahminini A/B derece olarak yazarsa kendi
+çıktısıyla beslenir — doğrulama yanlılığı"*). Sınıfı **yalnız uzman geri
+bildirimi** yazabilir.
+
+#### 🔴 SONUÇ — DÖNGÜSEL BAĞIMLILIK (ölçülmüş)
+
+```
+uzman sınıf yazmalı  →  ama uzman karo görmeli
+        ↑                        ↓
+disease_class = None   ←   1 karo görüyor  ←  unknown_anomaly 1'e iniyor
+        ↑                                             ↑
+   hint üretilemez  →  her karo unknown_anomaly  ──────┘
+```
+
+Halka `pipeline.py:3585`'te en ucuz yerden kırılır (W-4): beş karo gidince
+uzman sınıf yazar, sınıf yazılınca `disease_class` dolar, dolunca adlandırılmış
+tahmin mümkün olur. **W-4 yalnız bir sunum iyileştirmesi değil, öğrenme
+döngüsünün ateşleyicisidir.**
+
+#### ⚠️ KODDAKİ yorum-kod ayrışmaları (benden değil, ölçüldü)
+
+| yer | yorum ne diyor | kod ne yapıyor |
+|---|---|---|
+| `confidence_evaluator.py:35` | *"`EscalationReason(worker_string)` **ValueError fırlatır**"* | `parse_escalation_reason` **yakalıyor** (fail-open + WARNING) |
+| aynı docstring | *"Worker'ın **6** değerini taşımalı"* | worker **7** taşıyor (`AUDIT_SAMPLE`) |
+| `expert_bundle_producer.py` başlığı | *"Worker görsel artifact üretir ve **Expert Portal'a teslim eder**"* | `expert_bundle_bands` **üreticisi yok** → hiç üretilmiyor |
+
+**Kural (yeniden):** yorum bir İDDİADIR; kanıt üreticinin kendisidir.
