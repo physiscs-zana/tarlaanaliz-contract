@@ -3403,3 +3403,133 @@ canlıda doğrulanabilir.
 > ile aynı oturumda sorulmalı çünkü ikisi de **satılabilirlik ↔ teslim edilebilirlik**
 > ekseninde.
 
+
+---
+
+## 14.18 UZMAN KANITI — İKİ SÜZGEÇ (2026-08-31, ürün sahibi talebi · **kod TAM OKUNDU**)
+
+> **Ürün sahibinin sorusu:** *"zaten yerelde ham görüntüler varken tek bir uzmana neden
+> birkaç ham görüntü gönderilmiyor? … birbirine %97 benzeyen görüntüler gönderilirse
+> uzman görüşlerinden daha fazla yararlanmak mümkün olur."*
+>
+> **Ölçüm doğruladı.** Bugün **110 karo kesiliyor, uzmana 1'i gidiyor** — konumsuz ve
+> etiketsiz. Ürün sahibinin hatırladığı **%97 eşiği koda gerçekten var** ve tasarımın
+> tamamı yazılmış; **bağlı değil**.
+
+### ÖLÇÜLEN DURUM (iddia değil — komut çıktısı / `dosya:satır`)
+
+| ölçüm | değer | kaynak |
+|---|---|---|
+| Kesilen karo | **110** | worker logu `"110 tiles"` |
+| Uzmana giden | **1** | MinIO `results/<job>/tiles/` → 1 çift PNG (3 işte de) |
+| Karo boyutu | 512 px × 0.05 m = **25.6 m** | `model_config.py:73` (`stride=448`) |
+| **Karo = ağaç mı?** | ❌ **HAYIR** — 655 m², fıstık aralığı 6–8 m → **10–18 ağaç** | aritmetik |
+| Karonun konumu | ❌ `bbox` **11/11 NULL** | üretim sorgusu |
+| Benzerlik eşiği | **0.97** (0.93–0.97 geçerli aralık) | `prototype_manager.py:432`, `config.py:637` |
+| Gruplama üretimde | ❌ `tile_group_size=1`, `tile_group_id=NULL` (5 incelemede) | üretim sorgusu |
+| `should_send_to_expert` çağıranı | ❌ **ÜRETİMDE YOK** (0 eşleşme) | `grep -rn … src/` |
+| *"Yeni benzer tile grubu oluşturuldu"* logu | **0** | worker logu |
+
+### ⚠️ ÖNEMLİ — bağlı olmaması KUSUR DEĞİL, BEYAN EDİLMİŞ BORÇ
+
+`prototype_manager.py:76-88` bunu açıkça yazıyor:
+
+> *"These purity/exclusion gates are ENFORCED at admission time inside
+> `SimilarTileDeduplicator.should_send_to_expert` so that they are ready **BEFORE**
+> the dedup path is wired into the live pipeline. Audit G.4 [3]: 'dedup canlıya
+> **BAĞLANMADAN** önce; ölü yol bugün risksiz ama kapı hazır olmalı.'"*
+
+Gerekçe: *"Getting the gate wrong once the path is live directly poisons the training
+set (a cascaded label becomes ground truth)"* — kapılar önce, dormant ve doğru olarak
+inmiş. **Bu plan o bağlantıyı yapar, kapıları yeniden icat etmez.**
+
+### SÜZGEÇ-1 — "%97'den benzerleri ele" · **kod VAR, bağlı DEĞİL**
+
+`SimilarTileDeduplicator.should_send_to_expert` (`prototype_manager.py:571-745`) **dört
+kapı** taşıyor, hepsi yazılmış ve test edilmiş:
+
+| kapı | ne yapar | sabit |
+|---|---|---|
+| **F4** | nadir/karantina sınıf → **asla gruplanmaz**, bireysel eskalasyon (risk R3 "nadir sınıf maskeleme") | `K7_FD_TRIGGER_CLASSES` |
+| **F1(b)** | sınıf saflığı — farklı `predicted_class` birleşmez | — |
+| **F1(c)** | **indeks imzası yayılımı** — L∞ mesafe σ üstündeyse birleşmez | `_DEFAULT_MAX_INDEX_SPREAD = 0.15` |
+| kosinüs | `sim >= threshold` | **0.97** |
+| kapasite | grup ≤ 500 üye, ≤ 10.000 grup (RAM sınırı) | — |
+
+⭐ **F1(c) tam olarak ürün sahibinin "farklı dalgaboyları" fikridir** — imza
+`np.array([NDVI, NDRE])`; aynı morfolojide farklı stres imzalı karolar birleşmez.
+
+**Eksik olan iki halka:**
+
+1. 🔴 **Besleme yok.** `should_send_to_expert`'i üretimde çağıran kod **yok**.
+   Çağrı yeri `pipeline.py:3576-3601` (detection döngüsü) olmalı; gereken **her girdi
+   `TileResult`'ta ZATEN var**: `tile_id` · `embedding` (1024-d L2) · `predictions`
+   (→ `predicted_class`) · `ndvi_mean`/`ndre_mean` (→ `index_signature`).
+2. 🔴 **Okuma yanlış anahtarla.** `worker.py:1430` `get_group_info(result.job_id)`
+   çağırıyor; imza `get_group_info(self, tile_id: str)` ve arama
+   `self._tile_to_group.get(tile_id)`. **İş kimliği karo tablosunda asla bulunmaz**
+   → her zaman `(None, 1, None)`. Besleme düzelse bile bu tek başına boş döndürürdü.
+
+### SÜZGEÇ-2 — "dört bandın imzası farklı 5 karo seç" · **YOK**
+
+Bugünkü seçim `pipeline.py:3578`:
+
+```python
+if pred["class_id"] == "unknown_anomaly" and len(detections) > 0:
+    continue  # Skip duplicate unknown anomalies
+```
+
+Bu kural **eğitimli ürünler** için yazılmış. Fıstık **eğitimsiz** → model her belirsiz
+karo için `unknown_anomaly` üretiyor → **110 karonun kanıtı ilk bulunana iner**.
+Sonra `apply_fail_closed_masking` (`analysis_result.py:220-226`) onu `SUPPRESSED`
+yapıyor (bu **doğru**: tanı saklanır) → uzman **isimsiz, konumsuz tek karo** görür.
+
+⚠️ **Gruplama ≠ seçim.** Süzgeç-1 bağlansa bile N temsilci kalır; **hangi 5'i**
+gönderileceği ayrı bir karardır ve bugün hiçbir yerde yok.
+
+**Ölçüt (uydurma değil, mevcut veriden):** her temsilcinin indeks imzası bir vektör
+(`[ndvi_mean, ndre_mean]`, 5 bantlı sensörde genişler). Aralarındaki **L∞ mesafeyi
+maksimize eden 5'li** seçilir — F1(c)'nin tersi yönde kullanımı: F1(c) benzerleri
+*ayırmaya* yarar, seçim *farklıları öne almaya*.
+
+### AYRICA — konum taşınmıyor (uzmanın "tarlanın neresi" sorusu)
+
+`build_tile_polygon_geojson` **çağrılıyor** (`pipeline.py:2347`) ve karo sözlüğüne
+yazılıyor (`:2362`). `Detection.bbox` alanı **var** (`analysis_result.py:29`) ve dışa
+veriliyor (`:300`). Ama `Detection(...)` kurulurken (`pipeline.py:3588-3599`) **`bbox`
+verilmiyor** → üretimde 11/11 NULL. Konum hesaplanıyor, **taşınmıyor**.
+
+Platform tarafında da alan yok: `ReviewUncertainTile` (`expert_portal.py:119-127`)
+`tile_id · confidence · ndvi · ndre · rgb_url · ms_url` taşıyor, konum **yok**.
+
+### İŞ KALEMLERİ
+
+| # | iş | depo | dosya |
+|---|---|---|---|
+| **W-1** | `should_send_to_expert`'i detection döngüsünden çağır (tile_id · embedding · crop · predicted_class · index_signature) | worker | `pipeline.py:3576` |
+| **W-2** | `get_group_info(result.job_id)` → **temsilci karo kimliği** | worker | `worker.py:1430` |
+| **W-3** | `Detection.bbox`'ı `polygon_geojson`'dan doldur | worker | `pipeline.py:3588` |
+| **W-4** | `unknown_anomaly` "ilk bulunanı al" kuralını **çeşitlilik seçimiyle** değiştir (≤5) | worker | `pipeline.py:3578` |
+| **C-1** | `ReviewUncertainTile`'a konum alanı (kanonik sözleşme gerekirse MINOR) | contract | `report_phase`/uzman ekseni |
+| **P-1** | Uzman ucu konum + grup bilgisini sunsun (`tile_group_size` zaten kolon) | platform | `expert_portal.py:119` |
+
+### ÖNKOŞUL VE RİSKLER (ölçülmüş)
+
+* ⛔ **Eğitim seti zehirlenmesi** — modülün kendi uyarısı: canlıya bağlanınca yanlış
+  kapı doğrudan eğitim setini bozar (kaskad etiket ground-truth olur). F1/F4 kapıları
+  bu yüzden önce indi; **bağlantı turunda kapıların mutasyonla sınanması şart**.
+* ⚠️ **5 karo sayısı ürün kararıdır.** Kodda `MIN_PATCHES_PER_REVIEW = 5` ve
+  `TARGET_REVIEWS_PER_DAY = 10` var (`core/domain/entities/expert.py:86-87`) — 5
+  başlangıç değeri bunlarla tutarlı, ama uzman iş yükü ölçülmedi.
+* ⚠️ **Karo = ağaç DEĞİL** (10–18 ağaç). "Ağaç başına analiz" 512 px girdi boyutunu
+  değiştirir → ayrı ve büyük iş, bu kalemin kapsamı **değil**.
+* ⚠️ `audit_set_sampler.py:216,271` bugün `tile_group_id=None, tile_group_size=1`
+  varsayıyor — gruplama canlıya alınınca **i.i.d. denetim seti** etkilenir, birlikte
+  gözden geçirilmeli.
+
+### SIRALAMA ÖNERİSİ
+
+Bu kalem **§14.17'deki bant genişliği işinden (yerel artefakt önbelleği) ÖNCE**
+gelmeli: o bir tutarsızlığı düzeltir, bu ise **uzman kapısının işlevini** geri verir —
+ve çiftçiye giden raporun kalitesi doğrudan o kapıya bağlıdır (2026-08-30 ölçümü:
+uzman onayı olmadan hiçbir kart tam rapora geçemez).
