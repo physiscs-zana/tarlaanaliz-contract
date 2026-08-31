@@ -3723,3 +3723,101 @@ farkını **gözle göremiyor**.
 sözleşme dokunuşu istemiyor ve ürün sahibinin sorduğu şeyi (*"birkaç ham görüntü
 gitsin"*) **tek dosyada** karşılıyor. Kaskad zinciri (C-2→P-2→W-5) ayrı ve daha
 pahalı bir turdur.
+
+### 14.18-D — ZİNCİRİN TAMAMI OKUNDU (17.267 satır) · ÜRÜN KARARI UYGULANIR
+
+Ürün sahibi talimatı: *"okumadım dediklerinin ve varsa diğer ilgili dosyaların
+tamamını okuyup analizlerini yap"* + *"uzmanın görüşüne etkisi olacak ise **4 bandın
+sonuçlarını göstermelisiniz**"*. **Yirmi dosya tam okundu** (worker 10.564 + platform
+6.703 satır); liste `SESSION_HANDOFF.md §0.A ⑦`'de.
+
+#### ⭐ D-1 — DÖRT BANT KARARI: yeniden yazılmayacak, DİRİLTİLECEK
+
+`expert_bundle_producer.py` istenen şeyi **zaten üretiyor**: `BandSource(green,
+red, **rededge**, nir)` · dört ısı haritası (**NDVI/NDRE/NDWI/GNDVI**, sabit
+[-1,+1] ölçek) · **dört bandın ayrı yansıma istatistiği** · dört histogram ·
+gerçek+yanlış renk kompozit. İki bağımsız nedenle ölü: **üreticisi yok** ve
+`INDICES_ONLY`'de `ValueError` fırlatıyor.
+
+⚠️ Kapının gerekçesi *"tahmin sınıfı fail-closed kayboldu"*. Ama ürün sahibinin
+istediği **tanı değil ÖLÇÜM** — KR-025 zaten *"worker ölçer, yorumlamaz"* diyor.
+→ **W-7 (yeniden tanımlandı):** `INDICES_ONLY` için **ölçüm-yalnız paket** —
+`predicted_class` YOK, `band_stats` + dört ısı haritası VAR.
+✅ Ham veri hazır: karo bantları `RE` taşıyor (`SPECTRAL_BANDS = B,G,R,NIR,RE`).
+⛔ Yeni renk kompoziti yazmak GEREKMEZ — `render_index_heatmap` + `compute_band_stats`
+zaten dört bandı işliyor.
+
+#### 🔴 D-2 — `bulk_approval_id` İKİ FARKLI ŞEY (C-2'nin kapsamı büyüdü)
+
+* **platform**: *"5–50 AYRI incelemeyi tek tıkla onayladım"* (`review_ids`,
+  `min_length=5, max_length=50`)
+* **worker**: *"bu geri bildirim bir KARO GRUBUNUN temsilcisidir, üyelerine yay"*
+
+Aynı alan, iki kavram. Bugün zararsız (grup yok → tek eleman döner); **süzgeç-1
+bağlanınca sessizce yanlış yayılır**. → C-2 artık *"alan ekle"* değil,
+**"iki anlamı AYIR"**: kaskad, `bulk_approval_id` VARLIĞINDAN değil,
+**açık `representative_tile_id` alanından** tetiklenmeli.
+
+#### 🔴 D-3 — `tile_id`: alan iki yerde de VAR, ÜRETİCİSİ yok (**sözleşme gerekmez**)
+
+`EscalationRequest.tile_id` var (`agent_messages.py:259`) · kanonik
+`expert_review_queue.v1` şemasında var · `worker.py:1547` **geçmiyor** (0 eşleşme)
+→ `null` → `omit_nulls_schema_disallows` düşürüyor.
+→ **W-8 (yeni, UCUZ):** eskalasyonda `tile_id=first_detection.tile_id` geç.
+⭐ Bu, W-2/W-5'in yarısını sözleşmesiz çözer: eskalasyon yönü artık karo kimliği
+taşır. Geri-besleme yönü hâlâ C-2'ye muhtaç.
+
+#### 🔴 D-4 — Uzman kotası beş karoyu **1** sayacak
+
+`patch_page_size(kota) = clamp(kota/10, **5**, 100)` — sistemin kendi tabanı
+inceleme başına **5 karo**. Ürün sahibinin sayısı keyfi değil, **sistemin
+varsaydığı sayı**.
+🔴 Ama sayaç `analysis_priority_zones`'dan besleniyor, `findings`'ten değil — ve
+o tablo **üretimde BOŞ (0 satır, ölçüldü)** → her inceleme **1 görüntü** sayılıyor.
+Bugün 1 karo gösterildiği için tesadüfen doğru; W-4'ten sonra 5 gösterilip 1
+sayılacak.
+→ **P-3 (yeni):** kota sayacı gösterilen karo sayısını da saysın
+(`expert_profile_builder.py:104-137`). Aksi hâlde kodun *"C12 B1"* diye kapattığı
+sapma başka kapıdan geri gelir.
+
+#### ⚠️ D-5 — `AUDIT_SAMPLE` enum sapması + ÜÇÜNCÜ uykuda mekanizma
+
+Worker enum **7**, platform aynası **6**. `confidence_evaluator` docstring'i
+*"ValueError fırlatır"* diyor — **ölçüldü, yanlış**: `parse_escalation_reason`
+yakalıyor (fail-open + WARNING). Çökme yok; kayıp **neden** ve **şiddet
+yükseltmesi**. `AuditSetSampler` + `build_audit_escalation` da **0 çağıranlı**.
+→ **P-4 (küçük):** platform aynasına `AUDIT_SAMPLE` ekle. Denetim örneklemesini
+canlıya almak AYRI ve daha büyük bir karardır (i.i.d. ölçüm temeli).
+
+#### ✅ D-6 — `unknown_anomaly`'nin KÖKÜ: W-4 bir SEÇİM fonksiyonu ister
+
+`_build_predictions` adlandırılmış tahmini **yalnız** `hit AND disease_hint AND
+not is_ood` iken üretiyor. FAISS soğuk → hit yok → `if is_ood or ndvi_mean < 0.4`
+dalı. Üretimde `ndvi_mean = 0.282 < 0.4` → **her anomali karosu
+`unknown_anomaly`**. Sonra `:3585` ilkini alıyor.
+⚠️ Aday havuzu **110 değil**: `_anomaly_filter` sağlıklıları ve kapsama eşiği
+altındakileri (`tile_min_valid_ratio=0.20`) ayırıyor. Beş karo **anomali
+havuzundan** seçilir; `ndvi_mean`/`ndre_mean`/`embedding` hepsinde hazır.
+
+#### GÜNCEL İŞ KALEMİ TABLOSU (14.18 + B + C + D birleşik, SON)
+
+| # | iş | depo | önkoşul | not |
+|---|---|---|---|---|
+| **W-4** ⭐ | `unknown_anomaly` "ilkini al" → **≤5 çeşitlilik seçimi** (anomali havuzundan, L∞ imza uzaklığı) | worker | **yok** | tek başına beş karoyu teslim eder |
+| **W-8** ⭐ | Eskalasyona `tile_id` geç | worker | yok | **sözleşme gerekmez**, alan zaten kanonikte |
+| **W-7** ⭐ | D-13 paketini `INDICES_ONLY` için **ölçüm-yalnız** dirilt (dört bant) | worker | yok | ürün sahibi kararı; kod ZATEN var |
+| **P-3** 🔴 | Kota sayacı gösterilen karoyu saysın | platform | W-4 | yoksa C12 B1 geri gelir |
+| **W-3** | `Detection.bbox`'ı doldur | worker | yok | konum |
+| **W-1** | `should_send_to_expert`'i çağır | worker | yok | süzgeç-1 |
+| **W-2** | `get_group_info`'yu karo kimliğiyle çağır | worker | W-1 | |
+| **W-6** | Eşleşmeyen kaskad sessizce tek eleman dönmesin | worker | yok | |
+| **C-2** 🔴 | `expert_feedback`'e `representative_tile_id` + **iki anlamı ayır** | contract | yok | D-2 |
+| **P-2** 🔴 | Toplu onayda temsilci karo kimliğini yaz | platform | C-2 | |
+| **W-5** 🔴 | Kaskadı karo kimliğiyle çağır | worker | C-2, P-2 | |
+| **P-4** | Platform enum aynasına `AUDIT_SAMPLE` | platform | yok | küçük |
+| **C-1/P-1** | Konum alanı (yalnız bbox için) | ct+plat | W-3 | |
+
+⭐ **ÖNERİLEN İLK TUR: W-4 + W-8 + W-7.** Üçü de worker-içi, önkoşulsuz,
+sözleşme dokunuşu istemiyor ve ürün sahibinin iki isteğini birden karşılıyor
+(beş farklı karo + dört bandın sonucu). **P-3 aynı turda gitmeli** — yoksa uzman
+kotası sessizce beşe bir sapar.
