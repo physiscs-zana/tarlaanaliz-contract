@@ -58,31 +58,44 @@ bahçenin NDVI'si ~0.28. Yani anomali bayrağı bu bahçede **hiç ayırt etmiyo
 beş karo "anomaliler arasından" değil **indeks imzası çeşitliliğine göre**
 seçilmelidir.
 
-### ② 🔴 KÖK NEDEN — DÖNGÜSEL BAĞIMLILIK (ölçüldü)
+### ② 🔴 KÖK NEDEN — `disease_class` ÜRETİCİSİ HİÇ YOK (2026-08-31 son denetimde DÜZELTİLDİ)
 
-```
-uzman sınıf yazmalı  →  ama uzman karo görmeli
-        ↑                        ↓
-disease_class = None   ←   1 karo görüyor  ←  unknown_anomaly 1'e iniyor
-        ↑                                             ↑
-   hint üretilemez  →  her karo unknown_anomaly  ──────┘
-```
+⚠️ **Bu bölümün ilk hâli YANLIŞTI.** *"Uzman sınıf yazar → `disease_class`
+dolar"* demiştim; **ölçüldü, öyle değil.** Uzman geri bildiriminin çıkarıma
+etkisi **başka iki yoldan** olur (`prototype_manager.py:34-40` bunu zaten
+yazıyordu, ilk okuyuşta atlamışım):
 
-Zincir satır satır:
-* `_build_predictions` (`pipeline.py:3451`) adlandırılmış tahmin için
-  `memory_result.disease_hint` istiyor.
-* `disease_hint` = komşunun `disease_class`'ı
-  (`memory_orchestrator._weighted_top_disease_hint`).
-* Üretimdeki **100 kaydın 100'ünde `disease_class = None`** — çünkü
-  `_aggregate_results` çıkarımda **bilerek** sınıf yazmıyor (**O-4**: model
-  kendi tahminini derece olarak yazarsa kendi çıktısıyla beslenir).
-* → hint hep None → `if is_ood or ndvi_mean < 0.4` dalı → **her anomali karosu
-  `unknown_anomaly`** (üretimde `ndvi_mean = 0.282`).
-* → `_aggregate_results:3586` "unknown_anomaly ve zaten tespit varsa atla" →
-  **ilkinden sonrası atılıyor**.
+1. **Hebbian ağırlık** (K-6) → `_weighted_top_disease_hint` içinde
+   `score = cosine × weight × zero_init` ile **hangi komşunun** ipucunun öne
+   çıktığını sıralar. `cosine_sim`/`is_ood`'a dokunmaz.
+2. **REJECT** → `atlas.invalidate(crop, disease)` L1 kaydını **siler**.
 
-⛔ **O-4'ü gevşetmek YASAK** — döngüyü modelin kendi tahminiyle kapatmak tam da
-kapattığı doğrulama yanlılığıdır. Halka **W-4'ten** kırılır.
+**Hiçbiri `disease_class` YAZMAZ.** Ölçüldü:
+
+| ölçüm | sonuç |
+|---|---|
+| `memory.store()` üretim çağıranı | **tek** — `pipeline.py:3700` |
+| o çağrıda `disease_class` | ❌ **geçmiyor** (O-4: çıkarım sınıf yazamaz) |
+| `cache_warmer` (`disease_class` geçen tek kod) | **üretimde 0 çağıran** |
+| L1 atlas'a sınıf yazan üretim yolu | **yok** |
+| Üretimdeki 100 kayıtta `disease_class` | **100/100 None** |
+
+🔴 **Sonuç: `disease_hint` yapısal olarak DAİMA None.** Zincir:
+`_build_predictions` (`pipeline.py:3451`) adlandırılmış tahmin için
+`disease_hint` ister → hep None → `if is_ood or ndvi_mean < 0.4` dalı
+(üretimde `ndvi_mean = 0.282`) → **her anomali karosu `unknown_anomaly`** →
+`_aggregate_results:3586` ilkinden sonrasını atar → **uzman 1 karo görür**.
+
+⚠️ **W-4'ün BEKLENEN SONUCU DÜZELTİLDİ:**
+* ✅ W-4 **yapar**: uzman 1 yerine **5 karo** görür (gerçek ve ölçülebilir kazanç).
+* ❌ W-4 **yapmaz**: `unknown_anomaly` etiketini değiştirmez — o etiket
+  `disease_class` üreticisi olmadığı sürece kalır.
+
+→ **W-9 (yeni kalem):** `disease_class` üreticisi. Uzman `corrected_class`
+yazdığında o sınıf FAISS üstverisine işlenmeli (bugün yalnız Hebbian ağırlığına
+ve L1 silmeye dokunuyor). ⛔ **O-4'ü gevşetmek YASAK** — sınıfı modelin kendi
+tahmininden yazmak tam da kapattığı doğrulama yanlılığıdır; kaynak **uzman
+kararı** olmalı.
 
 ### ③ SÜZGEÇ-1 (%97 gruplama) — kod TAM, bağlı DEĞİL, ve bu BEYAN EDİLMİŞ BORÇ
 
@@ -175,10 +188,14 @@ docstring'i *"ValueError fırlatır"* diyor — **ölçüldü, yanlış**:
 
 | # | dokunulan | sonuç |
 |---|---|---|
-| **W-4** | `pipeline.py:3586` → çeşitlilik seçimi (≤5) | uzman **1 yerine 5** karo görür; halka kırılır |
+| **W-4** | `pipeline.py:3586` → çeşitlilik seçimi (≤5) | uzman **1 yerine 5** karo görür (etiket `unknown_anomaly` KALIR — bkz. §②) |
 | **W-8** | `worker.py:1547` → `tile_id=first_detection.tile_id` | eskalasyon **hangi karo** olduğunu söyler |
 | **W-7** | `tile_crop_renderer` → dört indeks ısı haritası + bant istatistiği | uzman **dört bandın** sonucunu görür |
 | **P-3** | `expert_profile_builder.py:102-137` | kota defteri 5'i 5 sayar (yoksa C12 B1 geri gelir) |
+
+**TUR 1.5 (öğrenme döngüsü)** — **W-9**: uzmanın `corrected_class`'ı FAISS
+üstverisine işlensin. *Sonuç:* `disease_hint` üretilebilir hâle gelir; karolar
+zamanla `unknown_anomaly` olmaktan çıkar. ⛔ O-4 gevşetilmez — kaynak uzman kararı.
 
 **TUR 2 (konum)** — W-3 + C-1/P-1 · **TUR 3 (kaskad, pahalı)** — C-2 → P-2 → W-5
 (+ W-1/W-2/W-6) · **TUR 4 (küçük)** — P-4 enum + parite testi.

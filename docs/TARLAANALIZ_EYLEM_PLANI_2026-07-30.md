@@ -3921,3 +3921,52 @@ döngüsünün ateşleyicisidir.**
 | `expert_bundle_producer.py` başlığı | *"Worker görsel artifact üretir ve **Expert Portal'a teslim eder**"* | `expert_bundle_bands` **üreticisi yok** → hiç üretilmiyor |
 
 **Kural (yeniden):** yorum bir İDDİADIR; kanıt üreticinin kendisidir.
+
+### 14.18-F — SON DENETİM: kök neden DÜZELTİLDİ, W-9 doğdu (2026-08-31)
+
+PR öncesi son denetimde `prototype_manager.py` **tamamı** okundu (861; önceki
+turlarda bölgesel okumuştum) ve başlığındaki **entegrasyon durumu bloğu** kendi
+kök-neden iddiamı çürüttü.
+
+#### 🔴 Düzeltilen iddia
+
+§14.18-E'de *"uzman sınıf yazar → `disease_class` dolar → hint üretilir"*
+yazmıştım. **Ölçüldü, yanlış.** Uzman geri bildiriminin çıkarıma etkisi **iki
+başka yoldan** olur (`prototype_manager.py:34-40`):
+① **Hebbian ağırlık** — `score = cosine × weight × zero_init` ile hangi komşunun
+ipucunun öne çıktığını **sıralar** ② **REJECT → `atlas.invalidate`** L1 kaydını
+**siler**. **Hiçbiri sınıf YAZMAZ.**
+
+| ölçüm | sonuç |
+|---|---|
+| `memory.store()` üretim çağıranı | **tek** — `pipeline.py:3700` |
+| o çağrıda `disease_class` | ❌ geçmiyor (O-4) |
+| `cache_warmer` (`disease_class` geçen tek kod) | üretimde **0 çağıran** |
+| L1 atlas'a sınıf yazan üretim yolu | **yok** |
+| Üretimde 100 kayıtta `disease_class` | **100/100 None** |
+
+🔴 **`disease_hint` yapısal olarak DAİMA None.**
+
+#### W-4'ün beklenen sonucu düzeltildi
+
+* ✅ **yapar**: uzman 1 yerine **5 karo** görür — ölçülebilir, gerçek kazanç.
+* ❌ **yapmaz**: `unknown_anomaly` etiketini değiştirmez.
+
+Önceki turda *"W-4 öğrenme döngüsünün ateşleyicisidir"* demiştim — **fazla
+iddialıydı**. W-4 uzmana kanıt verir; döngüyü **W-9** kapatır.
+
+#### W-9 (yeni) — `disease_class` üreticisi
+
+Uzman `corrected_class` yazdığında o sınıf FAISS üstverisine işlensin
+(`feedback_handler` bugün yalnız Hebbian + atlas invalidate yapıyor).
+⛔ **O-4 gevşetilmez** — sınıfı modelin kendi tahmininden yazmak tam da
+kapattığı doğrulama yanlılığıdır; kaynak **uzman kararı** olmalı.
+⚠️ Kapsam: `EmbeddingMetadata.disease_class` alanı **zaten var**
+(`faiss_retriever.py:383`), `store()` imzası da **zaten taşıyor** — eksik olan
+**geri-besleme yolundan yazan çağrı**. Yani W-9 de sözleşmesizdir.
+
+#### Sıra güncellendi
+
+**TUR 1** W-4 · W-8 · W-7 (+P-3) → uzman **beş karo + dört bant** görür ·
+**TUR 1.5** W-9 → etiket zamanla `unknown_anomaly` olmaktan çıkar ·
+TUR 2 konum · TUR 3 kaskad · TUR 4 enum.
