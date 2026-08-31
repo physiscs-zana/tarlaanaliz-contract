@@ -98,12 +98,41 @@ konum alanı içermiyor.
 kapıya bağlı (uzman onayı olmadan hiçbir kart tam rapora geçemiyor). Bant genişliği
 kalemi **açık kalıyor**, iptal edilmedi.
 
-⚠️ **Uygulama turuna girmeden önce okunmalı** (bu turda okunmadı, dürüstlük notu):
-`feedback_handler.py` kaskad yolu · `orchestration_agent.py` · `reporting_agent.py`.
+✅ **Üç dosya SONRADAN TAM OKUNDU** (aynı oturum, ikinci tur):
+`feedback_handler.py` (988) · `orchestration_agent.py` (546) ·
+`reporting_agent.py` (715) = **2.249 satır**; `origin/master` ile bayt-özdeş
+oldukları `git diff --stat` ile doğrulandı. **Üç yeni bulgu → §14.18-B**:
+
+* 🔴 **Kaskad da kopuk, ve bu SÖZLEŞME işi.** `feedback_handler.py:653`
+  `apply_expert_decision(representative_id=feedback.job_id)` çağırıyor;
+  `job_id` property'si `analysis_result_id` döndürüyor. Gruplar ise
+  **`f"{job.job_id}_t{tile_idx:04d}"`** karo kimliğiyle yazılıyor
+  (`pipeline.py:2358`, `prototype_manager.py:736`). İki değer aynı olsa **bile**
+  `_tNNNN` soneki yüzünden eşleşmez. Eşleşme olmayınca `WARNING` yazılıp
+  **`[representative_id]` dönüyor** — geçerli görünen tek elemanlı liste, hata yok:
+  *"birini etiketle, N'ine uygulansın"* vaadi **sessizce ölüyor**. Platformda toplu
+  onay ucu **var** (`expert_portal.py:1919`) → yol **canlıya erişilebilir**.
+  🔴 Kanonik `expert_feedback.v1.schema.json`'da **karo kimliği alanı YOK**
+  (kök alanlar ölçüldü; yalnız `tile_coordinates` x/y/w/h) → **C-2 (MINOR,
+  eklemeli)** gerekiyor. **Sıra zorunlu: C-2 → P-2 → W-5.**
+* ⚠️ **D-13 Uzman Görsel Paketi yapısal olarak ÖLÜ** — `expert_bundle_bands`'i
+  dolduran kod **yok** (tüm depoda yalnız okuyan iki satır). Ayrıca FULL/PARTIAL
+  ile kapılı; fıstık oraya hiç ulaşmıyor. ✅ **Ama beş karo için yeni kanal
+  GEREKMİYOR:** `tile_crop_artifacts` çalışıyor (pipeline üretir → orchestration
+  taşır, `orchestration_agent.py:285-288` → worker.py S3'e yükler). **W-4 bunu
+  kullanmalı**; paketi diriltmek ayrı üründür, kapsam dışı.
+* ✅ **Olumsuz bulgu:** çiftçi metni worker tarafında **temiz** — iç sözcük
+  basılmıyor (`reporting_agent.py:397-470`). 2026-08-30 sızıntısı platform
+  tarafındaydı. Sınır: `_scrub_kr025_fields` yalnız **anahtar adını** tarıyor,
+  değer metnini taramıyor (`:697`) — serbest metin taşıyan yeni alan eklenirse
+  yeniden değerlendirilmeli.
+
 Bu turda **tam okunanlar**: `prototype_manager.py`, `field_clip.py`,
-`expert_portal.py`, `analysis_result.py`, `expert.py`. **Bölgesel okunanlar**:
+`expert_portal.py`, `analysis_result.py`, `expert.py`, `feedback_handler.py`,
+`orchestration_agent.py`, `reporting_agent.py`. **Bölgesel okunanlar**:
 `pipeline.py` (2300-2400 · 3550-3620 · 580-600), `worker.py` (1400-1450),
-`audit_set_sampler.py` (200-280).
+`audit_set_sampler.py` (200-280), `expert_feedback.py` (80-96),
+`prototype_manager.py` grup-yazma bölgesi (726-742).
 
 ⚠️ **Kapasite riski:** `audit_set_sampler.py:216,271` bugün
 `tile_group_id=None, tile_group_size=1` varsayıyor → gruplama canlıya alınınca

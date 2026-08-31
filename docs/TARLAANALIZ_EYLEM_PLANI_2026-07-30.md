@@ -3533,3 +3533,100 @@ Bu kalem **§14.17'deki bant genişliği işinden (yerel artefakt önbelleği) �
 gelmeli: o bir tutarsızlığı düzeltir, bu ise **uzman kapısının işlevini** geri verir —
 ve çiftçiye giden raporun kalitesi doğrudan o kapıya bağlıdır (2026-08-30 ölçümü:
 uzman onayı olmadan hiçbir kart tam rapora geçemez).
+
+### 14.18-B — ÜÇ DOSYA TAM OKUNDU: kaskad zinciri de kopuk (2026-08-31, ikinci tur)
+
+§14.18 yazılırken üç dosya **okunmamıştı** ve bu açıkça not edilmişti. Okundular
+(`feedback_handler.py` 988 · `orchestration_agent.py` 546 · `reporting_agent.py` 715 =
+**2.249 satır, tamamı**; `origin/master` ile bayt-özdeş olduğu `git diff --stat` ile
+doğrulandı). **Üç yeni bulgu çıktı ve biri §14.18'in kapsamını genişletiyor.**
+
+#### 🔴 B-1 — Kaskad ÜÇÜNCÜ anahtar karışıklığını taşıyor (**sözleşme işi**)
+
+Uzman kararını gruba yayan tek yol `feedback_handler.py:653`:
+
+```python
+cascade_ids = self._tile_deduplicator.apply_expert_decision(
+    representative_id=feedback.job_id,   # <-- analysis_result_id
+    ...)
+```
+
+`feedback.job_id` bir **property**'dir ve `analysis_result_id` döndürür
+(`expert_feedback.py:87-89`, *"DEPRECATED: Use analysis_result_id"*). Gruplar ise
+**karo kimliğiyle** yazılıyor:
+
+| taraf | anahtar | kaynak |
+|---|---|---|
+| yazan | `_groups[tile_id]`, `representative_id=tile_id` | `prototype_manager.py:727,736` |
+| karo kimliğinin biçimi | **`f"{job.job_id}_t{tile_idx:04d}"`** | `pipeline.py:2358` |
+| okuyan (kaskad) | `analysis_result_id` | `feedback_handler.py:653` |
+| okuyan (eskalasyon) | `result.job_id` | `worker.py:1430` |
+
+⚠️ `analysis_result_id` ile `job_id` aynı değer olsa **bile** eşleşme olmaz:
+anahtarda **`_tNNNN` soneki** var. Yani argüman platformun ne gönderdiğinden bağımsız
+olarak geçerli.
+
+**Sessiz başarısızlık:** `apply_expert_decision` eşleşme bulamayınca `WARNING
+"Bilinmeyen temsilci"` yazıp **`[representative_id]` döndürüyor**
+(`prototype_manager.py:770-777`) — yani *geçerli görünen tek elemanlı bir liste*.
+Çağıran bunu normal sayar; kaskad **1 karoya iner** ve hiçbir hata yükselmez.
+**"Bir tanesini etiketle, N'ine uygulansın" vaadi tam burada sessizce ölür.**
+
+🔴 **Bu hipotetik değil:** platformda toplu onay ucu **var** ve
+`bulk_approval_id = str(_uuid.uuid4())` üretiyor (`expert_portal.py:1919`) → kaskad
+yolu **bugün canlıya erişilebilir**.
+
+🔴 **Kanonik şema kimlik taşımıyor.** `schemas/worker/expert_feedback.v1.schema.json`
+kök alanları ölçüldü — **karo kimliği alanı YOK**; yalnız `tile_coordinates`
+(x/y/w/h). Platform, uzmanın **hangi karoyu** onayladığını worker'a **söyleyemiyor**.
+→ **C-2 (MINOR, eklemeli):** `representative_tile_id` alanı. Bu olmadan W-5 yazılamaz;
+`tile_coordinates`'ten karo kimliği **türetmek uydurmadır** (CLAUDE.md §2.1: worker
+sözleşme alanı icat etmez).
+
+#### ⚠️ B-2 — D-13 Uzman Görsel Paketi yapısal olarak ÖLÜ
+
+`_maybe_build_expert_bundle` (`reporting_agent.py:365-372`) `expert_bundle_bands`
+None ise **hemen None** dönüyor. Ölçüldü: bu alanı **dolduran kod yok** — tüm depoda
+yalnız `reporting_agent.py:370,383` (okuyan) ve `agent_messages.py` (tanım) geçiyor.
+Ayrıca paket `FULL_REPORT`/`PARTIAL_REPORT` ile kapılı; fıstık bugün
+`INDICES_ONLY`/`NO_RESULT` üretiyor → **iki bağımsız nedenle** hiç üretilmiyor.
+
+✅ **Ama beş karo için yeni taşıma kanalı GEREKMİYOR.** Çalışan kanal ölçüldü:
+`tile_crop_artifacts` — üretici **pipeline**, taşıyıcı orchestration
+(`orchestration_agent.py:285-288`, DK-48 notu: *"karo görüntüsü artefaktları
+PIPELINE'dan gelir, reporting'den DEĞİL — ham bantlar yalnız orada yaşıyor"*),
+yükleyici `worker.py` (S3). **W-4 bu kanalı kullanmalı**; D-13 paketini diriltmek
+ayrı bir üründür ve bu kalemin kapsamı **değildir**.
+
+#### ✅ B-3 — Çiftçi metni bu üç dosyada temiz (olumsuz bulgu, kayda değer)
+
+`_generate_farmer_report` (`reporting_agent.py:397-470`) her `result_mode` için sade
+Türkçe cümle üretiyor (*"Kısmi analiz sonuçları hazır. Kesin tanı için uzman
+incelemesi önerilir."*) ve iç sözcük (`mod=`, `KR-025`, `SUPPRESSED`) **basmıyor**.
+2026-08-30'da kapatılan sızıntı **platform tarafındaydı**, worker tarafında **yok**.
+İç ad taşıyan tek alan `suppressed_fields`/`reason_codes` — bunlar **teknik rapora**
+gidiyor ve platform kapısı bunları çiftçiden zaten ayırıyor.
+
+⚠️ Not: `_scrub_kr025_fields` **yalnız anahtar ADINI** tarıyor
+(`reporting_agent.py:697-700`), değer metnini **taramıyor**. Bu bir kusur beyanı
+değil — ölçülen sınırdır; IPM metinleri indeks zamanında Katman-2 taramasından
+geçtiği için bugün savunma yeterli. **Serbest metin taşıyan yeni bir alan eklenirse
+bu sınır yeniden değerlendirilmeli.**
+
+#### İŞ KALEMLERİ — §14.18 tablosuna EKLENİR
+
+| # | iş | depo | dosya |
+|---|---|---|---|
+| **C-2** 🔴 | `expert_feedback` şemasına `representative_tile_id` (MINOR, eklemeli) | contract | `schemas/worker/expert_feedback.v1.schema.json` |
+| **P-2** 🔴 | Toplu onayda temsilci **karo kimliğini** olaya yaz | platform | `expert_portal.py:1919` |
+| **W-5** 🔴 | Kaskadı `analysis_result_id` yerine **karo kimliğiyle** çağır | worker | `feedback_handler.py:653` |
+| **W-6** ⚠️ | `apply_expert_decision` eşleşme bulamayınca **sessizce tek eleman DÖNMESİN** — çağıran ayırt edebilsin | worker | `prototype_manager.py:770` |
+
+⚠️ **Sıra zorunlu:** C-2 → P-2 → W-5. Ters sırada W-5 yazılamaz (taşıyacak alan yok).
+**W-2 ile W-5 aynı sınıftır ama AYNI DÜZELTME DEĞİLDİR** — biri eskalasyonu (worker→
+platform), diğeri kaskadı (platform→worker) kırıyor; ikisi ayrı ayrı sınanmalı.
+
+⛔ **Mutasyon şartı:** üç anahtarın da **eşleştiğini** kanıtlayan test, anahtarı
+bilerek bozunca **kırmızıya dönmeli**. Bugünkü kod sessizce `[rep_id]` döndüğü için
+naif bir test **eşleşme olmadan da yeşil kalır** — 2026-08-30'da tam bu tuzağa
+düşüldü (fikstür sorgu biçimiyle hizasızdı, 26 test hiçbir şey ölçmüyordu).
