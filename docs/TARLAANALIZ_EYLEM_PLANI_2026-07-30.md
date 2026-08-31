@@ -3403,3 +3403,570 @@ canlıda doğrulanabilir.
 > ile aynı oturumda sorulmalı çünkü ikisi de **satılabilirlik ↔ teslim edilebilirlik**
 > ekseninde.
 
+
+---
+
+## 14.18 UZMAN KANITI — İKİ SÜZGEÇ (2026-08-31, ürün sahibi talebi · **kod TAM OKUNDU**)
+
+> **Ürün sahibinin sorusu:** *"zaten yerelde ham görüntüler varken tek bir uzmana neden
+> birkaç ham görüntü gönderilmiyor? … birbirine %97 benzeyen görüntüler gönderilirse
+> uzman görüşlerinden daha fazla yararlanmak mümkün olur."*
+>
+> **Ölçüm doğruladı.** Bugün **110 karo kesiliyor, uzmana 1'i gidiyor** — konumsuz ve
+> etiketsiz. Ürün sahibinin hatırladığı **%97 eşiği koda gerçekten var** ve tasarımın
+> tamamı yazılmış; **bağlı değil**.
+
+### ÖLÇÜLEN DURUM (iddia değil — komut çıktısı / `dosya:satır`)
+
+| ölçüm | değer | kaynak |
+|---|---|---|
+| Kesilen karo | **110** | worker logu `"110 tiles"` |
+| Uzmana giden | **1** | MinIO `results/<job>/tiles/` → 1 çift PNG (3 işte de) |
+| Karo boyutu | 512 px × 0.05 m = **25.6 m** | `model_config.py:73` (`stride=448`) |
+| **Karo = ağaç mı?** | ❌ **HAYIR** — 655 m², fıstık aralığı 6–8 m → **10–18 ağaç** | aritmetik |
+| Karonun konumu | ❌ `bbox` **11/11 NULL** | üretim sorgusu |
+| Benzerlik eşiği | **0.97** (0.93–0.97 geçerli aralık) | `prototype_manager.py:432`, `config.py:637` |
+| Gruplama üretimde | ❌ `tile_group_size=1`, `tile_group_id=NULL` (5 incelemede) | üretim sorgusu |
+| `should_send_to_expert` çağıranı | ❌ **ÜRETİMDE YOK** (0 eşleşme) | `grep -rn … src/` |
+| *"Yeni benzer tile grubu oluşturuldu"* logu | **0** | worker logu |
+
+### ⚠️ ÖNEMLİ — bağlı olmaması KUSUR DEĞİL, BEYAN EDİLMİŞ BORÇ
+
+`prototype_manager.py:76-88` bunu açıkça yazıyor:
+
+> *"These purity/exclusion gates are ENFORCED at admission time inside
+> `SimilarTileDeduplicator.should_send_to_expert` so that they are ready **BEFORE**
+> the dedup path is wired into the live pipeline. Audit G.4 [3]: 'dedup canlıya
+> **BAĞLANMADAN** önce; ölü yol bugün risksiz ama kapı hazır olmalı.'"*
+
+Gerekçe: *"Getting the gate wrong once the path is live directly poisons the training
+set (a cascaded label becomes ground truth)"* — kapılar önce, dormant ve doğru olarak
+inmiş. **Bu plan o bağlantıyı yapar, kapıları yeniden icat etmez.**
+
+### SÜZGEÇ-1 — "%97'den benzerleri ele" · **kod VAR, bağlı DEĞİL**
+
+`SimilarTileDeduplicator.should_send_to_expert` (`prototype_manager.py:571-745`) **dört
+kapı** taşıyor, hepsi yazılmış ve test edilmiş:
+
+| kapı | ne yapar | sabit |
+|---|---|---|
+| **F4** | nadir/karantina sınıf → **asla gruplanmaz**, bireysel eskalasyon (risk R3 "nadir sınıf maskeleme") | `K7_FD_TRIGGER_CLASSES` |
+| **F1(b)** | sınıf saflığı — farklı `predicted_class` birleşmez | — |
+| **F1(c)** | **indeks imzası yayılımı** — L∞ mesafe σ üstündeyse birleşmez | `_DEFAULT_MAX_INDEX_SPREAD = 0.15` |
+| kosinüs | `sim >= threshold` | **0.97** |
+| kapasite | grup ≤ 500 üye, ≤ 10.000 grup (RAM sınırı) | — |
+
+⭐ **F1(c) tam olarak ürün sahibinin "farklı dalgaboyları" fikridir** — imza
+`np.array([NDVI, NDRE])`; aynı morfolojide farklı stres imzalı karolar birleşmez.
+
+**Eksik olan iki halka:**
+
+1. 🔴 **Besleme yok.** `should_send_to_expert`'i üretimde çağıran kod **yok**.
+   Çağrı yeri `pipeline.py:3576-3601` (detection döngüsü) olmalı; gereken **her girdi
+   `TileResult`'ta ZATEN var**: `tile_id` · `embedding` (1024-d L2) · `predictions`
+   (→ `predicted_class`) · `ndvi_mean`/`ndre_mean` (→ `index_signature`).
+2. 🔴 **Okuma yanlış anahtarla.** `worker.py:1430` `get_group_info(result.job_id)`
+   çağırıyor; imza `get_group_info(self, tile_id: str)` ve arama
+   `self._tile_to_group.get(tile_id)`. **İş kimliği karo tablosunda asla bulunmaz**
+   → her zaman `(None, 1, None)`. Besleme düzelse bile bu tek başına boş döndürürdü.
+
+### SÜZGEÇ-2 — "dört bandın imzası farklı 5 karo seç" · **YOK**
+
+Bugünkü seçim `pipeline.py:3586`:
+
+```python
+if pred["class_id"] == "unknown_anomaly" and len(detections) > 0:
+    continue  # Skip duplicate unknown anomalies
+```
+
+Bu kural **eğitimli ürünler** için yazılmış. Fıstık **eğitimsiz** → model her belirsiz
+karo için `unknown_anomaly` üretiyor → **110 karonun kanıtı ilk bulunana iner**.
+Sonra `apply_fail_closed_masking` (`analysis_result.py:220-226`) onu `SUPPRESSED`
+yapıyor (bu **doğru**: tanı saklanır) → uzman **isimsiz, konumsuz tek karo** görür.
+
+⚠️ **Gruplama ≠ seçim.** Süzgeç-1 bağlansa bile N temsilci kalır; **hangi 5'i**
+gönderileceği ayrı bir karardır ve bugün hiçbir yerde yok.
+
+**Ölçüt (uydurma değil, mevcut veriden):** her temsilcinin indeks imzası bir vektör
+(`[ndvi_mean, ndre_mean]`, 5 bantlı sensörde genişler). Aralarındaki **L∞ mesafeyi
+maksimize eden 5'li** seçilir — F1(c)'nin tersi yönde kullanımı: F1(c) benzerleri
+*ayırmaya* yarar, seçim *farklıları öne almaya*.
+
+### AYRICA — konum taşınmıyor (uzmanın "tarlanın neresi" sorusu)
+
+`build_tile_polygon_geojson` **çağrılıyor** (`pipeline.py:2347`) ve karo sözlüğüne
+yazılıyor (`:2362`). `Detection.bbox` alanı **var** (`analysis_result.py:29`) ve dışa
+veriliyor (`:300`). Ama `Detection(...)` kurulurken (`pipeline.py:3588-3599`) **`bbox`
+verilmiyor** → üretimde 11/11 NULL. Konum hesaplanıyor, **taşınmıyor**.
+
+Platform tarafında da alan yok: `ReviewUncertainTile` (`expert_portal.py:119-127`)
+`tile_id · confidence · ndvi · ndre · rgb_url · ms_url` taşıyor, konum **yok**.
+
+### İŞ KALEMLERİ
+
+| # | iş | depo | dosya |
+|---|---|---|---|
+| **W-1** | `should_send_to_expert`'i detection döngüsünden çağır (tile_id · embedding · crop · predicted_class · index_signature) | worker | `pipeline.py:3576` |
+| **W-2** | `get_group_info(result.job_id)` → **temsilci karo kimliği** | worker | `worker.py:1430` |
+| **W-3** | `Detection.bbox`'ı `polygon_geojson`'dan doldur | worker | `pipeline.py:3588` |
+| **W-4** | `unknown_anomaly` "ilk bulunanı al" kuralını **çeşitlilik seçimiyle** değiştir (≤5) | worker | `pipeline.py:3586` |
+| **C-1** | `ReviewUncertainTile`'a konum alanı (kanonik sözleşme gerekirse MINOR) | contract | `report_phase`/uzman ekseni |
+| **P-1** | Uzman ucu konum + grup bilgisini sunsun (`tile_group_size` zaten kolon) | platform | `expert_portal.py:119` |
+
+### ÖNKOŞUL VE RİSKLER (ölçülmüş)
+
+* ⛔ **Eğitim seti zehirlenmesi** — modülün kendi uyarısı: canlıya bağlanınca yanlış
+  kapı doğrudan eğitim setini bozar (kaskad etiket ground-truth olur). F1/F4 kapıları
+  bu yüzden önce indi; **bağlantı turunda kapıların mutasyonla sınanması şart**.
+* ⚠️ **5 karo sayısı ürün kararıdır.** Kodda `MIN_PATCHES_PER_REVIEW = 5` ve
+  `TARGET_REVIEWS_PER_DAY = 10` var (`core/domain/entities/expert.py:86-87`) — 5
+  başlangıç değeri bunlarla tutarlı, ama uzman iş yükü ölçülmedi.
+* ⚠️ **Karo = ağaç DEĞİL** (10–18 ağaç). "Ağaç başına analiz" 512 px girdi boyutunu
+  değiştirir → ayrı ve büyük iş, bu kalemin kapsamı **değil**.
+* ⚠️ `audit_set_sampler.py:216,271` bugün `tile_group_id=None, tile_group_size=1`
+  varsayıyor — gruplama canlıya alınınca **i.i.d. denetim seti** etkilenir, birlikte
+  gözden geçirilmeli.
+
+### SIRALAMA ÖNERİSİ
+
+Bu kalem **§14.17'deki bant genişliği işinden (yerel artefakt önbelleği) ÖNCE**
+gelmeli: o bir tutarsızlığı düzeltir, bu ise **uzman kapısının işlevini** geri verir —
+ve çiftçiye giden raporun kalitesi doğrudan o kapıya bağlıdır (2026-08-30 ölçümü:
+uzman onayı olmadan hiçbir kart tam rapora geçemez).
+
+### 14.18-B — ÜÇ DOSYA TAM OKUNDU: kaskad zinciri de kopuk (2026-08-31, ikinci tur)
+
+§14.18 yazılırken üç dosya **okunmamıştı** ve bu açıkça not edilmişti. Okundular
+(`feedback_handler.py` 988 · `orchestration_agent.py` 546 · `reporting_agent.py` 715 =
+**2.249 satır, tamamı**; `origin/master` ile bayt-özdeş olduğu `git diff --stat` ile
+doğrulandı). **Üç yeni bulgu çıktı ve biri §14.18'in kapsamını genişletiyor.**
+
+#### 🔴 B-1 — Kaskad ÜÇÜNCÜ anahtar karışıklığını taşıyor (**sözleşme işi**)
+
+Uzman kararını gruba yayan tek yol `feedback_handler.py:653`:
+
+```python
+cascade_ids = self._tile_deduplicator.apply_expert_decision(
+    representative_id=feedback.job_id,   # <-- analysis_result_id
+    ...)
+```
+
+`feedback.job_id` bir **property**'dir ve `analysis_result_id` döndürür
+(`expert_feedback.py:87-89`, *"DEPRECATED: Use analysis_result_id"*). Gruplar ise
+**karo kimliğiyle** yazılıyor:
+
+| taraf | anahtar | kaynak |
+|---|---|---|
+| yazan | `_groups[tile_id]`, `representative_id=tile_id` | `prototype_manager.py:727,736` |
+| karo kimliğinin biçimi | **`f"{job.job_id}_t{tile_idx:04d}"`** | `pipeline.py:2358` |
+| okuyan (kaskad) | `analysis_result_id` | `feedback_handler.py:653` |
+| okuyan (eskalasyon) | `result.job_id` | `worker.py:1430` |
+
+⚠️ `analysis_result_id` ile `job_id` aynı değer olsa **bile** eşleşme olmaz:
+anahtarda **`_tNNNN` soneki** var. Yani argüman platformun ne gönderdiğinden bağımsız
+olarak geçerli.
+
+**Sessiz başarısızlık:** `apply_expert_decision` eşleşme bulamayınca `WARNING
+"Bilinmeyen temsilci"` yazıp **`[representative_id]` döndürüyor**
+(`prototype_manager.py:770-777`) — yani *geçerli görünen tek elemanlı bir liste*.
+Çağıran bunu normal sayar; kaskad **1 karoya iner** ve hiçbir hata yükselmez.
+**"Bir tanesini etiketle, N'ine uygulansın" vaadi tam burada sessizce ölür.**
+
+🔴 **Bu hipotetik değil:** platformda toplu onay ucu **var** ve
+`bulk_approval_id = str(_uuid.uuid4())` üretiyor (`expert_portal.py:1919`) → kaskad
+yolu **bugün canlıya erişilebilir**.
+
+🔴 **Kanonik şema kimlik taşımıyor.** `schemas/worker/expert_feedback.v1.schema.json`
+kök alanları ölçüldü — **karo kimliği alanı YOK**; yalnız `tile_coordinates`
+(x/y/w/h). Platform, uzmanın **hangi karoyu** onayladığını worker'a **söyleyemiyor**.
+→ **C-2 (MINOR, eklemeli):** `representative_tile_id` alanı. Bu olmadan W-5 yazılamaz;
+`tile_coordinates`'ten karo kimliği **türetmek uydurmadır** (CLAUDE.md §2.1: worker
+sözleşme alanı icat etmez).
+
+#### ⚠️ B-2 — D-13 Uzman Görsel Paketi yapısal olarak ÖLÜ
+
+`_maybe_build_expert_bundle` (`reporting_agent.py:365-372`) `expert_bundle_bands`
+None ise **hemen None** dönüyor. Ölçüldü: bu alanı **dolduran kod yok** — tüm depoda
+yalnız `reporting_agent.py:370,383` (okuyan) ve `agent_messages.py` (tanım) geçiyor.
+Ayrıca paket `FULL_REPORT`/`PARTIAL_REPORT` ile kapılı; fıstık bugün
+`INDICES_ONLY`/`NO_RESULT` üretiyor → **iki bağımsız nedenle** hiç üretilmiyor.
+
+✅ **Ama beş karo için yeni taşıma kanalı GEREKMİYOR.** Çalışan kanal ölçüldü:
+`tile_crop_artifacts` — üretici **pipeline**, taşıyıcı orchestration
+(`orchestration_agent.py:285-288`, DK-48 notu: *"karo görüntüsü artefaktları
+PIPELINE'dan gelir, reporting'den DEĞİL — ham bantlar yalnız orada yaşıyor"*),
+yükleyici `worker.py` (S3). **W-4 bu kanalı kullanmalı**; D-13 paketini diriltmek
+ayrı bir üründür ve bu kalemin kapsamı **değildir**.
+
+#### ✅ B-3 — Çiftçi metni bu üç dosyada temiz (olumsuz bulgu, kayda değer)
+
+`_generate_farmer_report` (`reporting_agent.py:397-470`) her `result_mode` için sade
+Türkçe cümle üretiyor (*"Kısmi analiz sonuçları hazır. Kesin tanı için uzman
+incelemesi önerilir."*) ve iç sözcük (`mod=`, `KR-025`, `SUPPRESSED`) **basmıyor**.
+2026-08-30'da kapatılan sızıntı **platform tarafındaydı**, worker tarafında **yok**.
+İç ad taşıyan tek alan `suppressed_fields`/`reason_codes` — bunlar **teknik rapora**
+gidiyor ve platform kapısı bunları çiftçiden zaten ayırıyor.
+
+⚠️ Not: `_scrub_kr025_fields` **yalnız anahtar ADINI** tarıyor
+(`reporting_agent.py:697-700`), değer metnini **taramıyor**. Bu bir kusur beyanı
+değil — ölçülen sınırdır; IPM metinleri indeks zamanında Katman-2 taramasından
+geçtiği için bugün savunma yeterli. **Serbest metin taşıyan yeni bir alan eklenirse
+bu sınır yeniden değerlendirilmeli.**
+
+#### İŞ KALEMLERİ — §14.18 tablosuna EKLENİR
+
+| # | iş | depo | dosya |
+|---|---|---|---|
+| **C-2** 🔴 | `expert_feedback` şemasına `representative_tile_id` (MINOR, eklemeli) | contract | `schemas/worker/expert_feedback.v1.schema.json` |
+| **P-2** 🔴 | Toplu onayda temsilci **karo kimliğini** olaya yaz | platform | `expert_portal.py:1919` |
+| **W-5** 🔴 | Kaskadı `analysis_result_id` yerine **karo kimliğiyle** çağır | worker | `feedback_handler.py:653` |
+| **W-6** ⚠️ | `apply_expert_decision` eşleşme bulamayınca **sessizce tek eleman DÖNMESİN** — çağıran ayırt edebilsin | worker | `prototype_manager.py:770` |
+
+⚠️ **Sıra zorunlu:** C-2 → P-2 → W-5. Ters sırada W-5 yazılamaz (taşıyacak alan yok).
+**W-2 ile W-5 aynı sınıftır ama AYNI DÜZELTME DEĞİLDİR** — biri eskalasyonu (worker→
+platform), diğeri kaskadı (platform→worker) kırıyor; ikisi ayrı ayrı sınanmalı.
+
+⛔ **Mutasyon şartı:** üç anahtarın da **eşleştiğini** kanıtlayan test, anahtarı
+bilerek bozunca **kırmızıya dönmeli**. Bugünkü kod sessizce `[rep_id]` döndüğü için
+naif bir test **eşleşme olmadan da yeşil kalır** — 2026-08-30'da tam bu tuzağa
+düşüldü (fikstür sorgu biçimiyle hizasızdı, 26 test hiçbir şey ölçmüyordu).
+
+### 14.18-C — ZİNCİRİN TAMAMI ÖLÇÜLDÜ: iki DÜZELTME, bir SADELEŞME, bir yeni boşluk
+
+Üçüncü tur: eskalasyon/kanıt zincirine dokunan **tüm** dosyalar sayıldı ve karar
+değiştirebilecek olanlar okundu (`agent_messages.py` `EscalationRequest` bölgesi ·
+`publisher.py` idempotency · `tile_crop_renderer.py` **tamamı, 186** ·
+`expert_portal.py:470-575` karo-kanıtı üreticisi · `worker.py:1240-1295,1535-1560`).
+**Üretim veritabanından da ölçüldü.**
+
+#### 🔴 C-1 DÜZELTME — "11/11 bbox NULL" sayımı YANLIŞTI
+
+§14.18 *"`Detection.bbox` 11/11 NULL"* diyor. O 11 satır **fikstür/test tohumlarını
+da sayıyordu**. Üretimdeki gerçek analiz satırı **iki tane**:
+
+| sonuç | bulgu | `tile_id` | `rgb_uri` | `bbox` |
+|---|---|---|---|---|
+| `ab990df4` | 1 | 1 | **1** | 0 |
+| `d3cba4d8` | 1 | 1 | **1** | 0 |
+
+`bbox` yokluğu **doğru**; sayı yanlıştı. Ayrıca **her gerçek iş 1 bulgu taşıyor** —
+bu, `unknown_anomaly` atlamasının (`pipeline.py:3586`) bağlayıcı kısıt olduğunun
+doğrudan üretim kanıtıdır.
+
+#### ✅ C-2 SADELEŞME — beş karo **YALNIZCA WORKER İŞİ**
+
+§14.18 beş karo için `C-1`(sözleşme) + `P-1`(platform) kalemleri öneriyordu.
+**Ölçüm bunu gereksiz kıldı.** Zincir zaten uçtan uca liste biçiminde:
+
+| halka | ölçülen durum | kaynak |
+|---|---|---|
+| Görüntü üretimi | tespit taşıyan **her** karo için RGB+MS PNG | `pipeline.py:2018-2022` |
+| Üst sınır | **40** (5'in çok üstünde) | `tile_crop_renderer.py:DEFAULT_MAX_TILES` |
+| Yükleme | tek `sink.upload` çağrısı, `<job>/tiles/...` | `worker.py:1249-1260` |
+| Adres yazımı | her tespite `rgb_uri`/`ms_uri` | `worker.py:1275-1290` |
+| **Üretimde çalışıyor mu** | ✅ `rgb_uri` **DOLU** (2/2 gerçek satır) | üretim sorgusu |
+| Platform listesi | `findings` içindeki `tile_id`'li **her** karo, **üst sınır YOK**, en düşük güven önce | `expert_portal.py:542-556` |
+
+⭐ **Sonuç: W-4 beş karoyu uzmanın EKRANINA ulaştırır** (teslim yolu sözleşme/
+platform değişikliği istemez). ⚠️ **DÜZELTİLDİ (§14.18-D/E):** kota DEFTERİ için
+**P-3 platform kalemi GEREKİR** — uzman 5 görür, sistem 1 sayar. §14.18'in `C-1`/`P-1`
+kalemleri **yalnızca konum (bbox) için** geçerlidir; beş karo için değil.
+
+#### ✅ C-3 ÇÜRÜTÜLEN RİSK — eskalasyon idempotency çöküşü YOK
+
+Şüphe: beş karo beş eskalasyon üretirse, `(job_id, escalation_round)` türetilen
+idempotency anahtarı (`publisher.py`, P1-B1) dördünü düşürür mü? **Ölçüldü: hayır.**
+`EscalationRequest` **iş başına bir kez** kuruluyor (`worker.py:1547`), karo başına
+değil. İki **paralel kanal** var ve karıştırılmamalı:
+
+| kanal | biçim | işlevi |
+|---|---|---|
+| eskalasyon mesajı | **tekil** karo (`first_detection`) | yönlendirme/atama |
+| `analysis_results.findings` | **liste** | uzmanın baktığı **kanıt** |
+
+Beş karo ikinci kanaldan gider. ⚠️ Ama W-4 yazılırken **eskalasyondaki temsilci
+bilinçli seçilmeli**: bugün `first_detection` — yani sıradaki ilk karo — yönlendirmeyi
+belirliyor.
+
+#### ⚠️ C-4 YENİ BOŞLUK — kırmızı kenar (RE) GÖRÜNTÜYE hiç girmiyor
+
+Ürün sahibinin isteği *"her karonun ölçülen dalga boyları (yeşil, kırmızı, kırmızı
+kenar, yakın kızılötesi) farklı olsun"*. Ölçüldü:
+
+* `render_tile_crops` yalnız **G, R, NIR** bantlarını okuyor
+  (`tile_crop_renderer.py:_G,_R,_NIR`); RE bandı **istenmiyor bile**.
+* `false_color_renderer.py` içinde `RE`/`red_edge` geçmiyor (**0 eşleşme**).
+* RE bilgisi uzmana **yalnız sayı olarak** gidiyor: `ndre_value`
+  (`expert_portal.py:549`).
+
+Yani **sayılar dört bandı taşıyor, görüntüler üçünü.** Uzman kırmızı kenar
+farkını **gözle göremiyor**.
+→ **W-7 (yeni):** üçüncü kompozit (ör. NIR-RE-R) ya da NDRE ısı haritası.
+⚠️ Ürün kararı gerektirir: üçüncü görüntü **depolamayı ve uzman süresini** artırır;
+`DEFAULT_MAX_TILES=40` bütçesi buna göre gözden geçirilmeli.
+
+#### GÜNCELLENMİŞ İŞ KALEMİ TABLOSU (§14.18 + B + C birleşik)
+
+| # | iş | depo | önkoşul |
+|---|---|---|---|
+| **W-4** ⭐ | `unknown_anomaly` "ilkini al" yerine **≤5 çeşitlilik seçimi** | worker | **yok** — ekrana ulaştırır; kota defteri için P-3 (bkz. §14.18-D) |
+| **W-1** | `should_send_to_expert`'i detection döngüsünden çağır | worker | yok |
+| **W-2** | `get_group_info`'yu **karo kimliğiyle** çağır | worker | W-1 |
+| **W-3** | `Detection.bbox`'ı `polygon_geojson`'dan doldur | worker | yok |
+| **C-2** 🔴 | `expert_feedback`'e `representative_tile_id` (MINOR) | contract | yok |
+| **P-2** 🔴 | Toplu onayda temsilci karo kimliğini yaz | platform | C-2 |
+| **W-5** 🔴 | Kaskadı karo kimliğiyle çağır | worker | C-2, P-2 |
+| **W-6** | Eşleşmeyen kaskad **sessizce tek eleman dönmesin** | worker | yok |
+| **W-7** ⚠️ | RE'yi **görüntüye** taşı (ürün kararı) | worker | yok |
+| **C-1/P-1** | Konum alanı (yalnız **bbox** için; beş karo için DEĞİL) | ct+plat | W-3 |
+
+⭐ **Öneri (⚠️ §14.18-D'de GÜNCELLENDİ: TUR 1 = W-4+W-8+W-7+P-3).** Ölçüldü ki W-4'ün önkoşulu yok,
+sözleşme dokunuşu istemiyor ve ürün sahibinin sorduğu şeyi (*"birkaç ham görüntü
+gitsin"*) **tek dosyada** karşılıyor. Kaskad zinciri (C-2→P-2→W-5) ayrı ve daha
+pahalı bir turdur.
+
+### 14.18-D — ZİNCİRİN TAMAMI OKUNDU (17.267 satır) · ÜRÜN KARARI UYGULANIR
+
+Ürün sahibi talimatı: *"okumadım dediklerinin ve varsa diğer ilgili dosyaların
+tamamını okuyup analizlerini yap"* + *"uzmanın görüşüne etkisi olacak ise **4 bandın
+sonuçlarını göstermelisiniz**"*. **Yirmi dosya tam okundu** (worker 10.564 + platform
+6.703 satır); liste `SESSION_HANDOFF.md §0.A ⑦`'de.
+
+#### ⭐ D-1 — DÖRT BANT KARARI: yeniden yazılmayacak, DİRİLTİLECEK
+
+`expert_bundle_producer.py` istenen şeyi **zaten üretiyor**: `BandSource(green,
+red, **rededge**, nir)` · dört ısı haritası (**NDVI/NDRE/NDWI/GNDVI**, sabit
+[-1,+1] ölçek) · **dört bandın ayrı yansıma istatistiği** · dört histogram ·
+gerçek+yanlış renk kompozit. İki bağımsız nedenle ölü: **üreticisi yok** ve
+`INDICES_ONLY`'de `ValueError` fırlatıyor.
+
+⚠️ Kapının gerekçesi *"tahmin sınıfı fail-closed kayboldu"*. Ama ürün sahibinin
+istediği **tanı değil ÖLÇÜM** — KR-025 zaten *"worker ölçer, yorumlamaz"* diyor.
+→ **W-7 (yeniden tanımlandı):** `INDICES_ONLY` için **ölçüm-yalnız paket** —
+`predicted_class` YOK, `band_stats` + dört ısı haritası VAR.
+✅ Ham veri hazır: karo bantları `RE` taşıyor (`SPECTRAL_BANDS = B,G,R,NIR,RE`).
+⛔ Yeni renk kompoziti yazmak GEREKMEZ — `render_index_heatmap` + `compute_band_stats`
+zaten dört bandı işliyor.
+
+#### 🔴 D-2 — `bulk_approval_id` İKİ FARKLI ŞEY (C-2'nin kapsamı büyüdü)
+
+* **platform**: *"5–50 AYRI incelemeyi tek tıkla onayladım"* (`review_ids`,
+  `min_length=5, max_length=50`)
+* **worker**: *"bu geri bildirim bir KARO GRUBUNUN temsilcisidir, üyelerine yay"*
+
+Aynı alan, iki kavram. Bugün zararsız (grup yok → tek eleman döner); **süzgeç-1
+bağlanınca sessizce yanlış yayılır**. → C-2 artık *"alan ekle"* değil,
+**"iki anlamı AYIR"**: kaskad, `bulk_approval_id` VARLIĞINDAN değil,
+**açık `representative_tile_id` alanından** tetiklenmeli.
+
+#### 🔴 D-3 — `tile_id`: alan iki yerde de VAR, ÜRETİCİSİ yok (**sözleşme gerekmez**)
+
+`EscalationRequest.tile_id` var (`agent_messages.py:259`) · kanonik
+`expert_review_queue.v1` şemasında var · `worker.py:1547` **geçmiyor** (0 eşleşme)
+→ `null` → `omit_nulls_schema_disallows` düşürüyor.
+→ **W-8 (yeni, UCUZ):** eskalasyonda `tile_id=first_detection.tile_id` geç.
+⭐ Bu, W-2/W-5'in yarısını sözleşmesiz çözer: eskalasyon yönü artık karo kimliği
+taşır. Geri-besleme yönü hâlâ C-2'ye muhtaç.
+
+#### 🔴 D-4 — Uzman kotası beş karoyu **1** sayacak
+
+`patch_page_size(kota) = clamp(kota/10, **5**, 100)` — sistemin kendi tabanı
+inceleme başına **5 karo**. Ürün sahibinin sayısı keyfi değil, **sistemin
+varsaydığı sayı**.
+🔴 Ama sayaç `analysis_priority_zones`'dan besleniyor, `findings`'ten değil — ve
+o tablo **üretimde BOŞ (0 satır, ölçüldü)** → her inceleme **1 görüntü** sayılıyor.
+Bugün 1 karo gösterildiği için tesadüfen doğru; W-4'ten sonra 5 gösterilip 1
+sayılacak.
+→ **P-3 (yeni):** kota sayacı gösterilen karo sayısını da saysın
+(`expert_profile_builder.py:104-137`). Aksi hâlde kodun *"C12 B1"* diye kapattığı
+sapma başka kapıdan geri gelir.
+
+#### ⚠️ D-5 — `AUDIT_SAMPLE` enum sapması + ÜÇÜNCÜ uykuda mekanizma
+
+Worker enum **7**, platform aynası **6**. `confidence_evaluator` docstring'i
+*"ValueError fırlatır"* diyor — **ölçüldü, yanlış**: `parse_escalation_reason`
+yakalıyor (fail-open + WARNING). Çökme yok; kayıp **neden** ve **şiddet
+yükseltmesi**. `AuditSetSampler` + `build_audit_escalation` da **0 çağıranlı**.
+→ **P-4 (küçük):** platform aynasına `AUDIT_SAMPLE` ekle. Denetim örneklemesini
+canlıya almak AYRI ve daha büyük bir karardır (i.i.d. ölçüm temeli).
+
+#### ✅ D-6 — `unknown_anomaly`'nin KÖKÜ: W-4 bir SEÇİM fonksiyonu ister
+
+`_build_predictions` adlandırılmış tahmini **yalnız** `hit AND disease_hint AND
+not is_ood` iken üretiyor. FAISS soğuk → hit yok → `if is_ood or ndvi_mean < 0.4`
+dalı. Üretimde `ndvi_mean = 0.282 < 0.4` → **her anomali karosu
+`unknown_anomaly`**. Sonra `:3585` ilkini alıyor.
+⚠️ Aday havuzu **110 değil**: `_anomaly_filter` sağlıklıları ve kapsama eşiği
+altındakileri (`tile_min_valid_ratio=0.20`) ayırıyor. Beş karo **anomali
+havuzundan** seçilir; `ndvi_mean`/`ndre_mean`/`embedding` hepsinde hazır.
+
+#### GÜNCEL İŞ KALEMİ TABLOSU (14.18 + B + C + D birleşik, SON)
+
+| # | iş | depo | önkoşul | not |
+|---|---|---|---|---|
+| **W-4** ⭐ | `unknown_anomaly` "ilkini al" → **≤5 çeşitlilik seçimi** (anomali havuzundan, L∞ imza uzaklığı) | worker | **yok** | ekrana ulaştırır; defter için P-3 |
+| **W-8** ⭐ | Eskalasyona `tile_id` geç | worker | yok | **sözleşme gerekmez**, alan zaten kanonikte |
+| **W-7** ⭐ | D-13 paketini `INDICES_ONLY` için **ölçüm-yalnız** dirilt (dört bant) | worker | yok | ürün sahibi kararı; kod ZATEN var |
+| **P-3** 🔴 | Kota sayacı gösterilen karoyu saysın | platform | W-4 | yoksa C12 B1 geri gelir |
+| **W-3** | `Detection.bbox`'ı doldur | worker | yok | konum |
+| **W-1** | `should_send_to_expert`'i çağır | worker | yok | süzgeç-1 |
+| **W-2** | `get_group_info`'yu karo kimliğiyle çağır | worker | W-1 | |
+| **W-6** | Eşleşmeyen kaskad sessizce tek eleman dönmesin | worker | yok | |
+| **C-2** 🔴 | `expert_feedback`'e `representative_tile_id` + **iki anlamı ayır** | contract | yok | D-2 |
+| **P-2** 🔴 | Toplu onayda temsilci karo kimliğini yaz | platform | C-2 | |
+| **W-5** 🔴 | Kaskadı karo kimliğiyle çağır | worker | C-2, P-2 | |
+| **P-4** | Platform enum aynasına `AUDIT_SAMPLE` | platform | yok | küçük |
+| **C-1/P-1** | Konum alanı (yalnız bbox için) | ct+plat | W-3 | |
+
+⭐ **ÖNERİLEN İLK TUR: W-4 + W-8 + W-7.** Üçü de worker-içi, önkoşulsuz,
+sözleşme dokunuşu istemiyor ve ürün sahibinin iki isteğini birden karşılıyor
+(beş farklı karo + dört bandın sonucu). **P-3 aynı turda gitmeli** — yoksa uzman
+kotası sessizce beşe bir sapar.
+
+### 14.18-E — ÖZ-DENETİM: kendi çelişkilerim (ürün sahibi uyarısı, 2026-08-31)
+
+Ürün sahibi *"son 4-5 konuşmada yazdıklarında çelişkiler gördüm"* dedi. Dördü
+ölçüldü. **Üçü BENDEN, biri koddaki yorum-kod ayrışmasından.**
+
+#### 🔴 Ç-1 (BENDEN) — "110 karonun kanıtı 1'e iner" YANILTICI
+
+Üretim logu (dört iş):
+
+| iş | kesilen | **kapsama eşiği altı → HARİÇ** | anomali | sağlıklı | uzmana |
+|---|---|---|---|---|---|
+| `31afd0e4` | 110 | **66** | 44 | **0** | 1 |
+| `9cc74301` | 110 | **75** | 35 | **0** | 1 |
+| `512b8808` | 110 | **75** | 35 | **0** | 1 |
+| `4eba9231` | 25 | 3 | 22 | **0** | 1 |
+
+*"110 kesiliyor, 1 gidiyor"* **doğru**; ama *"110 karonun kanıtı 1'e iner"*
+yanlış çerçeve — gerçek aday havuzu **35–44**. Kalanı `_anomaly_filter`
+kapsama eşiğiyle (`tile_min_valid_ratio=0.20`) zaten **hariç tutuyor**.
+
+⭐ Ölçüm ayrıca beklenmedik bir şey söyledi: **sağlıklı karo sayısı SIFIR.**
+Ölçülebilir her karo "anomali". Yani anomali bayrağı bu bahçede **hiç ayırt
+etmiyor** (eşik `ndvi<0.55`, bahçenin NDVI'si ~0.28). Beş karo seçimi bu yüzden
+"anomaliler arasından" değil, **indeks imzası çeşitliliğine göre** yapılmalı —
+F1(c)'nin varlık nedeni tam da bu.
+
+#### 🔴 Ç-2 (BENDEN) — "platform değişikliği gerekmez" fazla genel bir cümleydi
+
+§14.18-C'de *"W-4 tek başına yeterli; sözleşme ve platform değişikliği
+gerekmez"* yazdım, §14.18-D'de **P-3 platform kalemini** ekledim.
+
+Ölçüldü, ikisi farklı şeyler:
+* **TESLİM** yolu gerçekten platform istemiyor — `_karo_kaniti_kur`
+  `limit`/`offset` argümanı **almıyor** (`expert_portal.py:864`), yani
+  `uncertain_tiles` **sayfalanmıyor**; sayfalama yalnız `patch_rows`'a uygulanıyor.
+* **KOTA MUHASEBESİ** platform istiyor (P-3).
+
+Cümle "teslim" için doğru, mutlak biçimiyle yanlıştı. **Düzeltilmiş ifade:**
+*"W-4 beş karoyu uzmanın EKRANINA ulaştırır; kota DEFTERİ için P-3 gerekir."*
+
+#### ✅ Ç-3 (ÇELİŞKİ DEĞİL) — iki AYRI şema, yazımım ayırmamıştı
+
+| şema | yön | `tile*` alanları |
+|---|---|---|
+| `expert_feedback.v1` | platform → worker (**geri besleme**) | `tile_coordinates` **yalnız** |
+| `expert_review_queue.v1` | worker → platform (**eskalasyon**) | `tile_coordinates`, `tile_group_id`, `tile_group_size`, `tile_group_similarity_min`, **`tile_id`** |
+
+Yani *"karo kimliği YOK"* (B-1) geri-besleme için **doğru**; *"tile_id VAR"*
+(D-3) eskalasyon için **doğru**. Çelişki yok — ama yan yana okunduğunda öyle
+görünüyordu. **C-2 yalnız geri-besleme yönü içindir.**
+
+#### 🔴 Ç-4 (BENDEN, EN AĞIRI) — "FAISS soğuk başlangıçta boş" ÖLÇÜLMEMİŞ ve YANLIŞ
+
+Üretimde ölçüldü (`/app/data/embeddings/manifest.json` + `metadata.pkl`):
+
+```
+ntotal = 100   index_type = IndexFlatIP   saved_at = 2026-08-27
+crop_type      -> pistachio: 100
+analysis_type  -> GENERAL: 50, DISEASE: 50
+disease_class  -> None: 100      ← 🔴
+grade          -> TrainingGrade.C: 100
+```
+
+**Depo boş değil.** Kök neden bambaşka ve daha keskin:
+`_build_predictions` adlandırılmış tahmin için `memory_result.disease_hint`
+istiyor; `disease_hint` komşunun `disease_class`'ı
+(`memory_orchestrator._weighted_top_disease_hint`) — ve **100 kaydın 100'ünde
+`disease_class = None`**.
+
+Neden None: `_aggregate_results` çıkarımda depolarken **bilerek** sınıf
+yazmıyor (O-4: *"model kendi tahminini A/B derece olarak yazarsa kendi
+çıktısıyla beslenir — doğrulama yanlılığı"*). Sınıfı **yalnız uzman geri
+bildirimi** yazabilir.
+
+#### 🔴 SONUÇ — DÖNGÜSEL BAĞIMLILIK (ölçülmüş)
+
+```
+uzman sınıf yazmalı  →  ama uzman karo görmeli
+        ↑                        ↓
+disease_class = None   ←   1 karo görüyor  ←  unknown_anomaly 1'e iniyor
+        ↑                                             ↑
+   hint üretilemez  →  her karo unknown_anomaly  ──────┘
+```
+
+Halka `pipeline.py:3585`'te en ucuz yerden kırılır (W-4): beş karo gidince
+uzman sınıf yazar, sınıf yazılınca `disease_class` dolar, dolunca adlandırılmış
+tahmin mümkün olur. **W-4 yalnız bir sunum iyileştirmesi değil, öğrenme
+döngüsünün ateşleyicisidir.**
+
+#### ⚠️ KODDAKİ yorum-kod ayrışmaları (benden değil, ölçüldü)
+
+| yer | yorum ne diyor | kod ne yapıyor |
+|---|---|---|
+| `confidence_evaluator.py:35` | *"`EscalationReason(worker_string)` **ValueError fırlatır**"* | `parse_escalation_reason` **yakalıyor** (fail-open + WARNING) |
+| aynı docstring | *"Worker'ın **6** değerini taşımalı"* | worker **7** taşıyor (`AUDIT_SAMPLE`) |
+| `expert_bundle_producer.py` başlığı | *"Worker görsel artifact üretir ve **Expert Portal'a teslim eder**"* | `expert_bundle_bands` **üreticisi yok** → hiç üretilmiyor |
+
+**Kural (yeniden):** yorum bir İDDİADIR; kanıt üreticinin kendisidir.
+
+### 14.18-F — SON DENETİM: kök neden DÜZELTİLDİ, W-9 doğdu (2026-08-31)
+
+PR öncesi son denetimde `prototype_manager.py` **tamamı** okundu (861; önceki
+turlarda bölgesel okumuştum) ve başlığındaki **entegrasyon durumu bloğu** kendi
+kök-neden iddiamı çürüttü.
+
+#### 🔴 Düzeltilen iddia
+
+§14.18-E'de *"uzman sınıf yazar → `disease_class` dolar → hint üretilir"*
+yazmıştım. **Ölçüldü, yanlış.** Uzman geri bildiriminin çıkarıma etkisi **iki
+başka yoldan** olur (`prototype_manager.py:34-40`):
+① **Hebbian ağırlık** — `score = cosine × weight × zero_init` ile hangi komşunun
+ipucunun öne çıktığını **sıralar** ② **REJECT → `atlas.invalidate`** L1 kaydını
+**siler**. **Hiçbiri sınıf YAZMAZ.**
+
+| ölçüm | sonuç |
+|---|---|
+| `memory.store()` üretim çağıranı | **tek** — `pipeline.py:3700` |
+| o çağrıda `disease_class` | ❌ geçmiyor (O-4) |
+| `cache_warmer` (`disease_class` geçen tek kod) | üretimde **0 çağıran** |
+| L1 atlas'a sınıf yazan üretim yolu | **yok** |
+| Üretimde 100 kayıtta `disease_class` | **100/100 None** |
+
+🔴 **`disease_hint` yapısal olarak DAİMA None.**
+
+#### W-4'ün beklenen sonucu düzeltildi
+
+* ✅ **yapar**: uzman 1 yerine **5 karo** görür — ölçülebilir, gerçek kazanç.
+* ❌ **yapmaz**: `unknown_anomaly` etiketini değiştirmez.
+
+Önceki turda *"W-4 öğrenme döngüsünün ateşleyicisidir"* demiştim — **fazla
+iddialıydı**. W-4 uzmana kanıt verir; döngüyü **W-9** kapatır.
+
+#### W-9 (yeni) — `disease_class` üreticisi
+
+Uzman `corrected_class` yazdığında o sınıf FAISS üstverisine işlensin
+(`feedback_handler` bugün yalnız Hebbian + atlas invalidate yapıyor).
+⛔ **O-4 gevşetilmez** — sınıfı modelin kendi tahmininden yazmak tam da
+kapattığı doğrulama yanlılığıdır; kaynak **uzman kararı** olmalı.
+⚠️ Kapsam: `EmbeddingMetadata.disease_class` alanı **zaten var**
+(`faiss_retriever.py:383`), `store()` imzası da **zaten taşıyor** — eksik olan
+**geri-besleme yolundan yazan çağrı**. Yani W-9 de sözleşmesizdir.
+
+#### Sıra güncellendi
+
+**TUR 1** W-4 · W-8 · W-7 (+P-3) → uzman **beş karo + dört bant** görür ·
+**TUR 1.5** W-9 → etiket zamanla `unknown_anomaly` olmaktan çıkar ·
+TUR 2 konum · TUR 3 kaskad · TUR 4 enum.
