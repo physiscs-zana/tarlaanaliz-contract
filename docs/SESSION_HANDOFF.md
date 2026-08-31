@@ -22,269 +22,202 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-31, **yirmi dördüncü oturum: UZMANA GİDEN KANIT — İKİ SÜZGEÇ ÖLÇÜLDÜ**)
+## 0.A EN GÜNCEL — (2026-08-31, **yirmi dördüncü oturum: UZMANA GİDEN KANIT — ÖĞRENME DÖNGÜSÜ KİLİTLİ**)
 
-> **Bu turun tek cümlesi:** Ürün sahibi *"uzmana neden birkaç ham görüntü
-> gönderilmiyor, %97 benzeyenler elenirse daha çok yararlanılır"* diye sordu.
-> **Ölçüldü: 110 karo kesiliyor, uzmana 1'i gidiyor** — konumsuz ve etiketsiz.
-> Hatırlanan **%97 eşiği kodda gerçekten var** ve tasarımın tamamı yazılmış;
-> **bağlı değil**. Bu tur **ölçüm + planlama** turudur; kod değişmedi.
+> **Bu turun tek cümlesi:** Uzman **1 karo** görüyor; o karo isimsiz ve konumsuz.
+> Nedeni sunum değil, **kilitli bir öğrenme döngüsü** — uzman sınıf yazmadan
+> bellek sınıf öğrenemiyor, bellek sınıf bilmeden her karo `unknown_anomaly`
+> oluyor, `unknown_anomaly` bir tanesine iniyor, uzman yine 1 karo görüyor.
+> Bu tur **ölçüm + planlama** turudur; **kod DEĞİŞMEDİ**.
+>
+> ⚠️ Bu bölüm dört tur boyunca eklenerek yazıldı ve **beş iç çelişki** üretti
+> (ürün sahibi fark etti). 2026-08-31'de **bütünsel olarak yeniden yazıldı**;
+> tur-tur anlatım yerine TEK tutarlı durum. Çelişkilerin dökümü ve nedenleri:
+> eylem planı **§14.18-E** (öz-denetim).
 
-### ① Ölçülen durum
+### ① ÖLÇÜLEN DURUM — üretim, dört iş
 
 | ölçüm | değer | kaynak |
 |---|---|---|
-| Kesilen karo | **110** | worker logu |
-| Uzmana giden | **1** | MinIO `results/<job>/tiles/` — 3 işte de 1 çift PNG |
-| Benzerlik eşiği | **0.97** (geçerli aralık 0.93–0.97) | `prototype_manager.py:432`, `config.py:637` |
-| Gruplama üretimde | `tile_group_size=1`, `tile_group_id=NULL` | üretim sorgusu (5 inceleme) |
+| Kesilen karo | **110** (25 olan iş de var) | worker logu "110 tiles" |
+| ↳ kapsama eşiği altı → **HARİÇ** | **66 / 75 / 75 / 3** | `anomaly_filter_excluded_low_coverage` |
+| ↳ **anomali (gerçek aday havuzu)** | **44 / 35 / 35 / 22** | "N/110 tiles flagged" |
+| ↳ **sağlıklı** | 🔴 **0 — hepsinde** | aritmetik (110−66−44=0) |
+| **Uzmana giden karo** | **1** — dört işin dördünde | `TILE_CROP.URETILDI karo=1` |
+| Benzerlik eşiği (%97) | **0.97**, varsayılan **açık** | `prototype_manager.py:432`, `config.py` |
+| Gruplama üretimde | `tile_group_size=1`, `tile_group_id=NULL` | üretim sorgusu |
 | `should_send_to_expert` çağıranı | **0** | `grep -rn … src/` |
-| *"Yeni benzer tile grubu"* logu | **0** | worker logu |
-| `Detection.bbox` | **11/11 NULL** | üretim sorgusu |
-| **Karo = ağaç mı?** | ❌ 512 px × 0.05 m = **25.6 m = 655 m²** → fıstık aralığı 6–8 m → **10–18 ağaç** | `model_config.py:73` + aritmetik |
+| `Detection.bbox` | **0/2 dolu** (gerçek analiz satırı iki tane) | üretim sorgusu |
+| `Detection.rgb_uri` | ✅ **2/2 DOLU** — karo görüntüsü zinciri **çalışıyor** | üretim sorgusu |
+| FAISS deposu | **100 vektör**, hepsi fıstık | `manifest.json: ntotal=100` |
+| ↳ `disease_class` | 🔴 **100/100 = None** | `metadata.pkl` |
+| **Karo = ağaç mı?** | ❌ 512 px × 0.05 m = 25.6 m = 655 m² → **10–18 ağaç** | `model_config.py:73` |
 
-### ② ⚠️ Bağlı olmaması KUSUR DEĞİL — beyan edilmiş borç
+⭐ **Sağlıklı karo sıfır** — ölçülebilir her karo "anomali". Eşik `ndvi<0.55`,
+bahçenin NDVI'si ~0.28. Yani anomali bayrağı bu bahçede **hiç ayırt etmiyor**;
+beş karo "anomaliler arasından" değil **indeks imzası çeşitliliğine göre**
+seçilmelidir.
 
-`prototype_manager.py:76-88` docstring'i: *"gates are ENFORCED at admission time …
-**BEFORE** the dedup path is wired into the live pipeline. Audit G.4 [3]"*.
-Gerekçe: yanlış kapı canlıya bağlanınca **eğitim setini zehirler** (kaskad etiket
-ground-truth olur). Dört kapı hazır: **F4** nadir/karantina sınıf asla gruplanmaz ·
-**F1(b)** sınıf saflığı · **F1(c)** indeks imzası L∞ yayılımı ≤ `0.15` ·
-kosinüs ≥ `0.97`. ⭐ F1(c) tam olarak *"farklı dalgaboyları"* fikridir.
-**Bir sonraki tur bu bağlantıyı yapar, kapıları yeniden icat ETMEZ.**
+### ② 🔴 KÖK NEDEN — DÖNGÜSEL BAĞIMLILIK (ölçüldü)
 
-### ③ İki kopuk halka (ölçüldü)
-
-1. **Besleme yok** — çağrı `pipeline.py:3576` olmalı; gereken **her girdi
-   `TileResult`'ta ZATEN var**: `embedding` (1024-d L2) · `predictions` ·
-   `ndvi_mean`/`ndre_mean` (indeks imzası) · `polygon_geojson`.
-2. **Yanlış anahtar** — `worker.py:1430` → `get_group_info(result.job_id)`;
-   imza `get_group_info(tile_id)`, arama `self._tile_to_group.get(tile_id)` →
-   **her zaman `(None, 1, None)`**. Besleme düzelse bile tek başına boş dönerdi.
-
-### ④ Seçim süzgeci (5 farklı karo) — HİÇ YOK
-
-Bugünkü seçim `pipeline.py:3578`: `if pred["class_id"] == "unknown_anomaly" and
-len(detections) > 0: continue`. Kural **eğitimli ürünler** için yazılmış; fıstık
-eğitimsiz → 110 karonun kanıtı **ilk bulunana** iniyor. Sonra
-`apply_fail_closed_masking` onu `SUPPRESSED` yapıyor (bu **doğru**) → uzman
-**isimsiz, konumsuz tek karo** görüyor. ⚠️ **Gruplama ≠ seçim**: Süzgeç-1
-bağlansa bile *hangi 5* sorusu ayrı ve bugün hiçbir yerde yok.
-
-### ⑤ Ayrıca: konum hesaplanıyor ama TAŞINMIYOR
-
-`build_tile_polygon_geojson` çağrılıyor (`pipeline.py:2347`), karo sözlüğüne
-yazılıyor (`:2362`), `Detection.bbox` alanı **var** (`analysis_result.py:29`) ve
-dışa veriliyor (`:300`) — ama `Detection(...)` kurulurken (`:3588`) **verilmiyor**.
-Platform tarafı da taşımıyor: `ReviewUncertainTile` (`expert_portal.py:119-127`)
-konum alanı içermiyor.
-
-### ⑥ ÜÇÜNCÜ TUR — zincirin tamamı ölçüldü (§14.18-C)
-
-* 🔴 **DÜZELTME:** *"`bbox` 11/11 NULL"* sayımı **fikstür satırlarını da sayıyordu**.
-  Üretimde gerçek analiz satırı **iki tane**, her biri **1 bulgu**; `bbox` yok ama
-  **`rgb_uri` DOLU**. Yani karo görüntüsü zinciri üretimde **çalışıyor**.
-* ⭐ **SADELEŞME:** beş karo **yalnızca worker işi**. Platform `findings` içindeki
-  `tile_id`'li **her** karoyu listeliyor (**üst sınır yok**, en düşük güven önce —
-  `expert_portal.py:542-556`), renderer sınırı **40**. → **`pipeline.py:3578`'i
-  düzeltmek (W-4) TEK BAŞINA beş karoyu uzmana ulaştırır**; sözleşme/platform
-  dokunuşu gerekmez. §14.18'in `C-1`/`P-1` kalemleri yalnız **bbox** içindir.
-* ✅ **ÇÜRÜTÜLEN RİSK:** *"beş karo beş eskalasyon → idempotency düşer"* — hayır.
-  `EscalationRequest` **iş başına bir kez** kuruluyor (`worker.py:1547`). İki
-  paralel kanal var: eskalasyon mesajı (**tekil**, yönlendirme) ve `findings`
-  (**liste**, kanıt). ⚠️ W-4'te eskalasyon temsilcisi bilinçli seçilmeli — bugün
-  `first_detection`.
-* ⚠️ **YENİ BOŞLUK (W-7):** **kırmızı kenar görüntüye hiç girmiyor.**
-  `render_tile_crops` yalnız G/R/NIR okuyor; `false_color_renderer`'da `RE` **0
-  eşleşme**. RE uzmana yalnız **sayı** olarak gidiyor (`ndre_value`). *Sayılar dört
-  bandı taşıyor, görüntüler üçünü.* Üçüncü kompozit ürün kararıdır (depolama +
-  uzman süresi).
-
-**Önerilen ilk tur: W-4 tek başına** — önkoşulsuz, tek dosya, ürün sahibinin
-sorduğu şeyi karşılıyor. Kaskad zinciri (C-2→P-2→W-5) ayrı ve pahalı turdur.
-
-### ⑦ DÖRDÜNCÜ TUR — ZİNCİRİN TAMAMI OKUNDU (17.267 satır)
-
-Ürün sahibi *"okumadım dediklerinin ve varsa diğer ilgili dosyaların TAMAMINI oku"*
-dedi. Yapıldı. **Tam okunan 20 dosya** (worker 10.564 + platform 6.703 satır):
-
-`pipeline.py` 4644 · `worker_bridge_consumer.py` 3075 · `expert_portal.py` 2310 ·
-`worker.py` 1664 · `feedback_handler.py` 988 · `prototype_manager.py` 861 ·
-`config.py` 776 · `reporting_agent.py` 715 · `orchestration_agent.py` 546 ·
-`contract_validator.py` 530 · `admin/expert_assignment_service.py` 405 ·
-`expert_bundle_producer.py` 398 · `publisher.py` 391 ·
-`agent_messages.py` 438 · `active_learning_packager.py` 423 ·
-`expert_review_prioritization_service.py` 328 · `audit_set_sampler.py` 273 ·
-`confidence_evaluator.py` 264 · `enums.py` 245 · `sub_specialty_resolver.py` 210 ·
-`false_color_renderer.py` 159 · `expert_review_model.py` 130 ·
-`training_feedback_events.py` 143 · `tile_crop_renderer.py` 186.
-
-#### ⭐ D-1 — ÜRÜN SAHİBİ KARARI: dört bandın sonucu da gösterilecek
-
-*"Uzmanın görüşüne etkisi olacak ise 4 bandın sonuçlarını göstermelisiniz."*
-**Karar verildi, W-7 artık açık soru değil.**
-
-🔴 **Ve bu ZATEN KODLANMIŞ — yeniden yazılmayacak.**
-`expert_bundle_producer.py` (398, tam okundu) tam olarak bunu üretiyor:
-
-| üretilen | içerik |
-|---|---|
-| `BandSource` | green · red · **rededge** · nir (+blue, M3M'de yok) |
-| ısı haritaları | NDVI · NDRE · **NDWI** · **GNDVI**, renk aralığı SABİT [-1,+1] |
-| bant istatistiği | **dört bandın ayrı ayrı** min/max/mean/std |
-| histogram | dört indeksin ayrı ayrı (50 kova) |
-| kompozitler | gerçek renk + yanlış renk (NIR-R-G) |
-
-**İki bağımsız nedenle ölü:** ① `expert_bundle_bands`'i dolduran kod **yok**
-(tüm depoda yalnız iki okuyan satır) ② `_BUNDLE_ENABLED_RESULT_MODES` yalnız
-`FULL_REPORT`/`PARTIAL_REPORT`; fıstık `INDICES_ONLY` üretiyor ve
-`build_expert_visual_bundle` o modda **`ValueError` fırlatıyor**.
-
-⚠️ ②'nin gerekçesi *"predicted_class + confidence fail-closed kaybedildi"*.
-Ama **ürün sahibinin istediği TANI değil ÖLÇÜM** — dört bandın sayıları KR-025'e
-göre serbesttir (worker ölçer, yorumlamaz). Doğru çözüm: `INDICES_ONLY` için
-**ölçüm-yalnız** paket (predicted_class YOK, band_stats + heatmap VAR).
-✅ Ham veri hazır: karo bantları `RE` **taşıyor**
-(`SPECTRAL_BANDS = B,G,R,NIR,RE`, `feature_extraction.py:68,122`).
-
-#### 🔴 D-2 — Toplu onay İKİ FARKLI ŞEY demek (en derin bulgu)
-
-| taraf | `bulk_approval_id` ne demek |
-|---|---|
-| **platform** | *"şu **5–50 AYRI İNCELEMEYİ** tek tıkla onayladım"* (`BulkApproveRequest.review_ids`, `min_length=5, max_length=50`) |
-| **worker** | *"bu geri bildirim bir **KARO GRUBUNUN TEMSİLCİSİDİR**, üyelerine yay"* (`_maybe_cascade_bulk_approval`) |
-
-Aynı alan, iki ayrı kavram — `av2_report_uri` sınıfının birebir tekrarı.
-Bugün zararsız (gruplar boş → `apply_expert_decision` *"Bilinmeyen temsilci"*
-deyip tek eleman dönüyor). **Ama süzgeç-1 bağlanınca sessizce yanlış yayılır.**
-→ C-2 yalnız alan eklemek değil, **iki anlamı AYIRMAK** zorunda.
-
-#### 🔴 D-3 — `tile_id`: alan İKİ YERDE de var, ÜRETİCİSİ yok
-
-* `EscalationRequest.tile_id` **var** (`agent_messages.py:259`, *"ölçüm JOIN
-  anahtarı; PII-SİZ tile kimliği"*)
-* Kanonik `expert_review_queue.v1` şemasında **var** (*"bu incelemenin işaret
-  ettiği TEKİL tile'ın kimliği — ölçüm JOIN anahtarı (M3)"*)
-* `worker.py:1547` eskalasyonu kurarken **geçmiyor** (ölçüldü: 0 eşleşme)
-  → `asdict` `null` yazıyor → `omit_nulls_schema_disallows` düşürüyor
-
-**Sonuç: eskalasyon mesajı hangi karoya ait olduğunu SÖYLEMİYOR.** Platform
-tarafında `expert_reviews`'a yazılabilecek bir karo kimliği hiç ulaşmıyor.
-⭐ İyi haber: **sözleşme değişikliği GEREKMİYOR** — alan zaten kanonikte.
-Tek satırlık üretici eksik. (Geri-besleme yönü hâlâ C-2'ye muhtaç.)
-
-#### 🔴 D-4 — Uzman kotası 5 karoyu 1 sayacak
-
-`patch_page_size(kota) = clamp(kota / 10, **5**, 100)` — yani sistemin kendi
-tabanı **inceleme başına 5 karo**. Ürün sahibinin istediği sayı **keyfi değil,
-sistemin zaten varsaydığı sayı**.
-
-⚠️ Ama sayaç başka yerden besleniyor: `daily_images_assigned`
-**`analysis_priority_zones`** tablosundan sayıyor
-(`expert_profile_builder.py:104-137`), `findings` karolarından **değil**.
-🔴 **Üretimde ölçüldü: `analysis_priority_zones` BOŞ (0 satır)** →
-`greatest(least(0, sayfa), 1)` = **her inceleme 1 görüntü**. Bugün 1 karo
-gösterildiği için tesadüfen doğru; W-4'ten sonra 5 karo gösterilip **yine 1**
-sayılacak — kodun *"C12 B1: kota '1 görev' sayarken uzman 100 görsel görüyor"*
-diye kapattığı sapma **başka kapıdan** geri gelir.
-
-#### ⚠️ D-5 — `AUDIT_SAMPLE` enum sapması (üçüncü uykuda mekanizma)
-
-Worker enum'unda **7** değer, platform aynasında **6** (`AUDIT_SAMPLE` yok).
-`confidence_evaluator` docstring'i *"`ValueError` fırlatır"* diyor — **ölçüldü,
-yanlış**: gerçek çağrı yeri `parse_escalation_reason` onu **yakalıyor**
-(fail-open + WARNING). Yani çökme yok; kayıp, denetim satırının **nedeni** ve
-**şiddet yükseltmesi**. `AuditSetSampler` + `build_audit_escalation` da
-üretimde **0 çağıranlı** — `should_send_to_expert` ve D-13 paketiyle birlikte
-**üçüncü** "yazılmış ama bağlanmamış" mekanizma.
-
-#### ✅ D-6 — `unknown_anomaly`'nin KÖKÜ ölçüldü (W-4'ün tam gerekçesi)
-
-`_build_predictions` (`pipeline.py:3450-3505`): adlandırılmış tahmin **yalnız**
-`memory_result.hit AND disease_hint AND not is_ood` iken üretiliyor. FAISS
-soğuk başlangıçta boş → hit yok → şu dala düşülüyor:
-
-```python
-if is_ood or ndvi_mean < 0.4:
-    predictions.append({"class_id": "unknown_anomaly", ...})
+```
+uzman sınıf yazmalı  →  ama uzman karo görmeli
+        ↑                        ↓
+disease_class = None   ←   1 karo görüyor  ←  unknown_anomaly 1'e iniyor
+        ↑                                             ↑
+   hint üretilemez  →  her karo unknown_anomaly  ──────┘
 ```
 
-Üretimde ölçülen `ndvi_mean = 0.282 < 0.4` → **her anomali karosu
-`unknown_anomaly` üretiyor**. Sonra `_aggregate_results:3585` *"ilkini al,
-gerisini atla"* diyor. **Yani W-4 tek satırlık bir kural değişikliği değil, bir
-SEÇİM fonksiyonu istiyor** — aday havuzu `tile_results` (anomali karoları),
-zaten hepsinde `ndvi_mean`/`ndre_mean` ve `embedding` mevcut.
+Zincir satır satır:
+* `_build_predictions` (`pipeline.py:3480`) adlandırılmış tahmin için
+  `memory_result.disease_hint` istiyor.
+* `disease_hint` = komşunun `disease_class`'ı
+  (`memory_orchestrator._weighted_top_disease_hint`).
+* Üretimdeki **100 kaydın 100'ünde `disease_class = None`** — çünkü
+  `_aggregate_results` çıkarımda **bilerek** sınıf yazmıyor (**O-4**: model
+  kendi tahminini derece olarak yazarsa kendi çıktısıyla beslenir).
+* → hint hep None → `if is_ood or ndvi_mean < 0.4` dalı → **her anomali karosu
+  `unknown_anomaly`** (üretimde `ndvi_mean = 0.282`).
+* → `_aggregate_results:3585` "unknown_anomaly ve zaten tespit varsa atla" →
+  **ilkinden sonrası atılıyor**.
 
-⚠️ Aday havuzu **110 değil**: `_anomaly_filter` önce sağlıklıları ve
-**kapsama eşiği altındaki** karoları (`tile_min_valid_ratio=0.20`) ayırıyor.
-Beş karo **anomali havuzundan** seçilir.
+⛔ **O-4'ü gevşetmek YASAK** — döngüyü modelin kendi tahminiyle kapatmak tam da
+kapattığı doğrulama yanlılığıdır. Halka **W-4'ten** kırılır.
 
-### ⑧ Bu turun çıktısı ve DAL DURUMU
+### ③ SÜZGEÇ-1 (%97 gruplama) — kod TAM, bağlı DEĞİL, ve bu BEYAN EDİLMİŞ BORÇ
 
-- **`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §14.18** yazıldı — altı iş kalemi
-  (**W-1..W-4**, **C-1**, **P-1**), önkoşullar ve riskler ölçümleriyle.
-- Dal **`plan/uzman-kaniti-iki-suzgec`** `origin`'e **push edildi**, **PR AÇILMADI**
-  — ürün sahibinin kararı: *"yerelde kalsın, sonra toplu olarak PR+merge"*
-  (kredi tasarrufu: her PR ayrı CI maliyeti).
-- Kapılar: `check_doc_links` **rc=0** · `check_kestirme_yok` **rc=0**.
-- Yalnız `docs/` değişti → **sürüm yükseltmesi GEREKMEZ** (`pin_version` yalnızca
-  `schemas/`, `enums/`, `api/` izler). Dört depo **7.13.0**'da hizalı kalıyor.
+`prototype_manager.py:76-88`: *"gates are ENFORCED at admission time … **BEFORE**
+the dedup path is wired into the live pipeline. Audit G.4 [3]"*. Gerekçe: yanlış
+kapı canlıya bağlanınca **eğitim setini zehirler**. Dört kapı hazır:
+**F4** nadir/karantina asla gruplanmaz · **F1(b)** sınıf saflığı ·
+**F1(c)** indeks imzası L∞ yayılımı ≤ `0.15` · kosinüs ≥ `0.97`.
+⭐ F1(c) tam olarak ürün sahibinin *"farklı dalgaboyları"* fikridir.
 
-### ⑨ 🔴 BİR SONRAKİ OTURUMUN AÇILIŞ SORUSU — DEĞİŞTİ
+**İki kopuk halka:** ① `should_send_to_expert`'in üretim çağıranı yok
+(gereken her girdi `TileResult`'ta hazır) ② `worker.py:1430`
+`get_group_info(result.job_id)` çağırıyor, imza `get_group_info(tile_id)` ve
+karo kimliği `f"{job_id}_t{idx:04d}"` (`pipeline.py:2358`) → **daima boş**.
 
-Önceki tur *"tünel bant genişliği mimarisi"* diyordu (§0.B ④). **Sıralama önerisi:
-§14.18 ÖNCE gelmeli** — bant genişliği bir tutarsızlığı düzeltir, §14.18 ise
-**uzman kapısının işlevini geri verir**; çiftçiye giden raporun kalitesi doğrudan o
-kapıya bağlı (uzman onayı olmadan hiçbir kart tam rapora geçemiyor). Bant genişliği
-kalemi **açık kalıyor**, iptal edilmedi.
+### ④ SÜZGEÇ-2 (hangi 5 karo) — HİÇ YOK, ve tek satır DEĞİL
 
-✅ **Üç dosya SONRADAN TAM OKUNDU** (aynı oturum, ikinci tur):
-`feedback_handler.py` (988) · `orchestration_agent.py` (546) ·
-`reporting_agent.py` (715) = **2.249 satır**; `origin/master` ile bayt-özdeş
-oldukları `git diff --stat` ile doğrulandı. **Üç yeni bulgu → §14.18-B**:
+Bugün seçim yok; `:3585` "ilkini al" var. **W-4 bir SEÇİM FONKSİYONU ister**:
+aday havuzu `tile_results` (anomali karoları, 22–44 adet), ölçüt indeks imzası
+(`[ndvi_mean, ndre_mean]`) uzaklığını maksimize etmek. Girdilerin hepsi hazır.
 
-* 🔴 **Kaskad da kopuk, ve bu SÖZLEŞME işi.** `feedback_handler.py:653`
-  `apply_expert_decision(representative_id=feedback.job_id)` çağırıyor;
-  `job_id` property'si `analysis_result_id` döndürüyor. Gruplar ise
-  **`f"{job.job_id}_t{tile_idx:04d}"`** karo kimliğiyle yazılıyor
-  (`pipeline.py:2358`, `prototype_manager.py:736`). İki değer aynı olsa **bile**
-  `_tNNNN` soneki yüzünden eşleşmez. Eşleşme olmayınca `WARNING` yazılıp
-  **`[representative_id]` dönüyor** — geçerli görünen tek elemanlı liste, hata yok:
-  *"birini etiketle, N'ine uygulansın"* vaadi **sessizce ölüyor**. Platformda toplu
-  onay ucu **var** (`expert_portal.py:1919`) → yol **canlıya erişilebilir**.
-  🔴 Kanonik `expert_feedback.v1.schema.json`'da **karo kimliği alanı YOK**
-  (kök alanlar ölçüldü; yalnız `tile_coordinates` x/y/w/h) → **C-2 (MINOR,
-  eklemeli)** gerekiyor. **Sıra zorunlu: C-2 → P-2 → W-5.**
-* ⚠️ **D-13 Uzman Görsel Paketi yapısal olarak ÖLÜ** — `expert_bundle_bands`'i
-  dolduran kod **yok** (tüm depoda yalnız okuyan iki satır). Ayrıca FULL/PARTIAL
-  ile kapılı; fıstık oraya hiç ulaşmıyor. ✅ **Ama beş karo için yeni kanal
-  GEREKMİYOR:** `tile_crop_artifacts` çalışıyor (pipeline üretir → orchestration
-  taşır, `orchestration_agent.py:285-288` → worker.py S3'e yükler). **W-4 bunu
-  kullanmalı**; paketi diriltmek ayrı üründür, kapsam dışı.
-* ✅ **Olumsuz bulgu:** çiftçi metni worker tarafında **temiz** — iç sözcük
-  basılmıyor (`reporting_agent.py:397-470`). 2026-08-30 sızıntısı platform
-  tarafındaydı. Sınır: `_scrub_kr025_fields` yalnız **anahtar adını** tarıyor,
-  değer metnini taramıyor (`:697`) — serbest metin taşıyan yeni alan eklenirse
-  yeniden değerlendirilmeli.
+### ⑤ ÜRÜN SAHİBİ KARARI — dört bandın sonucu gösterilecek
 
-Bu turda **tam okunanlar**: `prototype_manager.py`, `field_clip.py`,
-`expert_portal.py`, `analysis_result.py`, `expert.py`, `feedback_handler.py`,
-`orchestration_agent.py`, `reporting_agent.py`. **Bölgesel okunanlar**:
-`pipeline.py` (2300-2400 · 3550-3620 · 580-600), `worker.py` (1400-1450),
-`audit_set_sampler.py` (200-280), `expert_feedback.py` (80-96),
-`prototype_manager.py` grup-yazma bölgesi (726-742).
+*"Uzmanın görüşüne etkisi olacak ise 4 bandın sonuçlarını göstermelisiniz."*
+**Karar verildi; açık soru değil.** ⭐ **Kod da ZATEN var:**
 
-⚠️ **Kapasite riski:** `audit_set_sampler.py:216,271` bugün
-`tile_group_id=None, tile_group_size=1` varsayıyor → gruplama canlıya alınınca
-**i.i.d. denetim seti** etkilenir, birlikte gözden geçirilmeli.
+| hazır bileşen | dosya |
+|---|---|
+| `compute_ndvi/ndre/ndwi/gndvi` (RE ve G'yi açıkça alır) | `index_heatmap_renderer.py:21-103` |
+| `render_index_heatmap` (sabit [-1,+1] ölçek) + `compute_histogram_thumbnail` | aynı |
+| `compute_band_stats` (dört bandın ayrı min/max/mean/std) | `false_color_renderer.py` |
+| Karo bantlarında **RE var** | `SPECTRAL_BANDS = B,G,R,NIR,RE` |
 
-### ⑩ Kural eklendi
+⚠️ **Nereye bağlanacağı MİMARİ bir kısıt:** ham bantlar **yalnız `pipeline`
+kapsamında** yaşıyor; *"bantları yukarı taşımak tüm uçuşu bellekte tutmak
+olurdu"* (`pipeline.py:1998`). Yani D-13 paketini `ReportRequest` üzerinden
+diriltmek **yanlış yol**. Doğru yol **DK-48 deseni**: `tile_crop_renderer`
+üretsin → `PipelineResponse.tile_crop_artifacts` taşısın → `worker.py` yüklesin.
 
-Ürün sahibi (2026-08-31): **"tüm cevapları + araştırmaları ölçümle ver"** — araştırma
-sorularını da kapsar. Ölçemiyorsan *"ölçemedim"* de, tahmin etme.
+### ⑥ TAŞIMA ZİNCİRİ — ölçülen kapasite
+
+| halka | durum |
+|---|---|
+| Karo görüntüsü üretimi | tespit taşıyan **her** karo için, üst sınır **40** |
+| S3 yükleme + `rgb_uri`/`ms_uri` yazımı | ✅ **üretimde çalışıyor** (2/2 dolu) |
+| Platform karo listesi | `findings`'teki `tile_id`'li **her** karo; **sayfalama YOK** (`_karo_kaniti_kur` limit/offset almıyor) |
+| Uzman kotası defteri | 🔴 `analysis_priority_zones`'dan sayıyor, o tablo **üretimde BOŞ (0 satır)** → her inceleme **1 görüntü** sayılıyor |
+
+⚠️ **Düzeltilmiş ifade** (önceki turda fazla genel yazmıştım): W-4 beş karoyu
+uzmanın **EKRANINA** ulaştırır — teslim için platform değişikliği gerekmez.
+Ama kota **DEFTERİ** için **P-3 gerekir**; yoksa uzman 5 görür, sistem 1 sayar.
+
+### ⑦ KİMLİK VE ANLAM — iki AYRI şema, iki AYRI sorun
+
+| şema | yön | `tile*` alanları | sorun |
+|---|---|---|---|
+| `expert_review_queue.v1` | worker → platform (**eskalasyon**) | `tile_coordinates`, `tile_group_id`, `tile_group_size`, `tile_group_similarity_min`, **`tile_id`** | alan VAR, `worker.py:1547` **doldurmuyor** → W-8 (**sözleşmesiz**) |
+| `expert_feedback.v1` | platform → worker (**geri besleme**) | `tile_coordinates` **yalnız** | alan **YOK** → C-2 (**MINOR sözleşme**) |
+
+🔴 **Ve `bulk_approval_id` iki farklı şey demek:** platformda *"5–50 AYRI
+incelemeyi tek tıkla onayladım"* (`BulkApproveRequest.review_ids`), worker'da
+*"bu bir KARO GRUBUNUN temsilcisidir, üyelerine yay"*. `av2_report_uri`
+sınıfının tekrarı. Bugün zararsız (grup yok), **süzgeç-1 bağlanınca sessizce
+yanlış yayılır** → C-2 alan eklemek değil, **iki anlamı AYIRMAK**.
+
+### ⑧ KONUM — hesaplanıyor ama taşınmıyor
+
+`build_tile_polygon_geojson` çağrılıyor (`pipeline.py:2347`), karo sözlüğüne
+yazılıyor (`:2362`), `Detection.bbox` alanı var ve dışa veriliyor — ama
+`Detection(...)` kurulurken (`:3588`) **verilmiyor** → üretimde 0/2 dolu.
+
+### ⑨ UYKUDAKİ ÜÇ MEKANİZMA (hepsi ölçüldü, hiçbiri kusur değil)
+
+| mekanizma | durum | canlıya alma kararı |
+|---|---|---|
+| `SimilarTileDeduplicator.should_send_to_expert` | kod tam, 0 çağıran | beyan edilmiş borç (Audit G.4) |
+| `expert_bundle_producer` (D-13, dört bant) | kod tam, `expert_bundle_bands` üreticisi yok + `INDICES_ONLY`'de `ValueError` | ⑤'teki karar |
+| `AuditSetSampler` + `build_audit_escalation` | kod tam, 0 çağıran, oran varsayılanı 0.0 | i.i.d. ölçüm temeli — **ayrı ve büyük** karar |
+
+⚠️ Yan bulgu: worker `EscalationReason` **7** değer, platform Python aynası
+**6** (`AUDIT_SAMPLE` yok); kanonik şema **7**. `confidence_evaluator`
+docstring'i *"ValueError fırlatır"* diyor — **ölçüldü, yanlış**:
+`parse_escalation_reason` yakalıyor (fail-open + WARNING). Çökme yok; kayıp
+**neden** ve **şiddet yükseltmesi**. Platform aynasını kanoniğe kilitleyen
+**parite testi YOK**.
+
+### ⑩ İŞLEM SIRASI — ne yapılır, sonucu ne olur
+
+**TUR 1 (worker-içi, önkoşulsuz, sözleşmesiz) — W-4 · W-8 · W-7 + P-3**
+
+| # | dokunulan | sonuç |
+|---|---|---|
+| **W-4** | `pipeline.py:3585` → çeşitlilik seçimi (≤5) | uzman **1 yerine 5** karo görür; halka kırılır |
+| **W-8** | `worker.py:1547` → `tile_id=first_detection.tile_id` | eskalasyon **hangi karo** olduğunu söyler |
+| **W-7** | `tile_crop_renderer` → dört indeks ısı haritası + bant istatistiği | uzman **dört bandın** sonucunu görür |
+| **P-3** | `expert_profile_builder.py:104-137` | kota defteri 5'i 5 sayar (yoksa C12 B1 geri gelir) |
+
+**TUR 2 (konum)** — W-3 + C-1/P-1 · **TUR 3 (kaskad, pahalı)** — C-2 → P-2 → W-5
+(+ W-1/W-2/W-6) · **TUR 4 (küçük)** — P-4 enum + parite testi.
+
+⛔ **Mutasyon şartı (her tur):** kod sessizce geçerli görünen değer döndürdüğü
+için naif test yeşil kalır. Anahtarı/kuralı bilerek boz, **kırmızıya döndüğünü
+gör**, geri al. 2026-08-30'da tam bu tuzağa düşüldü.
+
+### ⑪ Bu turun çıktısı ve DAL DURUMU
+
+* `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` **§14.18 / -B / -C / -D / -E**
+  (sonuncusu öz-denetim: kendi çelişkilerim).
+* **20 dosya tam okundu** (17.267 satır): `pipeline.py` 4644 ·
+  `worker_bridge_consumer.py` 3075 · `expert_portal.py` 2310 · `worker.py` 1664 ·
+  `feedback_handler.py` 988 · `prototype_manager.py` 861 · `config.py` 776 ·
+  `reporting_agent.py` 715 · `orchestration_agent.py` 546 ·
+  `contract_validator.py` 530 · `agent_messages.py` 438 ·
+  `active_learning_packager.py` 423 · `expert_assignment_service.py` 405 ·
+  `expert_bundle_producer.py` 398 · `publisher.py` 391 ·
+  `expert_review_prioritization_service.py` 328 · `audit_set_sampler.py` 273 ·
+  `confidence_evaluator.py` 264 · `enums.py` 245 · `sub_specialty_resolver.py` 210
+  (+ `tile_crop_renderer` 186 · `false_color_renderer` 159 ·
+  `training_feedback_events` 143 · `expert_review_model` 130).
+* Dal **`plan/uzman-kaniti-iki-suzgec`** `origin`'e push edildi, **PR AÇILMADI**
+  (ürün sahibi kararı: toplu PR+merge). Kapılar: `validate` · `check_doc_links` ·
+  `check_kestirme_yok` = **rc 0**.
+* Yalnız `docs/` değişti → **sürüm yükseltmesi GEREKMEZ**. Dört depo **7.13.0**.
+
+### ⑫ 🔴 BİR SONRAKİ OTURUMUN AÇILIŞ SORUSU
+
+**TUR 1'i uygulamak** (W-4 · W-8 · W-7 · P-3). Bant genişliği kalemi (§14.17,
+yerel artefakt önbelleği) **açık kalıyor ama SONRA** — o bir tutarsızlığı
+düzeltir, TUR 1 öğrenme döngüsünü açar.
+
+### ⑬ Kural eklendi
+
+Ürün sahibi (2026-08-31): **"tüm cevapları + araştırmaları ölçümle ver"** —
+araştırma sorularını da kapsar. Ölçemiyorsan *"ölçemedim"* de, tahmin etme.
 Kural yerel hafızaya işlendi (makineye özel, git ile taşınmaz — bkz. §5).
-
----
 
 ## 0.B — (2026-08-30, **yirmi üçüncü oturum: ÖRTÜ DÜŞÜŞÜ SAHTE ÇIKTI · KAPSAM ZİNCİRİ · SADE DİL · 19 PR**)
 
