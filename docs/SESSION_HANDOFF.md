@@ -28,8 +28,8 @@
 > kusur olcumle duzeltildi), sonra **TUR 1 · 1.5 · 2 uygulandi** — uzman artik
 > 1 yerine **5 farkli karo**, **dort bandin haritasini** ve **konumu** goruyor;
 > sozlesme **7.14.0** dort depoda hizali ve **uretime dagitildi**. Ardindan
-> **TUR 3 + TUR 4** de kapandi (§11): dort depo **7.15.0**, etiket `v7.15.0` —
-> ⚠️ ama **7.15.0 HENUZ DAGITILMADI** (olculdu, §11 sonu).
+> **TUR 3 + TUR 4** de kapandi (§11): dort depo **7.15.0**, etiket `v7.15.0`, ve
+> **7.15.0 uretime DAGITILDI** (OD-2 sirasiyla; olculdu, §11).
 
 ### 1) ONCE DENETIM — bu bolumun uc kusuru (ct #133, #134)
 
@@ -209,21 +209,56 @@ MIRROR ciftlerde (or. `expert_feedback`) tur IKI PR'a bolunur:
 YOK), (B) C8 re-pin + beyanlari bosalt + etiket. Tur icinde `pin_version.py`
 kosturmak **XPASS(strict)** ile yakalanir — bu hatayi yaptim, kapi durdurdu.
 
-#### ⚠️ MERGE EDILDI, DAGITILMADI
+#### ✅ DAGITILDI ve DOGRULANDI (OD-2 sirasiyla: once worker, sonra platform)
 
-7.15.0'in tamami (TUR 3 + TUR 4) **canli DEGIL** — olculdu:
-* kosan worker: `SUZGEC1.GRUPLAMA` **0 gecis**, pin **v7.14.0**
-* uretim backend: `representative_tile_id` **0 gecis**
+**Sira 7.14.0'in TERSIYDI:** `expert_feedback` worker'a **GELEN** belgedir ve
+vendored kopya geleni dogrular; alan eksikse **gecerli** bir mesaj reddedilir.
+(7.14.0'da tersi gecerliydi: `analysis_result` worker'dan GIDEN belge.)
 
-⚠️ **DAGITIM SIRASI 7.14.0'IN TERSI (OD-2):** `expert_feedback` worker'a GELEN
-belgedir ve vendored kopya GELEN belgeyi dogrular; eksik alan GECERLI bir mesaji
-REDDEDER. Bu yuzden **once WORKER**, sonra platform. (7.14.0'da tersi gecerliydi:
-`analysis_result` worker'dan GIDEN belge oldugu icin once platform.)
+| katman | dogrulama |
+|---|---|
+| worker | surec **21:20:13** / dosya **20:51:25** (surec 29 dk daha YENI -> 7.15.0 yuklendi) · pin **7.15.0** · `critical_rabbitmq_consumer: true` · `faiss_size: 157` |
+| platform | `deploy_prod.sh --check` GECTI (`CONFIG_OK`, `RASTER_OK 1.26.4 1.4.4`) -> tam dagitim: backend+web **healthy**, uclar **200** |
+| backend ici | `representative_tile_id` **1** · `AUDIT_SAMPLE` **2** · pin **7.15.0** · `contracts/` submodule **22 girdi** (bos DEGIL) |
+| goc | alembic head `analysis_results_expert_evidence` — 7.15.0 yeni goc GETIRMEDI |
+| hata | backend `[ERROR] 0` · `[CRITICAL] 0` · web `[ERROR] 0` · disaridan `tarlaanaliz.com -> 200` |
 
-⚠️ Worker dagitimi **suzgec-1'i CANLI EDER** (`tile_dedup_enabled` uretimde
-varsayilan **True**, esik **0.97** — olculdu). Kapilar mutasyonla kilitli ama
-gruplama ilk kez gercek veride kosacak: ilk kosumda `SUZGEC1.GRUPLAMA`
-logu (aday/temsilci/gruplanan) OKUNMALI.
+⚠️ Ilk okumada "2 ERROR" gordum; ikisi de **WARNING**'di — grep'im `error=`
+**alan adini** esliyordu, **seviyeyi** degil. Seviyeye capali sayim (`[ERROR]`)
+**0** verdi ve desen **pozitif kontrolle** sinandi (sahte `[ERROR]` satirini
+yakaladi). Kalan 16 WARNING `schema_load_skipped` (`index.json` sema degil) ve
+dagitimdan **once de vardi**.
+
+⚠️ Suzgec-1 artik **CANLI** (`tile_dedup_enabled` varsayilan True, esik 0.97).
+Kapilar mutasyonla kilitli ama gruplama ilk kez gercek veride kosacak: ilk
+analiz kosumunda `SUZGEC1.GRUPLAMA` logu (aday/temsilci/gruplanan) OKUNMALI.
+
+#### 🔴 WORKER KONTEYNERI GOZLEMLENEMEZ — onceki turun dogrulamasini CURUTUR
+
+Olculdu: worker konteynerinin `docker logs` ciktisi **2026-08-28 20:36**'da
+duruyor. Bugunku iki baslatma (19:11:13 ve 21:20:13) **tek satir bile**
+yazmadi — acilis bandi dahil (`08-31` satir sayisi **0**).
+
+> Bu, onceki turda yazdigim *"yeniden baslatma sonrasi 0 ERROR"* dogrulamasini
+> **gecersiz kilar**: bos logda sifir hata **bedavadir**. Hata sayisi ancak
+> **once log akisinin kendisi** olculduyse kanittir.
+
+Kok neden **surec degil tasima**: PID 1'in stdout'una dogrudan yazdigim
+imlec (`TARLA_LOG_PROBE_9931`) da `docker logs`'ta **cikmadi**. Yani uygulama
+yaziyor, Docker **kalici log dosyasina gecirmiyor**.
+
+✅ **Asilma riski YOK** (olculdu): boruya **256 KB** yazildi, `rc=0`, bloke
+olmadi -> Docker boruyu **bosaltiyor**, yalnizca saklamiyor. Islemci saglikli
+kaldi.
+
+**Cozum:** `docker restart` bunu **duzeltmiyor** (iki kez olculdu). Konteyneri
+**yeniden olusturmak** gerekiyor. ⚠️ Bunun bir onkosulu var: compose'un
+ikame edecegi `RABBITMQ_PASSWORD` bu makinedeki **hicbir** `.env` dosyasiyla
+eslesmiyor (ozet karsilastirmasiyla olculdu: kosan konteyner `8bba2c…`,
+`tarlaanaliz-platform/.env` `04438d…`) — cunku worker **URETIM** brokerine
+tunelle bagli ve parolasi uretim sunucusunda. Reçetedeki
+`--env-file ../tarlaanaliz-platform/.env` ile yeniden olusturmak worker'i
+**brokerdan KOPARIR**. Once dogru sir kaynagi cozulmeli.
 
 ### 11-b) ONCEKI "DEVREDEN" METNI (kapandi, kayit icin)
 
@@ -244,8 +279,15 @@ logu (aday/temsilci/gruplanan) OKUNMALI.
 
 ### 12) ACIK — olculemeyen / beyan edilen
 
-* 🔴 **7.15.0 DAGITILMADI** — kod dort depoda `master`/`main`'de, **hicbir yerde
-  KOSMUYOR**. Dagitim sirasi **once worker, sonra platform** (OD-2, §11).
+* 🔴 **Worker konteyneri gozlemlenemez** — `docker logs` 08-28'de duruyor; kalici
+  cozum konteyneri yeniden olusturmak, ama once uretim broker sirrinin kaynagi
+  cozulmeli (§11). Bugun asilma riski YOK (olculdu), ama bir sonraki analiz
+  kosumunun `SUZGEC1.GRUPLAMA` logu **okunamaz** — suzgec-1 canliya yeni
+  baglandigi icin bu, ilk gercek veriyi gormeyi engeller.
+* ⚠️ **GitHub hesabi fatura nedeniyle kilitli** (2026-08-31 ~20:50–21:13 arasi
+  olculdu): Actions isleri runner **atanmadan** dusuyor
+  (`steps=0`, GitHub anotasyonu: *"account is locked due to a billing issue"*,
+  loglar `BlobNotFound`). Kod saglam — ayni kapilar yerelde **1476 passed**.
 
 * **Uzmanin gercekten 5 karo gordugu OLCULMEDI.** Kod canlida ve zincirin her
   halkasi birim duzeyinde kilitli, ama **gercek bir is kosmadi**. Kanit ancak
