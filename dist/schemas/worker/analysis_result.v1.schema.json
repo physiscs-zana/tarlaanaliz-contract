@@ -574,7 +574,7 @@
       "required": [
         "tile_id"
       ],
-      "additionalProperties": false
+      "unevaluatedProperties": false
     },
     "ResultId": {
       "type": "string",
