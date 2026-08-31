@@ -1,17 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.14.0
+## Version: 7.15.0
 
-**Release Date:** 2026-08-31T18:15:10.221074Z  
+**Release Date:** 2026-08-31T19:59:44.591240Z  
 **Breaking Change:** NO  
-**Checksum State:** PENDING_REPIN — C-2 turu SURUYOR (hedef 7.15.0). 
-`expert_feedback.v1` -> `representative_tile_id` kanonikte var; agrega checksum 
-BILEREK yeniden pinlenmedi (ara re-pin yayimlanmis v7.14.0 etiketinin checksum 
-anlamini bozardi) ve vendored kopyalar HENUZ senkron degil 
-(`tests/test_vendored_parity.py::PENDING_PROPAGATION`). C8 toreninde tuketiciler 
-senkronlanir, beyanlar silinir ve `pin_version.py --minor` calisir; bu satiri 
-KENDILIGINDEN kaldirir ve uc kapi o anda SERTLESIR.  
-**Contracts Checksum (SHA-256):** `b32b3c98078ad137716a8535530deb068b844408e978561604612d1762f7b049`
+**Contracts Checksum (SHA-256):** `607093f3c906ea6e52c1d70f24fe8b686834d4ad3c9ee2bd71c4e8ae0514abb7`
 
 ---
 
@@ -182,7 +175,7 @@ Individual file hashes for verification:
 - `schemas/worker/calibration_metadata.v1.schema.json`  
   `7fbe7303c237bb11302a9c879d091d4da788b4a893ee8c1bebcfb8edf6b90d0c`
 - `schemas/worker/expert_feedback.v1.schema.json`  
-  `f68361bec55ee84c49682779f078f695baadf5a811733a2a5873c1a9d9dd5475`
+  `737eabcdcec83e6e682130c4eb2a641134c666b09530e8072836b01eb56e7ab4`
 - `schemas/worker/expert_labeling_card.v1.schema.json`  
   `8c320cb4c34fdfcf14c9c33be39d91445735251e347bc16cf9671ce8dba43c51`
 - `schemas/worker/expert_review_queue.v1.schema.json`  
@@ -264,15 +257,21 @@ Individual file hashes for verification:
 ### API Specs
 
 - `api/edge_local.v1.yaml`  
-  `27b0481c40bd0ebbe342a2b69ef199db3e29bcdf907edf15522ce52131507624`
+  `66f13926dd121b02e4ed062b3c380a519d9027d7f1aa5f767a87fc74c805065c`
 - `api/platform_internal.v1.yaml`  
-  `881c933253d6d3bd920d2b005b1a3c046411fb5ff028fb393d939fc34823a407`
+  `469a2b913155ca6cb8a3db2517104354c9bb9924bc2bd155d54bc6794b60a5e8`
 - `api/platform_public.v1.yaml`  
-  `e31c5aa55c30f8b918869e94efc363a199083bb64882b82893d18c4a7b774c37`
+  `9da723fe5942d681b6fa23c28631156e4cdb77d74859b190ac7da5fded6e9b5a`
 
 ---
 
 ## Changelog
+
+### v7.15.0 (2026-08-31)
+
+**Breaking:** NO
+
+C8: 7.15.0 re-pin (representative_tile_id)
 
 ### v7.14.0 (2026-08-31)
 
@@ -464,7 +463,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("b32b3c98078ad137716a8535530deb068b844408e978561604612d1762f7b049"), "Contracts checksum mismatch!"
+assert verify_contracts("607093f3c906ea6e52c1d70f24fe8b686834d4ad3c9ee2bd71c4e8ae0514abb7"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -477,7 +476,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("b32b3c98078ad137716a8535530deb068b844408e978561604612d1762f7b049"), "Contracts checksum mismatch!");
+assert(verifyContracts("607093f3c906ea6e52c1d70f24fe8b686834d4ad3c9ee2bd71c4e8ae0514abb7"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -528,4 +527,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-08-31T18:15:10.221074Z
+**Last Updated:** 2026-08-31T19:59:44.591240Z
