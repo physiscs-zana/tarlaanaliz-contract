@@ -3630,3 +3630,96 @@ platform), diğeri kaskadı (platform→worker) kırıyor; ikisi ayrı ayrı sı
 bilerek bozunca **kırmızıya dönmeli**. Bugünkü kod sessizce `[rep_id]` döndüğü için
 naif bir test **eşleşme olmadan da yeşil kalır** — 2026-08-30'da tam bu tuzağa
 düşüldü (fikstür sorgu biçimiyle hizasızdı, 26 test hiçbir şey ölçmüyordu).
+
+### 14.18-C — ZİNCİRİN TAMAMI ÖLÇÜLDÜ: iki DÜZELTME, bir SADELEŞME, bir yeni boşluk
+
+Üçüncü tur: eskalasyon/kanıt zincirine dokunan **tüm** dosyalar sayıldı ve karar
+değiştirebilecek olanlar okundu (`agent_messages.py` `EscalationRequest` bölgesi ·
+`publisher.py` idempotency · `tile_crop_renderer.py` **tamamı, 186** ·
+`expert_portal.py:470-575` karo-kanıtı üreticisi · `worker.py:1240-1295,1535-1560`).
+**Üretim veritabanından da ölçüldü.**
+
+#### 🔴 C-1 DÜZELTME — "11/11 bbox NULL" sayımı YANLIŞTI
+
+§14.18 *"`Detection.bbox` 11/11 NULL"* diyor. O 11 satır **fikstür/test tohumlarını
+da sayıyordu**. Üretimdeki gerçek analiz satırı **iki tane**:
+
+| sonuç | bulgu | `tile_id` | `rgb_uri` | `bbox` |
+|---|---|---|---|---|
+| `ab990df4` | 1 | 1 | **1** | 0 |
+| `d3cba4d8` | 1 | 1 | **1** | 0 |
+
+`bbox` yokluğu **doğru**; sayı yanlıştı. Ayrıca **her gerçek iş 1 bulgu taşıyor** —
+bu, `unknown_anomaly` atlamasının (`pipeline.py:3578`) bağlayıcı kısıt olduğunun
+doğrudan üretim kanıtıdır.
+
+#### ✅ C-2 SADELEŞME — beş karo **YALNIZCA WORKER İŞİ**
+
+§14.18 beş karo için `C-1`(sözleşme) + `P-1`(platform) kalemleri öneriyordu.
+**Ölçüm bunu gereksiz kıldı.** Zincir zaten uçtan uca liste biçiminde:
+
+| halka | ölçülen durum | kaynak |
+|---|---|---|
+| Görüntü üretimi | tespit taşıyan **her** karo için RGB+MS PNG | `pipeline.py:2018-2022` |
+| Üst sınır | **40** (5'in çok üstünde) | `tile_crop_renderer.py:DEFAULT_MAX_TILES` |
+| Yükleme | tek `sink.upload` çağrısı, `<job>/tiles/...` | `worker.py:1249-1260` |
+| Adres yazımı | her tespite `rgb_uri`/`ms_uri` | `worker.py:1275-1290` |
+| **Üretimde çalışıyor mu** | ✅ `rgb_uri` **DOLU** (2/2 gerçek satır) | üretim sorgusu |
+| Platform listesi | `findings` içindeki `tile_id`'li **her** karo, **üst sınır YOK**, en düşük güven önce | `expert_portal.py:542-556` |
+
+⭐ **Sonuç: `pipeline.py:3578`'i düzeltmek (W-4) tek başına beş karoyu uzmana
+ulaştırır.** Sözleşme ve platform değişikliği **gerekmez**. §14.18'in `C-1`/`P-1`
+kalemleri **yalnızca konum (bbox) için** geçerlidir; beş karo için değil.
+
+#### ✅ C-3 ÇÜRÜTÜLEN RİSK — eskalasyon idempotency çöküşü YOK
+
+Şüphe: beş karo beş eskalasyon üretirse, `(job_id, escalation_round)` türetilen
+idempotency anahtarı (`publisher.py`, P1-B1) dördünü düşürür mü? **Ölçüldü: hayır.**
+`EscalationRequest` **iş başına bir kez** kuruluyor (`worker.py:1547`), karo başına
+değil. İki **paralel kanal** var ve karıştırılmamalı:
+
+| kanal | biçim | işlevi |
+|---|---|---|
+| eskalasyon mesajı | **tekil** karo (`first_detection`) | yönlendirme/atama |
+| `analysis_results.findings` | **liste** | uzmanın baktığı **kanıt** |
+
+Beş karo ikinci kanaldan gider. ⚠️ Ama W-4 yazılırken **eskalasyondaki temsilci
+bilinçli seçilmeli**: bugün `first_detection` — yani sıradaki ilk karo — yönlendirmeyi
+belirliyor.
+
+#### ⚠️ C-4 YENİ BOŞLUK — kırmızı kenar (RE) GÖRÜNTÜYE hiç girmiyor
+
+Ürün sahibinin isteği *"her karonun ölçülen dalga boyları (yeşil, kırmızı, kırmızı
+kenar, yakın kızılötesi) farklı olsun"*. Ölçüldü:
+
+* `render_tile_crops` yalnız **G, R, NIR** bantlarını okuyor
+  (`tile_crop_renderer.py:_G,_R,_NIR`); RE bandı **istenmiyor bile**.
+* `false_color_renderer.py` içinde `RE`/`red_edge` geçmiyor (**0 eşleşme**).
+* RE bilgisi uzmana **yalnız sayı olarak** gidiyor: `ndre_value`
+  (`expert_portal.py:549`).
+
+Yani **sayılar dört bandı taşıyor, görüntüler üçünü.** Uzman kırmızı kenar
+farkını **gözle göremiyor**.
+→ **W-7 (yeni):** üçüncü kompozit (ör. NIR-RE-R) ya da NDRE ısı haritası.
+⚠️ Ürün kararı gerektirir: üçüncü görüntü **depolamayı ve uzman süresini** artırır;
+`DEFAULT_MAX_TILES=40` bütçesi buna göre gözden geçirilmeli.
+
+#### GÜNCELLENMİŞ İŞ KALEMİ TABLOSU (§14.18 + B + C birleşik)
+
+| # | iş | depo | önkoşul |
+|---|---|---|---|
+| **W-4** ⭐ | `unknown_anomaly` "ilkini al" yerine **≤5 çeşitlilik seçimi** | worker | **yok — tek başına beş karoyu teslim eder** |
+| **W-1** | `should_send_to_expert`'i detection döngüsünden çağır | worker | yok |
+| **W-2** | `get_group_info`'yu **karo kimliğiyle** çağır | worker | W-1 |
+| **W-3** | `Detection.bbox`'ı `polygon_geojson`'dan doldur | worker | yok |
+| **C-2** 🔴 | `expert_feedback`'e `representative_tile_id` (MINOR) | contract | yok |
+| **P-2** 🔴 | Toplu onayda temsilci karo kimliğini yaz | platform | C-2 |
+| **W-5** 🔴 | Kaskadı karo kimliğiyle çağır | worker | C-2, P-2 |
+| **W-6** | Eşleşmeyen kaskad **sessizce tek eleman dönmesin** | worker | yok |
+| **W-7** ⚠️ | RE'yi **görüntüye** taşı (ürün kararı) | worker | yok |
+| **C-1/P-1** | Konum alanı (yalnız **bbox** için; beş karo için DEĞİL) | ct+plat | W-3 |
+
+⭐ **Öneri: W-4 tek başına ayrı ve ilk tur olsun.** Ölçüldü ki hiçbir önkoşulu yok,
+sözleşme dokunuşu istemiyor ve ürün sahibinin sorduğu şeyi (*"birkaç ham görüntü
+gitsin"*) **tek dosyada** karşılıyor. Kaskad zinciri (C-2→P-2→W-5) ayrı ve daha
+pahalı bir turdur.

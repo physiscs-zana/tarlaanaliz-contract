@@ -79,7 +79,31 @@ dışa veriliyor (`:300`) — ama `Detection(...)` kurulurken (`:3588`) **verilm
 Platform tarafı da taşımıyor: `ReviewUncertainTile` (`expert_portal.py:119-127`)
 konum alanı içermiyor.
 
-### ⑥ Bu turun çıktısı ve DAL DURUMU
+### ⑥ ÜÇÜNCÜ TUR — zincirin tamamı ölçüldü (§14.18-C)
+
+* 🔴 **DÜZELTME:** *"`bbox` 11/11 NULL"* sayımı **fikstür satırlarını da sayıyordu**.
+  Üretimde gerçek analiz satırı **iki tane**, her biri **1 bulgu**; `bbox` yok ama
+  **`rgb_uri` DOLU**. Yani karo görüntüsü zinciri üretimde **çalışıyor**.
+* ⭐ **SADELEŞME:** beş karo **yalnızca worker işi**. Platform `findings` içindeki
+  `tile_id`'li **her** karoyu listeliyor (**üst sınır yok**, en düşük güven önce —
+  `expert_portal.py:542-556`), renderer sınırı **40**. → **`pipeline.py:3578`'i
+  düzeltmek (W-4) TEK BAŞINA beş karoyu uzmana ulaştırır**; sözleşme/platform
+  dokunuşu gerekmez. §14.18'in `C-1`/`P-1` kalemleri yalnız **bbox** içindir.
+* ✅ **ÇÜRÜTÜLEN RİSK:** *"beş karo beş eskalasyon → idempotency düşer"* — hayır.
+  `EscalationRequest` **iş başına bir kez** kuruluyor (`worker.py:1547`). İki
+  paralel kanal var: eskalasyon mesajı (**tekil**, yönlendirme) ve `findings`
+  (**liste**, kanıt). ⚠️ W-4'te eskalasyon temsilcisi bilinçli seçilmeli — bugün
+  `first_detection`.
+* ⚠️ **YENİ BOŞLUK (W-7):** **kırmızı kenar görüntüye hiç girmiyor.**
+  `render_tile_crops` yalnız G/R/NIR okuyor; `false_color_renderer`'da `RE` **0
+  eşleşme**. RE uzmana yalnız **sayı** olarak gidiyor (`ndre_value`). *Sayılar dört
+  bandı taşıyor, görüntüler üçünü.* Üçüncü kompozit ürün kararıdır (depolama +
+  uzman süresi).
+
+**Önerilen ilk tur: W-4 tek başına** — önkoşulsuz, tek dosya, ürün sahibinin
+sorduğu şeyi karşılıyor. Kaskad zinciri (C-2→P-2→W-5) ayrı ve pahalı turdur.
+
+### ⑦ Bu turun çıktısı ve DAL DURUMU
 
 - **`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §14.18** yazıldı — altı iş kalemi
   (**W-1..W-4**, **C-1**, **P-1**), önkoşullar ve riskler ölçümleriyle.
@@ -90,7 +114,7 @@ konum alanı içermiyor.
 - Yalnız `docs/` değişti → **sürüm yükseltmesi GEREKMEZ** (`pin_version` yalnızca
   `schemas/`, `enums/`, `api/` izler). Dört depo **7.13.0**'da hizalı kalıyor.
 
-### ⑦ 🔴 BİR SONRAKİ OTURUMUN AÇILIŞ SORUSU — DEĞİŞTİ
+### ⑧ 🔴 BİR SONRAKİ OTURUMUN AÇILIŞ SORUSU — DEĞİŞTİ
 
 Önceki tur *"tünel bant genişliği mimarisi"* diyordu (§0.B ④). **Sıralama önerisi:
 §14.18 ÖNCE gelmeli** — bant genişliği bir tutarsızlığı düzeltir, §14.18 ise
@@ -138,7 +162,7 @@ Bu turda **tam okunanlar**: `prototype_manager.py`, `field_clip.py`,
 `tile_group_id=None, tile_group_size=1` varsayıyor → gruplama canlıya alınınca
 **i.i.d. denetim seti** etkilenir, birlikte gözden geçirilmeli.
 
-### ⑧ Kural eklendi
+### ⑨ Kural eklendi
 
 Ürün sahibi (2026-08-31): **"tüm cevapları + araştırmaları ölçümle ver"** — araştırma
 sorularını da kapsar. Ölçemiyorsan *"ölçemedim"* de, tahmin etme.
