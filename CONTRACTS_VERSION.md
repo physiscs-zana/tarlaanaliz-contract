@@ -2,9 +2,9 @@
 
 ## Version: 7.14.0
 
-**Release Date:** 2026-08-31T18:10:21.841545Z  
+**Release Date:** 2026-08-31T18:15:10.221074Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `b6986075ef74e5e51b2c63b242fec30161e005daf7852a6b259f0459b281f83c`
+**Contracts Checksum (SHA-256):** `b32b3c98078ad137716a8535530deb068b844408e978561604612d1762f7b049`
 
 ---
 
@@ -169,7 +169,7 @@ Individual file hashes for verification:
 - `schemas/worker/analysis_job_started.v1.schema.json`  
   `18f84c05db0c764b1277ad898dddc4d406676159105ae50e4128b70da51ca430`
 - `schemas/worker/analysis_result.v1.schema.json`  
-  `c0cd948f6f4d4b72ebf114f5bf186703d34048fd48bb15aacd903fba1e428ff9`
+  `72feb0ab5dabe466f74e0b6e2821edf1c72a67a598a279a8f7a5258555c65bd7`
 - `schemas/worker/calibrated_dataset.v1.schema.json`  
   `a2e628b8ef996d8bdb828ef623a378aba9c43337b083351e0b137a312092618a`
 - `schemas/worker/calibration_metadata.v1.schema.json`  
@@ -271,7 +271,7 @@ Individual file hashes for verification:
 
 **Breaking:** NO
 
-expert_evidence: uzman kaniti icin AYRI EKSEN (additive, 0 breaking)
+expert_evidence: $defs politikasi unevaluatedProperties: false olarak duzeltildi
 
 ### v7.13.0 (2026-08-30)
 
@@ -457,7 +457,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("b6986075ef74e5e51b2c63b242fec30161e005daf7852a6b259f0459b281f83c"), "Contracts checksum mismatch!"
+assert verify_contracts("b32b3c98078ad137716a8535530deb068b844408e978561604612d1762f7b049"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -470,7 +470,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("b6986075ef74e5e51b2c63b242fec30161e005daf7852a6b259f0459b281f83c"), "Contracts checksum mismatch!");
+assert(verifyContracts("b32b3c98078ad137716a8535530deb068b844408e978561604612d1762f7b049"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -521,4 +521,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-08-31T18:10:21.841545Z
+**Last Updated:** 2026-08-31T18:15:10.221074Z
