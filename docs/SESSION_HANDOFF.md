@@ -22,7 +22,102 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-30, **yirmi üçüncü oturum: ÖRTÜ DÜŞÜŞÜ SAHTE ÇIKTI · KAPSAM ZİNCİRİ · SADE DİL · 19 PR**)
+## 0.A EN GÜNCEL — (2026-08-31, **yirmi dördüncü oturum: UZMANA GİDEN KANIT — İKİ SÜZGEÇ ÖLÇÜLDÜ**)
+
+> **Bu turun tek cümlesi:** Ürün sahibi *"uzmana neden birkaç ham görüntü
+> gönderilmiyor, %97 benzeyenler elenirse daha çok yararlanılır"* diye sordu.
+> **Ölçüldü: 110 karo kesiliyor, uzmana 1'i gidiyor** — konumsuz ve etiketsiz.
+> Hatırlanan **%97 eşiği kodda gerçekten var** ve tasarımın tamamı yazılmış;
+> **bağlı değil**. Bu tur **ölçüm + planlama** turudur; kod değişmedi.
+
+### ① Ölçülen durum
+
+| ölçüm | değer | kaynak |
+|---|---|---|
+| Kesilen karo | **110** | worker logu |
+| Uzmana giden | **1** | MinIO `results/<job>/tiles/` — 3 işte de 1 çift PNG |
+| Benzerlik eşiği | **0.97** (geçerli aralık 0.93–0.97) | `prototype_manager.py:432`, `config.py:637` |
+| Gruplama üretimde | `tile_group_size=1`, `tile_group_id=NULL` | üretim sorgusu (5 inceleme) |
+| `should_send_to_expert` çağıranı | **0** | `grep -rn … src/` |
+| *"Yeni benzer tile grubu"* logu | **0** | worker logu |
+| `Detection.bbox` | **11/11 NULL** | üretim sorgusu |
+| **Karo = ağaç mı?** | ❌ 512 px × 0.05 m = **25.6 m = 655 m²** → fıstık aralığı 6–8 m → **10–18 ağaç** | `model_config.py:73` + aritmetik |
+
+### ② ⚠️ Bağlı olmaması KUSUR DEĞİL — beyan edilmiş borç
+
+`prototype_manager.py:76-88` docstring'i: *"gates are ENFORCED at admission time …
+**BEFORE** the dedup path is wired into the live pipeline. Audit G.4 [3]"*.
+Gerekçe: yanlış kapı canlıya bağlanınca **eğitim setini zehirler** (kaskad etiket
+ground-truth olur). Dört kapı hazır: **F4** nadir/karantina sınıf asla gruplanmaz ·
+**F1(b)** sınıf saflığı · **F1(c)** indeks imzası L∞ yayılımı ≤ `0.15` ·
+kosinüs ≥ `0.97`. ⭐ F1(c) tam olarak *"farklı dalgaboyları"* fikridir.
+**Bir sonraki tur bu bağlantıyı yapar, kapıları yeniden icat ETMEZ.**
+
+### ③ İki kopuk halka (ölçüldü)
+
+1. **Besleme yok** — çağrı `pipeline.py:3576` olmalı; gereken **her girdi
+   `TileResult`'ta ZATEN var**: `embedding` (1024-d L2) · `predictions` ·
+   `ndvi_mean`/`ndre_mean` (indeks imzası) · `polygon_geojson`.
+2. **Yanlış anahtar** — `worker.py:1430` → `get_group_info(result.job_id)`;
+   imza `get_group_info(tile_id)`, arama `self._tile_to_group.get(tile_id)` →
+   **her zaman `(None, 1, None)`**. Besleme düzelse bile tek başına boş dönerdi.
+
+### ④ Seçim süzgeci (5 farklı karo) — HİÇ YOK
+
+Bugünkü seçim `pipeline.py:3578`: `if pred["class_id"] == "unknown_anomaly" and
+len(detections) > 0: continue`. Kural **eğitimli ürünler** için yazılmış; fıstık
+eğitimsiz → 110 karonun kanıtı **ilk bulunana** iniyor. Sonra
+`apply_fail_closed_masking` onu `SUPPRESSED` yapıyor (bu **doğru**) → uzman
+**isimsiz, konumsuz tek karo** görüyor. ⚠️ **Gruplama ≠ seçim**: Süzgeç-1
+bağlansa bile *hangi 5* sorusu ayrı ve bugün hiçbir yerde yok.
+
+### ⑤ Ayrıca: konum hesaplanıyor ama TAŞINMIYOR
+
+`build_tile_polygon_geojson` çağrılıyor (`pipeline.py:2347`), karo sözlüğüne
+yazılıyor (`:2362`), `Detection.bbox` alanı **var** (`analysis_result.py:29`) ve
+dışa veriliyor (`:300`) — ama `Detection(...)` kurulurken (`:3588`) **verilmiyor**.
+Platform tarafı da taşımıyor: `ReviewUncertainTile` (`expert_portal.py:119-127`)
+konum alanı içermiyor.
+
+### ⑥ Bu turun çıktısı ve DAL DURUMU
+
+- **`docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` §14.18** yazıldı — altı iş kalemi
+  (**W-1..W-4**, **C-1**, **P-1**), önkoşullar ve riskler ölçümleriyle.
+- Dal **`plan/uzman-kaniti-iki-suzgec`** `origin`'e **push edildi**, **PR AÇILMADI**
+  — ürün sahibinin kararı: *"yerelde kalsın, sonra toplu olarak PR+merge"*
+  (kredi tasarrufu: her PR ayrı CI maliyeti).
+- Kapılar: `check_doc_links` **rc=0** · `check_kestirme_yok` **rc=0**.
+- Yalnız `docs/` değişti → **sürüm yükseltmesi GEREKMEZ** (`pin_version` yalnızca
+  `schemas/`, `enums/`, `api/` izler). Dört depo **7.13.0**'da hizalı kalıyor.
+
+### ⑦ 🔴 BİR SONRAKİ OTURUMUN AÇILIŞ SORUSU — DEĞİŞTİ
+
+Önceki tur *"tünel bant genişliği mimarisi"* diyordu (§0.B ④). **Sıralama önerisi:
+§14.18 ÖNCE gelmeli** — bant genişliği bir tutarsızlığı düzeltir, §14.18 ise
+**uzman kapısının işlevini geri verir**; çiftçiye giden raporun kalitesi doğrudan o
+kapıya bağlı (uzman onayı olmadan hiçbir kart tam rapora geçemiyor). Bant genişliği
+kalemi **açık kalıyor**, iptal edilmedi.
+
+⚠️ **Uygulama turuna girmeden önce okunmalı** (bu turda okunmadı, dürüstlük notu):
+`feedback_handler.py` kaskad yolu · `orchestration_agent.py` · `reporting_agent.py`.
+Bu turda **tam okunanlar**: `prototype_manager.py`, `field_clip.py`,
+`expert_portal.py`, `analysis_result.py`, `expert.py`. **Bölgesel okunanlar**:
+`pipeline.py` (2300-2400 · 3550-3620 · 580-600), `worker.py` (1400-1450),
+`audit_set_sampler.py` (200-280).
+
+⚠️ **Kapasite riski:** `audit_set_sampler.py:216,271` bugün
+`tile_group_id=None, tile_group_size=1` varsayıyor → gruplama canlıya alınınca
+**i.i.d. denetim seti** etkilenir, birlikte gözden geçirilmeli.
+
+### ⑧ Kural eklendi
+
+Ürün sahibi (2026-08-31): **"tüm cevapları + araştırmaları ölçümle ver"** — araştırma
+sorularını da kapsar. Ölçemiyorsan *"ölçemedim"* de, tahmin etme.
+Kural yerel hafızaya işlendi (makineye özel, git ile taşınmaz — bkz. §5).
+
+---
+
+## 0.B — (2026-08-30, **yirmi üçüncü oturum: ÖRTÜ DÜŞÜŞÜ SAHTE ÇIKTI · KAPSAM ZİNCİRİ · SADE DİL · 19 PR**)
 
 > **Bu turun tek cümlesi:** Çiftçiye *"örtünüz %27.2'den %19.1'e düştü"* diye
 > okunabilecek bir tablo gidiyordu — **ölçüldü, farkın %95'i KAPSAM
