@@ -85,7 +85,13 @@
       "type": "array",
       "items": { "$ref": "#/$defs/Detection" },
       "default": [],
-      "description": "Specific detections (diseases, pests, weeds)"
+      "description": "Specific detections (diseases, pests, weeds). FARMER AXIS: this is what the farmer-facing projection reads. Evidence shown to the expert lives in `expert_evidence` and must never multiply this array."
+    },
+    "expert_evidence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/ExpertEvidenceTile" },
+      "default": [],
+      "description": "EXPERT AXIS: tiles handed to the expert as evidence. Separate from `detections` on purpose — growing this array must not change what the farmer sees. Selected by index-signature diversity (W-4)."
     },
     "index_maps": {
       "type": ["object", "null"],
@@ -232,6 +238,57 @@
   "required": ["job_id", "status"],
   "unevaluatedProperties": false,
   "$defs": {
+    "ExpertEvidenceTile": {
+      "type": "object",
+      "title": "ExpertEvidenceTile",
+      "description": "One tile shown to the expert as EVIDENCE, not as a diagnosis. Carries no class or severity on purpose (KR-025: the expert names the finding; the system does not).",
+      "properties": {
+        "tile_id": { "type": "string", "maxLength": 128, "description": "Tile identity (`<job_id>_t<idx>`). PII-free (KR-071)." },
+        "rgb_uri": { "type": ["string", "null"], "description": "True-colour crop of THIS tile." },
+        "ms_uri": { "type": ["string", "null"], "description": "False-colour (NIR-R-G) crop of THIS tile." },
+        "ndvi_value": { "type": ["number", "null"], "minimum": -1, "maximum": 1, "description": "Mean NDVI of THIS tile." },
+        "ndre_value": { "type": ["number", "null"], "minimum": -1, "maximum": 1, "description": "Mean NDRE of THIS tile." },
+        "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "Model confidence ON THIS TILE (not the job-wide trigger confidence)." },
+        "bbox": {
+          "type": ["object", "null"],
+          "description": "Tile position in pixel space. Null until the producer fills it (W-3).",
+          "properties": {
+            "x_min": { "type": "number" },
+            "y_min": { "type": "number" },
+            "x_max": { "type": "number" },
+            "y_max": { "type": "number" }
+          },
+          "additionalProperties": false
+        },
+        "index_map_uris": {
+          "type": ["object", "null"],
+          "description": "Per-index heat maps of THIS tile on a fixed [-1,+1] scale (W-7). Null when not produced.",
+          "properties": {
+            "ndvi": { "type": ["string", "null"] },
+            "ndre": { "type": ["string", "null"] },
+            "ndwi": { "type": ["string", "null"] },
+            "gndvi": { "type": ["string", "null"] }
+          },
+          "additionalProperties": false
+        },
+        "band_stats": {
+          "type": ["object", "null"],
+          "description": "Per-band min/max/mean/std of THIS tile (W-7). Keys are canonical band names (G, R, NIR, RE). Null when not produced.",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "min": { "type": "number" },
+              "max": { "type": "number" },
+              "mean": { "type": "number" },
+              "std": { "type": "number" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": ["tile_id"],
+      "additionalProperties": false
+    },
     "ResultId": {
       "type": "string",
       "pattern": "^result_[a-z0-9]{24}$",

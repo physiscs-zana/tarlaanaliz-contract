@@ -7,6 +7,35 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.14.0] - 2026-08-31 — uzman kanıtı için AYRI EKSEN
+
+### Eklendi
+- `analysis_result.v1` → **`expert_evidence`** dizisi + `$defs.ExpertEvidenceTile`.
+- `ExpertEvidenceTile`: `tile_id` (zorunlu) · `rgb_uri` · `ms_uri` · `ndvi_value` ·
+  `ndre_value` · `confidence` · `bbox` · `index_map_uris` (dört indeks ısı haritası) ·
+  `band_stats` (bant başına min/max/mean/std).
+
+### Neden
+W-4 (worker #277) uzmana giden kanıtı **1 karodan 5 karoya** çıkardı ve bu
+kanıtı `detections` dizisine yazdı. Ölçüldü: `detections` aynı zamanda
+**çiftçi** yüzeyinin kaynağıdır (`results_service_impl._normalize_detections`,
+tekilleştirme YOK) ve çiftçiye `tile_id`/`bbox` **verilmez** (KR-071) — yani
+uzman için yapılan bir iyileştirme, çiftçiye **5 ayırt edilemez satır** olarak
+dönerdi. Bugün tetiklenmiyor (üretimde hiçbir görev `DONE` değil, ölçüldü) ama
+ilk uzman onayında canlanırdı.
+
+⚠️ **Kural: uzman ekseni büyüyünce çiftçi ekseni büyümez.** İki eksen artık
+şemada AYRI: `detections` **çiftçi**, `expert_evidence` **uzman**.
+
+`ExpertEvidenceTile` bilerek **sınıf/şiddet taşımaz** (KR-025: bulguyu uzman
+adlandırır, sistem değil).
+
+### Uyum
+**0 breaking** — `breaking_change_detector` ile doğrulandı ("Optional field
+added: expert_evidence"). Alan opsiyoneldir; yazmayan üretici etkilenmez.
+
+---
+
 ## [7.13.0] - 2026-08-30 — hangi zararlı HANGİ dalgaboyunu gerektirir (kısıt ilanı)
 
 ### Eklendi
