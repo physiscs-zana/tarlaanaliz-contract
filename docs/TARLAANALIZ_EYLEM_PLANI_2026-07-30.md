@@ -3943,7 +3943,7 @@ ipucunun öne çıktığını **sıralar** ② **REJECT → `atlas.invalidate`**
 | o çağrıda `disease_class` | ❌ geçmiyor (O-4) |
 | `cache_warmer` (`disease_class` geçen tek kod) | üretimde **0 çağıran** |
 | L1 atlas'a sınıf yazan üretim yolu | **yok** |
-| Üretimde 100 kayıtta `disease_class` | **100/100 None** |
+| Üretimde `disease_class` | **157/157 None** (⚠️ önce *100/100* yazılmıştı — devir notu ⑭) |
 
 🔴 **`disease_hint` yapısal olarak DAİMA None.**
 

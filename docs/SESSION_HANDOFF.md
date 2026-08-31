@@ -45,12 +45,14 @@
 | ↳ **sağlıklı** | 🔴 **0 — hepsinde** | aritmetik (110−66−44=0) |
 | **Uzmana giden karo** | **1** — dört işin dördünde | `TILE_CROP.URETILDI karo=1` |
 | Benzerlik eşiği (%97) | **0.97**, varsayılan **açık** | `prototype_manager.py:432`, `config.py` |
-| Gruplama üretimde | `tile_group_size=1`, `tile_group_id=NULL` | üretim sorgusu |
+| Gruplama üretimde | `tile_group_size=1`, `tile_group_id=NULL` — **31/31 incelemede** | üretim sorgusu (⑭'te yeniden ölçüldü) |
 | `should_send_to_expert` çağıranı | **0** | `grep -rn … src/` |
-| `Detection.bbox` | **0/2 dolu** (gerçek analiz satırı iki tane) | üretim sorgusu |
-| `Detection.rgb_uri` | ✅ **2/2 DOLU** — karo görüntüsü zinciri **çalışıyor** | üretim sorgusu |
-| FAISS deposu | **100 vektör**, hepsi fıstık | `manifest.json: ntotal=100` |
-| ↳ `disease_class` | 🔴 **100/100 = None** | `metadata.pkl` |
+| Sonuç başına tespit | **1** — 11 üretim sonucunun **hepsinde** | `jsonb_array_length(findings)` (⑭) |
+| `Detection.bbox` | 🔴 **0 dolu / 11** | üretim sorgusu (⑭) |
+| `Detection.rgb_uri` | ✅ **11/11 DOLU** — karo görüntüsü zinciri **çalışıyor** | üretim sorgusu (⑭) |
+| FAISS deposu | **157 vektör**, hepsi fıstık | `manifest.json: ntotal=157` ⚠️ önce **100** yazılmıştı → ⑭ |
+| ↳ `disease_class` | 🔴 **157/157 = None** | `metadata.pkl` (⑭) |
+| ↳ `grade` | **157/157 `TrainingGrade.C`** — O-4 koruması ölçüldü | `metadata.pkl` (⑭) |
 | **Karo = ağaç mı?** | ❌ 512 px × 0.05 m = 25.6 m = 655 m² → **10–18 ağaç** | `model_config.py:73` |
 
 ⭐ **Sağlıklı karo sıfır** — ölçülebilir her karo "anomali". Eşik `ndvi<0.55`,
@@ -208,8 +210,9 @@ gör**, geri al. 2026-08-30'da tam bu tuzağa düşüldü.
 
 * `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` **§14.18 / -B / -C / -D / -E**
   (sonuncusu öz-denetim: kendi çelişkilerim).
-* **24 dosya tam okundu** (**20.102 satır** — ölçüldü): `pipeline.py` 4644 ·
-  `worker_bridge_consumer.py` 3075 · `expert_portal.py` 2310 · `worker.py` 1664 ·
+* **24 dosya tam okundu** (**20.292 satır** — ⚠️ bu satır önce *20.102* diyordu;
+  ⑭'te yeniden ölçüldü): `pipeline.py` 4644 ·
+  `worker_bridge_consumer.py` 3214 · `expert_portal.py` 2361 · `worker.py` 1664 ·
   `feedback_handler.py` 988 · `prototype_manager.py` 861 · `config.py` 776 ·
   `reporting_agent.py` 715 · `orchestration_agent.py` 546 ·
   `contract_validator.py` 530 · `agent_messages.py` 438 ·
@@ -219,9 +222,11 @@ gör**, geri al. 2026-08-30'da tam bu tuzağa düşüldü.
   `confidence_evaluator.py` 264 · `enums.py` 245 · `sub_specialty_resolver.py` 210
   (+ `tile_crop_renderer` 186 · `false_color_renderer` 159 ·
   `training_feedback_events` 143 · `expert_review_model` 130).
-* Dal **`plan/uzman-kaniti-iki-suzgec`** `origin`'e push edildi, **PR AÇILMADI**
-  (ürün sahibi kararı: toplu PR+merge). Kapılar: `validate` · `check_doc_links` ·
-  `check_kestirme_yok` = **rc 0**.
+* Dal **`plan/uzman-kaniti-iki-suzgec`** `origin`'e push edildi. ⚠️ Bu satır
+  yazıldığı anda PR yoktu; **sonradan açıldı ve merge edildi** — içerik
+  `master`'da (**#131**, **#132**). Kapılar: `validate` · `check_doc_links` ·
+  `check_kestirme_yok` = **rc 0** (2026-08-31'de senkron sonrası yeniden koşuldu:
+  167 dosya doğrulandı / 96 atıf izlendi / kimliksiz işaret 0 — üçü de rc 0).
 * Yalnız `docs/` değişti → **sürüm yükseltmesi GEREKMEZ**. Dört depo **7.13.0**.
 
 ### ⑫ 🔴 BİR SONRAKİ OTURUMUN AÇILIŞ SORUSU
@@ -235,6 +240,85 @@ düzeltir, TUR 1 öğrenme döngüsünü açar.
 Ürün sahibi (2026-08-31): **"tüm cevapları + araştırmaları ölçümle ver"** —
 araştırma sorularını da kapsar. Ölçemiyorsan *"ölçemedim"* de, tahmin etme.
 Kural yerel hafızaya işlendi (makineye özel, git ile taşınmaz — bkz. §5).
+
+### ⑭ 🔴 BAĞIMSIZ DENETİM — bu bölümün ÜÇ kusuru (2026-08-31, ayrı tur)
+
+Ürün sahibi §0.A'nın ve eylem planının doğruluğunu **ölçümle** sınamamı istedi.
+§0.A ve §14.18'in ölçülebilir iddiaları **tek tek** sınandı: kod atıfları,
+şema alanları, enum sayıları, aritmetik ve üretim sorguları. **Üçü kusurlu
+çıktı**; geri kalanı — `dosya:satır` düzeyinde **50'den fazla** atıf dahil —
+birebir tuttu. Kusurların hiçbiri §0.A'nın **sonucunu** çürütmedi, ama üçü de
+kayda geçiyor.
+
+#### Kusur 1 — iki platform dosyası BAYAT kopyadan okundu
+
+| dosya | ⑪'de yazan | yerel (8 commit geride) | `origin/main` |
+|---|---|---|---|
+| `worker_bridge_consumer.py` | 3075 | **3075** | 3214 |
+| `expert_portal.py` | 2310 | **2310** | 2361 |
+
+Pozitif kontrol: yazılan sayılar bayat kopyayla **birebir**. O iki dosyaya son
+dokunuş **2026-08-30**, bu bölümün commit'i **2026-08-31 15:55** — yani yeni
+hâlleri ölçüm anında zaten oradaydı. Gerçek toplam **20.292**.
+
+**Sonucu:** o tur platform'un **#493–#500** PR'larının hiçbirini görmedi (yalnız
+bu iki dosyada **+219/−29 satır** fark). Bunlardan **#499** uzman ekranına
+`field_mean_ndvi` · `field_mean_basis` · `field_coverage_ratio` ekliyor;
+bu üç alan ne §0.A'nın geri kalanında ne de §14.18'de **geçmiyordu** — bu
+bölümden önce hiçbir yerde adı anılmıyordu.
+
+**Ama sonuçlar ayakta:** bu dosyalar hakkındaki somut iddialar `origin/main`'de
+tek tek yeniden ölçüldü — `ReviewUncertainTile` hâlâ konumsuz (yeni alanlar
+`ReviewImagesResponse`'a gitmiş, `expert_portal.py:190-197`), `_karo_kaniti_kur`
+hâlâ sayfalama almıyor, ayna enum hâlâ **6** değer. **Hiçbiri çürümedi.**
+
+#### Kusur 2 — FAISS "100 vektör" bugün yeniden üretilemiyor
+
+```
+manifest.json : ntotal=157, saved_at 2026-08-31T14:24:05Z
+kayıtlar      : 6 iş — 25 / 25 / 25 / 25 / 35 / 22
+en geç damga  : 2026-08-30 17:29   (bu bölümün commit'i: 2026-08-31 12:55Z)
+```
+
+Depo **tek**: `data/embeddings/` (bind-mount, `warm/` boş, `.gitignore`'da →
+geçmişi yok). Yani kayıtların tamamı bu bölüm yazılmadan **önce** oluşmuş.
+Mekanizma (disk manifestinin bayat okunmuş olması) **ölçülmedi** — tahmin
+edilmiyor.
+
+**Özü doğrulandı ve güçlendi:** `disease_class` **157/157 None** · `crop_type`
+**157/157 pistachio** · `grade` **157/157 `TrainingGrade.C`** (O-4 koruması
+böylece ilk kez veriden ölçüldü).
+
+#### Kusur 3 — "PR AÇILMADI" bayat
+
+İçerik `master`'da: **#131**, **#132**. ⑪'de düzeltildi.
+
+#### ⚠️ AÇIKLANAMAYAN — sessiz bırakılmıyor
+
+① tablosu dört işin anomali sayısını `44 / 35 / 35 / 22` diyor. FAISS'te **35 ve
+22 var** (ikisi de 08-30), **44 hiç yok**, ve ① tablosunda geçmeyen **dört ayrı
+25'lik iş** var. `memory.store` her anomali karosu için koşuyor ve **üst sınır
+yok** (ölçüldü) → 44'lük işin gömüleri **olmalıydı**. Nedeni **ölçülemedi**.
+
+#### ⚠️ ÖLÇÜLEMEYEN — worker logu
+
+`110 tiles` · `66/75/75/3` · `44/35/35/22` · `TILE_CROP.URETILDI karo=1`: bu
+makinedeki konteynerin log penceresi **08-24 → 08-28**, o dört iş dışarıda.
+⭐ Ama pencere içindeki **iki başka işte** aynı desen bağımsız olarak çıktı:
+sağlıklı karo **0** (36−11−25 = 0 ve 25−0−25 = 0) ve `TILE_CROP.URETILDI karo=1`.
+Üretim DB'si de aynı yöne bakıyor: **11 sonucun 11'inde de tam 1 tespit**.
+
+#### ⭐ Yan bulgu — W-8'in kapsamı sanılandan GENİŞ olabilir
+
+Platform tüketicisi eskalasyondan `tile_group_id` · `tile_group_size` ·
+`tile_group_similarity_min` okuyor ama **`tile_id` okumuyor**
+(`worker_bridge_consumer.py:267-317`), ve `expert_reviews` tablosunda **`tile_id`
+kolonu yok** (üretim `information_schema` sorgusu). §14.18-D'nin *"alan iki yerde
+de VAR → sözleşme gerekmez"* ifadesi **kanonik şema için doğru**, **platform
+kalıcılığı için değil**. ⚠️ Bu bir **iddia değil, ölçüm**; W-8 uygulanırken
+kapsam yeniden doğrulanacak — uzman ekranı `tile_id`'yi bugün zaten
+`findings`'ten alıyor (üretimde **11/11 dolu**), yani W-8'in kazancı ekran değil
+**eskalasyon satırının kendisi**.
 
 ## 0.B — (2026-08-30, **yirmi üçüncü oturum: ÖRTÜ DÜŞÜŞÜ SAHTE ÇIKTI · KAPSAM ZİNCİRİ · SADE DİL · 19 PR**)
 
