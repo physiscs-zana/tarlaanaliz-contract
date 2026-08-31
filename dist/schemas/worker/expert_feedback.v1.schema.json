@@ -116,7 +116,15 @@
         "string",
         "null"
       ],
-      "description": "KARAR-15: Expert bulk approval ID (>=5 tiles + same field + same L3 class, grade=B default)"
+      "description": "KARAR-15: batch id shared by SEPARATE reviews the expert approved in one click (platform: BulkApproveRequest.review_ids, 5-50 reviews). AUDIT/GROUPING ONLY. NOT a cascade trigger: it says nothing about tile grouping, and treating its presence as 'fan this verdict out to group members' silently propagates one expert decision to tiles the expert never saw once the dedup path is live. Use `representative_tile_id` for that."
+    },
+    "representative_tile_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 128,
+      "description": "The tile whose expert verdict may be fanned out to the members of ITS similarity group (SimilarTileDeduplicator). Null = no group, no cascade. This is the ONLY cascade trigger; `bulk_approval_id` is a separate concept (see there). Explicit on purpose: the producer must state that a group exists, rather than a consumer inferring it from an unrelated field."
     },
     "mask_correction": {
       "type": [

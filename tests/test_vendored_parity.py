@@ -297,7 +297,21 @@ def _strip_annotations(node: Any) -> Any:
 #     EKSİK kaldığı sürece onu yazan ilk belge worker'ın kapısında REDDEDİLİR (ÖD-2'nin
 #     tam deseni). Alanı KABUL etmek ölü değil, mayın temizlemedir; onu YAZMAK ayrı iş.
 #   * `analysis_job.v1` beyanı zaten `527c174`'te silinmişti (W13).
-PENDING_PROPAGATION: dict[str, dict] = {}
+PENDING_PROPAGATION: dict[str, dict] = {
+    "expert_feedback.v1.schema.json": {
+        "properties": {"representative_tile_id"},
+        "why": (
+            "C-2 / 7.15.0 (2026-08-31): kaskad tetigi `bulk_approval_id`'den AYRILDI. "
+            "Ayni alan iki kavram tasiyordu — platformda '5-50 AYRI incelemeyi tek tikla "
+            "onayladim', worker'da 'bu bir KARO GRUBUNUN temsilcisidir'. Bugun zararsiz "
+            "(uretimde tile_group_id 31/31 NULL), ama suzgec-1 canliya baglandigi anda bir "
+            "uzmanin karari HIC GORMEDIGI karolara yayilirdi. "
+            "KAPANIS: worker vendored kopyasi 7.15.0'a re-pin edildiginde (W-5 PR'i) bu "
+            "beyan SILINIR; `test_declared_propagation_is_not_stale` bayat kalmasina izin "
+            "vermez."
+        ),
+    },
+}
 
 W14_DECISION = (
     "KARAR (koordinator, 2026-08-01): bu degerler WORKER'DA KALIR - platformda gerekmiyor. "
