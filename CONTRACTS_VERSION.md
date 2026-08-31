@@ -1,10 +1,10 @@
 # TarlaAnaliz Contracts Version Lock
 
-## Version: 7.13.0
+## Version: 7.14.0
 
-**Release Date:** 2026-08-30T11:45:42.895940Z  
+**Release Date:** 2026-08-31T18:10:21.841545Z  
 **Breaking Change:** NO  
-**Contracts Checksum (SHA-256):** `1e43814d346f8f22e06ecbf3d4de1a9aaadd95a2e7cb08e2e217fa1c745b8f54`
+**Contracts Checksum (SHA-256):** `b6986075ef74e5e51b2c63b242fec30161e005daf7852a6b259f0459b281f83c`
 
 ---
 
@@ -169,7 +169,7 @@ Individual file hashes for verification:
 - `schemas/worker/analysis_job_started.v1.schema.json`  
   `18f84c05db0c764b1277ad898dddc4d406676159105ae50e4128b70da51ca430`
 - `schemas/worker/analysis_result.v1.schema.json`  
-  `42cc6686b2bdbcdf35f107b1614fd24d4376f98e3d114bd58fed08ea8c4fccc6`
+  `c0cd948f6f4d4b72ebf114f5bf186703d34048fd48bb15aacd903fba1e428ff9`
 - `schemas/worker/calibrated_dataset.v1.schema.json`  
   `a2e628b8ef996d8bdb828ef623a378aba9c43337b083351e0b137a312092618a`
 - `schemas/worker/calibration_metadata.v1.schema.json`  
@@ -257,15 +257,21 @@ Individual file hashes for verification:
 ### API Specs
 
 - `api/edge_local.v1.yaml`  
-  `c8f2f3b47efce94749c7b30f6bc19a78714d21422567b010df50f84962017737`
+  `27b0481c40bd0ebbe342a2b69ef199db3e29bcdf907edf15522ce52131507624`
 - `api/platform_internal.v1.yaml`  
-  `f137a51574a987b84806e773987b8ea0e116317a608f20efb709bc777e3ec7d2`
+  `881c933253d6d3bd920d2b005b1a3c046411fb5ff028fb393d939fc34823a407`
 - `api/platform_public.v1.yaml`  
-  `fc7be3a24ee3d3549e35c9a368ef7df169d83903cdb94663e230f380274b0a6a`
+  `e31c5aa55c30f8b918869e94efc363a199083bb64882b82893d18c4a7b774c37`
 
 ---
 
 ## Changelog
+
+### v7.14.0 (2026-08-31)
+
+**Breaking:** NO
+
+expert_evidence: uzman kaniti icin AYRI EKSEN (additive, 0 breaking)
 
 ### v7.13.0 (2026-08-30)
 
@@ -451,7 +457,7 @@ def verify_contracts(expected_checksum: str) -> bool:
     actual_checksum = compute_contracts_checksum()
     return actual_checksum == expected_checksum
 
-assert verify_contracts("1e43814d346f8f22e06ecbf3d4de1a9aaadd95a2e7cb08e2e217fa1c745b8f54"), "Contracts checksum mismatch!"
+assert verify_contracts("b6986075ef74e5e51b2c63b242fec30161e005daf7852a6b259f0459b281f83c"), "Contracts checksum mismatch!"
 ```
 
 ### Node.js
@@ -464,7 +470,7 @@ function verifyContracts(expectedChecksum) {
   return actualChecksum === expectedChecksum;
 }
 
-assert(verifyContracts("1e43814d346f8f22e06ecbf3d4de1a9aaadd95a2e7cb08e2e217fa1c745b8f54"), "Contracts checksum mismatch!");
+assert(verifyContracts("b6986075ef74e5e51b2c63b242fec30161e005daf7852a6b259f0459b281f83c"), "Contracts checksum mismatch!");
 ```
 
 ### CI/CD Integration
@@ -515,4 +521,4 @@ git submodule update --remote
 - **Hash Algorithm:** SHA-256 (collision-resistant, FIPS 140-2 compliant)
 - **Timestamp:** ISO 8601 UTC format
 
-**Last Updated:** 2026-08-30T11:45:42.895940Z
+**Last Updated:** 2026-08-31T18:10:21.841545Z
