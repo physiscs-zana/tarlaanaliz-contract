@@ -69,7 +69,7 @@ disease_class = None   ←   1 karo görüyor  ←  unknown_anomaly 1'e iniyor
 ```
 
 Zincir satır satır:
-* `_build_predictions` (`pipeline.py:3480`) adlandırılmış tahmin için
+* `_build_predictions` (`pipeline.py:3451`) adlandırılmış tahmin için
   `memory_result.disease_hint` istiyor.
 * `disease_hint` = komşunun `disease_class`'ı
   (`memory_orchestrator._weighted_top_disease_hint`).
@@ -78,7 +78,7 @@ Zincir satır satır:
   kendi tahminini derece olarak yazarsa kendi çıktısıyla beslenir).
 * → hint hep None → `if is_ood or ndvi_mean < 0.4` dalı → **her anomali karosu
   `unknown_anomaly`** (üretimde `ndvi_mean = 0.282`).
-* → `_aggregate_results:3585` "unknown_anomaly ve zaten tespit varsa atla" →
+* → `_aggregate_results:3586` "unknown_anomaly ve zaten tespit varsa atla" →
   **ilkinden sonrası atılıyor**.
 
 ⛔ **O-4'ü gevşetmek YASAK** — döngüyü modelin kendi tahminiyle kapatmak tam da
@@ -100,7 +100,7 @@ karo kimliği `f"{job_id}_t{idx:04d}"` (`pipeline.py:2358`) → **daima boş**.
 
 ### ④ SÜZGEÇ-2 (hangi 5 karo) — HİÇ YOK, ve tek satır DEĞİL
 
-Bugün seçim yok; `:3585` "ilkini al" var. **W-4 bir SEÇİM FONKSİYONU ister**:
+Bugün seçim yok; `:3586` "ilkini al" var. **W-4 bir SEÇİM FONKSİYONU ister**:
 aday havuzu `tile_results` (anomali karoları, 22–44 adet), ölçüt indeks imzası
 (`[ndvi_mean, ndre_mean]`) uzaklığını maksimize etmek. Girdilerin hepsi hazır.
 
@@ -118,7 +118,7 @@ aday havuzu `tile_results` (anomali karoları, 22–44 adet), ölçüt indeks im
 
 ⚠️ **Nereye bağlanacağı MİMARİ bir kısıt:** ham bantlar **yalnız `pipeline`
 kapsamında** yaşıyor; *"bantları yukarı taşımak tüm uçuşu bellekte tutmak
-olurdu"* (`pipeline.py:1998`). Yani D-13 paketini `ReportRequest` üzerinden
+olurdu"* (`pipeline.py:2000`). Yani D-13 paketini `ReportRequest` üzerinden
 diriltmek **yanlış yol**. Doğru yol **DK-48 deseni**: `tile_crop_renderer`
 üretsin → `PipelineResponse.tile_crop_artifacts` taşısın → `worker.py` yüklesin.
 
@@ -175,10 +175,10 @@ docstring'i *"ValueError fırlatır"* diyor — **ölçüldü, yanlış**:
 
 | # | dokunulan | sonuç |
 |---|---|---|
-| **W-4** | `pipeline.py:3585` → çeşitlilik seçimi (≤5) | uzman **1 yerine 5** karo görür; halka kırılır |
+| **W-4** | `pipeline.py:3586` → çeşitlilik seçimi (≤5) | uzman **1 yerine 5** karo görür; halka kırılır |
 | **W-8** | `worker.py:1547` → `tile_id=first_detection.tile_id` | eskalasyon **hangi karo** olduğunu söyler |
 | **W-7** | `tile_crop_renderer` → dört indeks ısı haritası + bant istatistiği | uzman **dört bandın** sonucunu görür |
-| **P-3** | `expert_profile_builder.py:104-137` | kota defteri 5'i 5 sayar (yoksa C12 B1 geri gelir) |
+| **P-3** | `expert_profile_builder.py:102-137` | kota defteri 5'i 5 sayar (yoksa C12 B1 geri gelir) |
 
 **TUR 2 (konum)** — W-3 + C-1/P-1 · **TUR 3 (kaskad, pahalı)** — C-2 → P-2 → W-5
 (+ W-1/W-2/W-6) · **TUR 4 (küçük)** — P-4 enum + parite testi.
@@ -191,7 +191,7 @@ gör**, geri al. 2026-08-30'da tam bu tuzağa düşüldü.
 
 * `docs/TARLAANALIZ_EYLEM_PLANI_2026-07-30.md` **§14.18 / -B / -C / -D / -E**
   (sonuncusu öz-denetim: kendi çelişkilerim).
-* **20 dosya tam okundu** (17.267 satır): `pipeline.py` 4644 ·
+* **24 dosya tam okundu** (**20.102 satır** — ölçüldü): `pipeline.py` 4644 ·
   `worker_bridge_consumer.py` 3075 · `expert_portal.py` 2310 · `worker.py` 1664 ·
   `feedback_handler.py` 988 · `prototype_manager.py` 861 · `config.py` 776 ·
   `reporting_agent.py` 715 · `orchestration_agent.py` 546 ·

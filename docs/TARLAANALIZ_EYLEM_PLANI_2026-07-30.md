@@ -3472,7 +3472,7 @@ kapı** taşıyor, hepsi yazılmış ve test edilmiş:
 
 ### SÜZGEÇ-2 — "dört bandın imzası farklı 5 karo seç" · **YOK**
 
-Bugünkü seçim `pipeline.py:3578`:
+Bugünkü seçim `pipeline.py:3586`:
 
 ```python
 if pred["class_id"] == "unknown_anomaly" and len(detections) > 0:
@@ -3509,7 +3509,7 @@ Platform tarafında da alan yok: `ReviewUncertainTile` (`expert_portal.py:119-12
 | **W-1** | `should_send_to_expert`'i detection döngüsünden çağır (tile_id · embedding · crop · predicted_class · index_signature) | worker | `pipeline.py:3576` |
 | **W-2** | `get_group_info(result.job_id)` → **temsilci karo kimliği** | worker | `worker.py:1430` |
 | **W-3** | `Detection.bbox`'ı `polygon_geojson`'dan doldur | worker | `pipeline.py:3588` |
-| **W-4** | `unknown_anomaly` "ilk bulunanı al" kuralını **çeşitlilik seçimiyle** değiştir (≤5) | worker | `pipeline.py:3578` |
+| **W-4** | `unknown_anomaly` "ilk bulunanı al" kuralını **çeşitlilik seçimiyle** değiştir (≤5) | worker | `pipeline.py:3586` |
 | **C-1** | `ReviewUncertainTile`'a konum alanı (kanonik sözleşme gerekirse MINOR) | contract | `report_phase`/uzman ekseni |
 | **P-1** | Uzman ucu konum + grup bilgisini sunsun (`tile_group_size` zaten kolon) | platform | `expert_portal.py:119` |
 
@@ -3650,7 +3650,7 @@ da sayıyordu**. Üretimdeki gerçek analiz satırı **iki tane**:
 | `d3cba4d8` | 1 | 1 | **1** | 0 |
 
 `bbox` yokluğu **doğru**; sayı yanlıştı. Ayrıca **her gerçek iş 1 bulgu taşıyor** —
-bu, `unknown_anomaly` atlamasının (`pipeline.py:3578`) bağlayıcı kısıt olduğunun
+bu, `unknown_anomaly` atlamasının (`pipeline.py:3586`) bağlayıcı kısıt olduğunun
 doğrudan üretim kanıtıdır.
 
 #### ✅ C-2 SADELEŞME — beş karo **YALNIZCA WORKER İŞİ**
@@ -3667,8 +3667,9 @@ doğrudan üretim kanıtıdır.
 | **Üretimde çalışıyor mu** | ✅ `rgb_uri` **DOLU** (2/2 gerçek satır) | üretim sorgusu |
 | Platform listesi | `findings` içindeki `tile_id`'li **her** karo, **üst sınır YOK**, en düşük güven önce | `expert_portal.py:542-556` |
 
-⭐ **Sonuç: `pipeline.py:3578`'i düzeltmek (W-4) tek başına beş karoyu uzmana
-ulaştırır.** Sözleşme ve platform değişikliği **gerekmez**. §14.18'in `C-1`/`P-1`
+⭐ **Sonuç: W-4 beş karoyu uzmanın EKRANINA ulaştırır** (teslim yolu sözleşme/
+platform değişikliği istemez). ⚠️ **DÜZELTİLDİ (§14.18-D/E):** kota DEFTERİ için
+**P-3 platform kalemi GEREKİR** — uzman 5 görür, sistem 1 sayar. §14.18'in `C-1`/`P-1`
 kalemleri **yalnızca konum (bbox) için** geçerlidir; beş karo için değil.
 
 #### ✅ C-3 ÇÜRÜTÜLEN RİSK — eskalasyon idempotency çöküşü YOK
@@ -3708,7 +3709,7 @@ farkını **gözle göremiyor**.
 
 | # | iş | depo | önkoşul |
 |---|---|---|---|
-| **W-4** ⭐ | `unknown_anomaly` "ilkini al" yerine **≤5 çeşitlilik seçimi** | worker | **yok — tek başına beş karoyu teslim eder** |
+| **W-4** ⭐ | `unknown_anomaly` "ilkini al" yerine **≤5 çeşitlilik seçimi** | worker | **yok** — ekrana ulaştırır; kota defteri için P-3 (bkz. §14.18-D) |
 | **W-1** | `should_send_to_expert`'i detection döngüsünden çağır | worker | yok |
 | **W-2** | `get_group_info`'yu **karo kimliğiyle** çağır | worker | W-1 |
 | **W-3** | `Detection.bbox`'ı `polygon_geojson`'dan doldur | worker | yok |
@@ -3719,7 +3720,7 @@ farkını **gözle göremiyor**.
 | **W-7** ⚠️ | RE'yi **görüntüye** taşı (ürün kararı) | worker | yok |
 | **C-1/P-1** | Konum alanı (yalnız **bbox** için; beş karo için DEĞİL) | ct+plat | W-3 |
 
-⭐ **Öneri: W-4 tek başına ayrı ve ilk tur olsun.** Ölçüldü ki hiçbir önkoşulu yok,
+⭐ **Öneri (⚠️ §14.18-D'de GÜNCELLENDİ: TUR 1 = W-4+W-8+W-7+P-3).** Ölçüldü ki W-4'ün önkoşulu yok,
 sözleşme dokunuşu istemiyor ve ürün sahibinin sorduğu şeyi (*"birkaç ham görüntü
 gitsin"*) **tek dosyada** karşılıyor. Kaskad zinciri (C-2→P-2→W-5) ayrı ve daha
 pahalı bir turdur.
@@ -3803,7 +3804,7 @@ havuzundan** seçilir; `ndvi_mean`/`ndre_mean`/`embedding` hepsinde hazır.
 
 | # | iş | depo | önkoşul | not |
 |---|---|---|---|---|
-| **W-4** ⭐ | `unknown_anomaly` "ilkini al" → **≤5 çeşitlilik seçimi** (anomali havuzundan, L∞ imza uzaklığı) | worker | **yok** | tek başına beş karoyu teslim eder |
+| **W-4** ⭐ | `unknown_anomaly` "ilkini al" → **≤5 çeşitlilik seçimi** (anomali havuzundan, L∞ imza uzaklığı) | worker | **yok** | ekrana ulaştırır; defter için P-3 |
 | **W-8** ⭐ | Eskalasyona `tile_id` geç | worker | yok | **sözleşme gerekmez**, alan zaten kanonikte |
 | **W-7** ⭐ | D-13 paketini `INDICES_ONLY` için **ölçüm-yalnız** dirilt (dört bant) | worker | yok | ürün sahibi kararı; kod ZATEN var |
 | **P-3** 🔴 | Kota sayacı gösterilen karoyu saysın | platform | W-4 | yoksa C12 B1 geri gelir |
