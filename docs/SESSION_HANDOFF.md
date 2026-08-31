@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-08-26 (**yirmi birinci oturum** — 🔴 **çiftçi tarla ekleyemiyordu**: saha kanıtından kök nedene, beş PR (plat #473/#474/#478/#479/#480) — ekran çiftçiye **yalan söylüyordu** (boş ama truthy sınır), `Invalid LngLat (NaN, NaN)` kök nedeni **deneyle kanıtlandı** (tür etiketine güvenmek; etiketi uyduran da bizim kodumuzdu), tarla ekleme **tek butona** indi · A-1/A-2 `/docs` üretimde fail-OPEN (#476) + G-1 WORM tablosuna yanlış “teslim edildi” (#477) · ⭐ **DAĞITIM İLK KEZ ÜÇ KATMANDA ÖLÇÜLDÜ** — üretim `origin/main` ile **0 commit** hizalı, backend konteynerinde ve **canlı web paketinde** doğrulandı · ⚠️ iki oturum **kayıt bırakmadan** kapandı, bu bölüm depodan kurtarıldı. Detay: §0.A. Önceki: 2026-08-25 (**yirminci oturum** — önceki turun devir notu **bağımsız denetimden geçti** (4 kusur + 1 yeni bulgu + 3 karar) · 🔴 **canlı çiftçi hatası** düzeltildi: tarla eklenemiyordu, arayüz sözleşmenin bayat aynasıydı (plat #468) · 🔴 **T01-K1 gerilemesi kapandı** — kapı doğruydu, KÜME yanlıştı; düşük-güvenli her işte uzman incelemesi sessizce kapanıyordu (plat #469) · Y1 sınıfı (üç üye) + Y2 üretici formu + çift declare (plat #470) · **K3** DLX'e bağlı kuyruk yoktu, **#467 bunu kapatmıyor** (plat #471) · **Y3** iş ekseni artık kanıt taşıyor, `status="FAILED"` bilerek YAPILMADI (plat #472) · iki sarkan betik atfı + Y4 tuzağı + yeni kapı (work #259). ⛔ “Hiçbiri dağıtılmadı” iddiası 2026-08-26'da **ÇÜRÜTÜLDÜ** — ölçüldü, altısı da canlıda (§0.A ③). Önceki: 2026-08-19/20 (**on altıncı oturum** — uzman ekranı zinciri: sonuç↔veri seti bağı sınıfı tamamen kapatıldı (#441/#443) · **üretimde ölü döşeme servisi** bulundu ve düzeltildi (#446 — NumPy x86-64-v2 uyumsuzluğu, 7770 log satırı) · CI asılma kapakları (#442) · alan adı + BOUND kapısı (#444) · dağıtımda submodule kapısı + simülasyon bağımsızlığı (#445) · kartlar alt uzmanlık duyarlı (#447). ✅ **7 PR MERGE EDİLDİ ve DAĞITILDI**. Önceki: 2026-08-18 (**on üçüncü/on dördüncü oturum** — KR-013-2 komşuluk kapısı sahipten bağımsız hâle getirildi (#91) · CLAUDE.md dört depoda Opus 5 rehberine göre yeniden yapılandırıldı + `check_claude_md_refs.py` atıf bütünlüğü kapısı kuruldu (#92) · kök `CLAUDE.md` + oturum-başı kanca kalıcılık için contract'a taşındı (#93) · dört depoda `docs/`+`denetim/` (191 dosya) tam-okuma denetimi: platform+worker sıfır aday, contract'ta 2 alansız dosya silindi/taşındı (#94). **AL-K26 (I-1 hizası) bu turda platformun 7.6.1'de kaldığı iddiasıyla açık görünüyordu — ölçüldü, 2026-08-13'te KAPANMIŞ ve dört depo bugün de 7.7.2'de hizalı** (bkz. §0.A, önceki turun bu satırı düzeltildi). Önceki: **on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
+**Son güncelleme:** 2026-08-30 (**yirmi üçüncü oturum** — 🔴 **çiftçiye giden "örtü düşüşü" SAHTE ÇIKTI**: −8.1 puanın **−7.7'si kapsam artefaktı**, gerçek değişim **−0.4** (yedi eşikte + negatif/pozitif kontrolle ölçüldü) · kapsam zinciri uçtan uca kuruldu (ct **7.11.0/7.12.0/7.13.0**, work #272/#274/#275, plat #493–#500) · **10 kusur** kapatıldı, hepsi mutasyonla · `mod=INDICES_ONLY`·`KR-025`·`SUPPRESSED` **çiftçi ekranına sızıyordu**, kapı kondu · SUPERSEDE **görev** kapsamlıydı, başka uçuşun incelemesini kapatıyordu · fıstık **`detection_requirements`** kısıt ilanı (psillid için uzaktan algılama literatürü **YOK**) · edge SSOT `7.8.0→7.13.0`. **19 PR MERGE EDİLDİ**, dört depo **7.13.0**'da. 🔴 **AÇIK ENGEL:** analiz tamamlanamıyor — tünel **0.47–0.90 MB/s** ölçüldü, 276 MB ortofoto okunamıyor; boru hattı doğru davranıp `NO_RESULT` veriyor. ⛔ SSRF gerekçeli timeout/retry sabitlerini gevşetme. Detay ve **açılış sorusu**: §0.A ④. Önceki: 2026-08-26 (**yirmi birinci oturum** — 🔴 **çiftçi tarla ekleyemiyordu**: saha kanıtından kök nedene, beş PR (plat #473/#474/#478/#479/#480) — ekran çiftçiye **yalan söylüyordu** (boş ama truthy sınır), `Invalid LngLat (NaN, NaN)` kök nedeni **deneyle kanıtlandı** (tür etiketine güvenmek; etiketi uyduran da bizim kodumuzdu), tarla ekleme **tek butona** indi · A-1/A-2 `/docs` üretimde fail-OPEN (#476) + G-1 WORM tablosuna yanlış “teslim edildi” (#477) · ⭐ **DAĞITIM İLK KEZ ÜÇ KATMANDA ÖLÇÜLDÜ** — üretim `origin/main` ile **0 commit** hizalı, backend konteynerinde ve **canlı web paketinde** doğrulandı · ⚠️ iki oturum **kayıt bırakmadan** kapandı, bu bölüm depodan kurtarıldı. Detay: §0.A. Önceki: 2026-08-25 (**yirminci oturum** — önceki turun devir notu **bağımsız denetimden geçti** (4 kusur + 1 yeni bulgu + 3 karar) · 🔴 **canlı çiftçi hatası** düzeltildi: tarla eklenemiyordu, arayüz sözleşmenin bayat aynasıydı (plat #468) · 🔴 **T01-K1 gerilemesi kapandı** — kapı doğruydu, KÜME yanlıştı; düşük-güvenli her işte uzman incelemesi sessizce kapanıyordu (plat #469) · Y1 sınıfı (üç üye) + Y2 üretici formu + çift declare (plat #470) · **K3** DLX'e bağlı kuyruk yoktu, **#467 bunu kapatmıyor** (plat #471) · **Y3** iş ekseni artık kanıt taşıyor, `status="FAILED"` bilerek YAPILMADI (plat #472) · iki sarkan betik atfı + Y4 tuzağı + yeni kapı (work #259). ⛔ “Hiçbiri dağıtılmadı” iddiası 2026-08-26'da **ÇÜRÜTÜLDÜ** — ölçüldü, altısı da canlıda (§0.A ③). Önceki: 2026-08-19/20 (**on altıncı oturum** — uzman ekranı zinciri: sonuç↔veri seti bağı sınıfı tamamen kapatıldı (#441/#443) · **üretimde ölü döşeme servisi** bulundu ve düzeltildi (#446 — NumPy x86-64-v2 uyumsuzluğu, 7770 log satırı) · CI asılma kapakları (#442) · alan adı + BOUND kapısı (#444) · dağıtımda submodule kapısı + simülasyon bağımsızlığı (#445) · kartlar alt uzmanlık duyarlı (#447). ✅ **7 PR MERGE EDİLDİ ve DAĞITILDI**. Önceki: 2026-08-18 (**on üçüncü/on dördüncü oturum** — KR-013-2 komşuluk kapısı sahipten bağımsız hâle getirildi (#91) · CLAUDE.md dört depoda Opus 5 rehberine göre yeniden yapılandırıldı + `check_claude_md_refs.py` atıf bütünlüğü kapısı kuruldu (#92) · kök `CLAUDE.md` + oturum-başı kanca kalıcılık için contract'a taşındı (#93) · dört depoda `docs/`+`denetim/` (191 dosya) tam-okuma denetimi: platform+worker sıfır aday, contract'ta 2 alansız dosya silindi/taşındı (#94). **AL-K26 (I-1 hizası) bu turda platformun 7.6.1'de kaldığı iddiasıyla açık görünüyordu — ölçüldü, 2026-08-13'te KAPANMIŞ ve dört depo bugün de 7.7.2'de hizalı** (bkz. §0.A, önceki turun bu satırı düzeltildi). Önceki: **on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -22,7 +22,109 @@
 
 ---
 
-## 0.A EN GÜNCEL — (2026-08-29, **yirmi ikinci oturum: GERÇEK UÇUŞ ÜRETİMDE İŞLENDİ · TOPRAK MASKESİ · CHM İLE AĞAÇ/OT/TOPRAK · RENK ÖLÇEĞİ**)
+## 0.A EN GÜNCEL — (2026-08-30, **yirmi üçüncü oturum: ÖRTÜ DÜŞÜŞÜ SAHTE ÇIKTI · KAPSAM ZİNCİRİ · SADE DİL · 19 PR**)
+
+> **Bu turun tek cümlesi:** Çiftçiye *"örtünüz %27.2'den %19.1'e düştü"* diye
+> okunabilecek bir tablo gidiyordu — **ölçüldü, farkın %95'i KAPSAM
+> ARTEFAKTIYDI**, gerçek değişim **−0.4 puan**.
+
+### ① Ölçüm: iki uçuş tarlanın FARKLI parçalarını ölçmüş
+
+| | Uçuş-1 `33f230f7` | Uçuş-2 `481e9c13` |
+|---|---|---|
+| **Tarlanın ölçülen kısmı** | **%21.2** (6.13 dönüm) | **%50.1** (14.49 dönüm) |
+| Örtü — kendi kapsamında | %27.2 | %19.1 |
+| Örtü — **ortak alanda** | %27.2 | **%26.8** |
+
+Tarla 28.93 dönüm; Uçuş-1'in alanı Uçuş-2'nin **alt kümesi**. 0.25–0.55 arası
+**yedi eşikte** doğrulandı · negatif kontrol (U1'in görmediği 8.36 dönüm belirgin
+seyrek: %13.5 vs %26.8) · pozitif kontrol (her uçuş kendisiyle → +0.0).
+
+**Çapraz doğrulama:** bağımsız hesap "kendi kapsamında" %27.2/%19.1 verdi —
+üretimdeki `canopy_cover_ratio` (0.272/0.191) ile **birebir**.
+Betikler: `tarlaanaliz-worker/denetim/deneyler/deney_kapsam_*.py`,
+rapor `tarlaanaliz-worker/denetim/kapsam_mi_gercek_degisim_mi_olcumu_2026_08_30.md`.
+
+### ② Kapatılan kusurlar (hepsi mutasyonla sınandı)
+
+| # | kusur | PR |
+|---|---|---|
+| 1 | Geçerli ölçüm çiftçiye *"ölçüm yok"* gidiyordu (`overall_health_basis` upsert'te güncellenmiyordu) | plat #493 |
+| 2 | İki kart ayırt edilemiyordu — sonuç kartları **hiç tarih basmıyordu** | ct 7.11.0 · plat #494 |
+| 3 | Kapsam hiç gösterilmiyordu | ct 7.12.0 · work #272 · plat #495 |
+| 4 | 🔴 Gösterilen kapsam **YANLIŞTI** (%76.9 yerine %50.1) — payda raster-kırpıktı | work #274 |
+| 5 | Maske üretilemeyince ölçüm sapıyor, satır yine *"maske uygulandı"* diyordu | work #275 |
+| 6 | `mod=INDICES_ONLY` · `KR-025` · `SUPPRESSED` **çiftçi ekranına sızıyordu** | plat #497 |
+| 7 | SUPERSEDE **görev** kapsamlıydı → başka uçuşun incelemesi kapanıyordu | plat #498 |
+| 8 | `NO_RESULT` satırı **veri seti bağı olmadan** yazılıyordu | plat #500 |
+| 9 | `check_orm_schema_conformance` URL sıra hatası — kapı **hiç koşamıyordu** | plat #495 |
+| 10 | `_olcum_yontemi` erken çıkışı kırpma ölçümlerini siliyordu | plat #495 |
+
+Ayrıca: uzmana **tarla referansı** (plat #499) · fıstık **`detection_requirements`**
+kısıt ilanı (ct 7.13.0) · IPM atılan başlıkların kimliği (work #273) ·
+edge SSOT re-pin `7.8.0→7.13.0` (edge #82).
+
+### ③ Sözleşme: 7.11.0 · 7.12.0 · 7.13.0 (üçü de etiketli, 0 breaking)
+
+Dört depo **7.13.0**'da hizalı. `detection_requirements` bir **yetenek ilanı
+DEĞİL, KISIT ilanıdır**: referans donanımla (BASIC_4BAND) beş kalemin hiçbiri
+tespit edilemez ve bir test bunu **kilitler**. Fıstık psillidi için uzaktan
+algılama literatürü **yok** → kalıcı yasak. **Termal (LWIR) en yüksek getirili
+donanım adımıdır** (`WATER_STRESS`'i vekil olmaktan çıkarır).
+
+### 🔴 ④ AÇIK ENGEL — analiz TAMAMLANAMIYOR (kod değil, BANT GENİŞLİĞİ)
+
+Üç koşum üst üste `NO_RESULT`. Ölçüldü:
+
+```
+tünel hızı : 0.47 / 0.85 / 0.90 MB/s   (üç örnek, kararlı)
+ortofoto   : 276 MB  ->  ~300–600 sn
+GDAL       : GDAL_HTTP_TIMEOUT = 30 sn, GDAL_HTTP_MAX_RETRY = 0
+worker logu: "ZORUNLU bant(lar) okunamadı: G,R,RE,NIR — sıfırla doldurmak
+              YASAK, fail-closed (K2)" -> NO_RESULT
+```
+
+✅ Boru hattı **doğru** davrandı: uydurma sayı üretmedi.
+⛔ **Timeout/retry sabitlerini GEVŞETME** — gerekçeleri `pipeline.py:590-599`'da
+yazılı ve **SSRF sertleştirmesidir** (IMDS redirect · IP pinleme · TOCTOU).
+⚠️ Bu simülasyon kısıtı **değil**: worker üretim sunucusunda koşamıyor
+(sse4_2/avx yok, GPU yok) → tünel bu dağıtımın **üretim mimarisi**.
+
+**BİR SONRAKİ OTURUMUN AÇILIŞ SORUSU:** worker tarafında **yerel artefakt
+önbelleği** mi (kod `https` yolunda zaten yerel temp dosyası kullanıyor), yoksa
+**mimari ayrım** mı? ⚠️ Üretim `datasets` kaydına makineye özgü dosya yolu
+YAZILMAZ — başka makinede kırılır ve müşteri kaydını kirletir.
+
+### ⑤ Ürün etkisi — bekleyen
+
+Çiftçi kartlarındaki **özet metni hâlâ ESKİ** (`mod=PARTIAL_REPORT`): metin sonuç
+satırında saklanır, okuma anında üretilmez. Sade dil ancak **başarılı bir yeni
+koşumda** yansır → ④'e bağlı.
+
+Kartlar bozulmadı (başarısız sonuçlar `vegetation_mask_applied IS TRUE`
+süzgecinden elenir). İnceleme zinciri temiz: Uçuş-1 2 PENDING · Uçuş-2 2 PENDING ·
+NULL bağlı 4 boş inceleme SUPERSEDED (elle temizlendi, bağları kurtarılamıyordu —
+`datasets.worker_job_id` her sevkte üzerine yazılıyor).
+
+### ⑥ Öz denetimin bulduğu KENDİ hatalarım (hepsi PR'a girmeden kapandı)
+
+1. **Yeni ölçümü elimdeki gerçek veriye karşı hiç koşturmadım** — rasterler ve
+   poligon diskteydi, kendi ölçtüğüm 0.501 vardı, uygulamanın onu üretip
+   üretmediğine bakmadım. Bu turun **en pahalı** hatası (%76.9 kusuru).
+2. **Fikstür sorgu biçimiyle hizasız kaldı** — `scalar_one_or_none`→`.first()`
+   değişikliğinde mock sessizce boşaldı, **26 test yeşil kaldı ama ölçmüyordu**.
+3. **Yardımcıyı test etmek çağrı yerini test etmez** — 12 entegrasyon testi
+   mutasyonu kaçırdı; T03 emsaliyle mantık modül düzeyine çıkarıldı.
+4. **`grep | head` ile YOKLUK kanıtladım** — yanlıştı, ve yanlış iddiayı PR
+   gövdesine + depoya yazmıştım; üç yerde birden düzeltildi.
+5. **Sürüm töreni SIRASI** — etiketi tüketici re-pin'i merge edilmeden bastım ve
+   `master`'ı kırmızıya düşürdüm; aynı hatayı **iki kez** yaptım.
+
+Kurallar hafızaya yazıldı (yedi yeni/derinleştirilmiş kayıt).
+
+---
+
+## 0.B — (2026-08-29, **yirmi ikinci oturum: GERÇEK UÇUŞ ÜRETİMDE İŞLENDİ · TOPRAK MASKESİ · CHM İLE AĞAÇ/OT/TOPRAK · RENK ÖLÇEĞİ**)
 
 > **Bu turun tek cümlesi:** 2026-08-27 gerçek fıstık uçuşu (Karaburun 102/1, sipariş
 > `24cceb52`) üretim zincirinden **uçtan uca geçti** ve çiftçinin canlılık puanı
