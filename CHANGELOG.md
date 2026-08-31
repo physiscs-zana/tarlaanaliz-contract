@@ -7,6 +7,37 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.15.0] - 2026-08-31 — kaskad tetigi AYRILDI: `representative_tile_id`
+
+### Eklendi
+- `expert_feedback.v1` → **`representative_tile_id`** (opsiyonel, `maxLength 128`).
+
+### Degisti (yalniz aciklama)
+- `bulk_approval_id` aciklamasi: **DENETIM/GRUPLAMA amaclidir, kaskad tetigi DEGILDIR.**
+
+### Neden
+Ayni alan **iki farkli kavram** tasiyordu (olculdu, D-2):
+
+| taraf | anlam |
+|---|---|
+| **platform** | *"5-50 AYRI incelemeyi tek tikla onayladim"* (`BulkApproveRequest.review_ids`) |
+| **worker** | *"bu geri bildirim bir KARO GRUBUNUN temsilcisidir, uyelerine yay"* (`feedback_handler:675` — `if not feedback.bulk_approval_id: return []`) |
+
+Bugun zararsiz: grup yok (uretimde `tile_group_id` **31/31 NULL**), kaskad tek
+eleman donuyor. **Suzgec-1 canliya baglandigi anda sessizce yanlis yayilir** —
+bir uzmanin bir karo icin verdigi karar, HIC GORMEDIGI karolara gider.
+
+⭐ Tetik artik **acik**: uretici bir grubun VAR OLDUGUNU beyan eder; tuketici
+ilgisiz bir alanin varligindan **cikarim yapmaz**. `av2_report_uri` sinifinin
+(alanin ADI degil URETICISI kanittir) tekrari kapatildi.
+
+### Uyum
+**0 breaking** — `breaking_change_detector`: *"Optional field added:
+representative_tile_id"*. Alan opsiyonel; yazmayan uretici etkilenmez ve
+`bulk_approval_id` **kaldirilmadi** (denetim ekseni olarak duruyor).
+
+---
+
 ## [7.14.0] - 2026-08-31 — uzman kanıtı için AYRI EKSEN
 
 ### Eklendi

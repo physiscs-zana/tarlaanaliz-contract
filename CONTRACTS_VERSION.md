@@ -4,6 +4,13 @@
 
 **Release Date:** 2026-08-31T18:15:10.221074Z  
 **Breaking Change:** NO  
+**Checksum State:** PENDING_REPIN — C-2 turu SURUYOR (hedef 7.15.0). 
+`expert_feedback.v1` -> `representative_tile_id` kanonikte var; agrega checksum 
+BILEREK yeniden pinlenmedi (ara re-pin yayimlanmis v7.14.0 etiketinin checksum 
+anlamini bozardi) ve vendored kopyalar HENUZ senkron degil 
+(`tests/test_vendored_parity.py::PENDING_PROPAGATION`). C8 toreninde tuketiciler 
+senkronlanir, beyanlar silinir ve `pin_version.py --minor` calisir; bu satiri 
+KENDILIGINDEN kaldirir ve uc kapi o anda SERTLESIR.  
 **Contracts Checksum (SHA-256):** `b32b3c98078ad137716a8535530deb068b844408e978561604612d1762f7b049`
 
 ---
