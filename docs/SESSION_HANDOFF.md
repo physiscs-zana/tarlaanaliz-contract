@@ -22,12 +22,14 @@
 
 ---
 
-## 0.A EN GUNCEL — (2026-08-31, **yirmi besinci oturum: TUR 1 + TUR 1.5 + TUR 2 UYGULANDI · AYRI EKSEN · 7.14.0 DAGITILDI**)
+## 0.A EN GUNCEL — (2026-08-31, **yirmi besinci oturum: EYLEM PLANININ TAMAMI (TUR 1 · 1.5 · 2 · 3 · 4) UYGULANDI · AYRI EKSEN · 7.15.0**)
 
 > **Bu turun tek cumlesi:** §0.A'nin kendisi **bagimsiz denetimden gecti** (uc
 > kusur olcumle duzeltildi), sonra **TUR 1 · 1.5 · 2 uygulandi** — uzman artik
 > 1 yerine **5 farkli karo**, **dort bandin haritasini** ve **konumu** goruyor;
-> sozlesme **7.14.0** dort depoda hizali ve **uretime dagitildi**.
+> sozlesme **7.14.0** dort depoda hizali ve **uretime dagitildi**. Ardindan
+> **TUR 3 + TUR 4** de kapandi (§11): dort depo **7.15.0**, etiket `v7.15.0`, ve
+> **7.15.0 uretime DAGITILDI** (OD-2 sirasiyla; olculdu, §11).
 
 ### 1) ONCE DENETIM — bu bolumun uc kusuru (ct #133, #134)
 
@@ -149,7 +151,116 @@ Toplam **48 mutasyon**, hepsi sonunda yakalandi. Ucu once kacti:
   gercekten tasindigini hicbiri kanitlamiyordu. Olumlu test yazildi ve **ayni
   boslugun `rgb_url` icin de var oldugu** ortaya cikti.
 
-### 11) DEVREDEN — TUR 3 ve TUR 4
+### 11) TUR 3 ve TUR 4 — AYNI OTURUMDA TAMAMLANDI (sozlesme 7.15.0)
+
+Asagidaki "devreden" listesi ayni oturumda KAPANDI. Dort depo **7.15.0**,
+etiket **`v7.15.0`** basili.
+
+| kalem | ne yapildi | PR |
+|---|---|---|
+| **C-2** | `expert_feedback.v1` -> `representative_tile_id`; `bulk_approval_id` "kaskad tetigi DEGILDIR" diye ilan edildi | ct #138 |
+| **C8** | 7.15.0 re-pin + PENDING beyanlari kapatildi + etiket | ct #139 |
+| **W-5** | kaskad tetigi `bulk_approval_id`'den AYRILDI; temsilci `job_id`'den DEGIL acik alandan | work #281 |
+| **W-6** | grup yoksa `[representative_id]` yerine **BOS liste** | work #281 |
+| **W-1** | suzgec-1 CANLIYA baglandi (pipeline'a enjeksiyon) | work #282 |
+| **W-2** | `get_group_info` artik KARO kimligiyle cagriliyor | work #282 |
+| **P-2** | `representative_tile_id` tele yazilir (kaynak `review.tile_group_id`) | plat #504 |
+| **P-4** | enum aynasina `AUDIT_SAMPLE` + kanonige kilitleyen parite testi | plat #504 |
+
+#### 🔴 W-1'in ONKOSULU GERCEK BIR KUSUR BULDU
+
+Urun sahibi *"yap ama F1/F4 kapilarini mutasyonla sina"* dedi. Sinandi ve
+**IKI kapi KACTI**:
+
+| mutasyon | ilk tur |
+|---|---|
+| kosinus esigi **0.97 -> 0.10** | 🔴 kacti |
+| F1(c) yayilim tavani **0.15 -> 1e9** | 🔴 kacti |
+
+Yani suzgec-1'i o hâliyle baglamak, modulun uyardigi **iki zehirlenme yolunu
+KORUMASIZ** birakirdi (`prototype_manager.py:76-88`: *"yanlis kapi canliya
+baglaninca DOGRUDAN egitim setini bozar"*). Ikisine davranissal kilit yazildi;
+ikinci turda **5/5 yakalandi** + her kapiya pozitif kontrol.
+
+⚠️ Kosinus testini ILK yazisimda iki BAGIMSIZ rastgele vektor kullandim; 1024
+boyutta kosinusleri **~0.03**'tur ve mutasyonlu **0.10** esiginin de ALTINDA
+kalir -> mutasyon YINE kacti. Test verisi kapinin **gevsetildigi araligi**
+kapsamali: kosinusu **0.50** olan cift OLCULEREK kuruldu.
+
+#### 🔴 P-4: "parite testi YOK" iddiam YANLISTI
+
+Test VARDI (`test_confidence_evaluator_deep.py`); grep'im gormedi cunku degerleri
+**elle listeliyordu**, `AUDIT_SAMPLE` adi gecmiyordu. **Kusur tam da oydu:**
+liste *"worker enum'u ayri depoda, import edilemez"* gerekcesiyle elle tutuluyor
+ve kanonik buyudugunde SESSIZCE bayatliyordu — D16'nin kapattigi "ikili govde"
+hatasinin TEST HALI. Elle liste SILINDI; kaynak artik KANONIK SEMA.
+
+#### ⛔ SURUM TORENI: "etiket EN SONA" kurali CURUDU
+
+Olculdu: worker'in parite isi sozlesmeyi **PINLI ETIKETTE** checkout ediyor ->
+etiket yokken tuketici PR'i **gecemez** (`v7.14.0` yokken tam o adimda kirmizi
+oldu; etiket basilinca ayni is yesile dondu). Kanonik kapinin kendi mesaji da
+*"merge sonrasi etiket basilmali"* diyor.
+
+**Dogru sira:** contract merge -> **ETIKET** -> tuketici re-pin'leri (hizla).
+
+MIRROR ciftlerde (or. `expert_feedback`) tur IKI PR'a bolunur:
+(A) sema + `PENDING_PROPAGATION` + `Checksum State: PENDING_REPIN` (surum bump
+YOK), (B) C8 re-pin + beyanlari bosalt + etiket. Tur icinde `pin_version.py`
+kosturmak **XPASS(strict)** ile yakalanir — bu hatayi yaptim, kapi durdurdu.
+
+#### ✅ DAGITILDI ve DOGRULANDI (OD-2 sirasiyla: once worker, sonra platform)
+
+**Sira 7.14.0'in TERSIYDI:** `expert_feedback` worker'a **GELEN** belgedir ve
+vendored kopya geleni dogrular; alan eksikse **gecerli** bir mesaj reddedilir.
+(7.14.0'da tersi gecerliydi: `analysis_result` worker'dan GIDEN belge.)
+
+| katman | dogrulama |
+|---|---|
+| worker | surec **21:20:13** / dosya **20:51:25** (surec 29 dk daha YENI -> 7.15.0 yuklendi) · pin **7.15.0** · `critical_rabbitmq_consumer: true` · `faiss_size: 157` |
+| platform | `deploy_prod.sh --check` GECTI (`CONFIG_OK`, `RASTER_OK 1.26.4 1.4.4`) -> tam dagitim: backend+web **healthy**, uclar **200** |
+| backend ici | `representative_tile_id` **1** · `AUDIT_SAMPLE` **2** · pin **7.15.0** · `contracts/` submodule **22 girdi** (bos DEGIL) |
+| goc | alembic head `analysis_results_expert_evidence` — 7.15.0 yeni goc GETIRMEDI |
+| hata | backend `[ERROR] 0` · `[CRITICAL] 0` · web `[ERROR] 0` · disaridan `tarlaanaliz.com -> 200` |
+
+⚠️ Ilk okumada "2 ERROR" gordum; ikisi de **WARNING**'di — grep'im `error=`
+**alan adini** esliyordu, **seviyeyi** degil. Seviyeye capali sayim (`[ERROR]`)
+**0** verdi ve desen **pozitif kontrolle** sinandi (sahte `[ERROR]` satirini
+yakaladi). Kalan 16 WARNING `schema_load_skipped` (`index.json` sema degil) ve
+dagitimdan **once de vardi**.
+
+⚠️ Suzgec-1 artik **CANLI** (`tile_dedup_enabled` varsayilan True, esik 0.97).
+Kapilar mutasyonla kilitli ama gruplama ilk kez gercek veride kosacak: ilk
+analiz kosumunda `SUZGEC1.GRUPLAMA` logu (aday/temsilci/gruplanan) OKUNMALI.
+
+#### 🔴 WORKER KONTEYNERI GOZLEMLENEMEZ — onceki turun dogrulamasini CURUTUR
+
+Olculdu: worker konteynerinin `docker logs` ciktisi **2026-08-28 20:36**'da
+duruyor. Bugunku iki baslatma (19:11:13 ve 21:20:13) **tek satir bile**
+yazmadi — acilis bandi dahil (`08-31` satir sayisi **0**).
+
+> Bu, onceki turda yazdigim *"yeniden baslatma sonrasi 0 ERROR"* dogrulamasini
+> **gecersiz kilar**: bos logda sifir hata **bedavadir**. Hata sayisi ancak
+> **once log akisinin kendisi** olculduyse kanittir.
+
+Kok neden **surec degil tasima**: PID 1'in stdout'una dogrudan yazdigim
+imlec (`TARLA_LOG_PROBE_9931`) da `docker logs`'ta **cikmadi**. Yani uygulama
+yaziyor, Docker **kalici log dosyasina gecirmiyor**.
+
+✅ **Asilma riski YOK** (olculdu): boruya **256 KB** yazildi, `rc=0`, bloke
+olmadi -> Docker boruyu **bosaltiyor**, yalnizca saklamiyor. Islemci saglikli
+kaldi.
+
+**Cozum:** `docker restart` bunu **duzeltmiyor** (iki kez olculdu). Konteyneri
+**yeniden olusturmak** gerekiyor. ⚠️ Bunun bir onkosulu var: compose'un
+ikame edecegi `RABBITMQ_PASSWORD` bu makinedeki **hicbir** `.env` dosyasiyla
+eslesmiyor (ozet karsilastirmasiyla olculdu: kosan konteyner `8bba2c…`,
+`tarlaanaliz-platform/.env` `04438d…`) — cunku worker **URETIM** brokerine
+tunelle bagli ve parolasi uretim sunucusunda. Reçetedeki
+`--env-file ../tarlaanaliz-platform/.env` ile yeniden olusturmak worker'i
+**brokerdan KOPARIR**. Once dogru sir kaynagi cozulmeli.
+
+### 11-b) ONCEKI "DEVREDEN" METNI (kapandi, kayit icin)
 
 **TUR 3 (kaskad, pahali — sozlesme toreni gerektirir):**
 * **C-2** `expert_feedback`'e `representative_tile_id` + **iki anlami AYIR**.
@@ -167,6 +278,16 @@ Toplam **48 mutasyon**, hepsi sonunda yakalandi. Ucu once kacti:
 `AUDIT_SAMPLE` **hic gecmiyor**).
 
 ### 12) ACIK — olculemeyen / beyan edilen
+
+* 🔴 **Worker konteyneri gozlemlenemez** — `docker logs` 08-28'de duruyor; kalici
+  cozum konteyneri yeniden olusturmak, ama once uretim broker sirrinin kaynagi
+  cozulmeli (§11). Bugun asilma riski YOK (olculdu), ama bir sonraki analiz
+  kosumunun `SUZGEC1.GRUPLAMA` logu **okunamaz** — suzgec-1 canliya yeni
+  baglandigi icin bu, ilk gercek veriyi gormeyi engeller.
+* ⚠️ **GitHub hesabi fatura nedeniyle kilitli** (2026-08-31 ~20:50–21:13 arasi
+  olculdu): Actions isleri runner **atanmadan** dusuyor
+  (`steps=0`, GitHub anotasyonu: *"account is locked due to a billing issue"*,
+  loglar `BlobNotFound`). Kod saglam — ayni kapilar yerelde **1476 passed**.
 
 * **Uzmanin gercekten 5 karo gordugu OLCULMEDI.** Kod canlida ve zincirin her
   halkasi birim duzeyinde kilitli, ama **gercek bir is kosmadi**. Kanit ancak
