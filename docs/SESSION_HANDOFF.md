@@ -229,9 +229,36 @@ vendored kopya geleni dogrular; alan eksikse **gecerli** bir mesaj reddedilir.
 yakaladi). Kalan 16 WARNING `schema_load_skipped` (`index.json` sema degil) ve
 dagitimdan **once de vardi**.
 
-⚠️ Suzgec-1 artik **CANLI** (`tile_dedup_enabled` varsayilan True, esik 0.97).
-Kapilar mutasyonla kilitli ama gruplama ilk kez gercek veride kosacak: ilk
-analiz kosumunda `SUZGEC1.GRUPLAMA` logu (aday/temsilci/gruplanan) OKUNMALI.
+⛔ **BU SATIR 2026-09-01'DE CURUDU — suzgec-1 KANIT HAVUZUNDAN CIKARILDI.**
+
+Bir gun once burada *"suzgec-1 artik CANLI"* yaziyordu. Oz-denetim onu
+gercek uretim gommeleriyle olctu ve W-4'u TAMAMEN geri aldigini buldu:
+
+* is ICI ikili kosinus ortalamasi **0.9891**; 2026 ciftin **2026'si (%100)**
+  uretim esigi 0.97'nin ustunde
+* gercek `SimilarTileDeduplicator(0.97)` + gercek `cesitlilik_secimi`:
+  6 isin 6'sinda da **25 aday -> 1 temsilci -> 1 kanit karosu**
+* ayni tarlaya **ikinci ucus** (ayni surec, gruplar yasiyor): **0 temsilci**
+  -> kanit BOS -> `_ciftci_yer_tutucu=None` -> her `unknown_anomaly` elendi.
+  Uzman DA ciftci DE hicbir sey gormedi, `expert_escalation_required` yine True.
+
+Uc saflik kapisinin ucu de bu uründe FIILEN ACIK (olculdu): F1(b) 15/15 is
+TEK sinifli (483/493 `unknown_anomaly`) · F4 kumesi `{esca_or_fd,
+flavescence_doree}` yani BAG hastaliklari, nadir kumesi BOS · F1(c) is ici
+ciftlerin **%77.3'unu** geciriyor.
+
+**Bugunku hâl (work #283, dagitildi ve dogrulandi):** enjeksiyon AYRI
+bayrakta — `tile_dedup_in_pipeline`, varsayilan **False** (kosan konteynerde
+olculdu). `tile_dedup_enabled` hâlâ True ve gruplayiciyi KURUYOR; F-10
+eskalasyon ustverisi o yoldan besleniyor ve o yol saglam.
+
+**Geri acma tetigi:** gomme uzayi is ICINDE ayirt edici hale gelirse (ya da
+esik o dagilima gore YENIDEN OLCULEREK secilirse). Acmadan once yapilacak
+ilk olcum bellidir: is ici kosinus dagilimi + gercek zincirin uctan uca
+kac kanit karosu urettigi.
+
+⚠️ Ayrica `_aday_karolar` bosalirsa gruplama artik GERI ALINIR ve
+`SUZGEC1.HAVUZ_BOSALDI` diye loglanir — optimizasyon bir eksene mal olamaz.
 
 #### 🔴 WORKER KONTEYNERI GOZLEMLENEMEZ — onceki turun dogrulamasini CURUTUR
 
