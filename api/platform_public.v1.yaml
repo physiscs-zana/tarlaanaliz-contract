@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TarlaAnaliz Platform Public API
-  version: 7.15.0
+  version: 7.16.0
   description: |
     Public API for TarlaAnaliz web and mobile applications.
     Consumed by farmer UI, cooperative UI, and pilot apps.
