@@ -7,6 +7,50 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.16.0] - 2026-09-02 — on-faz kapali listesine UCUS KIMLIGI
+
+### Eklendi
+- `report_phase.enum.v1` → `x-preliminary-content.stage_b_post_analysis.fields`
+  listesine **`flight_ordinal`**, **`flight_date`**, **`flight_date_source`**.
+
+### Neden
+OLCULDU 2026-09-02 (gercek siparis `24cceb52`): Ucus-1'in veri seti 27 Agustos'ta
+geldi ama sonucu 2 Eylul'de YENIDEN ANALIZ edildi. Ciftci karti `created_at`
+(**ANALIZ zamani**) bastigi icin "2 Eylul 2026 ucusu" yazdi ve listenin **basina**
+gecti — ciftci ESKI ucusu YENI sandi.
+
+Bu sinir **7.12.0'da zaten yaziliydi** (`x-added-2026-08-30-b.bilinen-sinir`):
+
+> "Bu ANALIZ zamanidir, UCUS tarihi DEGIL."
+
+Bu tur o sinirin kendisini kapatir.
+
+### Urun sahibi karari (2026-09-02)
+> "Ciftciye iki ucus da SIRASIYLA sunulsun. Ayni gun ayni yukseklikten ucsaydi
+> bile 1. ucus ve 2. ucus olarak iki sonuc AYRI AYRI gosterilmelidir."
+
+### "Ucus" tanimi — olculerek verildi
+`datasets` satiri bir **YUKLEME PARTISIDIR** (`manifest->>'batch_id'` benzersiz),
+mutlaka bir KALKIS degil: gorev `0903ba16` **ALTI** veri seti tasiyor ama yalniz
+**DORT** farkli gun var ve statuler bir boru hatti ilerleyisi gosteriyor
+(`CALIBRATED_SCANNED` / `RAW_INGESTED` / `DISPATCHED_TO_WORKER` / `ANALYZED`x3).
+
+Kalkis kaydi sistemde **YOK** (`capture_date` gun cozunurluklu ve cogunlukla
+NULL; irtifa hic kayitli degil) → "yalniz yeni kalkis" tanimi bugun
+UYGULANAMAZ. Kabul edilen tanim:
+
+> **"Ucus" = ciftciye SONUC URETMIS veri seti.**
+
+Numara, ekranda gorulen kartlarin OKUMA SIRASIDIR: bosluk olmaz,
+karantina/analiz edilmemis partiler numara tuketmez, ic paket sayisi ciftciye
+SIZMAZ (KR-071).
+
+### Kirici mi
+HAYIR. Kapali listeye alan EKLEMEK izin genisletir, daraltmaz; mevcut
+tuketiciler etkilenmez. `breaking_change_detector` bunu
+`Normative annotation changed` diye isaretler ve **elle inceleme** ister —
+inceleme bu bolumdur.
+
 ## [7.15.0] - 2026-08-31 — kaskad tetigi AYRILDI: `representative_tile_id`
 
 ### Eklendi

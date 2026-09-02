@@ -35,7 +35,10 @@
         "canopy_cover_ratio",
         "field_clip_outside_ratio",
         "created_at",
-        "field_coverage_ratio"
+        "field_coverage_ratio",
+        "flight_ordinal",
+        "flight_date",
+        "flight_date_source"
       ],
       "x-added-2026-08-30": {
         "fields": ["canopy_cover_ratio", "field_clip_outside_ratio"],
@@ -47,6 +50,14 @@
         "why": "ÖLÇÜLDÜ 2026-08-30 (gerçek sipariş 24cceb52): çiftçiye AYNI görevde İKİ kart gidiyor (iki uçuş, iki veri seti) ve kartlarda hiçbir ayırt edici bilgi yoktu — sonuç kartları hiç tarih basmıyordu (`web/src/features/results/` içinde tarih biçimlendirmesi YALNIZ `HistoryTimeline.tsx`'te, ayrı bir bileşende). Kimlik (`result_id`) çiftçi için anlamsızdır; ayırt edici olan TARİHTİR. Backend alanı ZATEN gönderiyordu (`results.py` `ResultSummaryDTO.created_at`, gerekçesi yorumda yazılı) ama web tipi (`resultService.ts` `ResultData`) alanı hiç beyan etmiyordu → ÜRETİLEN ALANIN TÜKETİCİSİ YOKTU.",
         "scope": "Bu bir ÖLÇÜM değil, KAYIT ZAMANIDIR ve vekil-gösterge riski taşımaz. Yine de kapalı listeye YAZILIR: liste exhaustive ilan edilmiştir; \"zararsız olduğu için listelemeye gerek yok\" istisnası listeyi çürütür. Alan gönderiliyor ama listede değildi — yani sunulması KR-093'e göre zaten ihlaldi.",
         "bilinen-sinir": "Bu ANALİZ zamanıdır, UÇUŞ tarihi DEĞİL. Uçuş tarihi `datasets.capture_date` olurdu; kanonik `intake_manifest.v1` içinde `files[].captured_at` OPSİYONEL olduğu için üretimde 8 veri setinin 7'sinde NULL (ölçüldü 2026-08-30). Zorunlu kılmak sahadaki edge cihazları için BREAKING değişikliktir → ÜRÜN kararı, ayrı kalem. Arayüz bu yüzden alanı açıkça \"Analiz\" diye etiketler; \"Uçuş\" DEMEZ."
+      },
+      "x-added-2026-09-02": {
+        "fields": ["flight_ordinal", "flight_date", "flight_date_source"],
+        "why": "ÖLÇÜLDÜ 2026-09-02 (gerçek sipariş 24cceb52): Uçuş-1'in veri seti 27 Ağustos'ta geldi ama sonucu 2 Eylül'de YENİDEN ANALİZ edildi; kart `created_at` (ANALİZ zamanı) bastığı için \"2 Eylül 2026 uçuşu\" yazdı ve listenin BAŞINA geçti — çiftçi ESKİ uçuşu YENİ sandı. Bu sınır 7.12.0'da `x-added-2026-08-30-b.bilinen-sinir` altında AÇIKÇA yazılmıştı (\"Bu ANALİZ zamanıdır, UÇUŞ tarihi DEĞİL\"); bu tur o sınırı kapatır.",
+        "urun-sahibi-karari": "2026-09-02: \"Çiftçiye iki uçuş da SIRASIYLA sunulsun. Aynı gün aynı yükseklikten uçsaydı bile 1. uçuş ve 2. uçuş olarak iki sonuç AYRI AYRI gösterilmelidir.\"",
+        "ucus-tanimi": "\"Uçuş\" = çiftçiye SONUÇ ÜRETMİŞ veri seti. Bir `datasets` satırı bir YÜKLEME PARTİSİDİR (`manifest->>'batch_id'` benzersiz), mutlaka bir KALKIŞ değil — ölçüldü: görev `0903ba16` ALTI veri seti taşıyor ama yalnız DÖRT farklı gün var ve statüler bir boru hattı ilerleyişi gösteriyor. Kalkış kaydı sistemde YOK (`capture_date` gün çözünürlüklü ve çoğunlukla NULL, irtifa hiç kayıtlı değil), bu yüzden \"yalnız yeni kalkış\" tanımı bugün UYGULANAMAZ. Numara, ekranda görülen kartların OKUMA SIRASIDIR: boşluk olmaz, karantina/analiz edilmemiş partiler numara tüketmez ve iç paket sayısı çiftçiye SIZMAZ (KR-071).",
+        "scope": "İkisi de KAYIT bilgisidir, ÖLÇÜM değil — vekil-gösterge riski taşımaz (`created_at` ile aynı gerekçe). Yine de kapalı listeye YAZILIR: liste exhaustive ilan edilmiştir ve listede olmayan bir alanı sunmak, gerekçesi ne olursa olsun sözleşmeyi çiğner.",
+        "flight_date_source": "\"capture\" = `datasets.capture_date` (gerçek uçuş günü) · \"ingest\" = verinin sisteme geliş anı. Tüketici, kaynak \"capture\" DEĞİLSE \"uçuşu\" DEMEZ — ölçülmemiş bir anı iddia etmemek için."
       },
       "x-added-2026-08-30-c": {
         "fields": ["field_coverage_ratio"],
