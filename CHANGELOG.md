@@ -7,6 +7,38 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.17.0] - 2026-09-04 — UZMAN EKSENINE MODEL IPUCU (karar sonrasi acilim)
+
+### Degisti
+- `analysis_result.v1` :: `$defs.ExpertEvidenceTile` — aciklama yeniden yazildi.
+  Nesne bugune kadar **bilerek** hicbir sinif tasimiyordu (KR-025: bulguyu uzman
+  adlandirir). Urun sahibi karari (2026-09-04) bunu **degistirir**: modelin kendi
+  ipucu TASINABILIR ki uzman modelin hakli mi haksiz mi oldugunu **ogrenebilsin**.
+
+  ⚠️ Bu bir TANI DEGILDIR ve uzman kararini VERMEDEN gosterilemez. Tuketiciler
+  **yalnizca karar sonrasi** acar (platform bunu kapiya bagladi: inceleme
+  kapanmadan uc 409 doner).
+
+### Eklendi
+- `ExpertEvidenceTile.model_hint` — modelin o karoda eslestirdigi sinif; hicbir
+  sey tanimadiysa (yenilik/OOD) ya da tani bastirildiysa `null`.
+- `ExpertEvidenceTile.model_hint_source` — ipucunun KAYNAGI:
+  `L1_HASH_ATLAS` (uzman geri bildirimiyle beslenen atlas) · `L2_FAISS` (gomme
+  benzerligi) · `NONE`. Uzman ipucunun kaynagini tartabilsin diye; her ipucu ayni
+  agirlikta degildir.
+
+### Gerekce (olculdu)
+- Karardan ONCE gostermek capa/otomasyon yanliligi yaratir: randomize bir
+  calismada hatali YZ onerisi hekim tani dogrulugunu **14 puan** dusurdu. Bu
+  kuyruk TASARIM GEREGI modelin en emin olamadigi vakalardan olusur — zararli
+  kosul burada yogunlasmistir.
+- `confidence` KALIBRE DEGILDIR (uc sezgiselin agirlikli harmani). Tuketiciler
+  onu **sirali bant** olarak sunar, asla yuzde/olasilik olarak degil.
+
+### KIRICI DEGIL
+Iki alan da opsiyonel ve `null` kabul eder; eski uretici/tuketiciler etkilenmez.
+Ciftci yuzeyi bu ekseni hic okumaz (KR-071 yapisal olarak korunur).
+
 ## [7.16.0] - 2026-09-02 — on-faz kapali listesine UCUS KIMLIGI
 
 ### Eklendi

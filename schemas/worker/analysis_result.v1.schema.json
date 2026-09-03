@@ -241,7 +241,7 @@
     "ExpertEvidenceTile": {
       "type": "object",
       "title": "ExpertEvidenceTile",
-      "description": "One tile shown to the expert as EVIDENCE, not as a diagnosis. Carries no class or severity on purpose (KR-025: the expert names the finding; the system does not).",
+      "description": "One tile shown to the expert as EVIDENCE. Historically this object deliberately carried no class at all (KR-025: the expert names the finding). CHANGED 2026-09-04 by product-owner decision: the model's own hint MAY be carried so the expert can LEARN whether the model was right. It is NOT a diagnosis and MUST NOT be shown before the expert has committed a decision - consumers reveal it POST-DECISION only. Rationale (measured): showing AI advice before the decision causes anchoring/automation bias; in a randomized trial erroneous AI suggestions cut physician diagnostic accuracy by 14 percentage points, and this queue consists BY DESIGN of the cases the model is least sure about. `confidence` remains an UNCALIBRATED heuristic blend - consumers MUST present it as an ordinal band, never as a probability/percentage.",
       "properties": {
         "tile_id": { "type": "string", "maxLength": 128, "description": "Tile identity (`<job_id>_t<idx>`). PII-free (KR-071)." },
         "rgb_uri": { "type": ["string", "null"], "description": "True-colour crop of THIS tile." },
@@ -249,6 +249,8 @@
         "ndvi_value": { "type": ["number", "null"], "minimum": -1, "maximum": 1, "description": "Mean NDVI of THIS tile." },
         "ndre_value": { "type": ["number", "null"], "minimum": -1, "maximum": 1, "description": "Mean NDRE of THIS tile." },
         "confidence": { "type": ["number", "null"], "minimum": 0, "maximum": 1, "description": "Model confidence ON THIS TILE (not the job-wide trigger confidence)." },
+        "model_hint": { "type": ["string", "null"], "description": "Class id the model matched for THIS tile, or null when it recognised nothing (novelty/out-of-distribution) or the diagnosis is suppressed. NEVER shown to the farmer (KR-071); shown to the expert ONLY after their decision is committed." },
+        "model_hint_source": { "type": ["string", "null"], "enum": ["L1_HASH_ATLAS", "L2_FAISS", "NONE", null], "description": "How the hint was obtained. L1_HASH_ATLAS = expert-curated atlas hit (fed by prior expert feedback); L2_FAISS = embedding similarity; NONE = no memory hit. Lets the expert weigh the hint provenance instead of treating all alike." },
         "bbox": {
           "type": ["object", "null"],
           "description": "Tile position in pixel space. Null until the producer fills it (W-3).",
