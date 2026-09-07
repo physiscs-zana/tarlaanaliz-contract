@@ -358,6 +358,39 @@ Enstrümantasyon mekanizmanın çalıştığını kanıtladı (`apply_mask` doğ
 gerçekten düzeltiyor (karaburun: NDVI anomalisi **25→4**, NDRE **25→0**), ama
 bağlayan ölçüt onlar değil.
 
+
+##### İki tam koşumun UÇTAN UCA sonucu (ürün sahibinin istediği ölçüm)
+
+Üretim kurulumuyla (`InferenceWorker.setup()`, gerçek SSL kodlayıcı + gerçek FAISS),
+aynı ortomozaikte maske kapalı ve açık, dört koşum:
+
+| veri seti | maske | anomali | sağlıklı | tespit | **kanıt karosu** | result_mode | confidence |
+|---|---|---|---|---|---|---|---|
+| karaburun | KAPALI | 25 | 0 | 1 | **10** | INDICES_ONLY | 0,4345 |
+| karaburun | AÇIK | 25 | 0 | 1 | **10** | INDICES_ONLY | 0,4289 |
+| karaburun2 | KAPALI | 80 | 0 | 1 | **10** | INDICES_ONLY | 0,4306 |
+| karaburun2 | AÇIK | 80 | 0 | 1 | **10** | INDICES_ONLY | 0,4290 |
+
+🔴 **Seçilen 10 kanıt karosu her dört koşumda BİREBİR AYNI** — aynı `tile_id`
+listesi, aynı sırada, aynı NDVI değerleriyle. `confidence` farkı yalnız üçüncü
+onda basamağında ve MC-Dropout rastgeleliğinden geliyor, maskeden değil.
+
+Yani maske **uçtan uca hiçbir şeyi değiştirmiyor**: ne kapıyı, ne kanıt seçimini,
+ne sonuç kipini, ne tespitleri. Bu, work #291'in *"karar bit düzeyinde aynı"*
+iddiasını **uçtan uca doğrular** — ve aynı zamanda `apply_mask=True` yapmanın
+bugün **hiçbir işe yaramayacağını** gösterir.
+
+⚠️ Çürütücünün *"maske `pipeline.py:4020`'deki `ndvi_mean < 0.4` kapısını
+erişilemez kılar"* uyarısı, tasarımın **Aşama-2'yi de maskeleyen** adımı için
+geçerlidir. O adım UYGULANMADI: Aşama-2 kendi NDVI'sini maskesiz hesaplıyor,
+dolayısıyla 4020 maskeden etkilenmiyor. Ölçümle doğrulandı (kanıt karolarının
+NDVI'leri iki kipte de maskesiz değerler: 0,2295 · 0,3957 · 0,3098 …).
+
+⚠️ **Ölçüm geçerliliği notu:** ilk koşumda `expert_evidence_tiles` ve
+`mean_confidence` alan adlarını yanlış yazdım ve "kanıt = 0" sanmıştım. Doğru
+adlar `expert_evidence` ve `confidence_score`. Yanlış alan adı **sessizce None
+döner** — sıfır sonuç, yokluğun değil sorunun kanıtıydı.
+
 #### 🔴 ASIL KÖK NEDEN: `stress_ratio < 0,85` YAPISAL OLARAK SAĞLANAMAZ
 
 `stress_ratio = NDRE / NDVI`. Vejetasyonda kırmızı-kenar yansıması kırmızıdan
