@@ -147,6 +147,117 @@ ibaresi **yok**. Worker `running healthy RestartCount=0`, RabbitMQ'ya bağlı.
 
 ---
 
+## §0.A §14 — Açık kalemler ölçülerek kapatıldı + 710 gün kararı (2026-09-07, geç)
+
+Ürün sahibi iki şey istedi: (1) yer gerçeği olmadan ölçülebilecek açık
+kalemleri ölçerek kapat, (2) 710 gün beklemenin mantıklı olup olmadığını ölç.
+Beş mercek + çürütme turu koştu (33 bulgu, 15 ayakta). **Üç PR merge edildi ve
+ikisi üretime dağıtıldı**: ct #153 · work #299 · plat #539.
+
+> ⚠️ **Üretim veritabanına erişim bu turda açıldı** (`tarlaanaliz_user`), bir
+> önceki turda "izin engeli" diye kapalı bırakılan kalemlerin çoğu bu yüzden
+> kapandı.
+
+### 🔴 Bugün açtığım kolda FAIL-OPEN bulundu (en önemli sonuç)
+
+`_anomaly_filter`, geçerli piksel oranı eşiğin altında kalan karoyu **iki
+kovaya da** koymaz. Bu yüzden `anomali = 0` iki anlama geliyordu:
+*(a)* her karo ölçüldü ve temiz, *(b)* ölçülebilen karo **hiç yoktu**.
+DK-60 ikisini de `INDICES_ONLY` yapıyordu.
+
+Üretimde ölçüldü — `field_index_timeseries`'te **toplam ≠ sağlıklı + anomali**:
+36·0·25 → **11 karo (%31)** hiçbir kovada; 25·0·22 → **3 karo**. `analysis_results`:
+kırpma 8 satırda açık, `field_coverage_ratio` **0,212–0,769**. Yani tarlasının
+beşte dördünü kaçırmış bir uçuş "sorunsuz" sunulabiliyordu.
+
+Düzeltme üç tüketicide birden (work #299 + plat #539): worker
+`if not anomaly_tiles and healthy_tiles:` (yoksa `NO_RESULT` KALIR) ·
+`_panoya_dahil` → `healthy > 0` · çiftçi metni → `healthy > 0`.
+
+### ✅ KAPANDI
+
+| kalem | sonuç |
+|---|---|
+| **Dedup: canlıda grup oluşuyor mu?** | **OLUŞMUYOR** — `tile_group_id` 38/38 NULL. Kök neden bilinçli: `_havuz_gruplayicisi` `tile_dedup_in_pipeline` kapalıyken `None` döner. Mekanizma BOZUK DEĞİL, TETİKLENMİYOR |
+| **"5-10x uzman verimliliği"** | Bu gömme uzayında **GERÇEKLEŞMİYOR**: 6 işin 6'sında 25 aday → 1 temsilci, ikinci uçuşta → **0**. Kosinüs TARLAYI ayırıyor, karo desenini değil → bu bir **MODEL** işi |
+| **Üretim veritabanı sayımı** | 19 sonuç / 2 (field,mission) çifti / 2 timeseries satırı; timeseries karşılığı olmayan sonuç **0** |
+| **Açılış logu yalan söylüyordu** | *"F-10 escalation metadata now populated"* — **262 kez** basılmış, sonuncusu bugün 11:38. Metin düzeltildi (work #299) |
+| **KR-090 md. 7-a** | Dün yazdığım kural **UYGULANAMAZDI**: `analysis_results`ta da `analysis_jobs`ta da `result_mode` kolonu YOK. Kural NULL üzerinden yeniden yazıldı (ct #153) |
+
+### ⛔ KAPANAMAZ (yapısal) — "yer gerçeği yok" ifadem çürüdü, gerekçesi güçlendi
+
+Etiket **VAR** ve kimlikle sıkı bağlı (30 karar / 20 karo, `tile_id` 30/30
+`expert_evidence`'ta, sarkan 0). Ama uzmana **yalnız kapının işaretlediği** karo
+gider (yedi halkalı zincir kodla kanıtlandı) → **doğrulama yanlılığı**:
+duyarlılık ve özgüllük "henüz ölçülmedi" değil **TANIMSIZ**.
+
+Ölçülebilen tek büyüklük **kesinlik (PPV)**: satır düzeyi 10/14 = **%71,4**
+[Wilson %95: **%45,4–%88,3**]. Etiketler inceleme içinde **tam homojen** →
+küme-içi korelasyon 1 → **etkin n = 2**, 30 değil. Aynı 10 karoyu gören iki
+uzman **sıfır kesin uzlaşma** üretti. **30 etiketin 30'u ESKİ kapı rejimine ait.**
+
+🔴 **Risk BUGÜN doğdu:** eski rejimde kapı 25/25 işaretliyordu (`healthy = 0`)
+→ kapı-negatif küme üretimde BOŞTU → kaçırma riski ≈ 0. Maske açılıp stres
+ölçütü emekli edilince kapı **ilk kez karo REDDEDİYOR** → yanlış-negatif ilk kez
+**mümkün** ve **aynı anda ölçülemez**.
+
+**Çözümü var ama ÜRÜN KARARI:** kapı-negatif kalibrasyon örneklemi — kanıt
+setine `healthy_tiles` havuzundan determinist rastgele 2-3 karo **kör** eklenir
+(`sampling_stratum`, uzman yüzeyine ÇIKMAZ). Uzman kontrol karosuna "var" derse
+o bir yanlış-negatiftir. ⚠️ Uzman kotasını ~%25 artırır.
+
+### 710 gün kararı: **BEKLEME** — ölçümle
+
+Mekanik: `created_at < now - 730g`, gece 03:00 UTC, `dry_run=False` (**gerçek
+silme**), iş üretimde kayıtlı. En eski sonuç 20 günlük → pencere **710 gün**
+sonra açılıyor ve tetikleyici küme bugün **boş**. Yine de beklemek mantıksız:
+
+1. Kusur **kozmetik değil**: sabit `FULL_REPORT`, panonun fail-closed kapısını
+   **tersine** çevirip hiçbir şey üretmemiş bir uçuşu "tam rapor" sağlık
+   noktası yapardı.
+2. Sapma **tek alan değil üç**: `measurement_date` ANALİZ tarihiydi (ürünün
+   7.16.0'da bir kez ödediği kusur), `crop_type` boş dizeydi.
+3. Düzeltme **küçük** (tek dosya, bir SELECT) ve yol bugün tetiklenmediği için
+   **riski sıfıra yakın**.
+4. Beklemek **iki kalıcı borç** bırakırdı: uygulanamaz yazılmış bir kural ve onu
+   ölçmeyen bir test paketi. 710 gün sonra kimse gerekçeyi hatırlamaz.
+
+### 🔴 AÇIK — ÜRÜN SAHİBİ KARARI GEREKİYOR (uygulanmadı)
+
+**Hakem incelemesi SLA devriyle TIER_2'den TIER_1'e düştü.** Gerçek ve
+**ödemesi yapılmış** fıstık siparişi `24cceb52`, 2026-09-01'den beri
+PENDING_REVIEW. Audit izi: GRACE_GRANTED (TIER_2) → SLA_PENALTY → SLA_BREACH
+"reassigned_to" → hedef **TIER_1** (hiç terfi etmemiş). `_hakem_incelemesi_ac`
+hakemi `_SENIOR_EXPERT_TIERS` ile seçiyor ama **devir yolunda o kapı YOK** —
+`ExpertProfile` nesnesinde kıdem **alanı bile yok**, yani eksik bir `if` değil
+**eksik bir veri yolu**. İdempotans kilidi yeni hakem açılmasını da engelliyor.
+
+⚠️ Tek başına kıdem süzgeci eklemek **yetmez**: üretimde TIER_2 uzman **1**
+ve mevcut atanan olarak zaten dışlanıyor → havuz daima boş kalır, sessiz yanlış
+karar görünür tıkanmaya döner (iyileşme) ama sipariş çözülmez. Kalıcı çözüm
+**ürün kararı**: ya ikinci bir TIER_2 uzman, ya "SLA'yı kaçıran hakem ceza
+puanıyla yeniden aday olabilir" kuralı.
+
+### ⚠️ DÜRÜSTLÜK NOTU — bugünkü dağıtımlar üretimde HENÜZ SINANMADI
+
+- Worker 11:38'de yeniden başladı, bağlı ve tüketiyor ama **sıfır iş işledi**
+  (dağıtım sonrası log satırı = 0). Yani bugünkü worker değişiklikleri
+  **dağıtıldı ama koşmadı**.
+- Pano süzgeci üretimde **hiçbir satırı görünür kılmadı**: iki timeseries
+  satırının ikisi de `anomali > 0` (22 ve 25), yani ikisi de düşük güven kolu.
+  Çiftçinin ekranı bit düzeyinde aynı.
+- Sağlıklı kol (`anomali = 0`) üretimde **henüz hiç doğmadı**.
+
+### Kalan ölçülmüş borçlar (iş kalemi olarak açılmadı)
+
+`time_spent_seconds` tüketici VAR üretici YOK (admin ekranı sürekli boş) ·
+kapıyı HANGİ ölçütün tetiklediği hiçbir yere yazılmıyor (mevcut 30 etiket bile
+bir eşiğe atfedilemez) · `model_confidence` İSTEMCİDEN geliyor · uzmana giden
+10 karo işaretlenen havuzu temsil etmiyor (model güveninde 1,93 kat sapma) ·
+`tile_counts` sayılarının sunum katmanında tüketicisi yok.
+
+---
+
 ---
 
 ## 0.A EN GÜNCEL — (2026-09-06, **yirmi altıncı oturum: UZMAN REHBERİ DENETİMİ + YENİDEN YAZIM · ÜÇ EKSİK TÜKETİCİ · plat #535 AÇIK**)
