@@ -335,6 +335,92 @@ Yani worker dağıtımı **13,8 GB GPU imajını yeniden derlemek DEĞİL**: ana
 ⚠️ **`docker logs` kanalı ÖLÜ** (10 dakikada 0 satır **ve pozitif kontrol de 0**).
 Worker sağlığı yalnız `data/state/worker.jsonl` dosya kanalından okunur.
 
+
+#### ⛔ DÜZELTME (aynı gün, iki tam koşumdan sonra): "%66–80" SAYISI ÇÜRÜDÜ
+
+Yukarıdaki tabloda yazan *"maskeli anomali 17/53/20"* **yanlıştır**. O sayılar,
+`stress_ratio`'yu **da** maskeleyen tek-başına benzetimimden geldi — yani
+çürütücünün **fail-OPEN** dediği kusurlu uygulamayı ölçüyordum. Gönderilen kod
+(work #291) stresi doğru olarak muaf tutuyor.
+
+Ürün sahibinin istediği **iki tam koşum** yapıldı (üretim kurulumuyla,
+`InferenceWorker.setup()`; FAISS ve sonuç deposu geçici kopyaya yönlendirildi).
+Enstrümantasyon mekanizmanın çalıştığını kanıtladı (`apply_mask` doğru,
+`veg_enabled=true`, taç oranı 25/80 karoda yazıldı) — **ama sayılar değişmedi.**
+
+| veri seti | bugün | YALNIZ MASKE | MASKE + STRESSİZ |
+|---|---|---|---|
+| karaburun | 25 anomali / 0 sağlıklı | **25 / 0** | **4 / 21** |
+| karaburun2 | 80 / 0 | **80 / 0** | **22 / 58** |
+| dicle | 25 / 0 | **25 / 0** | **17 / 8** |
+
+🔴 **Maske tek başına kapıyı hiç değiştirmiyor.** Maske NDVI ve NDRE ölçütlerini
+gerçekten düzeltiyor (karaburun: NDVI anomalisi **25→4**, NDRE **25→0**), ama
+bağlayan ölçüt onlar değil.
+
+
+##### İki tam koşumun UÇTAN UCA sonucu (ürün sahibinin istediği ölçüm)
+
+Üretim kurulumuyla (`InferenceWorker.setup()`, gerçek SSL kodlayıcı + gerçek FAISS),
+aynı ortomozaikte maske kapalı ve açık, dört koşum:
+
+| veri seti | maske | anomali | sağlıklı | tespit | **kanıt karosu** | result_mode | confidence |
+|---|---|---|---|---|---|---|---|
+| karaburun | KAPALI | 25 | 0 | 1 | **10** | INDICES_ONLY | 0,4345 |
+| karaburun | AÇIK | 25 | 0 | 1 | **10** | INDICES_ONLY | 0,4289 |
+| karaburun2 | KAPALI | 80 | 0 | 1 | **10** | INDICES_ONLY | 0,4306 |
+| karaburun2 | AÇIK | 80 | 0 | 1 | **10** | INDICES_ONLY | 0,4290 |
+
+🔴 **Seçilen 10 kanıt karosu her dört koşumda BİREBİR AYNI** — aynı `tile_id`
+listesi, aynı sırada, aynı NDVI değerleriyle. `confidence` farkı yalnız üçüncü
+onda basamağında ve MC-Dropout rastgeleliğinden geliyor, maskeden değil.
+
+Yani maske **uçtan uca hiçbir şeyi değiştirmiyor**: ne kapıyı, ne kanıt seçimini,
+ne sonuç kipini, ne tespitleri. Bu, work #291'in *"karar bit düzeyinde aynı"*
+iddiasını **uçtan uca doğrular** — ve aynı zamanda `apply_mask=True` yapmanın
+bugün **hiçbir işe yaramayacağını** gösterir.
+
+⚠️ Çürütücünün *"maske `pipeline.py:4020`'deki `ndvi_mean < 0.4` kapısını
+erişilemez kılar"* uyarısı, tasarımın **Aşama-2'yi de maskeleyen** adımı için
+geçerlidir. O adım UYGULANMADI: Aşama-2 kendi NDVI'sini maskesiz hesaplıyor,
+dolayısıyla 4020 maskeden etkilenmiyor. Ölçümle doğrulandı (kanıt karolarının
+NDVI'leri iki kipte de maskesiz değerler: 0,2295 · 0,3957 · 0,3098 …).
+
+⚠️ **Ölçüm geçerliliği notu:** ilk koşumda `expert_evidence_tiles` ve
+`mean_confidence` alan adlarını yanlış yazdım ve "kanıt = 0" sanmıştım. Doğru
+adlar `expert_evidence` ve `confidence_score`. Yanlış alan adı **sessizce None
+döner** — sıfır sonuç, yokluğun değil sorunun kanıtıydı.
+
+#### 🔴 ASIL KÖK NEDEN: `stress_ratio < 0,85` YAPISAL OLARAK SAĞLANAMAZ
+
+`stress_ratio = NDRE / NDVI`. Vejetasyonda kırmızı-kenar yansıması kırmızıdan
+**daima** büyüktür — ölçüldü: taç piksellerinin **%99,99–100**'ünde `RE > R` —
+dolayısıyla `NDRE < NDVI` ve oran **daima 1'in altında** kalır.
+
+| veri seti (yalnız taç pikselleri) | n | stres p50 | p99 | **≥0,85 olan** |
+|---|---|---|---|---|
+| karaburun | 713 745 | 0,319 | 0,540 | 161 (**%0,023**) |
+| karaburun2 | 2 834 166 | 0,301 | 0,550 | 221 (**%0,008**) |
+| dicle | 464 933 | 0,275 | 0,512 | 33 (**%0,007**) |
+| dicle_none (ham DN) | 204 742 | — | 0,286 | **0** |
+
+Bahçenin **en sağlıklı** pikselleri (NDVI 0,683) bile stres **0,319** veriyor.
+Karo ORTALAMASI alındığı için hiçbir karo 0,85'i aşamaz → **her karo, her zaman
+anomali**. Bu, "550/550 anomali, sıfır sağlıklı"yı maskeden daha iyi açıklar.
+
+⚠️ Kodun kendisi eşiğin doğrulanmamış olduğunu **zaten yazıyor**:
+`src/indices/stress_ratio.py` docstring'i *"değiştirmek ablasyon ister (eşik
+kalemi ayrı karar)"*, `pipeline.py:1306` *"no validated numeric cut-off"*.
+**Eksik olan ablasyon sayılarıydı; artık var** (yukarıdaki tablo).
+
+🔴 **ÜRÜN SAHİBİ KARARI BEKLİYOR:** `stress_ratio` ölçütü ne olacak — eşik
+yeniden türetilsin mi (taç p99'u 0,51–0,55), ölçüt kapıdan çıkarılsın mı, yoksa
+mahsul/sensör koşullu mu yapılsın? Eşik kapıya dokunduğu için **her işi**
+etkiler; tek başıma değiştirmedim.
+
+**Ders:** Bileşeni izole ölçüp **bileşimi** ölçmedim. Maskeyi tek başına ölçtüm,
+kapının üç ölçütünün BİLEŞİMİNİ ölçmedim ve yanlış bir sayı yayımladım.
+
 #### KAPANMAYAN
 
 * Maske **açılmadı**; açmanın ön koşulu `pipeline.py:4020`'nin yeniden tasarımıdır.
