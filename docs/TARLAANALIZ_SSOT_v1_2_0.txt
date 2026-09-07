@@ -628,6 +628,17 @@ Aşağıdaki koşullardan **biri** yeterlidir; sonuç uzman kuyruğuna yönlendi
 
 Her durumda tam sonuç WORM (silinemez) denetim kaydına yazılır; NDVI/NDRE haritaları `PARTIAL_REPORT` ve `INDICES_ONLY` kademelerinde her zaman paylaşılır.
 
+> 🔴 **İSTİSNA — SAĞLIKLI TARLA (2026-09-07, DK-60).** Yukarıdaki tablo `result_mode`'u `final_confidence` bandına BİRE BİR bağlar. Bu bağ 2026-09-07'de KOPTU ve `INDICES_ONLY` artık **İKİ AYRI DURUM** taşır:
+>
+> | Ayırt edici | Ne demek | EscalationLevel | Çiftçiye |
+> |---|---|---|---|
+> | `INDICES_ONLY` + `tile_counts.anomaly = 0` | **Ölçüm BAŞARILI, bulgu YOK** — Aşama-1 hiç anomali karosu işaretlemedi. Tanı hiç DENENMEDİ. | `NONE` | Ölçüm tamamlandı + indeks haritaları |
+> | `INDICES_ONLY` + `tile_counts.anomaly > 0` | Güven 0,25-0,45 — bir şey bulundu, **tanı saklandı** (tablodaki asıl satır). | `PRIORITY` | Fail-closed: tanı YOK |
+>
+> Sağlıklı tarla kolunda `confidence_score` bir **ÖLÇÜM DEĞİL**, yer tutucudur (0,0) — çünkü tanı hiç denenmemiştir. **Tüketici, eskalasyon kademesini güvenden türetmeden ÖNCE bu durumu ayırmak zorundadır**; aksi hâlde tablonun `< 0,25 → CRITICAL / ACİL` satırı sapasağlam bir tarlayı acil vakaya çevirir. Ayırt edici alan `result_mode` DEĞİL, `tile_counts.anomaly`'dir.
+>
+> ⚠️ Bu kol 2026-09-07'den ÖNCE **ULAŞILAMAZDI**: Aşama-1 kapısı `stress_ratio < 0,85` ölçütüyle her karoyu işaretliyordu (üretimde ölçüldü: 550/550 karo anomali, sağlıklı SIFIR). Ölçüt emekli edilip vejetasyon maskesi açılınca kol ULAŞILIR oldu (ölçüldü: 4/25 ve 22/80 anomali — yani karoların çoğu artık sağlıklı sayılıyor).
+
 ### Sorumluluk Ayrımı (Worker ↔ Platform)
 
 - **Worker:** tetikleyicileri değerlendirir, `ResultMode` belirler, eskalasyon paketi üretir — pakette `field_id` **YOKTUR** (**[KR-071]**)
@@ -874,6 +885,12 @@ Takvim değerleri **karar desteğidir**; parsel gözlemi, yerel fenoloji (sıcak
 - Erken dönem su stresi uyarısı (görünür bantlardan önce tespit)
 
 > **Not:** Çiftçi PWA'da hangi rapor seviyesini aldığını görür. Eksik bantlar nedeniyle üretilemeyen katmanlar için bilgi notu gösterilir; bu durum hata değil, sensör kapasitesi ile ilgili normal bir kısıtlamadır.
+
+**Bulgu Çıkmayan Tarla (sağlıklı sonuç) — 2026-09-07 (DK-60):**
+
+Ölçüm başarılı olup Aşama-1 hiçbir anomali karosu işaretlememişse bu bir **BAŞARISIZLIK DEĞİL, ürünün hedeflediği sonuçtur**. Teslim edilir: ortomozaik, indeks haritaları (NDVI/NDRE), `overall_health_index` ve örtü dağılımı. Teslim EDİLMEZ: tanı / sınıf / şiddet — çünkü hiçbiri **üretilmemiştir** (Temel İlke aynen geçerli; bu bir maskeleme değil, yokluktur).
+
+> 🔴 **Çiftçiye giden metin ölçümün TAMAMLANDIĞINI söyler, sensör/kapasite KISITI ima ETMEZ.** 'Yalnız temel haritalar *üretilebildi*' gibi bir cümle en iyi haberi kusur gibi okutur. Doğrusu: *'Ölçüm tamamlandı. Bu uçuşta dikkat çeken bir sorun bulunmadı; bitki sağlığı haritalarınız hazır.'* Ayırt edici alan `tile_counts.anomaly = 0`'dır (`result_mode` tek başına YETMEZ — bkz. KR-019 fail-closed kademe tablosu istisnası).
 
 ---
 

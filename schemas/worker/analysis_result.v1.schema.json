@@ -40,7 +40,7 @@
     "result_mode": {
       "type": "string",
       "enum": ["FULL_REPORT", "PARTIAL_REPORT", "INDICES_ONLY", "NO_RESULT"],
-      "description": "Fail-closed output level (KR-019 / KARAR-13). Worker runtime field."
+      "description": "Fail-closed output level (KR-019 / KARAR-13). Worker runtime field. DEĞER BAŞINA: FULL_REPORT = tanı dahil tam sonuç. PARTIAL_REPORT = indeks + anomali, tanı YOK. INDICES_ONLY = 🔴 İKİ AYRI DURUM taşır ve ayırt edici `result_mode` DEĞİL, `tile_counts.anomaly`'dir: (a) anomaly = 0 → ölçüm BAŞARILI, Aşama-1 hiç anomali karosu işaretlemedi = SAĞLIKLI TARLA (worker work #294/DK-60, 2026-09-07). Bu kolda tanı hiç DENENMEZ, dolayısıyla `confidence_score` bir ÖLÇÜM DEĞİL yer tutucudur (0.0) ve eskalasyon kademesi ondan TÜRETİLEMEZ. (b) anomaly > 0 → model güveni 0.25-0.45, tanı SAKLANDI (KR-019 fail-closed), uzmana PRIORITY ile gider. NO_RESULT = ölçüm başarısız, hiçbir şey gönderilmez. ⚠️ Tüketici kademeyi/eskalasyonu `confidence_score`'tan türetmeden ÖNCE (a) durumunu AYIRMALIDIR; aksi hâlde sapasağlam bir tarla ACİL sınıflanır."
     },
     "confidence_score": {
       "type": "number",
@@ -226,7 +226,7 @@
     },
     "tile_counts": {
       "type": ["object", "null"],
-      "description": "G-10 (2026-07-13, KR-088 preliminary report): aggregate green-vs-problem summary of the worker inference tile scan — how many tiles were scanned, how many are healthy (green/problem-free), how many are anomalous (problematic). The worker_bridge consumer persists this per-mission into field_index_timeseries; it is the farmer preliminary report's 'healthy tiles / problem tiles' signal. Source: worker PipelineResponse.tile_count_total/healthy/anomaly. NOT emitted under NO_RESULT (fail-closed). KR-071: aggregate count, not PII. Kept at top level (NOT under summary) because it does NOT depend on ResultSummary's required overall_health/health_score/area_analyzed_hectares/coverage_percent fields, which the worker runtime form does not compute.",
+      "description": "G-10 (2026-07-13, KR-088 preliminary report): aggregate green-vs-problem summary of the worker inference tile scan — how many tiles were scanned, how many are healthy (green/problem-free), how many are anomalous (problematic). The worker_bridge consumer persists this per-mission into field_index_timeseries. 🔴 KARAR (2026-09-07): bu alan BUGÜN ÇİFTÇİ ÖN RAPORUNDA SUNULMAZ — KR-093 Aşama B kapalı listesinde (`report_phase.enum` → `x-preliminary-content.stage_b_post_analysis.fields`) YOKTUR ve liste kapalıdır. Eski cümle ('it is the farmer preliminary report's signal') o listeyle ÇELİŞİYORDU; çelişki alanı listeye ekleyerek değil, cümleyi düzelterek kapatıldı. GEREKÇE: alanın platform sunum katmanında bugün HİÇ tüketicisi yok (ölçüldü: `tile_count` → platform/src/presentation + web/src'te 0 eşleşme), yani listeyi açmak hiçbir şey teslim etmez ama bir yüzeyi kalıcı olarak açar. GERİ AÇMA TETİKLEYİCİSİ: çiftçiye 'kaç karo sağlıklı' bilgisini gösterecek gerçek bir tüketici yazıldığında karar yeniden verilir ve alan aynı turda kapalı listeye EKLENİR. ⚠️ 2026-09-07'den ÖNCE bu sayılar bilgi taşımıyordu: Aşama-1 kapısı her karoyu işaretlediği için `healthy` daima 0 idi; DK-61'den sonra ilk kez gerçek bölünme veriyor. Source: worker PipelineResponse.tile_count_total/healthy/anomaly. NOT emitted under NO_RESULT (fail-closed). KR-071: aggregate count, not PII. Kept at top level (NOT under summary) because it does NOT depend on ResultSummary's required overall_health/health_score/area_analyzed_hectares/coverage_percent fields, which the worker runtime form does not compute.",
       "properties": {
         "total": { "type": ["integer", "null"], "minimum": 0, "description": "Total number of tiles scanned" },
         "healthy": { "type": ["integer", "null"], "minimum": 0, "description": "Number of healthy (green/problem-free) tiles" },
@@ -253,7 +253,7 @@
         "model_hint_source": { "type": ["string", "null"], "enum": ["L1_HASH_ATLAS", "L2_FAISS", "NONE", null], "description": "How the hint was obtained. L1_HASH_ATLAS = expert-curated atlas hit (fed by prior expert feedback); L2_FAISS = embedding similarity; NONE = no memory hit. Lets the expert weigh the hint provenance instead of treating all alike." },
         "bbox": {
           "type": ["object", "null"],
-          "description": "Tile position in pixel space. Null until the producer fills it (W-3).",
+          "description": "Tile position in pixel space, origin top-left (x = sütun ekseni, y = satır ekseni). ÜRETİCİ 2026-09-07'de BAĞLANDI (W-3, worker work #292: `pipeline._tile_bbox`, iki çağrı yerinden beslenir) — alan artık kural olarak DOLUDUR. Null YALNIZCA karo sözlüğünde `row`/`col`/`height`/`width` eksik ya da geçersizse döner; üretici UYDURMAZ. ⚠️ ÖLÇÜ DOLGU ÖNCESİDİR: kenar karolarında görüntü dizisi `tile_size`'a doldurulur, bbox ise dolgudan ÖNCEKİ gerçek ölçüyü taşır — `x_max - x_min` karo görüntüsünün genişliğinden KÜÇÜK olabilir. Tüketici kutuyu görüntü şeklinden TÜRETMEMELİ, bu alandan OKUMALIDIR. Piksel uzayıdır: coğrafi koordinat DEĞİLDİR. KR-071: PII taşımaz.",
           "properties": {
             "x_min": { "type": "number" },
             "y_min": { "type": "number" },
