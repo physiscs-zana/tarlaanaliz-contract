@@ -720,7 +720,15 @@ Verilerin yaşam döngüsünü yöneterek DB boyutu ve S3 depolama maliyetini ko
 5) field_history: ASLA silinmez.
 6) field_index_timeseries: ASLA silinmez (trend verisi değerli).
 7) analysis_results silmeden ÖNCE timeseries'te karşılığının varlığı doğrulanır.
-7-a) **Geri-doldurma (backfill) kaydı SİLİNEN sonucun GERÇEK alanlarını taşır** (2026-09-07'de eklendi). `result_mode` **SABİT YAZILAMAZ** — kaynak satırdan okunur; retention seçim sorgusu bunu yapabilmek için `result_mode`'u okumak ZORUNDADIR. `NO_RESULT` sonuçları için backfill YAPILMAZ (karşılığı KR-088 §3-2 gereği zaten olmamalıdır). Gerekçe: sabit `FULL_REPORT` yazan bir backfill, 730 gün sonra hiçbir şey üretmemiş bir uçuşu çiftçi panosunda 'tam rapor' sağlık noktası olarak DOĞURUR ve KR-088 §7 kabul ölçütünü tersine çevirir.
+7-a) **Geri-doldurma (backfill) kaydı UYDURMAZ** (2026-09-07'de eklendi, aynı gün ölçümle DÜZELTİLDİ). Kayıt, kanonik yazıcının (`_insert_timeseries`) kullandığı AYNI kaynaklardan beslenir: ölçüm tarihi `mission.flown_at` (yoksa analiz tarihine geri düşülür), mahsul `mission.crop_type`. `result_mode` **SABİT YAZILAMAZ** — ama TÜRETİLEMEZ de: bilinmiyorsa **NULL** yazılır.
+
+> ⚠️ **BU MADDENİN İLK HÂLİ UYGULANAMAZDI ve aynı gün düzeltildi.** İlk yazımı *"kaynak satırdan okunur; retention seçim sorgusu `result_mode`'u okumak ZORUNDADIR"* diyordu. Ölçüldü: `analysis_results` tablosunda `result_mode` kolonu **YOK**, `analysis_jobs` tablosunda da **YOK** (yalnız `status` var). `status` ile `result_mode` **AYRI EKSENLERDİR** (KR-088 §7) — birini ötekinden türetmek, düzeltilmeye çalışılan yalanın başka bir biçimi olurdu. Kural, olmayan bir kolonu işaret ettiği için bir **kapı değil dilek** hâline gelmişti.
+>
+> **NULL neden doğru cevap:** kolon nullable'dır (ölçüldü) ve NULL sunum tarafında **FAIL-CLOSED**'dır — KR-091 §3-2 süzgeci NULL kipi hiçbir kolda kabul etmez. Kayıt böylece denetim için KORUNUR ama çiftçi panosunda sağlık noktası olarak GÖRÜNMEZ. "Bilinmiyor" demek, "tam rapor" demekten iyidir.
+
+`NO_RESULT` sonuçları için backfill YAPILMAZ (karşılığı KR-088 §3-2 gereği zaten olmamalıdır) — ama bugün hangi sonucun `NO_RESULT` olduğu **anlaşılamaz**, bu yüzden kural pratikte NULL kipi üzerinden işler. Gerekçe: sabit `FULL_REPORT` yazan bir backfill, hiçbir şey üretmemiş bir uçuşu çiftçi panosunda 'tam rapor' sağlık noktası olarak DOĞURUR ve KR-088 §7 kabul ölçütünü tersine çevirir.
+
+> 📌 **ULAŞILABİLİRLİK (ölçüldü 2026-09-07):** bu yol bugün TETİKLENMEZ — en eski `analysis_results` satırı 20 günlük, eşik 730 gün, yani pencere ~710 gün sonra açılır; ayrıca timeseries karşılığı olmayan sonuç sayısı bugün **0**. Buna rağmen kod ve testler ŞİMDİ yazıldı: 710 gün sonra bu kararın gerekçesini kimse hatırlamaz ve kuralı ölçen hiçbir kapı yoktu.
 8) İlk çalıştırma dry_run() modunda yapılır (silmeden rapor).
 
 **Sözleşmeye 2026-07/08 turunda giren veri kategorileri (0.h kararı — K2/K3):**
