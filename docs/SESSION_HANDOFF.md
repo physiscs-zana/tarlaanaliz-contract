@@ -4,7 +4,7 @@
 > Yerel makine hafızası taşınmaz; bu dosya repo ile GitHub üzerinden senkronize olur.
 > **Bir sonraki oturumda önce bu dosyayı oku.**
 
-**Son güncelleme:** 2026-09-06 (**yirmi altıncı oturum** — ⚠️ bu not **beş gün bayattı** (1 Eylül'den sonra ct 7.16.0/7.17.0, work 9 PR, plat 29 PR merge edilmişti; edge hâlâ 7.15.0). Uzman **Karo Yorumlama Rehberi** dört mercek + bilim merceğiyle denetlendi ve **12 bölüm** olarak yeniden yazıldı: rehber artık uzmanın GERÇEKTE gördüğü ekranı anlatıyor (çok bantlı görüntü, karonun neden geldiği — kapı 0,55/0,15/0,85, en fazla **10** karo —, güven bandı, karar seçenekleri, karar-sonrası panel, tarla referansı). NDVI merdiveni çiftçi sınıflarıyla (0,2/0,4/0,6/0,8) hizalandı. 🔴 Üç **"üretici var, tüketici yok"** kapandı: tarla referansı (#499'un arayüz yarısı HİÇ yoktu), güven bandı iki ekranda iki eşik seti, model ipucu kaynağı. ✅ **DÖRT PR MERGE EDİLDİ ve PLATFORM ÜRETİME DAĞITILDI** (ürün sahibi devretti): plat #535 (rehber) · plat #536 (uçuş tarihi + çok-zamanlı rozet) · ct #144 · edge #86 (pin 7.17.0). Canlı doğrulama: yeni rehber CSS imzası `list-style-type:circle` **canlıda VAR** (pozitif+negatif kontrolle), backend 15 dakikada 178 satır akış ve **0 ERROR**. Worker karşılaştırması: desen/komşuluk/zaman eksenini HİÇ kullanmıyor. 🔴 Ardından rehberin **67 bilimsel iddiası** hakemli literatüre karşı sınandı: **28 DOĞRU · 36 KISMEN · 2 YANLIŞ**; **iki YANLIŞ da bu turda sayfaya benim eklediğim cümlelerdi** ve bir gün üretimde canlı kaldı (mavi bant erken uyarı sanılıyordu; standart sapma aykırı değere bağışık sanılıyordu). plat **#537** ile düzeltildi, 10 kilit + mutasyon 10/10. 🔴 Ardından worker önerilerim **dokuz uzman merceğinden** geçti ve **beşi de** yazıldığı hâliyle düştü; hiçbirinde adı geçmeyen kök neden çıktı: **Aşama-1 kapısı bitki örtüsü maskesini HİÇ uygulamıyor**, karo ortalaması bitki sağlığını değil **taç kaplama oranını** ölçüyor (üç gerçek ortomozaikte maskesiz anomali **%100**, maskeli %66–80). Çürütücü, **benim yazdığım** ölümcül bir kusuru da buldu: maskeli `stress_ratio` stresi değil **kaplamayı** ölçüyordu (r=0,94). work **#291** merge edildi ve **DAĞITILDI**: ölçüm açık, **maske KAPALI**. ⛔ Ardından **iki tam koşum** o turun sayısını ÇÜRÜTTÜ: maske uçtan uca **hiçbir şeyi** değiştirmiyor — asıl kök neden **`stress_ratio < 0,85` eşiğinin yapısal olarak sağlanamaması** (taç piksellerinin **%0,01**'i ulaşıyor; ablasyon: maske+stressiz 4/21 · 22/58 · 17/8). ✅ Kalan beş kalem de kapatıldı: **W-3 indi ve dağıtıldı** (work **#292** — kanıt karosunun KONUMU uzmana hiç gitmiyordu; mutasyon **iki kez** testimi çürüttü), **#1/#4/#5/#6/#7 ölçümle düştü** (#5'te beş ölümcül kusur). 🔴 **Ardından ürün sahibi 0,85'i RASTGELE yazdığını açıkladı**; bilimsel karşılık dört yoldan arandı ve BULUNAMADI (fiziksel tavan 0,66-0,69; savunulabilir her eşik kaldırmayla özdeş; R²=0,963-0,968 ile NDRE'nin kopyası). ✅ **İKİ ADIM İNDİ ve DAĞITILDI**: work **#294** sağlıklı-tarla yolunu onardı (veri yalanı + kip çelişkisi), work **#295** **maskeyi AÇTI ve stres ölçütünü emekliye ayırdı**. Uzmana giden 10 kanıt karosunun karaburun'da **0'ı** gerçekten anomaliydi; artık havuz gerçek anomalilere iniyor ve Aşama-2 yükü %100'den **%16-27**'ye düştü — kodun kendi tasarım hedefi ilk kez tuttu. Detay: §0.A §10-§12. Önceki: 2026-08-31 (**yirmi beşinci oturum** — §0.A'nın kendisi **bağımsız denetimden geçti** (üç kusur + öz-denetimin bulduğu dördüncüsü, ct #133/#134), ardından **TUR 1 · 1.5 · 2 uygulandı**: uzman artık 1 yerine **5 farklı karo**, **dört bandın haritasını** ve **konumu** görüyor. 🔴 W-4'ün beyan edilmemiş bir sonucu öz-denetimde çıktı — kanıt `detections`'a yazılınca **çiftçi beş ayırt edilemez satır** görecekti; ürün sahibi kararıyla **AYRI EKSEN** açıldı (`expert_evidence`, sözleşme **7.14.0**, dört depo hizalı). **W-9** `disease_class` üreticisi **iki ölü mekanizmayı** birden açtı (`disease_hint` + `atlas.invalidate`). **Üretime dağıtıldı ve doğrulandı** (platform → worker sırası kritikti). ⛔ *"Etiket en sona"* kuralı **ölçümle çürüdü**. **48 mutasyon**, üçü ilk turda kaçıp testin zayıf olduğunu gösterdi. Detay: §0.A. Önceki: 2026-08-31 (**yirmi dördüncü oturum** — uzmana giden kanıt: **öğrenme döngüsü kilitli**, ölçüm+planlama turu, kod değişmedi; ardından §0.A'nın kendisi **bağımsız denetimden** geçti ve **üç kusuru** ölçümle düzeltildi — detay §0.A ve §0.A ⑭. Önceki: 2026-08-30 (**yirmi üçüncü oturum** — 🔴 **çiftçiye giden "örtü düşüşü" SAHTE ÇIKTI**: −8.1 puanın **−7.7'si kapsam artefaktı**, gerçek değişim **−0.4** (yedi eşikte + negatif/pozitif kontrolle ölçüldü) · kapsam zinciri uçtan uca kuruldu (ct **7.11.0/7.12.0/7.13.0**, work #272/#274/#275, plat #493–#500) · **10 kusur** kapatıldı, hepsi mutasyonla · `mod=INDICES_ONLY`·`KR-025`·`SUPPRESSED` **çiftçi ekranına sızıyordu**, kapı kondu · SUPERSEDE **görev** kapsamlıydı, başka uçuşun incelemesini kapatıyordu · fıstık **`detection_requirements`** kısıt ilanı (psillid için uzaktan algılama literatürü **YOK**) · edge SSOT `7.8.0→7.13.0`. **19 PR MERGE EDİLDİ**, dört depo **7.13.0**'da. 🔴 **AÇIK ENGEL:** analiz tamamlanamıyor — tünel **0.47–0.90 MB/s** ölçüldü, 276 MB ortofoto okunamıyor; boru hattı doğru davranıp `NO_RESULT` veriyor. ⛔ SSRF gerekçeli timeout/retry sabitlerini gevşetme. Detay ve **açılış sorusu**: §0.A ④. Önceki: 2026-08-26 (**yirmi birinci oturum** — 🔴 **çiftçi tarla ekleyemiyordu**: saha kanıtından kök nedene, beş PR (plat #473/#474/#478/#479/#480) — ekran çiftçiye **yalan söylüyordu** (boş ama truthy sınır), `Invalid LngLat (NaN, NaN)` kök nedeni **deneyle kanıtlandı** (tür etiketine güvenmek; etiketi uyduran da bizim kodumuzdu), tarla ekleme **tek butona** indi · A-1/A-2 `/docs` üretimde fail-OPEN (#476) + G-1 WORM tablosuna yanlış “teslim edildi” (#477) · ⭐ **DAĞITIM İLK KEZ ÜÇ KATMANDA ÖLÇÜLDÜ** — üretim `origin/main` ile **0 commit** hizalı, backend konteynerinde ve **canlı web paketinde** doğrulandı · ⚠️ iki oturum **kayıt bırakmadan** kapandı, bu bölüm depodan kurtarıldı. Detay: §0.A. Önceki: 2026-08-25 (**yirminci oturum** — önceki turun devir notu **bağımsız denetimden geçti** (4 kusur + 1 yeni bulgu + 3 karar) · 🔴 **canlı çiftçi hatası** düzeltildi: tarla eklenemiyordu, arayüz sözleşmenin bayat aynasıydı (plat #468) · 🔴 **T01-K1 gerilemesi kapandı** — kapı doğruydu, KÜME yanlıştı; düşük-güvenli her işte uzman incelemesi sessizce kapanıyordu (plat #469) · Y1 sınıfı (üç üye) + Y2 üretici formu + çift declare (plat #470) · **K3** DLX'e bağlı kuyruk yoktu, **#467 bunu kapatmıyor** (plat #471) · **Y3** iş ekseni artık kanıt taşıyor, `status="FAILED"` bilerek YAPILMADI (plat #472) · iki sarkan betik atfı + Y4 tuzağı + yeni kapı (work #259). ⛔ “Hiçbiri dağıtılmadı” iddiası 2026-08-26'da **ÇÜRÜTÜLDÜ** — ölçüldü, altısı da canlıda (§0.A ③). Önceki: 2026-08-19/20 (**on altıncı oturum** — uzman ekranı zinciri: sonuç↔veri seti bağı sınıfı tamamen kapatıldı (#441/#443) · **üretimde ölü döşeme servisi** bulundu ve düzeltildi (#446 — NumPy x86-64-v2 uyumsuzluğu, 7770 log satırı) · CI asılma kapakları (#442) · alan adı + BOUND kapısı (#444) · dağıtımda submodule kapısı + simülasyon bağımsızlığı (#445) · kartlar alt uzmanlık duyarlı (#447). ✅ **7 PR MERGE EDİLDİ ve DAĞITILDI**. Önceki: 2026-08-18 (**on üçüncü/on dördüncü oturum** — KR-013-2 komşuluk kapısı sahipten bağımsız hâle getirildi (#91) · CLAUDE.md dört depoda Opus 5 rehberine göre yeniden yapılandırıldı + `check_claude_md_refs.py` atıf bütünlüğü kapısı kuruldu (#92) · kök `CLAUDE.md` + oturum-başı kanca kalıcılık için contract'a taşındı (#93) · dört depoda `docs/`+`denetim/` (191 dosya) tam-okuma denetimi: platform+worker sıfır aday, contract'ta 2 alansız dosya silindi/taşındı (#94). **AL-K26 (I-1 hizası) bu turda platformun 7.6.1'de kaldığı iddiasıyla açık görünüyordu — ölçüldü, 2026-08-13'te KAPANMIŞ ve dört depo bugün de 7.7.2'de hizalı** (bkz. §0.A, önceki turun bu satırı düzeltildi). Önceki: **on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
+**Son güncelleme:** 2026-09-07 (**yirmi yedinci oturum** — **KR/SSOT belge denetimi + iki gün öz-denetimi**. Altı uzman merceği + çürütücü bugünkü değişikliklere karşı kanonik metinleri taradı: **58 bulgu → 10 küme elendi → 14 ayakta**. ✅ **BEŞ PR MERGE EDİLDİ ve ÜÇÜ DE ÜRETİME DAĞITILDI**: ct **#151** (v7.17.1 + etiket `v7.17.1`) · work **#297**, **#298** · plat **#538**. 🔴 **ÜÇ ALAN ÖLÇÜMLE ÇÜRÜTÜLDÜ:** `internal_use` hâlâ *"eşiğin altındaki karo derin incelemeye yollanır"* diyordu (ölçüt DK-61 ile emekli); `direction_and_range`'in *"tipik aralık 0–1"* ifadesi YANLIŞTI **ve tüketicide ölçülebilir zarara dönüşmüştü** — rampa aritmetiği: yayınlanmış SAĞLIKLI SCCCI aralığı 0,26-0,31 **turuncu-kahve** `#BB772E`, taç dışı nötr klemp (ölçüm YOKLUĞU) **en koyu yeşil** `#1A731A` → **harita TERS okunuyordu**; `measured_from`+`measured_producers`'ın **sekiz satır atfının SEKİZİ de** bayattı (sapma 500-1500 satır). 🔴 **SAĞLIKLI TARLA PANODAN DÜŞÜYORDU**: yazıcı `INDICES_ONLY` satırını yazıyor, okuyucu **altı ayrı yerde** eliyordu; KR-091 §6 boş panoyu hata saymadığı için kusur **sessizdi** ve DK-61 onu ilk kez ULAŞILABİLİR yapmıştı. 🔴 **REHBERDE ALTI DÜZELTME** — en ciddisi *"tek bir karoda bile incelemenin sonucu red olur"*: kod bunu **yapmıyor** (hepsi 'yok' ise red, bir kısmı ise **düzeltme**) ve o kod 2026-09-03'te tam bu kusur için düzeltilmişti; yanlış metin uzmanı "yok" demekten **çekindirip eğitim verisini bozuyordu**. 🔴 **BUGÜN YAZDIĞIM ÜÇ YANLIŞ ÖZ-DENETİMDE ÇIKTI**: "%16-21" aritmetik yanlış (gerçek: %16 · %27,5 · **%68**), "telde ayırt edilebilir" iddiasının (B) yarısı yanlış, "bu dal ULAŞILAMAZ" bayat. ⚠️ **CRLF tuzağına ikinci biçimiyle düştüm**: pin **HAM** blob hash'i ister, normalize etmek `drone_type.enum`'un DOĞRU pinini bozuyordu (dosyanın kendi blob'unda 35 CRLF var; `grep -c $'\r'` **0 dedi ve yanılttı**). ⚠️ Worker re-pin'i **yerelde 4737 yeşil, CI'da iki kırmızı** — ikisi de yalnız CI'da koşuyor (`lastUpdated` parite kapısı kardeş depo ister; CHANGELOG kapısı workflow adımı). Mutasyon: **16 mutasyon, 16 kırmızı, 0 kaçak** (ilk turda iki kaçak vardı ve ikisi de gerçek test boşluğuydu). Dağıtım **dışarıdan** doğrulandı: pozitif kontrol + yalnız #538'le doğan `0,656`/`0,317` canlı pakette, kaldırılan "stres oranı" ibaresi **yok**. Detay: §0.A §13. Önceki: 2026-09-06 (**yirmi altıncı oturum** — ⚠️ bu not **beş gün bayattı** (1 Eylül'den sonra ct 7.16.0/7.17.0, work 9 PR, plat 29 PR merge edilmişti; edge hâlâ 7.15.0). Uzman **Karo Yorumlama Rehberi** dört mercek + bilim merceğiyle denetlendi ve **12 bölüm** olarak yeniden yazıldı: rehber artık uzmanın GERÇEKTE gördüğü ekranı anlatıyor (çok bantlı görüntü, karonun neden geldiği — kapı 0,55/0,15/0,85, en fazla **10** karo —, güven bandı, karar seçenekleri, karar-sonrası panel, tarla referansı). NDVI merdiveni çiftçi sınıflarıyla (0,2/0,4/0,6/0,8) hizalandı. 🔴 Üç **"üretici var, tüketici yok"** kapandı: tarla referansı (#499'un arayüz yarısı HİÇ yoktu), güven bandı iki ekranda iki eşik seti, model ipucu kaynağı. ✅ **DÖRT PR MERGE EDİLDİ ve PLATFORM ÜRETİME DAĞITILDI** (ürün sahibi devretti): plat #535 (rehber) · plat #536 (uçuş tarihi + çok-zamanlı rozet) · ct #144 · edge #86 (pin 7.17.0). Canlı doğrulama: yeni rehber CSS imzası `list-style-type:circle` **canlıda VAR** (pozitif+negatif kontrolle), backend 15 dakikada 178 satır akış ve **0 ERROR**. Worker karşılaştırması: desen/komşuluk/zaman eksenini HİÇ kullanmıyor. 🔴 Ardından rehberin **67 bilimsel iddiası** hakemli literatüre karşı sınandı: **28 DOĞRU · 36 KISMEN · 2 YANLIŞ**; **iki YANLIŞ da bu turda sayfaya benim eklediğim cümlelerdi** ve bir gün üretimde canlı kaldı (mavi bant erken uyarı sanılıyordu; standart sapma aykırı değere bağışık sanılıyordu). plat **#537** ile düzeltildi, 10 kilit + mutasyon 10/10. 🔴 Ardından worker önerilerim **dokuz uzman merceğinden** geçti ve **beşi de** yazıldığı hâliyle düştü; hiçbirinde adı geçmeyen kök neden çıktı: **Aşama-1 kapısı bitki örtüsü maskesini HİÇ uygulamıyor**, karo ortalaması bitki sağlığını değil **taç kaplama oranını** ölçüyor (üç gerçek ortomozaikte maskesiz anomali **%100**, maskeli %66–80). Çürütücü, **benim yazdığım** ölümcül bir kusuru da buldu: maskeli `stress_ratio` stresi değil **kaplamayı** ölçüyordu (r=0,94). work **#291** merge edildi ve **DAĞITILDI**: ölçüm açık, **maske KAPALI**. ⛔ Ardından **iki tam koşum** o turun sayısını ÇÜRÜTTÜ: maske uçtan uca **hiçbir şeyi** değiştirmiyor — asıl kök neden **`stress_ratio < 0,85` eşiğinin yapısal olarak sağlanamaması** (taç piksellerinin **%0,01**'i ulaşıyor; ablasyon: maske+stressiz 4/21 · 22/58 · 17/8). ✅ Kalan beş kalem de kapatıldı: **W-3 indi ve dağıtıldı** (work **#292** — kanıt karosunun KONUMU uzmana hiç gitmiyordu; mutasyon **iki kez** testimi çürüttü), **#1/#4/#5/#6/#7 ölçümle düştü** (#5'te beş ölümcül kusur). 🔴 **Ardından ürün sahibi 0,85'i RASTGELE yazdığını açıkladı**; bilimsel karşılık dört yoldan arandı ve BULUNAMADI (fiziksel tavan 0,66-0,69; savunulabilir her eşik kaldırmayla özdeş; R²=0,963-0,968 ile NDRE'nin kopyası). ✅ **İKİ ADIM İNDİ ve DAĞITILDI**: work **#294** sağlıklı-tarla yolunu onardı (veri yalanı + kip çelişkisi), work **#295** **maskeyi AÇTI ve stres ölçütünü emekliye ayırdı**. Uzmana giden 10 kanıt karosunun karaburun'da **0'ı** gerçekten anomaliydi; artık havuz gerçek anomalilere iniyor ve Aşama-2 yükü %100'den **%16-27**'ye düştü — kodun kendi tasarım hedefi ilk kez tuttu. Detay: §0.A §10-§12. Önceki: 2026-08-31 (**yirmi beşinci oturum** — §0.A'nın kendisi **bağımsız denetimden geçti** (üç kusur + öz-denetimin bulduğu dördüncüsü, ct #133/#134), ardından **TUR 1 · 1.5 · 2 uygulandı**: uzman artık 1 yerine **5 farklı karo**, **dört bandın haritasını** ve **konumu** görüyor. 🔴 W-4'ün beyan edilmemiş bir sonucu öz-denetimde çıktı — kanıt `detections`'a yazılınca **çiftçi beş ayırt edilemez satır** görecekti; ürün sahibi kararıyla **AYRI EKSEN** açıldı (`expert_evidence`, sözleşme **7.14.0**, dört depo hizalı). **W-9** `disease_class` üreticisi **iki ölü mekanizmayı** birden açtı (`disease_hint` + `atlas.invalidate`). **Üretime dağıtıldı ve doğrulandı** (platform → worker sırası kritikti). ⛔ *"Etiket en sona"* kuralı **ölçümle çürüdü**. **48 mutasyon**, üçü ilk turda kaçıp testin zayıf olduğunu gösterdi. Detay: §0.A. Önceki: 2026-08-31 (**yirmi dördüncü oturum** — uzmana giden kanıt: **öğrenme döngüsü kilitli**, ölçüm+planlama turu, kod değişmedi; ardından §0.A'nın kendisi **bağımsız denetimden** geçti ve **üç kusuru** ölçümle düzeltildi — detay §0.A ve §0.A ⑭. Önceki: 2026-08-30 (**yirmi üçüncü oturum** — 🔴 **çiftçiye giden "örtü düşüşü" SAHTE ÇIKTI**: −8.1 puanın **−7.7'si kapsam artefaktı**, gerçek değişim **−0.4** (yedi eşikte + negatif/pozitif kontrolle ölçüldü) · kapsam zinciri uçtan uca kuruldu (ct **7.11.0/7.12.0/7.13.0**, work #272/#274/#275, plat #493–#500) · **10 kusur** kapatıldı, hepsi mutasyonla · `mod=INDICES_ONLY`·`KR-025`·`SUPPRESSED` **çiftçi ekranına sızıyordu**, kapı kondu · SUPERSEDE **görev** kapsamlıydı, başka uçuşun incelemesini kapatıyordu · fıstık **`detection_requirements`** kısıt ilanı (psillid için uzaktan algılama literatürü **YOK**) · edge SSOT `7.8.0→7.13.0`. **19 PR MERGE EDİLDİ**, dört depo **7.13.0**'da. 🔴 **AÇIK ENGEL:** analiz tamamlanamıyor — tünel **0.47–0.90 MB/s** ölçüldü, 276 MB ortofoto okunamıyor; boru hattı doğru davranıp `NO_RESULT` veriyor. ⛔ SSRF gerekçeli timeout/retry sabitlerini gevşetme. Detay ve **açılış sorusu**: §0.A ④. Önceki: 2026-08-26 (**yirmi birinci oturum** — 🔴 **çiftçi tarla ekleyemiyordu**: saha kanıtından kök nedene, beş PR (plat #473/#474/#478/#479/#480) — ekran çiftçiye **yalan söylüyordu** (boş ama truthy sınır), `Invalid LngLat (NaN, NaN)` kök nedeni **deneyle kanıtlandı** (tür etiketine güvenmek; etiketi uyduran da bizim kodumuzdu), tarla ekleme **tek butona** indi · A-1/A-2 `/docs` üretimde fail-OPEN (#476) + G-1 WORM tablosuna yanlış “teslim edildi” (#477) · ⭐ **DAĞITIM İLK KEZ ÜÇ KATMANDA ÖLÇÜLDÜ** — üretim `origin/main` ile **0 commit** hizalı, backend konteynerinde ve **canlı web paketinde** doğrulandı · ⚠️ iki oturum **kayıt bırakmadan** kapandı, bu bölüm depodan kurtarıldı. Detay: §0.A. Önceki: 2026-08-25 (**yirminci oturum** — önceki turun devir notu **bağımsız denetimden geçti** (4 kusur + 1 yeni bulgu + 3 karar) · 🔴 **canlı çiftçi hatası** düzeltildi: tarla eklenemiyordu, arayüz sözleşmenin bayat aynasıydı (plat #468) · 🔴 **T01-K1 gerilemesi kapandı** — kapı doğruydu, KÜME yanlıştı; düşük-güvenli her işte uzman incelemesi sessizce kapanıyordu (plat #469) · Y1 sınıfı (üç üye) + Y2 üretici formu + çift declare (plat #470) · **K3** DLX'e bağlı kuyruk yoktu, **#467 bunu kapatmıyor** (plat #471) · **Y3** iş ekseni artık kanıt taşıyor, `status="FAILED"` bilerek YAPILMADI (plat #472) · iki sarkan betik atfı + Y4 tuzağı + yeni kapı (work #259). ⛔ “Hiçbiri dağıtılmadı” iddiası 2026-08-26'da **ÇÜRÜTÜLDÜ** — ölçüldü, altısı da canlıda (§0.A ③). Önceki: 2026-08-19/20 (**on altıncı oturum** — uzman ekranı zinciri: sonuç↔veri seti bağı sınıfı tamamen kapatıldı (#441/#443) · **üretimde ölü döşeme servisi** bulundu ve düzeltildi (#446 — NumPy x86-64-v2 uyumsuzluğu, 7770 log satırı) · CI asılma kapakları (#442) · alan adı + BOUND kapısı (#444) · dağıtımda submodule kapısı + simülasyon bağımsızlığı (#445) · kartlar alt uzmanlık duyarlı (#447). ✅ **7 PR MERGE EDİLDİ ve DAĞITILDI**. Önceki: 2026-08-18 (**on üçüncü/on dördüncü oturum** — KR-013-2 komşuluk kapısı sahipten bağımsız hâle getirildi (#91) · CLAUDE.md dört depoda Opus 5 rehberine göre yeniden yapılandırıldı + `check_claude_md_refs.py` atıf bütünlüğü kapısı kuruldu (#92) · kök `CLAUDE.md` + oturum-başı kanca kalıcılık için contract'a taşındı (#93) · dört depoda `docs/`+`denetim/` (191 dosya) tam-okuma denetimi: platform+worker sıfır aday, contract'ta 2 alansız dosya silindi/taşındı (#94). **AL-K26 (I-1 hizası) bu turda platformun 7.6.1'de kaldığı iddiasıyla açık görünüyordu — ölçüldü, 2026-08-13'te KAPANMIŞ ve dört depo bugün de 7.7.2'de hizalı** (bkz. §0.A, önceki turun bu satırı düzeltildi). Önceki: **on ikinci oturum** — contract deposunun cerrahi kalite denetimi: 27 alan-sızması düğümü kapatıldı · `validate.py` tüm ağacı gezer oldu · CI `paths:`/`needs` **türetiliyor** · hiç var olmamış Node/TS zinciri kaldırıldı (`npm run format` **zararlıydı**) · üç "belgelenmiş ama koşmayan" kural kapıya bağlandı · parite kapılarının **beş** kör noktası ölçülüp kapatıldı. ✅ **19 PR MERGE EDİLDİ**, **v7.7.0 · v7.7.1 · v7.7.2** etiketlendi; ayrıca **I-1 sürüm hizası** ve **betik ağacı** kapıları kuruldu. Önceki: **on birinci oturum** — docs sadeleştirme turunun ÖZ-DENETİMİ: 12 sarkan atıf onarıldı · **sarkan-atıf kapısı dört depoya kuruldu** ve çapraz-repo ayağı worker/edge CI'ında bağlayıcı kılındı · **çeltik sunumdan çıkarıldı** (canlı ürün çelişkisi) · aktif_ogrenme ikilisi tek belgede birleşti. ✅ **9 PR MERGE EDİLDİ.** ⚠️ Çeltik `main`'de ama **CANLIDA DEĞİL** — bkz. §0.A. Önceki: **onuncu oturum** — D12: `stress_ratio` kanonikte TANIMLANDI (`NDRE/NDVI`) ve KR-093 ön faz kapalı listesi **ilk kez kodda kapıya bağlandı** · D13: üç depo **7.6.1**'e hizalandı · öz-denetim, parite kapısının `metadata`'ya kör olduğunu ölçüp yeni kapı ekletti. ✅ **5 PR MERGE EDİLDİ**, üç depo temiz ve varsayılan dalında)
 
 > ## 📐 BU DOSYANIN ROLÜ (2026-07-31'de netleştirildi)
 > Bu dosya **DURUM FOTOĞRAFIDIR** — depo sürümleri, senkron durumu, oturumlar arası devir.
@@ -17,6 +17,133 @@
 > | `denetim/denetim_raporu_2026-07-31_plan_devir_ozdenetim.md` | Kanıt arşivi — her düzeltmenin `dosya:satır` dayanağı |
 >
 > Aynı iş için ikinci bir liste açılmaz; bir kalem değişecekse **eylem planında** değişir.
+
+---
+
+## §0.A §13 — KR/SSOT belge denetimi + iki gün öz-denetimi (2026-09-07)
+
+### Ne yapıldı
+
+Altı uzman merceği (SWE · DL/ML · ürün-KR · veri mühendisliği · uzman portali ·
+ops) bugünkü kod değişikliklerine karşı kanonik metinleri taradı; bir çürütücü
+bulguları dosyaları açarak tek tek sınadı.
+
+| | sayı |
+|---|---|
+| ham bulgu | 58 |
+| elenen küme | 10 (`ZATEN_DOGRU` · `URUN_ETKISI_SIFIR` · `KAPSAM_DISI`) |
+| ayakta kalan | 14 |
+| merge edilen PR | 5 |
+
+**PR'lar:** ct **#151** (v7.17.1, etiket `v7.17.1` basıldı) · work **#297** (rampa
++ metinler) · work **#298** (vendored re-pin) · plat **#538** (pano süzgeci +
+çiftçi metni + rehber + platform re-pin). Üçü de **üretime dağıtıldı**.
+
+### 🔴 Üç kanonik alan ölçümle çürütüldü
+
+1. **`internal_use`** — `stress_ratio` DK-61 ile anomali kapısından emekli edildi;
+   metin hâlâ *"eşiğin ALTINDAKİ karo derin incelemeye yollanır"* diyordu.
+2. **`direction_and_range`** — *"tipik aralık 0–1"* yanlıştı **ve tüketicide
+   ölçülebilir zarara dönüşmüştü**. `STRESS_RATIO_RAMP` aritmetiği:
+
+   | değer | ne | renk |
+   |---|---|---|
+   | 0,26–0,31 | yayınlanmış **SAĞLIKLI** SCCCI aralığı | turuncu-kahve `#BB772E`–`#C78B34` |
+   | 0,69 | PROSAIL fiziksel tavan | sarı-yeşil `#ADC44C` |
+   | 1,00 | **taç dışı nötr klemp** = ölçüm YOKLUĞU | **en koyu yeşil** `#1A731A` |
+
+   Sağlıklı taç "stresli", çıplak toprak "en sağlıklı" görünüyordu. Katman uzman
+   inceleme yüzeyinde canlı → doğrudan yanlış-pozitif üretir.
+   **Yerine yeni mutlak eşik YAZILMADI** (kanonik `interpretation_limits` ③
+   kalibrasyonsuz mutlak eşiği geçersiz sayıyor): ölçek **sahne içi göreli**
+   gerdirmeye çevrildi, geri-düşme rampasının durakları **eşit aralıklı** yapıldı,
+   üst sınır fiziksel tavana (0,70) oturtuldu, taç dışı piksel rampaya **hiç**
+   sokulmuyor (NaN → şeffaf).
+3. **`measured_from` + `measured_producers`** — sekiz satır atfının **sekizi de**
+   bayattı (sapma 500-1500 satır; ör. `:902` bugün `_resolve_pinned_ip`'e düşüyor).
+
+### 🔴 Sağlıklı tarla panodan düşüyordu
+
+| | davranış |
+|---|---|
+| yazıcı `_insert_timeseries` | yalnız `NO_RESULT`'ta erken dönüyor → satır **YAZILIYOR** |
+| okuyucu `_VALID_RESULT_MODES` | `{FULL, PARTIAL}` — **altı yerde**, satırı **ELİYOR** |
+
+Kusur **sessizdi**: KR-091 §6 boş panoyu hata saymıyor. Kol DK-61'den **önce
+ulaşılamazdı** (550/550 karo anomali), yani kusur başka bir düzeltme onu
+ulaşılabilir kılınca **doğdu**. Ölçüt artık `result_mode` değil **ölçümün
+geçerliliği**: `INDICES_ONLY` + `anomaly == 0` dahil, `None` fail-closed dışarıda.
+
+Çiftçi metni de ikiye ayrıldı: *"yalnız temel haritalar **üretilebildi**"* bir
+**kısıt** anlatıyordu ve sağlıklı tarlalar artık o koldan geliyor.
+
+### 🔴 Uzman rehberinde altı düzeltme
+
+En ciddisi: *"tek bir karoda bile incelemenin sonucu red olur"* — **kod bunu
+yapmıyor**. `expert_review_rules.aggregate_tile_verdict`: hepsi `not_a_finding`
+ise `rejected`, **bir kısmı** ise `corrected`. O kod **2026-09-03'te tam bu kusur
+için düzeltilmiş**, rehber metni geride kalmış. Yanlış metin uzmanı "yok" demekten
+çekindirip **eğitim verisini bozuyordu**.
+
+Ayrıca: `stresOraniAlti: 0.85` sabiti silindi · "sağlıklı karo sıfırdı" ölçümü
+tazelendi (artık 25'in 4'ü · 80'in 22'si) · **"ölçülecek bitki yok"** kolu
+anlatıldı (bitki hasta DEĞİL) · kapının sayısı ile kartın sayısının **aynı şey
+olmadığı** yazıldı (tüm-piksel 0,317 · yalnız taç 0,656) · konum satırının aşırı
+iddiası düzeltildi (piksel aralığı, coğrafi koordinat değil).
+
+### 🔴 Bugün yazdığım üç yanlış (öz-denetim)
+
+1. **"%16-21" aritmetik yanlış** — gerçek: 4/25=%16 · 22/80=%27,5 · **17/25=%68**.
+   "~%70-80 tasarruf" hedefi Dicle'de **tutmuyor** (%32).
+2. **"Telde ayırt edilebilir: (B) NO_RESULT + anomali > 0"** — `to_dict`
+   `tile_counts`'ı yalnız `result_mode != NO_RESULT` iken serileştiriyor.
+3. **"Bu dal BUGÜN ULAŞILAMAZ"** — DK-61 ile aynı gün ulaşılır oldu.
+
+Ayrıca `_anomaly_filter` içindeki risk kaydı dosyayı **kendi kendisiyle
+çelişkiye** düşürüyordu (*"kapı yeniden tasarlanmadan `apply_mask=True`
+geçilemez"* derken 800 satır yukarıda geçiliyordu). Blok **silinmedi, öncülü
+ölçüldü ve çürütüldü**: maske yerel kopyaya uygulanıyor, bant dizilerine
+dokunulmuyor, Aşama-2 indeksleri **ham** bantlardan yeniden hesaplıyor.
+Kilit: `TestMaskeAsama2yiKirletmez`.
+
+### ⚠️ DK-61 kararını koruyan hiçbir kilit yoktu
+
+`TestEsikIliskisi` imzadaki **varsayılanı** okuyup `>= 0.8` diyordu — ölü bir
+ilişkiyi kilitliyordu. Eşiği 0,90 yapmak da yeşil kalırdı ama `stress_low`'un
+kapıya geri sızması testi **kırmazdı**. `TestStresOlcutuKapidaDEGIL` ile
+değiştirildi.
+
+### ⚠️ İki ölçüm tuzağı (kendi hatalarım)
+
+1. **CRLF, ikinci biçim.** Pin **HAM** blob hash'i ister. Normalize edince ALTI
+   dosya değişti, oysa `git diff` **BEŞ** gösteriyor; fazladan gelen
+   `drone_type.enum` iki sürümde de aynıydı — pini **doğruydu**, normalizasyonum
+   onu bozuyordu (dosyanın kendi blob'unda **35 CRLF** var). `grep -c $'\r'`
+   **0 dedi ve yanılttı**; CR'yi Python ile say.
+2. **Yerel kapı CI'dan zayıf, yine.** Worker re-pin yerelde `4737 passed`, CI'da
+   iki kırmızı: `metadata.lastUpdated` parite kapısı (kardeş depo ister) ve
+   CHANGELOG zorunluluğu (workflow adımı, pytest kapsamında değil).
+
+### Ölçüm
+
+**16 mutasyon, 16 kırmızı, 0 kaçak** (rampa 7 · kapı kilidi 4 · pano/metin 5).
+İlk turda **iki kaçak** vardı ve ikisi de gerçek test boşluğuydu: fikstürüm düz
+diziydi (ikinci geri-düşme kolu testi ayırt edici olmaktan çıkarıyordu) ve PNG
+imzasına bakmak **çağrı yerini** ölçmüyordu.
+
+Dağıtım **dışarıdan** doğrulandı: pozitif kontrol (`Karo Yorumlama`) + yalnız
+#538'le doğan `0,656`/`0,317` canlı pakette **var**, kaldırılan "stres oranı"
+ibaresi **yok**. Worker `running healthy RestartCount=0`, RabbitMQ'ya bağlı.
+
+### Açık kalanlar
+
+- **Yer gerçeği yok** → hiçbir eşiğin duyarlılık/özgüllüğü ölçülemedi. `stress_ratio`
+  emekliliği "bilgi eklemiyor" ölçümüne dayanıyor, "zararlı" ölçümüne değil.
+- `retention_service.py:260` `result_mode="FULL_REPORT"` sabit kodlu (KR-090 md. 7-a
+  yazıldı, **kod yazılmadı**); pencere ~709 gün sonra ulaşılabilir.
+- `tile_counts` KR-093 kapalı listesine **eklenmedi** (bugün tüketicisi yok);
+  geri açma tetikleyicisi kanonik metne yazıldı.
+- Dedup: bağlanma ölçüldü (`pipeline.py:4379`), **canlıda grup oluşumu ölçülmedi**.
 
 ---
 
