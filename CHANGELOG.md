@@ -7,6 +7,83 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.17.1] - 2026-09-07 — BAYAT METIN TAZELEME (uc alan olcumle curutuldu)
+
+Kod 2026-09-07'de degisti (worker work #291-#296: vejetasyon maskesi ACILDI,
+`stress_ratio` anomali kapisindan EMEKLI EDILDI, kanit karosu `bbox` uretici
+BAGLANDI). Bu surum sozlesme METNINI o olcumlere hizalar. **Alan eklenmedi,
+kaldirilmadi, tip degismedi** — yalnizca aciklamalar. Non-breaking (PATCH).
+
+### Degisti
+- `analysis_type.enum.v1` :: `indexDefinitions.stress_ratio` (metadata v1.4.4 -> v1.4.5)
+  - `internal_use` — buyukluk artik Asama-1 anomali kapisini **BESLEMIYOR**. Metin
+    hala *"esigin ALTINDAKI karo derin incelemeye yollanir"* diyordu. Emeklilik
+    gerekcesi dort bagimsiz olcumle yazildi (yapisal tavan · sayinin kaynagi yok ·
+    hicbir esik calismiyor · bagimsiz bilgi tasimiyor).
+  - `direction_and_range` — **"tipik aralik 0-1" YANLISTI**. Vejetasyonda RE > R
+    daima gecerli oldugu icin NDRE < NDVI ve oran yapisal olarak 1'in ALTINDADIR
+    (fiziksel tavan 0,66-0,69; olculen tac ortancasi 0,275-0,319; literaturde
+    yayinlanmis SAGLIKLI SCCCI araligi 0,26-0,31). Tuketici kisiti eklendi.
+  - `domain_guard.measured_from` + `measured_producers` — **sekiz satir atfinin
+    SEKIZI de bayatlamisti** (sapma 500-1500 satir). Sembol adlari ve dogrulama
+    komutu eklendi; `measured_on` bu dersi kayda gecirir.
+- `analysis_result.v1` :: `result_mode.description` — `INDICES_ONLY` artik **IKI
+  AYRI DURUM** tasir ve ayirt edici `result_mode` DEGIL, `tile_counts.anomaly`'dir:
+  `anomaly = 0` saglikli tarladir (olcum basarili, bulgu yok, tani hic denenmedi),
+  `anomaly > 0` dusuk guvendir (tani saklandi). Aciklama deger basina acildi.
+- `analysis_result.v1` :: `$defs.ExpertEvidenceTile.bbox.description` — *"Null until
+  the producer fills it (W-3)"* artik YANLIS: uretici 2026-09-07'de baglandi.
+  Dolgu-oncesi olcu uyarisi eklendi (kenar karolarinda kutu, karo goruntusunden
+  KUCUK olabilir — tuketici sekilden turetmemeli).
+- `analysis_result.v1` :: `tile_counts.description` — alan *"ciftci on raporunun
+  saglikli/sorunlu karo sinyali"* ilan ediliyordu, oysa KR-093 Asama B **kapali
+  listesinde YOK**. Celiski, alani listeye ekleyerek degil **cumleyi duzelterek**
+  kapatildi (karar + geri acma tetikleyicisi metne yazildi): alanin platform sunum
+  katmaninda bugun hic tuketicisi yok, yani listeyi acmak hicbir sey teslim etmez
+  ama bir yuzeyi kalici olarak acar.
+- `docs/TARLAANALIZ_SSOT_v1_2_0.txt` :: KR-019 fail-closed kademe tablosu — tablo
+  `result_mode`'u `final_confidence` bandina BIRE BIR bagliyordu; bu bag koptu.
+  **ISTISNA — SAGLIKLI TARLA** blogu eklendi: o kolda `confidence_score` bir olcum
+  DEGIL yer tutucudur (0,0) ve eskalasyon ondan turetilemez. Aksi halde tablonun
+  `< 0,25 -> CRITICAL / ACIL` satiri sapasaglam bir tarlayi acil vakaya cevirir.
+- `docs/TARLAANALIZ_SSOT_v1_2_0.txt` :: KR-025 — **"Bulgu Cikmayan Tarla"** maddesi
+  eklendi. 1959 satirlik govdede bu durumun teslim semantigi HIC tanimli degildi;
+  bugune kadar yalniz bir Python yorumunda yasiyordu.
+- `ssot/kr_registry.md` :: KR-088 §3-2 ve §7 — YAZMA kapisi yalniz `NO_RESULT`'u
+  dislar (yazici zaten boyle davraniyordu; eski metin hem yaziciyla hem ayni KR'nin
+  §7'siyle celisiyordu). Sunum kisiti KR-091'in isidir. §7'ye dort kabul olcutu +
+  **taban kirilmasi** uyarisi eklendi.
+- `ssot/kr_registry.md` :: KR-091 §3-2 ve §7 — dahil etme olcutu `result_mode`
+  DEGIL, olcumun gecerliligidir. Eski olcut uygulandiginda tarlasi saglikli olan
+  ciftci **BOS pano** goruyordu ve §6 bunu hata saymiyordu.
+- `ssot/kr_registry.md` :: KR-090 §3 — madde **7-a** eklendi: backfill kaydi silinen
+  sonucun GERCEK `result_mode`'unu tasir, sabit yazilamaz.
+
+### Duzeltildi
+- `ssot/kr_registry.md` :: KR-090 §8 capraz atfi **KR-062 -> KR-066**. KR-062
+  `Tasarim Ilkeleri`dir; WORM govdesi KR-066 `Guvenlik ve KVKK` altindadir. Bir
+  KVKK denetimi atfi izleyip dayanagi BULAMAZDI.
+
+### Gerekce (olculdu)
+- Renk rampasi aritmetigi (worker `map_renderer.STRESS_RATIO_RAMP`, duraklar
+  0,0/0,5/0,85/1,0 · vmin-vmax 0-1): yayinlanmis saglikli aralik 0,26-0,31 ->
+  **turuncu-kahve** `#BB772E`-`#C78B34`; tac disi notr 1,0 -> **en koyu yesil**
+  `#1A731A`. Yani harita TERS okunuyor: saglikli tac "stresli", ciplak toprak
+  "en saglikli" gorunuyor. Bu, `direction_and_range` yanlisinin olculebilir zarara
+  donustugu yerdir.
+- Sekiz satir atfi tek tek acilarak dogrulandi; ornegin `pipeline.py:902`
+  (`_INDEX_CALCULATORS` kaydi iddiasi) bugun `_resolve_pinned_ip` govdesine
+  dusuyor. Bu blok tam olarak bu tuzagin anitidir: ayni alanin
+  `superseded_claim.lesson` metni *"su dosyada yok ile hicbir yerde yok ayni cumle
+  degildir"* diyor ve D12 kusuru ureticiyi YANLIS YERDE aradigi icin dogmustu.
+
+### Not
+- `stress_ratio` **HESAPLANMAYA, `index_maps`'te RAPORLANMAYA ve `WATER_STRESS`
+  vekil katmanini BESLEMEYE devam eder**; emekli olan yalnizca ANOMALI
+  KARARINDAKI roludur. `formula`, `domain_guard` ve `delivery_rule` DEGISMEDI.
+
+---
+
 ## [7.17.0] - 2026-09-04 — UZMAN EKSENINE MODEL IPUCU (karar sonrasi acilim)
 
 ### Degisti

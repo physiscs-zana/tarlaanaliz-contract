@@ -627,7 +627,7 @@ Her başarılı analiz sonucunda tarla bazlı vejetasyon indeksleri, sağlık me
 
 **3) Zorunluluklar (MUST)**
 1) Worker analysis_result payload'undan otomatik olarak timeseries kaydı oluşturulur.
-2) Sadece `result_mode ∈ {FULL_REPORT, PARTIAL_REPORT}` olan sonuçlar dahil edilir (KR-019 fail-closed uyumu).
+2) **YAZMA kapısı yalnız `NO_RESULT`'u dışlar** (2026-09-07'de düzeltildi): `result_mode ≠ NO_RESULT` olan her sonuç için timeseries kaydı YAZILIR — `FULL_REPORT`, `PARTIAL_REPORT` ve `INDICES_ONLY` dahil. Yazıcı zaten böyle davranıyordu (platform `worker_bridge_consumer` `_insert_timeseries`); eski metin yazıcıyla ÇELİŞİYOR ve aynı KR'nin §7 kabul ölçütüyle de çelişiyordu (§7 yalnız `NO_RESULT`'u dışlıyor). **SUNUM kısıtı bu KR'nin işi DEĞİLDİR** — hangi kaydın panoda görüneceğini KR-091 §3-2 belirler. Gerekçe: trend verisi ölçüldüğü anda saklanır; neyin gösterileceği ayrı ve sonradan değiştirilebilir bir karardır (KR-019 fail-closed sunum katmanında uygulanır).
 3) `status ∉ {COMPLETED, SUCCESS}` olan sonuçlar için timeseries kaydı YAZILMAZ.
 4) Timeseries kaydı, Dataset + Mission güncellemesi ile AYNI transaction'da atomik olarak yazılır.
 5) UNIQUE constraint: (field_id, mission_id) — aynı tarla+görev çifti tekrar yazılamaz.
@@ -646,9 +646,15 @@ Her başarılı analiz sonucunda tarla bazlı vejetasyon indeksleri, sağlık me
 - Transaction failure → tüm işlem rollback (Dataset, Mission, Timeseries)
 
 **7) Test / Kabul Kriterleri**
+> ⚠️ İlk iki ölçüt `status` eksenini (iş durumu), üçüncüsü `result_mode` eksenini ölçer; ikisi AYRI eksenlerdir ve karıştırılmamalıdır.
 - COMPLETED result → timeseries kaydı oluşturuldu
 - FAILED result → timeseries YAZILMADI
 - NO_RESULT mode → timeseries YAZILMADI
+- `PARTIAL_REPORT` → timeseries YAZILDI
+- `INDICES_ONLY` + `tile_count_anomaly = 0` (sağlıklı tarla) → timeseries YAZILDI **ve panoda GÖRÜNÜR** (KR-091 §3-2)
+- `INDICES_ONLY` + `tile_count_anomaly > 0` (düşük güven) → timeseries YAZILDI, **sunum kısıtlı** (panoya dahil edilmez)
+- `tile_count_total` / `tile_count_healthy` / `tile_count_anomaly` kolonları yazıldı (worker `PipelineResponse.tile_count_*`; kanonik `analysis_result.v1.schema.json` → `tile_counts`)
+> 🔴 **TABAN KIRILMASI (2026-09-07):** bu tarihten önce `tile_count_healthy` pratikte DAİMA 0'dı (Aşama-1 kapısı her karoyu işaretliyordu). Öncesi ile sonrası **KARŞILAŞTIRILAMAZ**; 'sağlıklı karo' trendi çizen tüketici bu tarihte sahte bir sıçrama görür ve seriyi bu noktadan bölmelidir.
 - Duplicate mission_id → UNIQUE hata, log warning
 - Atomik rollback testi: timeseries hata → Dataset/Mission de rollback
 
@@ -714,6 +720,7 @@ Verilerin yaşam döngüsünü yöneterek DB boyutu ve S3 depolama maliyetini ko
 5) field_history: ASLA silinmez.
 6) field_index_timeseries: ASLA silinmez (trend verisi değerli).
 7) analysis_results silmeden ÖNCE timeseries'te karşılığının varlığı doğrulanır.
+7-a) **Geri-doldurma (backfill) kaydı SİLİNEN sonucun GERÇEK alanlarını taşır** (2026-09-07'de eklendi). `result_mode` **SABİT YAZILAMAZ** — kaynak satırdan okunur; retention seçim sorgusu bunu yapabilmek için `result_mode`'u okumak ZORUNDADIR. `NO_RESULT` sonuçları için backfill YAPILMAZ (karşılığı KR-088 §3-2 gereği zaten olmamalıdır). Gerekçe: sabit `FULL_REPORT` yazan bir backfill, 730 gün sonra hiçbir şey üretmemiş bir uçuşu çiftçi panosunda 'tam rapor' sağlık noktası olarak DOĞURUR ve KR-088 §7 kabul ölçütünü tersine çevirir.
 8) İlk çalıştırma dry_run() modunda yapılır (silmeden rapor).
 
 **Sözleşmeye 2026-07/08 turunda giren veri kategorileri (0.h kararı — K2/K3):**
@@ -770,7 +777,7 @@ Verilerin yaşam döngüsünü yöneterek DB boyutu ve S3 depolama maliyetini ko
 - 730 gün öncesi result silinebiliyor, 729 gün öncesi silinmiyor
 
 **8) Cross-refs**
-- KR-088 (timeseries koruma), KR-089 (history koruma), KR-062 (audit WORM)
+- KR-088 (timeseries koruma), KR-089 (history koruma), KR-066 (audit WORM — SSOT `## [KR-066] Güvenlik ve KVKK` → `### Log / Audit Kanıtı (WORM)`; 2026-09-07'de düzeltildi, eski atıf **KR-062** idi ve o başlık `## [KR-062] Tasarım İlkeleri`dir — bir KVKK denetimi atfı izleyip dayanağı BULAMAZDI)
 
 ---
 
@@ -785,7 +792,7 @@ Verilerin yaşam döngüsünü yöneterek DB boyutu ve S3 depolama maliyetini ko
 
 **3) Zorunluluklar (MUST)**
 1) Dashboard verileri field_index_timeseries tablosundan beslenir (KR-088).
-2) Sadece result_mode ∈ {FULL_REPORT, PARTIAL_REPORT} olan kayıtlar dahil edilir (KR-019).
+2) **Dahil etme ölçütü `result_mode` DEĞİL, ÖLÇÜMÜN GEÇERLİLİĞİDİR** (2026-09-07'de düzeltildi). DAHİL EDİLİR: `result_mode ∈ {FULL_REPORT, PARTIAL_REPORT}` **veya** (`INDICES_ONLY` **ve** `tile_count_anomaly = 0`) — bu ikincisi ölçümü başarılı, bulgusu olmayan **SAĞLIKLI TARLA**'dır. DAHİL EDİLMEZ: `NO_RESULT` (ölçüm başarısız) ve `INDICES_ONLY` + `tile_count_anomaly > 0` (güven 0,25-0,45 — KR-019 fail-closed). GEREKÇE: `INDICES_ONLY` 2026-09-07'den beri İKİ ayrı durum taşır (KR-019 kademe tablosu istisnası) ve `result_mode` tek başına AYIRT EDİCİ DEĞİLDİR. Eski ölçüt uygulandığında tarlası sağlıklı olan çiftçi **BOŞ pano** görür ve §6 bunu hata saymaz — yani kusur sessizdir.
 3) RBAC kontrolleri:
    - Çiftçi dashboardı: sadece kendi tarlaları (user_id eşleşmesi)
    - İlçe dashboardı: DISTRICT_REP rolü + ilçe eşleşmesi
@@ -809,6 +816,9 @@ Verilerin yaşam döngüsünü yöneterek DB boyutu ve S3 depolama maliyetini ko
 - DISTRICT_REP sadece kendi ilçesini görür
 - Boş timeseries → boş response (crash yok)
 - result_mode=NO_RESULT dahil edilmemiş
+- `INDICES_ONLY` + `tile_count_anomaly = 0` (sağlıklı tarla) → panoda **GÖRÜNÜR**
+- `INDICES_ONLY` + `tile_count_anomaly > 0` (düşük güven) → panoya dahil **EDİLMEZ**
+> Bu iki ölçüt aynı `result_mode` değeriyle ZIT sonuç bekler — testin ayırt edici olması için ikisi de yazılmalıdır (yalnız biri yazılırsa süzgeç `result_mode`'a geri sadeleştirilebilir ve test yeşil kalır).
 
 **8) Cross-refs**
 - KR-088 (veri kaynağı), KR-019 (fail-closed filtre), KR-083 (temsilci rolü), KR-014 (kooperatif)
