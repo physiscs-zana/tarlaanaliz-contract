@@ -7,6 +7,42 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [7.18.0] - 2026-09-08 — KANIT KAROSU: KAPININ GORDUGU DEGER TASINIR
+
+🔴 OLCULMUS KUSUR (uc gercek ODM ortomozaigi, uretim yapilandirmasi):
+boru hattinda **ayni adli IKI `ndvi_mean`** var ve kanit karosu YANLIS olani
+tasiyordu.
+
+* Asama-1 KAPISI maskeli **tac** dizisinden hesaplar (`pipeline.py:3083`).
+* Asama-2 ham bantlardan **yeniden** hesaplar, maske UYGULAMAZ
+  (`pipeline.py:3980`) — ve kanit karosu bunu aliyordu.
+
+Iki buyukluk ayni karoda cok farkli: **tac degeri tum-piksel degerinin
+2,03-2,27 KATI** (tac 0,552-0,656 · tum-piksel 0,272-0,309). Esik tum-piksel
+degere uygulansaydi olculen **61 karonun 61'i de anomali** cikardi; verdikt
+**53 karoda FARKLI**.
+
+Uzman ekrani tum-piksel sayiyi basiyor, rehber ise kapi esigini (0,55)
+soyluyordu. Uzman IKI AYRI buyuklugu karsilastirip *"esigin cok altinda,
+ciddi"* diye okuyabiliyordu — oysa kapinin gordugu sayi esigin USTUNDEYDI.
+
+### Eklendi
+- `analysis_result.v1` :: `$defs.ExpertEvidenceTile` — **uc opsiyonel alan**
+  (additive, non-breaking -> MINOR):
+  - `ndvi_canopy_value` — **kapinin gordugu** NDVI (yalniz tac pikselleri).
+  - `ndre_canopy_value` — kapinin gordugu NDRE.
+  - `canopy_cover_ratio` — tac degerlerinin **PAYDASI**. 0,05 ile hesaplanan bir
+    tac ortalamasi 0,65 ile hesaplananla ayni agirlikta okunamaz. Uretimde
+    olculdu: karaburun2'de 110 karonun 66'si `min_canopy_ratio` kolundan gecti
+    ve bu *"bitki hasta"* DEMEK DEGILDIR.
+
+### Degisti
+- `ndvi_value` / `ndre_value` aciklamalari — artik hangi POPULASYONUN
+  ortalamasi olduklarini ve kapi esigiyle **karsilastirilamayacaklarini**
+  acikca soyluyor. Tip ve sinirlar DEGISMEDI.
+
+---
+
 ## [7.17.1] - 2026-09-07 — BAYAT METIN TAZELEME (uc alan olcumle curutuldu)
 
 Kod 2026-09-07'de degisti (worker work #291-#296: vejetasyon maskesi ACILDI,
