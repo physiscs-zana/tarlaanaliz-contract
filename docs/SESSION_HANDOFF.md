@@ -191,10 +191,37 @@ Etiket **VAR** ve kimlikle sıkı bağlı (30 karar / 20 karo, `tile_id` 30/30
 gider (yedi halkalı zincir kodla kanıtlandı) → **doğrulama yanlılığı**:
 duyarlılık ve özgüllük "henüz ölçülmedi" değil **TANIMSIZ**.
 
-Ölçülebilen tek büyüklük **kesinlik (PPV)**: satır düzeyi 10/14 = **%71,4**
-[Wilson %95: **%45,4–%88,3**]. Etiketler inceleme içinde **tam homojen** →
-küme-içi korelasyon 1 → **etkin n = 2**, 30 değil. Aynı 10 karoyu gören iki
-uzman **sıfır kesin uzlaşma** üretti. **30 etiketin 30'u ESKİ kapı rejimine ait.**
+Ölçülebilen tek büyüklük **kesinlik (PPV)** ve o da bir karar taşımıyor:
+satır düzeyi 10/14 = **%71,4** [Wilson %95: **%45,4–%88,3**].
+
+> 🔴 **DÜZELTME (2026-09-08, ölçüldü).** Bu sayı iki ayrı sebeple
+> kullanılamaz ve ilk yazımında ikisi de eksikti:
+>
+> **1. Kesin karar veren 14 etiketin 14'ü de TEK uzmana ait.**
+> Üretimden ölçüldü: `confirmed` 10 + `not_a_finding` 4, hepsi
+> serpil karadağ. Yani bağımsız birim **1 rater**; "etkin n = 2" ifadesi
+> de FAZLA İYİMSERDİ. Öteki iki uzman kesin karar hiç vermedi
+> (ABUZER YÜCEL 8/10 ve Bekir Erol Ak 10/10 "emin değilim").
+>
+> **2. `confirmed` bir ANOMALİ onayıdır, TANI onayı DEĞİL.**
+> Kanonik tanım (`expert_review_rules.py:180`): `not_a_finding` =
+> *"model burada bir şey gördü ama yok"*. Model üretimde 539/550 karoya
+> `unknown_anomaly` yazıyor ve karo kartında uzmana **tanı gösterilmiyor**
+> (`TileDecisionControls.tsx` içinde `model_hint` yok — ölçüldü).
+> Dolayısıyla "onaylandı" denen karolarda uzman notunun
+> *"Hastalık belirtileri görünmedi"* / *"tamamı topraktır"* demesi bir
+> **çelişki değil, beklenen sonuçtur**: çıplak toprak da bir anomalidir.
+> ⛔ Bu turda bir ara raporda bunu "etiket ölçtüğünü sanmadığımız şeyi
+> ölçüyor" diye yazdım; o çıkarım **YANLIŞTI** ve burada düzeltiliyor.
+>
+> **Payda da tartışmalı:** `corrected` anomali için doğru pozitiftir;
+> katılırsa 12/16 = **%75,0**. Tek veriden iki savunulabilir sayı çıkması,
+> sayının kırılganlığının kanıtıdır.
+>
+> ⛔ Hiçbir çiftçi/uzman/yönetici yüzeyinde gösterilmiyor ve gösterilemez;
+> kodda da hesaplanmıyor (ölçüldü: yalnız üç belgede geçiyordu).
+
+**40 etiketin 40'ı ESKİ kapı rejimine ait** (maskesiz Aşama-1).
 
 🔴 **Risk BUGÜN doğdu:** eski rejimde kapı 25/25 işaretliyordu (`healthy = 0`)
 → kapı-negatif küme üretimde BOŞTU → kaçırma riski ≈ 0. Maske açılıp stres
