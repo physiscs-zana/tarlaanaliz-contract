@@ -531,6 +531,88 @@ kendiliginden cozulmuyor.
 
 ---
 
+## §0.A §18 — `escalation_round` anlam ayrimi: KARAR VERILDI ve UYGULANDI (2026-09-08)
+
+Urun sahibi karari asistana birakti: *"kararı sen ver ama ilgili tum dosyalari
+tamamen okuyarak, analizlerini yaparak ve olcum ile yap."*
+
+### Cakisma: IKI URETICI, UYUMSUZ ANLAM, TEK KOLON
+
+Kanonik `expert_review_queue.v1.schema.json` birebir soyle der:
+
+> *"Which round of escalation this is. Starts at 0 for the first escalation;
+> **incremented when the previous expert verdict was `needs_more_expert`**."*
+
+Yani `escalation_round` **worker'in** sayacidir. Zincir: worker
+`orchestration_agent.py:224` -> kuyruk mesaji -> platform
+`worker_bridge_consumer.py:265` -> worker `active_learning_packager.py:271`
+(`>= 3` -> kidemli panel, KM-01 freni).
+
+Platform `expert_reassignment_service.py:483` ise ayni kolonu her SLA/elle
+**devrinde** artiriyordu. Sonuc: **ikisi de** kullanilamaz.
+Iki sabitin de 3 olmasi **tesaduf** — biri 28 turluk gercek devir salinimindan
+(urun sahibi karari 2026-09-03), oteki KM-01 freninden gelir.
+
+### Karar 1 — KOLONU AYIR ✅ uygulandi (plat #543)
+
+Yeni **platform-ici** kolon `reassignment_round`; sozlesmeye girmez.
+`escalation_round` kanonik anlamina doner ve platform ona **dokunmaz**.
+
+Goc belirsizligi **yoktu**, olculdu:
+
+| olcum | sonuc |
+|---|---|
+| `escalation_round > 0` **ve** devir izi var | **22** |
+| `escalation_round > 0` **ama** devir izi yok (kanonik olabilir) | **0** |
+| `escalation_round = 0` ama devir izi var | **0** |
+
+Yani mevcut degerlerin tamami devir turuydu. Goc onlari aynen tasidi.
+**Uretimde dogrulandi:** `reassignment_round` max **28**, `escalation_round`
+max **0**, tur>0 satir sayisi **22** (goc oncesiyle birebir), 28 turluk
+satirlarin gecmisi korundu.
+
+### Karar 2 — OTOMATIK AKRAN MERDIVENI EKLENMEDI ❌ gerekcesi olculdu
+
+Kanonik `senior_panel_redirect` "MAX turdan sonra kidemli panele" der; bir akran
+merdiveni kurmak akla yakin gorunuyordu. **Olcum bunu curuttu:**
+
+* Uretimde `e403c57c` sonucunda **IKI uzman da** `needs_more_expert` dedi —
+  ikinci akran sorunu **cozmedi**.
+* Gerekceler **yapisal**: kanonik `drone_capability_matrix` tanimli **5**
+  hastaligin **5'i de** BASIC_4BAND ile tespit EDILEMEZ der; kart katalogu
+  **14** yerde SAHA dogrulamasi ister. Ayni goruntuyu ucuncu bir uzmana
+  yollamak o sinirlari degistirmez.
+* Kidemli havuz uretimde **4** kisi; her "emin degilim"i oraya yollamak tikar.
+
+Bugun dagitilmis olan davranis (ESCALATED -> dogrudan kidemli hakem) kanonik
+niyetin **daha guclu ve daha ucuz** bicimidir. Merdiven eklemek ikinci bir
+uzmanin zamanini harcardi.
+
+### Karar 3 — HAKEM TIKANMASI GORUNUR KILINDI ✅ uygulandi
+
+`_hakem_incelemesi_ac` idempotenttir: sonuc basina IKINCI hakem satiri acmaz.
+Hakemin **kendisi** "karar veremedim" derse sonuc yine ESCALATED olur, yeni
+satir acilmaz, acik inceleme kalmaz ve SLA gozcusu de kapanmis incelemeyi
+taramaz — sonsuz dongu degil, **sonsuz olu bekleme**.
+
+Otomatik cikis yolu **bilerek** eklenmedi (Karar 2'nin gerekcesi). Yapilan sey
+tikanmayi gorunur kilmak: sessiz bekleme -> yuksek sesli ERROR
+(`EXPERT_REVIEW.HAKEM_KARAR_VEREMEDI`) -> yonetici kuyrugu. Karar insana
+devredilir, uydurulmaz.
+
+### Sozlesme DEGISMEDI
+
+Worker karar arsivi **KONU 1** (`analysis_job.v1`e `escalation_round` eklensin
+mi) **acik kalir** — arsivin kendi tavsiyesi zaten "tek basina acele PR olarak
+DEGIL, bir sonraki sozlesme degisikligiyle ayni pakete". Ama platform tarafi
+artik **HAZIR**: kolon kanonik anlamini geri aldi, yani alan eklendiginde
+doldurulacak dogru sayac mevcut. Arsivin kabul kriteri ("sema alani eklemek
+YETMEZ, platform sayaci gercekten DOLDURMALI") bu turda yarisi karsilandi.
+
+Mutasyon 4/4, kacak 0. Uretimde dagitilmis kodla dogrulandi.
+
+---
+
 ---
 
 ## 0.A EN GÜNCEL — (2026-09-06, **yirmi altıncı oturum: UZMAN REHBERİ DENETİMİ + YENİDEN YAZIM · ÜÇ EKSİK TÜKETİCİ · plat #535 AÇIK**)
