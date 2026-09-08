@@ -613,6 +613,72 @@ Mutasyon 4/4, kacak 0. Uretimde dagitilmis kodla dogrulandi.
 
 ---
 
+## §0.A §19 — GERCEK UCUSLA dogrulama: saglikli kol ILK KEZ dogdu (2026-09-08)
+
+Urun sahibi bildirdi: elde gercek ucus ve **kalibre edilmis** goruntuler var,
+worker degisikliklerini uretimde sinamak icin kullanilabilir. Bu, oturum
+boyunca tasidigim *"uretimde gercek bir ucusla sinanmadi"* kisitini kaldirdi.
+
+Kullanilan veri: `ODM_TARLA/_tarlaanaliz_cog/` altindaki gercek ODM
+ortomozaikleri (`dicle_camsun_cog.tif` 73 MB, `karaburun_camsun_tarla_cog.tif`
+48 MB). Ikisi de 5 bant float32 ve **yansima olceginde** (0-0,27), yani
+radyometrik duzeltmenin bekledigi bicimde. Ayni goruntuler uretim nesne
+deposunda da dataset artefakti olarak duruyor.
+
+### ✅ SONUC — dagitilmis worker kodu, gercek veri
+
+| ucus | karo | saglikli | anomali | elenen | kip |
+|---|---|---|---|---|---|
+| dicle | 36 | 9 (%25) | 27 (%75) | 0 | NO_RESULT |
+| karaburun | 25 | **22 (%88)** | **0 (%0)** | 3 | **INDICES_ONLY** |
+
+Uc sey birden dogrulandi:
+
+1. 🔴 **SAGLIKLI KOL ILK KEZ GERCEK VERIDE DOGDU.** karaburun'da hic anomali
+   cikmadi ve kip `INDICES_ONLY` oldu — DK-60'ta yazip bugune kadar yalniz
+   sentetik karoyla sinayabildigim dal, gercek bir ucusta kostu.
+2. **Kapsam ekseni duzeltmesi dogru davrandi.** 25 karonun 3'u kapsam esiginin
+   altinda kalip iki kovaya da girmedi; `healthy > 0` oldugu icin kip dogru
+   sekilde `INDICES_ONLY` kaldi. Hepsi elenseydi `NO_RESULT`ta kalacakti.
+3. **Kapi gercek veride AYIRT EDIYOR.** Asama-2 yuku %0 ve %75; yani kapinin
+   %100 isaretledigi eski hal geri gelmedi.
+
+### 🔴 KENDI OLCUM HATAM — GERI ALINDI
+
+Ilk kosumda bant eslemesini `(G, R, RE, NIR)` diye VARSAYDIM. Gercek ODM
+ciktisinin bant aciklamalari **`('Red','Green','NIR','RedEdge')`**. Yani dort
+bandin dordunu de yanlis esledim ve su sonuclari uretmistim:
+
+    NDRE ortancasi NEGATIF (-0,068) · kapi %88-100 isaretliyor · saglikli SIFIR
+
+**Uculu de ARTEFAKTTI ve geri alinmistir.** Dogru eslemeyle NDRE ortancasi
++0,068 ve +0,047 cikiyor — ki bu, worker'in kendi `inference.db` kayitlarindaki
+0,067-0,087 araligiyla ORTUSUYOR (bagimsiz capraz dogrulama).
+
+⚠️ Ders bunun otesinde: **urun bu kusuru ZATEN 2026-08-08'de olcup kapatmis.**
+`_resolve_band_plan` GeoTIFF bant aciklamalarini OTORITER kabul eder ve
+docstring'i tam bu vakayi anlatir (*"ODM ortomozaigi kendi bantlarini Red,
+Green, NIR, RedEdge sirasiyla yazar; kanonik available_bands ise GREEN, RED,
+RED_EDGE, NIR sirasiyla gelir"*). Benim ad-hoc betigim urunun coktan cozdugu
+hatayi tekrarladi. Uretim yolu DOGRU calisiyor ve bu kosum onu da dogruladi.
+
+### ⚠️ NE SINANMADI
+
+Kosum yalniz **indirme** adimini atlar (SSRF korumasi yerel yolu bilerek
+engelliyor ve onu asmak dogru olmaz); bant dizileri uretimin kendi
+`_resolve_band_plan` cozucusuyle kuruldu, karolama/maske/kapi/toplama
+dagitilmis kodun kendisidir.
+
+🔴 **Model ve guven yolu SINANMADI**: kosum `allow_cpu_encoder_stub=True` ile
+yapildi ve o kodlayici RASTGELE gomme uretir. Dicle'nin `NO_RESULT` kipi bu
+yuzden anlamli DEGILDIR — guven sayisi stub'dan geliyor. Kapi davranisi
+gecerlidir, model davranisi degildir.
+
+Ayrica iki ortomozaikte de **tarla siniri bildirilmedi**, yani olcum tarla
+disindaki alani da kapsiyor olabilir (`Field clip YAPILMADI` uyarisi loglandi).
+
+---
+
 ---
 
 ## 0.A EN GÜNCEL — (2026-09-06, **yirmi altıncı oturum: UZMAN REHBERİ DENETİMİ + YENİDEN YAZIM · ÜÇ EKSİK TÜKETİCİ · plat #535 AÇIK**)
