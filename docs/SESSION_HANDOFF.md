@@ -679,6 +679,78 @@ disindaki alani da kapsiyor olabilir (`Field clip YAPILMADI` uyarisi loglandi).
 
 ---
 
+## §0.A §20 — GERCEK UCUS OLCUM TURU: maske karari DOGRULANDI, model YOK (2026-09-08)
+
+Uc gercek ODM ortomozaigi, **URETIM yapilandirmasi** (`WorkerConfig()`, stub
+KAPALI, GPU acik, gercek `SSLEncoder`), bant eslemesi uretimin kendi
+`_resolve_band_plan` cozucusuyle.
+
+### ✅ URETIM YAPILANDIRMASIYLA KOSUM
+
+| ucus | karo | saglikli | anomali | elenen | kip | guven |
+|---|---|---|---|---|---|---|
+| dicle | 36 | 9 | 27 | 0 | INDICES_ONLY | 0,4296 |
+| karaburun2 | 110 | 25 | 19 | **66 (%60)** | INDICES_ONLY | 0,4292 |
+| karaburun | 25 | **22** | **0** | 3 | INDICES_ONLY | 0,0 |
+
+* **Saglikli kol gercek veride calisiyor** (karaburun: anomali sifir).
+* **Kapsam ekseni duzeltmesi tasiyici**: karaburun2'de 110 karonun **66'si**
+  (%60) kapsam esigi altinda kalip iki kovaya da girmedi. `healthy = 25 > 0`
+  oldugu icin kip dogru sekilde `INDICES_ONLY`; hepsi elenseydi `NO_RESULT`
+  kalacakti. Bugun kapatilan fail-OPEN tam bu senaryoyu koruyor.
+* Asama-2 yuku %100'den **%0 - %75** araligina indi.
+
+### 🔴 MASKE KARARI OLCUMLE DOGRULANDI (G3)
+
+Kapinin GERCEKTEN gordugu deger maskeli **tac** ortalamasidir. Ikisi yan yana:
+
+| ucus | NDVI maskesiz | NDVI MASKELI | NDRE maskesiz | NDRE MASKELI |
+|---|---|---|---|---|
+| dicle | maks 0,4145 → **%100** | ortanca 0,5162 → %60,9 | maks 0,1206 → **%100** | ortanca 0,1499 → %52,2 |
+| karaburun2 | maks 0,4002 → **%100** | ortanca 0,6322 → %22,2 | maks 0,1154 → **%100** | ortanca 0,1775 → %30,6 |
+| karaburun | maks 0,3863 → **%100** | ortanca 0,6563 → **%0** | maks 0,1290 → **%100** | ortanca 0,2044 → **%0** |
+
+**Maske OLMADAN iki esik de SABIT EVET**: uc ucusun ucunde de gozlenen
+MAKSIMUM deger esigin ALTINDA (NDVI maks 0,39-0,41 vs esik 0,55; NDRE maks
+0,115-0,129 vs esik 0,15). Yani `stress_ratio < 0,85` kalibinin AYNISI iki
+esikte daha vardi ve maske acilmasi onu kirdi.
+
+**Maskeyle ikisi de ayirt ediyor** ve siralama fizyolojik olarak tutarli:
+karaburun (saglikli bahce) %0/%0 · karaburun2 %22/%31 · dicle %61/%52 — bu,
+boru hattinin urettigi anomali sayilariyla ortusuyor (0/25 · 19/44 · 27/36).
+
+⚠️ **Yeni uyari:** dicle'de maskeli NDRE ortancasi **0,1499**, esik **0,15**.
+Esik ortancanin 0,0001 ustunde, yani o tarlada olcut "karolarin yarisini
+isaretle" demeye denk. Bu, emekli edilen `stress_ratio`nun *ikinci* kaliniydi
+("esik = medyan") ve simdi olculdu.
+
+### 🔴 MODEL YOK — KANITLANDI
+
+`config/model_registry.yaml`: **9 kayitli modelin 9'unda da**
+`lora_adapter: null` ve `adapter_sha256: null`. Alti mahsulun hicbirinde
+egitilmis siniflandirici YOK. Diskte de yalniz SAM (375 MB) ve bir uzum
+DOGRUSAL siniflandiricisi var; fistik agirligi HIC yok.
+
+Sonuc GERCEK kodlayiciyla (stub degil, GPU) dogrulandi: uc ucusta da tespit
+sinifi **yalniz `unknown_anomaly`**, ve 20 kanit karosunun 20'sinde
+`model_hint_source = None`.
+
+Yani *"539/550 karo unknown_anomaly"* bir model KALITE sorunu degil,
+**model YOKLUGU**dur. Bu, su acik kalemleri yeniden cerceveler:
+uzman geri bildiriminin bellege ulasmamasi · aktif ogrenme tetiginin olu
+olmasi · `confidence` degerinin sabitlerden gelmesi (uc ucusta 0,4296 /
+0,4292 — neredeyse ozdes).
+
+### ⚠️ BU TURDA OLCEMEDIKLERIM
+
+* **G1 (epistemik pozitif kontrol) KOSULAMADI.** Egitilmis agirlik olmadigi
+  icin MC-dropout varyansi bir SEYI olcmuyor; "duyarga olu mu" sorusu ancak
+  egitilmis bir bas geldiginde anlamlidir. Bu, G1'i iptal etmez — SIRAYA alir.
+* Tarla siniri uc ortomozaikte de bildirilmedi (`Field clip YAPILMADI`).
+* Kosum yalniz INDIRME adimini atlar (SSRF korumasi yerel yolu engelliyor).
+
+---
+
 ---
 
 ## 0.A EN GÜNCEL — (2026-09-06, **yirmi altıncı oturum: UZMAN REHBERİ DENETİMİ + YENİDEN YAZIM · ÜÇ EKSİK TÜKETİCİ · plat #535 AÇIK**)
