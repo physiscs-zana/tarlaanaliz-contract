@@ -466,6 +466,71 @@ Eşik değiştirmek bir ÜRÜN kararıdır; bu turda ölçüldü, **uygulanmadı
 
 ---
 
+## §0.A §17 — Uzman karar zorlugu: iddialar KANITLANDI, uc duzeltme UYGULANDI (2026-09-08)
+
+Urun sahibi uzmanlarin uc sikayetini iletti ve once **iddialarimi kanitlamami**,
+sonra **onerdigim uc ucuz duzeltmeyi olcup uygulamami** istedi.
+
+### ✅ Sekiz iddia da kanitlandi (her biri POZITIF KONTROLLU)
+
+| iddia | olcum | pozitif kontrol |
+|---|---|---|
+| Cografi poligon 550/550 hesaplanmis | 550/550 dolu, gecerli WGS84 | koordinatlar Diyarbakir'da |
+| Uzmana ULASMIYOR | sozlesmede 0, uretim verisinde 0, arayuzde 0 cografi alan | — |
+| Saha gozlemi altyapisi YOK | 4 depoda **0 dosya**, uretimde **0 tablo** | `expert_review` 53 dosya · `ground_verification` 14 config |
+| `time_spent_seconds` | **0/39** dolu | `created_at` 39/39 |
+| Inceleme suresi | **18/18** kayitta sifir | — |
+| Altin standart yok | `spot_check` **0/39** | — |
+| Fenoloji girilmemis | `phenology_anchor` **0/21** | — |
+| Bellek sinifsiz | `disease_class` **0/179** | `crop_type`/`grade`/`analysis_type`/`model_id` **179/179** |
+
+### 🔴 Bir iddiami CURUTTUM
+
+*"Onaylandi denen karolarin 9'unda uzman notu hastaligi reddediyor, yani etiket
+olctugunu sandigimiz seyi olcmuyor"* — **YANLISTI**. Kanonik tanim `confirmed`
+= modelin isaretledigi sey GERCEKTEN VAR; model 539/550 karoya
+`unknown_anomaly` yaziyor ve karo kartinda uzmana **tani gosterilmiyor**.
+Ciplak toprak da bir anomalidir, yani not ile etiket **celismiyor**.
+Ayrica: 14 kesin etiketin **14'u de TEK uzmana** ait — "etkin n = 2" bile fazla
+iyimserdi. (ct #157 ile duzeltildi.)
+
+### ✅ Uc duzeltme uygulandi ve URETIME DAGITILDI
+
+**1. Konsensus kapisi fail-closed** (plat #541). Kapinin son satiri
+`return "APPROVED"` idi: sinifllandiramadigi HER SEYI yayinliyordu. Olculen
+**dort** girdi oradan geciyordu (`needs_more_expert` · NULL+`SUPERSEDED` ·
+NULL+`COMPLETED` · bilinmeyen verdict). Yeni kural YAZILMADI; kanonikte dort
+ayri yerde yazili olan uygulandi (SSOT:821 [ZORUNLU], :606, olay semasi,
+sozlesme testi). Hakem dali da kapatildi — hakem oyu BAGLAYICIDIR.
+**Uretim etkisi: 19 sonuc grubunun 9'u APPROVED -> ESCALATED**, dokuzu da tum
+satirlari `SUPERSEDED` olan gruplar (hicbir uzman yargi bildirmemis).
+Mutasyon 6/6, kacak 0.
+
+**2. PPV %71,4 duzeltildi** (ct #157). Sayi kodda hesaplanmiyor, hicbir yuzeyde
+gosterilmiyor; yalniz uc belgede geciyordu.
+
+**3. "Emin degilim" gerekce kodu** (plat #542). 24 `unsure` kararinin 24'unde
+not YOKTU. Kapali liste (4 kod, her birinin olculmus dayanagi var) + zorunlu
+dogrulama + **uzman formu** + **yonetici gorunumu**. Alti katman, mutasyon 6/6.
+⚠️ Liste BILEREK DAR: uretimde ornegi olmayan kodlar konulmadi.
+
+### ⚠️ Bu turda dustugum IKI olcum hatasi
+
+1. **Etki probunu URETIM konteynerinde kosturdum** ve "YENI kapi" sutunu da
+   ESKI kodu cagirdi -> "0 degisiklik" dedi. Oy verisi disari cekilip yeni
+   kodla yeniden kosuldu: gercek sayi **9**.
+2. **Bellek okuyucusu yanlis yazildi** (dict anahtarlari uzerinde donuyordu) ve
+   TUM alanlar 0/179 cikti. Yapi once incelendi, sonra dogru okundu.
+
+### 🔴 KALAN — URUN KARARI GEREKTIRIYOR
+
+ESCALATED gorevler `PENDING_REVIEW`'da KALIR; yeni akran incelemesinin
+OTOMATIK acilmasi yazilmadi cunku `escalation_round` alani bugun SLA-devir
+sayaci olarak kullaniliyor (anlam cakismasi). Tikanma artik **gorunur**, ama
+kendiliginden cozulmuyor.
+
+---
+
 ---
 
 ## 0.A EN GÜNCEL — (2026-09-06, **yirmi altıncı oturum: UZMAN REHBERİ DENETİMİ + YENİDEN YAZIM · ÜÇ EKSİK TÜKETİCİ · plat #535 AÇIK**)
