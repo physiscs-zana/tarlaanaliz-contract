@@ -357,6 +357,88 @@ sürecinde dört senaryoyla sınandı:
 
 ---
 
+## §0.A §16 — Başka bir oturumun öz-denetimi BAĞIMSIZ sınandı (2026-09-08)
+
+Ürün sahibi, başka bir oturumun ürettiği 14 maddelik öz-denetim raporunu
+kontrol etmemi istedi. İlk filo oturum limitine takıldı; en yüksek değerli
+**altı** iddia ayrı ayrı, pozitif **ve** negatif kontrollerle yeniden ölçüldü.
+
+| iddia | verdikt | not |
+|---|---|---|
+| C5 bellek boş (179/179 sınıf yok) | **AYAKTA** | + deponun ÜRETİM olduğu kanıtlandı |
+| C9 kaynak etiketi yanıltıyor | **AYAKTA** | + nüans: OOD eşiği VAR, tanı tarafı fail-closed |
+| C1 epistemik ≠ 0 | KISMEN | sayılar doğru, **iki YENİ kusur** çıktı |
+| C10 uzman sınıfı belleğe gitmiyor | KISMEN | sonuç doğru, **teşhis yanlış** |
+| C11 NO_RESULT maskeleme | KISMEN | "kusur" DEĞİL, sözleşme kuralı |
+| C13 WAL yan etkisi | KISMEN | kayıp yok; ama **reçete yanlış** |
+
+### 🔴 Raporun YANLIŞ çıkan iki maddesi (izlenirse zarar verir)
+
+**1. C13'ün reçetesi.** Rapor *"doğru reçete kopyala ya da immutable kip"*
+diyordu. Ölçüldü: `immutable=1` WAL'i **tamamen yok sayar** ve **sessizce
+bayat** veri döndürür — WAL'de bekleyen satır varken `mode=ro` **551** derken
+`immutable=1` **550** dedi, hata vermeden. Worker konteyneri DB tanıtıcılarını
+açık tutuyor, yani bu reçete denetimi yanlış sayıya götürürdü.
+Doğrusu: **`db` + `db-wal` + `db-shm` üçünü birden kopyala.**
+WAL'in sıfırlanması ise **kayıp değil, checkpoint** — pozitif kontrolle
+çivilendi (WAL'de yaşayan satır, WAL silindikten sonra da yerinde; 551,
+`integrity_check=ok`). → [[sqlite-okurken-denegi-degistirir]]
+
+**2. C11'in çerçevesi.** Rapor *"ipucu yalnız INDICES_ONLY ve PARTIAL_REPORT
+kiplerinde maskelenmiyor"* diyordu. İki hata: (a) FULL_REPORT atlanmış, maskesiz
+kip **üç**; (b) daha önemlisi bu bir **kusur değil**, sözleşmenin açık kuralı —
+`model_hint` telde taşınır, gizleme görevi **tüketiciye** verilmiştir
+(*"shown to the expert ONLY after their decision is committed"*). Üç tüketici
+kapısı da ölçülerek tutuyor bulundu. Bu satıra göre worker'a maskeleme ekleyen
+biri, 2026-09-04 ürün sahibi kararıyla kurulan uzman öğrenme döngüsünü
+**hiçbir test kırmızıya dönmeden** öldürürdü.
+
+### 🔴 C10'un teşhisi yanlıştı — sonuç doğru, sebep başka
+
+Rapor *"tek gönderim yolu sınıfı taşımıyor"* diyordu. **Taşıyor**
+(`expert_portal.py:2095`) ve üretimde worker'a **ulaştı** (`corrected_class =
+"karazenk"`). Zincir **iki başka yerde** kapalı:
+
+- `feedback_handler.py:592` — worker yalnız `verdict = 'corrected'` iken yazıyor,
+  ama üretimde hiçbir inceleme 'corrected' olmadı;
+- `feedback_handler.py:615` — sınıfın yazılacağı **karo adresi** kabloda yok
+  (`representative_tile_id` platformda yalnız toplu onay yolunda atanıyor ve
+  kaynağı 0/39 dolu).
+
+**Raporun kaçırdığı canlı sebep:** karo kararları incelemeye toplanırken
+`unsure` (öncelik 1), `corrected`'ın (öncelik 2) **üstünde baskın**
+(`expert_review_rules.py:182-194`). Üretimdeki tek gerçek vaka tam buradan
+düştü: uzman 2 karoda sınıf verdi, 8 karoda emin değildi → inceleme
+`needs_more_expert` oldu → worker kapısı hiç açılmadı. Yani sözleşme alanı
+eklense **bile** sınıf yine geçmezdi.
+
+⚠️ **Geriye dönük sınır (iddiada yoktu, ölçümde çıktı):** `tile_id` yalnız
+**22/179** gömmede dolu. Düzeltme canlıya çıksa bile eski 157 vektöre sınıf
+yazılamaz.
+
+### 🔴 C1'den çıkan İKİ YENİ kusur — stress_ratio ile AYNI SINIF
+
+Epistemik belirsizlik gerçekten sıfır değil (550/550), ama **işlevsel olarak
+sabit**: terimin aralığı güven aralığının **%0,0248**'i. Ablasyon: `eps → 0`
+yapıldığında sonuç modu değişen karo **0/539** (karşı-kontrol `eps → 1.0`:
+539/539 değişir, yani araç çalışıyor).
+
+**(a) Aktif öğrenme tetiği ÖLÜ.** `active_learning_packager.py:261`
+`epistemic_signal > 0.4`; ölçüldü **0/550**. Dropout oranı saçma bir 0,9'a
+çıkarılsa bile eşiğin ancak %30'una ulaşılıyor — eşik bu mimaride
+**yapısal olarak ulaşılamaz**.
+
+**(b) NO_RESULT kapısı ULAŞILAMAZ.** Epistemik ≈ 0 olduğu için güven
+formülünün tabanı `0.30 × (1 − 4.5e-4) = 0.2999`. NO_RESULT eşikleri **0,25**
+ve **0,20** bu tabanın **altında** → `model_conf < 0.25` olan karo **0/550**
+(pozitif kontrol: `< 0.31` → 150 karo). Yani fail-closed kademesinin en alt
+basamağı **hiçbir karoda tetiklenemez**.
+
+Bu, `stress_ratio < 0,85`'in aynısı: **kapı değil, sabit bir cevap.**
+Eşik değiştirmek bir ÜRÜN kararıdır; bu turda ölçüldü, **uygulanmadı.**
+
+---
+
 ---
 
 ## 0.A EN GÜNCEL — (2026-09-06, **yirmi altıncı oturum: UZMAN REHBERİ DENETİMİ + YENİDEN YAZIM · ÜÇ EKSİK TÜKETİCİ · plat #535 AÇIK**)
