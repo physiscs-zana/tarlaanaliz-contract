@@ -258,6 +258,105 @@ bir eşiğe atfedilemez) · `model_confidence` İSTEMCİDEN geliyor · uzmana gi
 
 ---
 
+## §0.A §15 — Hakem kıdem kapısı KAPANDI + dağıtımlar üretimde SINANDI (2026-09-08)
+
+Ürün sahibi bir önceki turda bıraktığım kararı verdi: **dört uzmanı TIER_2 yaptı**
+(Doç. Dr. Hakan Çetinkaya · Yük. Müh. Ferda Yarpuzlu · Prof. Dr. ŞENER KURT ·
+Prof. Dr. SEMA BAŞBAĞ). Bu, çürütücünün "tek başına kıdem süzgeci yetmez"
+çekincesini geçersiz kıldı ve kod düzeltmesini uygulanabilir hâle getirdi.
+
+**PR:** plat #540 — merge edildi ve üretime dağıtıldı.
+
+### 🔴 Kusur "eksik bir `if`" değildi — eksik bir VERİ YOLUYDU
+
+`_hakem_incelemesi_ac` hakemi **açarken** kıdem arıyordu, **devir** yolunda o kapı
+yoktu. Ama nedeni basit bir unutma değil: devir, adayı
+`ExpertAssignmentService.assign()`e devrediyor ve oraya `build_expert_profiles`
+çıktısı olan `ExpertProfile` nesneleri gidiyor — **o nesnede kıdem alanı YOK**.
+Yani devir yolu kıdemi *süzemezdi*. Süzgeç bu yüzden ham `ExpertModel` listesine,
+profil kurulmadan **önce** uygulandı.
+
+Denetim izi (inceleme `b4dfdf0f`, sonuç `86a255fa`, görev `24cceb52` — gerçek ve
+**ödemesi yapılmış** sipariş):
+
+    2026-09-05 17:17  GRACE_GRANTED  expert=ff5497cc (TIER_2)
+    2026-09-06 05:17  SLA_PENALTY    penalty_points_after=1
+    2026-09-06 05:17  SLA_BREACH     reassigned_to=a0f77a63
+    ...                              -> nihayetinde d4f37de2 (TIER_1)
+
+### ✅ Üretimde İZOLE ölçüldü (dağıtım sonrası, salt-okunur)
+
+`b4dfdf0f` üzerinde, mahsul kapısının **geçtiği** adaylarla sınandı — yani
+reddin kaynağı kıdem kapısı, mahsul kapısı DEĞİL:
+
+| aday | kademe | fıstık | sonuç |
+|---|---|---|---|
+| Abuzer Sagir | TIER_1 | ✅ | **REDDEDİLDİ** |
+| Erol Bayhan | TIER_1 | ✅ | **REDDEDİLDİ** |
+| Ozan Akat | TIER_1 | ✅ | **REDDEDİLDİ** |
+| Ferda Yarpuzlu | TIER_2 | ✅ | KABUL (pozitif kontrol) |
+| ŞENER KURT | TIER_2 | ✅ | KABUL (pozitif kontrol) |
+
+Otomatik devir de artık **ŞENER KURT (TIER_2)** seçiyor (her iki hakem
+incelemesi için ölçüldü). Mutasyon sınaması: 6 mutasyon, 6 kırmızı, **0 kaçak**.
+
+> ⚠️ İlk üretim probumda red gerekçesi *"PISTACHIO kapsamıyor"* çıkmıştı — yani
+> **beşinci** kapı ateşlemişti, benimki değil. Ölçüm izole edilmeden verdikt
+> verilmedi. ([[olcumun-gecerliligini-olc]] kalıbının tekrarı.)
+
+### ⚠️ ÜRETİM VERİSİ HÂLÂ BOZUK — kararınızı bekliyor
+
+`b4dfdf0f` hâlâ **TIER_1** uzmanda (`d4f37de2`) ve oyu kural gereği
+**bağlayıcı**. Kod bunu geriye dönük düzeltmez. Ölçüldü:
+
+- `escalation_round = 2`, sınır 3 → **bir otomatik tur daha hakkı var**
+- SLA son tarihi `2026-09-08 17:20 UTC`, ardından 12 saat ek süre
+- Gözcü 15 dakikada bir koşuyor
+
+Yani satır **~2026-09-09 05:20 UTC'de kendiliğinden** kıdemliye geçer — ama o
+tarihe kadar TIER_1 uzman karar verirse oy bağlayıcı olur. Hızlı çözüm ürünün
+kendi denetimli yolu: **admin elle devir ucu** (`POST /admin/expert-reviews/
+{review_id}/reassign`, `target_expert_id` = ŞENER KURT ya da Ferda Yarpuzlu).
+Gerçek ve ödemesi yapılmış siparişe asistan yazma yapmadı.
+
+### ✅ "Dağıtımlar üretimde sınanmadı" notu KAPANDI
+
+Bir önceki turun dürüstlük notu üç şey diyordu; üçü de ölçüldü:
+
+**1. Worker kodu dağıtıldı ama koşmadı.** → Artık koştu. Worker konteyneri yerel
+depoyla **bayt-özdeş** (`pipeline.py` sha256 `63fd93c78857da23`, iki tarafta da
+aynı) ve kapsam ekseni düzeltmesi **dağıtılmış kodun içinde** koşturuldu:
+
+    A1  her karo ÖLÇÜLDÜ + temiz     -> INDICES_ONLY  ✅ (sağlıklı kol İLK KEZ doğdu)
+    A2  hiçbiri ölçülemedi (kapsam)  -> NO_RESULT     ✅ (fail-OPEN KAPALI)
+    A1b kısmi kapsam, 1 karo ölçüldü -> INDICES_ONLY  ✅
+
+Konteyner logu mekanizmayı doğruluyor: *"Anomaly filter: 4/4 tile kaplama esigi
+altinda — HARIC TUTULDU (ne anomali ne saglikli; esik=0.20)"*.
+
+⚠️ **Sınır:** bu koşum dağıtılmış kodu sentetik karolarla sınadı; kuyruktan geçen
+**gerçek bir uçuş** değil. Üretimde ödemesiz görev YOK (21 görevin hepsi
+`subscription_id`/`payment_intent_id` taşıyor), bu yüzden gerçek sipariş
+sevk edilmedi.
+
+**2. Pano süzgeci hiçbir satırı görünür kılmadı.** → Hâlâ doğru, ve artık
+üretim sürecinin **içinde** ölçüldü. Gerçek iki `field_index_timeseries` satırı
+dağıtılmış `_panoya_dahil`e verildi: ikisi de `PANODA=False` (ikisi de
+`anomali > 0` **ve** `saglikli = 0` — iki fail-closed koşul da tutuyor).
+
+**3. Sağlıklı kol hiç doğmadı.** → Üretim **verisinde** hâlâ doğmadı, ama
+dağıtılmış kodda doğduğu kanıtlandı (yukarıdaki A1). Çiftçi metni de üretim
+sürecinde dört senaryoyla sınandı:
+
+| senaryo | üretimdeki çıktı |
+|---|---|
+| sağlıklı (21 ölçüldü, 0 anomali) | *"…dikkat çeken bir sorun bulunmadı."* ✅ |
+| **hiç ölçülemedi** (0 sağlıklı, 0 anomali) | kısıtlı cümle ✅ **fail-OPEN kapalı** |
+| düşük güven (22 anomali) | kısıtlı cümle ✅ |
+| sağlıklı sayacı yok | kısıtlı cümle ✅ fail-closed |
+
+---
+
 ---
 
 ## 0.A EN GÜNCEL — (2026-09-06, **yirmi altıncı oturum: UZMAN REHBERİ DENETİMİ + YENİDEN YAZIM · ÜÇ EKSİK TÜKETİCİ · plat #535 AÇIK**)
